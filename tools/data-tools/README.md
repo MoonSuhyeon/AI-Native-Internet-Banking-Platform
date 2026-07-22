@@ -48,7 +48,7 @@ scripts/
 ## 로컬 실행
 
 ```bash
-cd services/data-tools
+cd tools/data-tools
 pip install -r requirements.txt
 python -m scripts.fetch_all                 # 전체
 python -m scripts.fetch_all --source ecos   # 일부
