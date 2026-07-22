@@ -1,4 +1,4 @@
-$root = $PSScriptRoot
+$root = Split-Path -Parent $PSScriptRoot
 
 Write-Host "=== Internet Banking services start ===" -ForegroundColor Cyan
 

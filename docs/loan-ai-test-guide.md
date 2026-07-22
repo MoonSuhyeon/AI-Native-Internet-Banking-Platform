@@ -1,6 +1,6 @@
 # 대출·AI 서비스 로컬 테스트 가이드 (플로우 기반)
 
-`start.bat` 로 로컬 스택을 띄운 뒤 **loan / auto-loan-review / review-ai-gateway / doc-agent** 네 서비스의
+`start.ps1` 로 로컬 스택을 띄운 뒤 **loan / auto-loan-review / review-ai-gateway / doc-agent** 네 서비스의
 기능을 플로우 순서대로 검증하기 위한 문서다.
 
 > 정확한 요청 바디는 각 서비스 Swagger(`http://localhost:<port>/swagger-ui.html`, loan 은 8083)에서 확인할 수 있다.
@@ -28,7 +28,7 @@ foreach ($p in 8083,8089,8088,8087) {
 
 ---
 
-## 1. 서비스 간 base-url 오버라이드 (start.bat 에 이미 반영됨)
+## 1. 서비스 간 base-url 오버라이드 (start.ps1 에 이미 반영됨)
 
 `start.ps1` 은 모든 Spring 서비스를 **호스트에서 bootRun** 으로 띄운다.
 loan-service 의 아래 두 base-url 기본값은 **도커 네트워크 호스트명**이라 호스트 실행 시 이름이 풀리지 않는데,
@@ -207,7 +207,7 @@ doc-agent 는 독립 서비스로 직접 검증 가능(port 8087).
 ## 9. 빠른 점검 체크리스트
 
 - [ ] 4개 서비스 `/actuator/health` 모두 UP
-- [ ] `AUTO_REVIEW_BASE_URL`, `DOC_AGENT_BASE_URL` 오버라이드 — start.bat 사용 시 자동, loan 단독 기동 시 수동
+- [ ] `AUTO_REVIEW_BASE_URL`, `DOC_AGENT_BASE_URL` 오버라이드 — start.ps1 사용 시 자동, loan 단독 기동 시 수동
 - [ ] (AI 테스트 시) `.env` 에 `OPENAI_API_KEY` 존재
 - [ ] `ib-kafka` 컨테이너 healthy (편향 플로우)
 - [ ] Flow A: 신청→가심사→본심사 상태 전이 확인, 가심사 `aiTrackCd` 채워짐
