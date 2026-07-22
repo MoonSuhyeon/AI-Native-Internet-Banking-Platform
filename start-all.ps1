@@ -3,7 +3,7 @@ $root = $PSScriptRoot
 Write-Host "=== Internet Banking services start ===" -ForegroundColor Cyan
 
 Write-Host "[1/5] Consultation Service (8087) starting..." -ForegroundColor Yellow
-$consultDir = Join-Path $root "services\consultation-service"
+$consultDir = Join-Path $root "agents\consultation"
 Start-Process powershell -ArgumentList "-NoProfile -Command `"cd '$consultDir'; python -m uvicorn app.main:app --host 0.0.0.0 --port 8087 --reload`"" -WindowStyle Normal
 
 Start-Sleep -Seconds 2

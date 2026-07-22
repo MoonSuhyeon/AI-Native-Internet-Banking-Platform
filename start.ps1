@@ -135,15 +135,15 @@ Start-Process cmd -ArgumentList "/k gradlew.bat :services:master-service:bootRun
 Start-Sleep -Seconds 2
 Start-Process cmd -ArgumentList "/k gradlew.bat :services:api-gateway:bootRun" -WorkingDirectory $root -WindowStyle Normal
 Start-Sleep -Seconds 2
-Start-Process cmd -ArgumentList "/k gradlew.bat :services:auto-loan-review:bootRun" -WorkingDirectory $root -WindowStyle Normal
+Start-Process cmd -ArgumentList "/k gradlew.bat :agents:auto-loan-review:bootRun" -WorkingDirectory $root -WindowStyle Normal
 Start-Sleep -Seconds 2
-Start-Process cmd -ArgumentList "/k gradlew.bat :services:review-ai-gateway:bootRun" -WorkingDirectory $root -WindowStyle Normal
+Start-Process cmd -ArgumentList "/k gradlew.bat :agents:review-ai-gateway:bootRun" -WorkingDirectory $root -WindowStyle Normal
 Start-Sleep -Seconds 2
-Start-Process cmd -ArgumentList "/k gradlew.bat :services:doc-agent:bootRun" -WorkingDirectory $root -WindowStyle Normal
+Start-Process cmd -ArgumentList "/k gradlew.bat :agents:doc-agent:bootRun" -WorkingDirectory $root -WindowStyle Normal
 Start-Sleep -Seconds 2
 
 # consultation-service (FastAPI, 8090) — venv 자동 구성 후 기동
-$consultDir    = Join-Path $root "services\consultation-service"
+$consultDir    = Join-Path $root "agents\consultation"
 $consultVenvPy = Join-Path $consultDir ".venv\Scripts\python.exe"
 if (-not (Test-Path $consultVenvPy)) {
     Write-Host "  consultation-service: venv 생성 + 의존성 설치 (최초 1회, 수 분 소요)..." -ForegroundColor Yellow
