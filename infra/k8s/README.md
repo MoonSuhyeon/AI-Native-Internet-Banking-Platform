@@ -41,7 +41,7 @@ CI/CD 워크플로우 (`reusable-docker-publish.yml`) 가 Oracle/GCP 공통으�
 | Kafka | 컨테이너 | **Pub/Sub** 또는 Confluent Cloud |
 | 이미지 레지스트리 | GHCR | GHCR 그대로 OR **Artifact Registry** |
 | 모니터링 | Prometheus + Grafana | **Cloud Monitoring** + Grafana |
-| 외부 진입 | gateway-service 8080 | **GKE Ingress** + Cloud Load Balancer |
+| 외부 진입 | api-gateway 8080 | **GKE Ingress** + Cloud Load Balancer |
 | 시크릿 | `.env.prod` 파일 | **Secret Manager** + CSI driver |
 
 ## 골격 사용법

@@ -13,7 +13,7 @@ metadata:
 spec:
   defaultBackend:
     service:
-      name: gateway-service
+      name: api-gateway
       port:
         number: 8080
   # 도메인 라우팅이 필요하면:
@@ -25,6 +25,6 @@ spec:
   #           pathType: Prefix
   #           backend:
   #             service:
-  #               name: gateway-service
+  #               name: api-gateway
   #               port:
   #                 number: 8080

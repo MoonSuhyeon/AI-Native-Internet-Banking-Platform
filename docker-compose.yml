@@ -712,7 +712,7 @@ services:
   # Application
   # =============================================================
 
-  gateway-service:
+  api-gateway:
     build:
       context: .
       dockerfile: services/api-gateway/Dockerfile

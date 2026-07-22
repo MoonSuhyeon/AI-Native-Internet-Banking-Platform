@@ -389,7 +389,7 @@ services:
       retries: 10
       start_period: 180s
 
-  gateway-service:
+  api-gateway:
     build:
       context: .
       dockerfile: services/api-gateway/Dockerfile
@@ -640,7 +640,7 @@ services:
     environment:
       PAYMENT_B_API_URL: http://payment-service-b:8084
     depends_on:
-      gateway-service:
+      api-gateway:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:

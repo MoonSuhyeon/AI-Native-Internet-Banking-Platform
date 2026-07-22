@@ -34,7 +34,7 @@ jobs:
             echo "$CHANGED"
 
             # 공유 모듈·빌드 설정 변경 시 전체 재빌드
-            ALL_SERVICES="gateway-service customer-service deposit-service loan-service payment-service payment-service-b master-service auto-loan-review review-ai-gateway consultation-service web"
+            ALL_SERVICES="api-gateway customer-service deposit-service loan-service payment-service payment-service-b master-service auto-loan-review review-ai-gateway consultation-service web"
 
             if echo "$CHANGED" | grep -qE "^(common|libs)/|^build\.gradle|^settings\.gradle|^docker-compose\.server\.yml"; then
               echo "Shared module or build config changed — rebuilding all services"
@@ -42,7 +42,7 @@ jobs:
             else
               # 변경된 서비스 감지
               services=""
-              echo "$CHANGED" | grep -q "^services/api-gateway/"          && services="$services gateway-service"
+              echo "$CHANGED" | grep -q "^services/api-gateway/"          && services="$services api-gateway"
               echo "$CHANGED" | grep -q "^services/customer-service/"     && services="$services customer-service"
               echo "$CHANGED" | grep -q "^services/deposit-service/"      && services="$services deposit-service"
               echo "$CHANGED" | grep -q "^services/loan-service/"         && services="$services loan-service"
