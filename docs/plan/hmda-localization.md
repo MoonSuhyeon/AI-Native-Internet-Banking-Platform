@@ -242,7 +242,7 @@ HMDA 에는 CONDITIONAL 개념 없음. 두 옵션:
 - `synthetic-data-generator/src/loaders/ecos.py`, `kosis.py` — KOSIS Enrichment 에 필수
 - `synthetic-data-generator/src/synthesize/application.py` — `purpose_text` 한국어 템플릿 부분만
 - `synthetic-data-generator/src/training/`, `src/evaluation/` — 학습·평가 골격 (feature schema 만 갈아끼움)
-- `inference-server/`, `services/auto-loan-review/` — 게이트웨이·서빙 (DTO 필드명만 변경)
+- `inference-server/`, `agents/auto-loan-review/` — 게이트웨이·서빙 (DTO 필드명만 변경)
 
 ### 7.3 신규
 

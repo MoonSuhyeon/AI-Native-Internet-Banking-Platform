@@ -2,8 +2,8 @@
 
 - **작성일**: 2026-06-18
 - **대상**: advisory-service RAG 청킹 설정(`DocumentIngestionService` `CHUNK_SIZE=800`, `CHUNK_OVERLAP=100`)
-- **측정 코드**: `services/advisory-service/src/test/java/com/bank/loan/advisory/rag/ChunkSizeRetrievalEvalTest.java`
-- **동결 질의셋**: `services/advisory-service/src/test/resources/chunk-eval/queries.json` (50개)
+- **측정 코드**: `agents/advisory-service/src/test/java/com/bank/loan/advisory/rag/ChunkSizeRetrievalEvalTest.java`
+- **동결 질의셋**: `agents/advisory-service/src/test/resources/chunk-eval/queries.json` (50개)
 
 ---
 

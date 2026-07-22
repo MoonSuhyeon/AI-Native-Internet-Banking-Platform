@@ -321,12 +321,12 @@ VALUES
 |---------|------|
 | 심사 서비스 | `services/loan-service/.../review/LoanReviewService.java` |
 | 심사 완료 이벤트 | `services/loan-service/.../review/event/LoanReviewCompletedEvent.java` |
-| Advisory 이벤트 리스너 | `services/advisory-service/.../listener/AdvisoryReviewListener.java` |
-| 규칙 엔진 | `services/advisory-service/.../engine/AdvisoryEvaluator.java` |
-| 유사 사례 RAG | `services/advisory-service/.../rag/SimilarCaseRetriever.java` |
-| 정책 인용 RAG | `services/advisory-service/.../rag/PolicyCitationRetriever.java` |
-| AI Gateway 에이전틱 루프 | `services/review-ai-gateway/.../agent/AgenticLoop.java` |
-| Tool 목록 | `services/review-ai-gateway/.../tool/executor/` |
+| Advisory 이벤트 리스너 | `agents/advisory-service/.../listener/AdvisoryReviewListener.java` |
+| 규칙 엔진 | `agents/advisory-service/.../engine/AdvisoryEvaluator.java` |
+| 유사 사례 RAG | `agents/advisory-service/.../rag/SimilarCaseRetriever.java` |
+| 정책 인용 RAG | `agents/advisory-service/.../rag/PolicyCitationRetriever.java` |
+| AI Gateway 에이전틱 루프 | `agents/review-ai-gateway/.../agent/AgenticLoop.java` |
+| Tool 목록 | `agents/review-ai-gateway/.../tool/executor/` |
 
 ---
 

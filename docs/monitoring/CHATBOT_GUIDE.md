@@ -235,7 +235,7 @@ consultation-service는 자체 `docker-compose.yml`로 실행된다 (메인 `doc
 
 ```bash
 # 프로젝트 루트에서
-cd services/consultation-service
+cd agents/consultation
 docker compose up -d
 ```
 
@@ -298,11 +298,11 @@ curl -X POST http://localhost:8087/chat/consultations/{CHAT_ID}/end \
 | `infra/prometheus/alerts.yml` | 알림 규칙 (chatbot 그룹) |
 | `infra/prometheus/prometheus.yml` | 스크레이핑 대상 (consultation-service 포함) |
 | `infra/grafana/provisioning/dashboards/chatbot.json` | 대시보드 정의 파일 |
-| `services/consultation-service/app/metrics.py` | 메트릭 정의 |
-| `services/consultation-service/app/main.py` | 세션·메시지·만족도 계측 |
-| `services/consultation-service/app/llm.py` | LLM 응답시간·오류·토큰 계측 |
-| `services/consultation-service/app/kafka.py` | Kafka 발행·소비 계측 |
-| `services/consultation-service/.env` | 환경 변수 (API 키, Kafka 설정 등) |
+| `agents/consultation/app/metrics.py` | 메트릭 정의 |
+| `agents/consultation/app/main.py` | 세션·메시지·만족도 계측 |
+| `agents/consultation/app/llm.py` | LLM 응답시간·오류·토큰 계측 |
+| `agents/consultation/app/kafka.py` | Kafka 발행·소비 계측 |
+| `agents/consultation/.env` | 환경 변수 (API 키, Kafka 설정 등) |
 
 ---
 

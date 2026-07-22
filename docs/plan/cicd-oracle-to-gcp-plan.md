@@ -84,8 +84,8 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 - `services/loan-service/Dockerfile`
 - `services/ai-service/Dockerfile`
 - `services/master-service/Dockerfile`
-- `services/review-ai-gateway/Dockerfile`
-- `services/auto-loan-review/Dockerfile`
+- `agents/review-ai-gateway/Dockerfile`
+- `agents/auto-loan-review/Dockerfile`
 
 **개선 포인트**:
 - 멀티스테이지 빌드(builder + runtime)로 이미지 크기 축소

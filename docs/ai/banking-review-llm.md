@@ -124,7 +124,7 @@ soft delete 불필요 — append-only.
 각 단계는 **별도 PR + 별도 커밋**. 기능/테스트 분리(`feat(...)` + `test(...)`).
 
 ### Step 1. 인프라 — 게이트웨이 스켈레톤
-- `services/review-ai-gateway` 신규 모듈 (Spring Boot).
+- `agents/review-ai-gateway` 신규 모듈 (Spring Boot).
 - `/v1/advice` POST 단일 엔드포인트, 더미 응답 (`"stub"`) 반환.
 - 헬스체크, 메트릭(timer), 구조화 로그.
 - 빌드/도커 등록.

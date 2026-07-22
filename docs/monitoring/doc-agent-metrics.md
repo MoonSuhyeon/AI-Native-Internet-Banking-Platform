@@ -84,7 +84,7 @@ Resilience4j가 아래 메트릭을 자동 생성한다.
 > 대시보드 담당자는 아래 클래스에서 MeterRegistry 주입 방식을 확인한다.
 
 ```
-services/doc-agent/src/main/java/com/bank/docagent/
+agents/doc-agent/src/main/java/com/bank/docagent/
 ├── submission/service/SubmissionPipelineService.java  ← doc_agent_pipeline_seconds
 ├── forgery/service/ForgeryAnalysisService.java        ← doc_agent_forgery_*
 ├── review/service/HumanReviewService.java             ← doc_agent_human_review_*

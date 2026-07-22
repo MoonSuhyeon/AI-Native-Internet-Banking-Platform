@@ -24,7 +24,7 @@
 
 ### `purpose_analysis` v1
 
-- **파일**: `services/auto-loan-review/src/main/resources/prompts/purpose_analysis_v1.yml`
+- **파일**: `agents/auto-loan-review/src/main/resources/prompts/purpose_analysis_v1.yml`
 - **용도**: 신청 사유(목적 코드 + 자유 텍스트)와 페르소나 일관성을 분석해 plausibility·specificity(0~1) 및 RedFlag 목록 반환
 - **입력 키**: `persona_summary`, `purpose_cd`, `product_code`, `amount_kw`, `period_mo`
 - **출력 스키마**: `PurposeAnalysis` record (`plausibility`, `specificity`, `redFlags`, `reasoning`)
@@ -36,7 +36,7 @@
 
 ### `review_report_track1` / `review_report_track2` / `review_report_track3` v1
 
-- **파일**: `services/auto-loan-review/src/main/resources/prompts/review_report_track{1|2|3}_v1.yml`
+- **파일**: `agents/auto-loan-review/src/main/resources/prompts/review_report_track{1|2|3}_v1.yml`
 - **용도**: RuleEngine 트랙 결정 결과를 받아 트랙별 톤의 심사 리포트 생성
 - **트랙별 산출**:
   - Track 1: 1문단 summary + strengths, citations ≥ 1

@@ -373,8 +373,8 @@ curl -s -X POST http://localhost:8089/api/ai/auto-review/evaluate \
 | `infra/prometheus/alerts.yml` | 알림 규칙 정의 (ml-loan-review 그룹) |
 | `infra/prometheus/prometheus.yml` | 데이터 수집 대상 설정 (auto-loan-review 포함) |
 | `infra/grafana/provisioning/dashboards/ml-loan-review.json` | 대시보드 정의 파일 |
-| `services/auto-loan-review/src/main/java/com/bank/ai/metrics/ReviewMetrics.java` | 어떤 지표를 어떻게 기록할지 정의한 파일 |
-| `services/auto-loan-review/src/main/java/com/bank/ai/rule/service/RuleEngineService.java` | 심사가 완료되는 시점에 위 메트릭을 실제로 기록하는 파일 |
+| `agents/auto-loan-review/src/main/java/com/bank/ai/metrics/ReviewMetrics.java` | 어떤 지표를 어떻게 기록할지 정의한 파일 |
+| `agents/auto-loan-review/src/main/java/com/bank/ai/rule/service/RuleEngineService.java` | 심사가 완료되는 시점에 위 메트릭을 실제로 기록하는 파일 |
 | `docs/ai/MODEL_CARDS.md` | 사용 중인 ML 모델 명세 — 모델 이름, 학습 데이터, 성능 지표 기록 |
 | `docs/plan/phase-c-ml-pipeline.md` | 모델 학습 방법 및 파이프라인 구현 계획 |
 

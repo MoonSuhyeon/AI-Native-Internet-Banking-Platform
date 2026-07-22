@@ -278,10 +278,10 @@ LANGFUSE_PUBLIC_KEY=pk-lf-xxxx   ← 이미 입력됨
 
 ### consultation-service
 
-**이미 설정 완료입니다.** `services/consultation-service/.env` 파일에 아래 항목이 설정되어 있습니다. 서비스 재시작만 하면 됩니다.
+**이미 설정 완료입니다.** `agents/consultation/.env` 파일에 아래 항목이 설정되어 있습니다. 서비스 재시작만 하면 됩니다.
 
 ```
-# services/consultation-service/.env (현재 설정됨)
+# agents/consultation/.env (현재 설정됨)
 CONSULTATION_LANGFUSE_ENABLED=true
 CONSULTATION_LANGFUSE_SECRET_KEY=sk-lf-xxxx   ← 이미 입력됨
 CONSULTATION_LANGFUSE_PUBLIC_KEY=pk-lf-xxxx   ← 이미 입력됨
@@ -475,26 +475,26 @@ sum(rate(advisory_rag_embedding_calls_total{status="error"}[5m]))
 
 | 파일 | 역할 |
 |------|------|
-| `services/auto-loan-review/src/main/java/.../LangfuseService.java` | Langfuse HTTP API로 trace/span/generation 데이터 전송 |
-| `services/auto-loan-review/src/main/java/.../GeminiOpenAiCompatLlmClient.java` | LLM 호출 시 generation 기록 |
-| `services/auto-loan-review/src/main/java/.../RagSearchService.java` | RAG 검색 시 span 기록 |
-| `services/review-ai-gateway/src/main/java/.../LangfuseService.java` | Langfuse HTTP API로 trace/generation 데이터 전송 |
-| `services/review-ai-gateway/src/main/java/.../ClaudeLlmClient.java` | Claude 호출 시 trace + generation 기록 |
-| `services/consultation-service/app/main.py` | 앱 시작 시 `Langfuse()` 인스턴스를 직접 생성하여 초기화. 이 코드가 실행되어야 `rag.py`, `llm.py`의 `@observe` 데코레이터가 Langfuse와 연결됨 |
-| `services/consultation-service/app/rag.py` | `@observe(name="rag-search")` 데코레이터 — RAG 검색 함수에 붙어 있으며, 함수가 호출될 때 자동으로 Langfuse에 span을 기록 |
-| `services/consultation-service/app/llm.py` | `@observe(name="llm-document-analyze")`, `@observe(name="llm-rag-answer")` |
-| `services/consultation-service/app/features/product_compare.py` | `_langfuse_trace()` 헬퍼 함수로 `llm-product-compare` 트레이스 기록. `@observe` 데코레이터 대신 헬퍼를 사용하는 이유: `@observe`는 Python 모듈이 임포트되는 시점에 함수에 적용되는데, 이 시점에 Langfuse가 아직 초기화되지 않아 트레이스가 생성되지 않는 문제가 있었음. 함수 내부에서 직접 `Langfuse()` 인스턴스를 생성하는 헬퍼 방식은 실제 함수가 호출될 때 초기화되므로 이 문제가 없음 |
-| `services/consultation-service/app/features/savings_goal.py` | `@observe(name="llm-savings-recommend")` |
-| `services/goal-agent/app/main.py` | `_setup_langfuse()` — 앱 시작 시 Langfuse 클라이언트 초기화 |
-| `services/goal-agent/app/agent_goal_chat.py` | `@observe(name="goal-agent")` |
-| `services/goal-agent/app/agent_maturity_chat.py` | `@observe(name="maturity-agent")` |
-| `services/goal-agent/app/agent_spending_chat.py` | `@observe(name="spending-agent")` |
+| `agents/auto-loan-review/src/main/java/.../LangfuseService.java` | Langfuse HTTP API로 trace/span/generation 데이터 전송 |
+| `agents/auto-loan-review/src/main/java/.../GeminiOpenAiCompatLlmClient.java` | LLM 호출 시 generation 기록 |
+| `agents/auto-loan-review/src/main/java/.../RagSearchService.java` | RAG 검색 시 span 기록 |
+| `agents/review-ai-gateway/src/main/java/.../LangfuseService.java` | Langfuse HTTP API로 trace/generation 데이터 전송 |
+| `agents/review-ai-gateway/src/main/java/.../ClaudeLlmClient.java` | Claude 호출 시 trace + generation 기록 |
+| `agents/consultation/app/main.py` | 앱 시작 시 `Langfuse()` 인스턴스를 직접 생성하여 초기화. 이 코드가 실행되어야 `rag.py`, `llm.py`의 `@observe` 데코레이터가 Langfuse와 연결됨 |
+| `agents/consultation/app/rag.py` | `@observe(name="rag-search")` 데코레이터 — RAG 검색 함수에 붙어 있으며, 함수가 호출될 때 자동으로 Langfuse에 span을 기록 |
+| `agents/consultation/app/llm.py` | `@observe(name="llm-document-analyze")`, `@observe(name="llm-rag-answer")` |
+| `agents/consultation/app/features/product_compare.py` | `_langfuse_trace()` 헬퍼 함수로 `llm-product-compare` 트레이스 기록. `@observe` 데코레이터 대신 헬퍼를 사용하는 이유: `@observe`는 Python 모듈이 임포트되는 시점에 함수에 적용되는데, 이 시점에 Langfuse가 아직 초기화되지 않아 트레이스가 생성되지 않는 문제가 있었음. 함수 내부에서 직접 `Langfuse()` 인스턴스를 생성하는 헬퍼 방식은 실제 함수가 호출될 때 초기화되므로 이 문제가 없음 |
+| `agents/consultation/app/features/savings_goal.py` | `@observe(name="llm-savings-recommend")` |
+| `agents/goal-agent/app/main.py` | `_setup_langfuse()` — 앱 시작 시 Langfuse 클라이언트 초기화 |
+| `agents/goal-agent/app/agent_goal_chat.py` | `@observe(name="goal-agent")` |
+| `agents/goal-agent/app/agent_maturity_chat.py` | `@observe(name="maturity-agent")` |
+| `agents/goal-agent/app/agent_spending_chat.py` | `@observe(name="spending-agent")` |
 
 ### Advisory RAG 메트릭
 
 | 파일 | 역할 |
 |------|------|
-| `services/advisory-service/src/main/java/.../AdvisoryMetrics.java` | RAG 검색·임베딩 Prometheus 메트릭 수집 |
+| `agents/advisory-service/src/main/java/.../AdvisoryMetrics.java` | RAG 검색·임베딩 Prometheus 메트릭 수집 |
 
 ---
 

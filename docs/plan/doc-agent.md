@@ -48,7 +48,7 @@
 ```
 
 **경계 원칙**:
-- doc-agent는 **별도 마이크로서비스** (`services/doc-agent`)
+- doc-agent는 **별도 마이크로서비스** (`agents/doc-agent`)
 - 비즈니스 로직·상태·라우팅·Kafka는 Spring (Java)
 - Python 사이드카는 **stateless, 추론만**. DB/Kafka 접근 금지
 - 사이드카 장애 시 Spring이 circuit-breaker로 `NEEDS_RESUBMIT` 라우팅

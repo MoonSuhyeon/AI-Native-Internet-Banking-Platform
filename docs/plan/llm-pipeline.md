@@ -189,7 +189,7 @@ public record ReviewReport(
 
 ### 6.1 파일 구조
 
-`services/auto-loan-review/src/main/resources/prompts/*.yml`:
+`agents/auto-loan-review/src/main/resources/prompts/*.yml`:
 
 ```yaml
 # prompts/purpose_analysis_v1.yml
@@ -410,8 +410,8 @@ LLM 호출은 모두 stub:
 
 ### 13.1 신규
 
-- `services/auto-loan-review/src/main/java/com/bank/ai/llm/**/*.java` (§3 패키지 구조 전체)
-- `services/auto-loan-review/src/main/resources/prompts/*.yml` (4종 + 통보문)
+- `agents/auto-loan-review/src/main/java/com/bank/ai/llm/**/*.java` (§3 패키지 구조 전체)
+- `agents/auto-loan-review/src/main/resources/prompts/*.yml` (4종 + 통보문)
 - `db/migration/ai_db/V20260601__feature_purpose.sql`
 - `db/migration/loan_db/V20260601__loan_review_report_columns.sql`
 - `docs/ai/PROMPT_REGISTRY.md`
@@ -419,7 +419,7 @@ LLM 호출은 모두 stub:
 
 ### 13.2 갱신
 
-- `services/auto-loan-review/src/main/resources/application.yml` — `ai.llm.*` 섹션 신규
+- `agents/auto-loan-review/src/main/resources/application.yml` — `ai.llm.*` 섹션 신규
 - `com.bank.ai.review.service.AutoReviewService` — sync 응답 후 `AutoReviewEvaluatedEvent` publish
 - `com.bank.ai.review.dto.AutoReviewEvaluateResponse` — `reportStatus` 필드 추가
 - `services/loan-service` `LoanReview` 엔티티 — `reportJson`, `reportStatus`, `reportAt` 컬럼
@@ -508,7 +508,7 @@ ai:
 
 - [ ] Vertex AI 프로젝트 + service account JSON (`GOOGLE_APPLICATION_CREDENTIALS`)
 - [ ] Anthropic API key (운영 cutover 전, PoC 엔 불필요)
-- [ ] Spring AI 1.x 가 현 Spring Boot 버전과 호환되는지 확인 (services/auto-loan-review build.gradle)
+- [ ] Spring AI 1.x 가 현 Spring Boot 버전과 호환되는지 확인 (agents/auto-loan-review build.gradle)
 - [ ] `com.bank.ai.privacy.PiiMaskingFilter` 의 한국어 PII 패턴 커버리지 점검 (purpose_text
       자유 입력 대응)
 - [ ] loan-service `LoanReview` 엔티티 schema 변경 → 기존 데이터 migration 영향 점검

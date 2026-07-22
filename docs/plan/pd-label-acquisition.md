@@ -329,7 +329,7 @@ generated_at                    timestamptz
 
 - `synthetic-data-generator/src/synthesize/hmda_to_kr.py` — `_kr_enrich_common` 으로 공통 로직 이관
 - `synthetic-data-generator/src/training/features.py` — `--dataset` 옵션 + label/feature 분기
-- `services/auto-loan-review/src/main/resources/application.yml` — `ai.inference.pd-model-url`, `ai.rule-engine.pd-threshold`, `ai.rule-engine.decision-strong-threshold` 신규 키
+- `agents/auto-loan-review/src/main/resources/application.yml` — `ai.inference.pd-model-url`, `ai.rule-engine.pd-threshold`, `ai.rule-engine.decision-strong-threshold` 신규 키
 - `com.bank.ai.rule.service.TrackClassifier` — 듀얼 score 결합 분기 추가 (단, decision_score 미가용 시 PD 단독 fallback)
 - `com.bank.ai.rule.config.PolicyMatrix` — `decision_strong_threshold` 필드 추가
 - `docs/ai/DATASETS.md` — Home Credit 항목 추가 (라이선스·출처·사용 범위)

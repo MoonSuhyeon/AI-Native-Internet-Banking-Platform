@@ -418,8 +418,8 @@ RAG OFF 또는 검색 결과 empty 시 `application.yml` 인라인 policy text �
 
 ```
 [정책 문서 원본]
-  - services/auto-loan-review/src/main/resources/policy/*.md  (자행 정책서, 수동 작성)
-  - services/auto-loan-review/src/main/resources/policy/*.yml (정책 매트릭스 export)
+  - agents/auto-loan-review/src/main/resources/policy/*.md  (자행 정책서, 수동 작성)
+  - agents/auto-loan-review/src/main/resources/policy/*.yml (정책 매트릭스 export)
   - data/external/regulation/fss_guidelines_2024.pdf          (금감원 가이드)
         ↓
 [ai-data-builder/scripts/build_policy_corpus.py]
@@ -549,9 +549,9 @@ loan-service 의 LOAN_REVIEW.report_json 도 비변경.
 
 ### 14.1 신규
 
-- `services/auto-loan-review/src/main/java/com/bank/ai/rag/**` (embedding, search, tool, support)
-- `services/auto-loan-review/src/main/resources/policy/*.md`, `*.yml` (정책 원문)
-- `services/auto-loan-review/src/main/resources/prompts/review_report_track{1,2,3}_v2.yml`
+- `agents/auto-loan-review/src/main/java/com/bank/ai/rag/**` (embedding, search, tool, support)
+- `agents/auto-loan-review/src/main/resources/policy/*.md`, `*.yml` (정책 원문)
+- `agents/auto-loan-review/src/main/resources/prompts/review_report_track{1,2,3}_v2.yml`
 - `services/loan-service/src/main/java/com/bank/loan/rag/SimilarCaseExporter.java` + `@Scheduled` job (또는 별도 batch 모듈)
 - `db/migration/ai_db/V20260701__ai_embedding.sql` + GIN/IVFFlat 인덱스
 - `scripts/build_policy_corpus.py` (Python 빌더) 또는 Java equivalent
@@ -561,7 +561,7 @@ loan-service 의 LOAN_REVIEW.report_json 도 비변경.
 
 ### 14.2 갱신
 
-- `services/auto-loan-review/src/main/resources/application.yml` — `ai.rag.*` 섹션 (enabled, embedding.provider, search.alpha, similarityThreshold, callCaps per track)
+- `agents/auto-loan-review/src/main/resources/application.yml` — `ai.rag.*` 섹션 (enabled, embedding.provider, search.alpha, similarityThreshold, callCaps per track)
 - `com.bank.ai.llm.report.ReviewReportService` — tool calling 라운드 지원 (Spring AI agent loop)
 - `com.bank.ai.llm.report.GroundingValidator` — RAG chunk lookup 추가, `Citation.id` prefix 분기
 - `com.bank.ai.llm.prompt.PromptRegistry` — v1 (inline) / v2 (rag) 분기, `ai.rag.enabled` 에 따라 선택

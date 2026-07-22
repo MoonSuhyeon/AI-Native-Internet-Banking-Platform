@@ -162,21 +162,21 @@ provider swap (`vertex` → `onnx-bge-m3` 등) 은 `application.yml` 한 키 변
 
 ### 3.1 신규
 
-- `services/auto-loan-review/src/main/java/com/bank/ai/rag/embedding/` — `EmbeddingClient`, `SpringAiEmbeddingClient`, `StubEmbeddingClient`
-- `services/auto-loan-review/src/main/java/com/bank/ai/rag/search/` — `RagSearchService`, `Chunk`, `RagSearchProperties`
-- `services/auto-loan-review/src/main/java/com/bank/ai/rag/retrieval/` — `RagRetrievalService` (코드 오케스트레이션 진입점)
-- `services/auto-loan-review/src/main/java/com/bank/ai/rag/policy/` — `RagPolicyIndex` (PolicyIndex 구현체)
-- `services/auto-loan-review/src/main/java/com/bank/ai/rag/seed/` — 정책 코퍼스 seed loader
-- `services/auto-loan-review/src/main/java/com/bank/ai/rag/api/` — `/api/internal/embeddings/batch` 컨트롤러
-- `services/auto-loan-review/src/main/resources/db/migration/V4__create_ai_embedding.sql` + H2 stub
-- `services/auto-loan-review/src/main/resources/db/migration/V5__shadow_run_rag_flag.sql` + H2 stub
-- `services/auto-loan-review/src/main/resources/prompts/review_report_track{1,2,3}_v2.yml`, `rejection_reason_draft_v2.yml`
+- `agents/auto-loan-review/src/main/java/com/bank/ai/rag/embedding/` — `EmbeddingClient`, `SpringAiEmbeddingClient`, `StubEmbeddingClient`
+- `agents/auto-loan-review/src/main/java/com/bank/ai/rag/search/` — `RagSearchService`, `Chunk`, `RagSearchProperties`
+- `agents/auto-loan-review/src/main/java/com/bank/ai/rag/retrieval/` — `RagRetrievalService` (코드 오케스트레이션 진입점)
+- `agents/auto-loan-review/src/main/java/com/bank/ai/rag/policy/` — `RagPolicyIndex` (PolicyIndex 구현체)
+- `agents/auto-loan-review/src/main/java/com/bank/ai/rag/seed/` — 정책 코퍼스 seed loader
+- `agents/auto-loan-review/src/main/java/com/bank/ai/rag/api/` — `/api/internal/embeddings/batch` 컨트롤러
+- `agents/auto-loan-review/src/main/resources/db/migration/V4__create_ai_embedding.sql` + H2 stub
+- `agents/auto-loan-review/src/main/resources/db/migration/V5__shadow_run_rag_flag.sql` + H2 stub
+- `agents/auto-loan-review/src/main/resources/prompts/review_report_track{1,2,3}_v2.yml`, `rejection_reason_draft_v2.yml`
 - `services/loan-service/src/main/java/com/bank/loan/rag/SimilarCaseExporter.java` + 일배치 job
 
 ### 3.2 갱신
 
-- `services/auto-loan-review/build.gradle` — Spring AI BOM + embedding starter
-- `services/auto-loan-review/src/main/resources/application.yml` — `ai.rag.*` + `spring.ai.vertex.*` 섹션
+- `agents/auto-loan-review/build.gradle` — Spring AI BOM + embedding starter
+- `agents/auto-loan-review/src/main/resources/application.yml` — `ai.rag.*` + `spring.ai.vertex.*` 섹션
 - `com.bank.ai.llm.policy.PolicyIndex` — record → interface 추출
 - `com.bank.ai.llm.report.GroundingValidator` — `Citation.id` prefix 분기
 - `com.bank.ai.llm.report.ReviewReportInput` — `ragContext` 필드 추가

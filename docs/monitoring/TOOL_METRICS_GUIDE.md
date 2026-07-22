@@ -44,7 +44,7 @@
 ### 3-1. `GatewayMetrics.java` — 메서드 추가
 
 ```
-services/review-ai-gateway/src/main/java/com/bank/aigateway/observability/GatewayMetrics.java
+agents/review-ai-gateway/src/main/java/com/bank/aigateway/observability/GatewayMetrics.java
 ```
 
 아래 세 메서드를 추가한다.
@@ -84,7 +84,7 @@ public void recordTurnsUsed(String analysisType, int turns) {
 ### 3-2. `AgenticLoop.java` — tool 실행 지점 계측
 
 ```
-services/review-ai-gateway/src/main/java/com/bank/aigateway/agent/AgenticLoop.java
+agents/review-ai-gateway/src/main/java/com/bank/aigateway/agent/AgenticLoop.java
 ```
 
 현재 tool 실행은 `executeQuietly()` 내부에서 일어난다. `GatewayMetrics`를 주입한 뒤 아래 위치에 계측을 추가한다.
@@ -118,7 +118,7 @@ private String executeWithMetrics(ToolCall toolCall, Function<ToolCall, String> 
 ### 3-3. `AgenticAuditAnalysisService.java` — 턴 수 기록
 
 ```
-services/review-ai-gateway/src/main/java/com/bank/aigateway/audit/AgenticAuditAnalysisService.java
+agents/review-ai-gateway/src/main/java/com/bank/aigateway/audit/AgenticAuditAnalysisService.java
 ```
 
 `agenticLoop.run()` 호출 직후, `loopResult.turnsUsed()`가 이미 채워져 있으므로:
@@ -196,9 +196,9 @@ aigateway_agentic_turns_count{analysis_type="BIAS_DETECTION",...}
 
 | 역할 | 파일 |
 |---|---|
-| 메트릭 메서드 추가 | `services/review-ai-gateway/src/main/java/com/bank/aigateway/observability/GatewayMetrics.java` |
-| tool 실행 계측 | `services/review-ai-gateway/src/main/java/com/bank/aigateway/agent/AgenticLoop.java` |
-| 턴 수 기록 | `services/review-ai-gateway/src/main/java/com/bank/aigateway/audit/AgenticAuditAnalysisService.java` |
-| ToolCall 레코드 | `services/review-ai-gateway/src/main/java/com/bank/aigateway/llm/agentic/ToolCall.java` |
-| AgenticLoopResult (turnsUsed 포함) | `services/review-ai-gateway/src/main/java/com/bank/aigateway/agent/AgenticLoopResult.java` |
-| Prometheus 설정 확인 | `services/review-ai-gateway/src/main/resources/application.yml` |
+| 메트릭 메서드 추가 | `agents/review-ai-gateway/src/main/java/com/bank/aigateway/observability/GatewayMetrics.java` |
+| tool 실행 계측 | `agents/review-ai-gateway/src/main/java/com/bank/aigateway/agent/AgenticLoop.java` |
+| 턴 수 기록 | `agents/review-ai-gateway/src/main/java/com/bank/aigateway/audit/AgenticAuditAnalysisService.java` |
+| ToolCall 레코드 | `agents/review-ai-gateway/src/main/java/com/bank/aigateway/llm/agentic/ToolCall.java` |
+| AgenticLoopResult (turnsUsed 포함) | `agents/review-ai-gateway/src/main/java/com/bank/aigateway/agent/AgenticLoopResult.java` |
+| Prometheus 설정 확인 | `agents/review-ai-gateway/src/main/resources/application.yml` |

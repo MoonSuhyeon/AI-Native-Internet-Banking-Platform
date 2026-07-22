@@ -22,7 +22,7 @@ C3  homecredit_kr_v1 PD 학습 + ONNX   (synthetic-data-generator/training)
  ↓
 C4  inference-server FastAPI 구현      (inference-server/)
  ↑                                        |
-C5  Java InferenceClient 확장          (services/auto-loan-review)
+C5  Java InferenceClient 확장          (agents/auto-loan-review)
  ↑
 C6  Feature Engineering Pipeline      (auto-loan-review → inference-server)
  ↓
@@ -850,7 +850,7 @@ SHAP 필드 수신, 오류 코드 세분화, PD 응답 DTO 확장.
 ### 2. 파일 구조
 
 ```
-services/auto-loan-review/src/main/java/com/bank/ai/review/client/dto/
+agents/auto-loan-review/src/main/java/com/bank/ai/review/client/dto/
   InferenceResponse.java           # Prediction 에 shapTop3 필드 추가
   PdInferenceResponse.java         # Prediction 에 shapTop3 필드 추가
   ShapEntry.java                   # 신규 record
@@ -954,7 +954,7 @@ public record InferenceRequest(
 ### 4. 테스트 전략
 
 ```
-services/auto-loan-review/src/test/java/com/bank/ai/review/client/
+agents/auto-loan-review/src/test/java/com/bank/ai/review/client/
   InferenceClientShapTest.java
     shouldDeserializeShapTop3FromResponse      — shap_top3 JSON 역직렬화
     shouldReturnEmptyShapWhenNull              — null shap_top3 → shapTop3OrEmpty() = []
@@ -991,7 +991,7 @@ snake_case feature map 변환을 단일 컴포넌트로 캡슐화.
 ### 2. 파일 구조
 
 ```
-services/auto-loan-review/src/main/java/com/bank/ai/review/
+agents/auto-loan-review/src/main/java/com/bank/ai/review/
   client/
     FeatureMapper.java             # 신규 — AutoReviewRequest → Map<String, Object>
     FeatureMapperTest.java         # (test 디렉터리)
@@ -1334,7 +1334,7 @@ onnxruntime>=1.17
 shapiq>=0.1
 ```
 
-### `services/auto-loan-review/build.gradle` — 변경 없음
+### `agents/auto-loan-review/build.gradle` — 변경 없음
 
 Java 측은 HTTP JSON 통신이라 ONNX/SHAP 라이브러리 의존 없음.
 
