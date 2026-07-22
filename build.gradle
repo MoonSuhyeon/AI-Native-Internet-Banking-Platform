@@ -32,9 +32,9 @@ subprojects {
 }
 
 configure(subprojects.findAll {
-    it.path.startsWith(':services:') &&
+    (it.path.startsWith(':services:') || it.path.startsWith(':agents:')) &&
     it.path != ':services:api-gateway' &&
-    it.path != ':services:review-ai-gateway'
+    it.path != ':agents:review-ai-gateway'
 }) {
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
