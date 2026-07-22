@@ -9,18 +9,19 @@ dependencies {
 }
 
 // advisory-service 소스를 같은 JVM에서 컴파일 (com.bank.loan.advisory.* 패키지)
+// advisory-service는 agents/로 이동됨 → 경로: services/loan-service 기준 ../../agents/advisory-service
 sourceSets {
     main {
         java {
-            srcDirs += ['../advisory-service/src/main/java']
+            srcDirs += ['../../agents/advisory-service/src/main/java']
         }
         resources {
-            srcDirs += ['../advisory-service/src/main/resources']
+            srcDirs += ['../../agents/advisory-service/src/main/resources']
         }
     }
     test {
         java {
-            srcDirs += ['../advisory-service/src/test/java']
+            srcDirs += ['../../agents/advisory-service/src/test/java']
         }
     }
 }
