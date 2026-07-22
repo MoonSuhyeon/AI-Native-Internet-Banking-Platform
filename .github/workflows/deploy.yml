@@ -48,9 +48,9 @@ jobs:
               echo "$CHANGED" | grep -q "^services/loan-service/"         && services="$services loan-service"
               echo "$CHANGED" | grep -q "^services/payment-service/"      && services="$services payment-service payment-service-b"
               echo "$CHANGED" | grep -q "^services/master-service/"       && services="$services master-service"
-              echo "$CHANGED" | grep -q "^services/auto-loan-review/"     && services="$services auto-loan-review"
-              echo "$CHANGED" | grep -q "^services/review-ai-gateway/"    && services="$services review-ai-gateway"
-              echo "$CHANGED" | grep -q "^services/consultation-service/" && services="$services consultation-service"
+              echo "$CHANGED" | grep -q "^agents/auto-loan-review/"     && services="$services auto-loan-review"
+              echo "$CHANGED" | grep -q "^agents/review-ai-gateway/"    && services="$services review-ai-gateway"
+              echo "$CHANGED" | grep -q "^agents/consultation/" && services="$services consultation-service"
               echo "$CHANGED" | grep -q "^web/"                           && services="$services web"
             fi
 

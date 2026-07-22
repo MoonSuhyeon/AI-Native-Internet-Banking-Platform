@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'services/consultation-service/**'
+      - 'agents/consultation/**'
       - '.github/workflows/deploy-consultation-service.yml'
       - '.github/workflows/reusable-docker-publish.yml'
       - '.github/workflows/reusable-deploy-oracle.yml'
@@ -19,8 +19,8 @@ jobs:
     uses: ./.github/workflows/reusable-docker-publish.yml
     with:
       service-name: consultation-service
-      build-context: services/consultation-service
-      dockerfile-path: services/consultation-service/Dockerfile
+      build-context: agents/consultation
+      dockerfile-path: agents/consultation/Dockerfile
 
   deploy:
     needs: publish

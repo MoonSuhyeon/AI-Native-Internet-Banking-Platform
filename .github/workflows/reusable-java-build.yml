@@ -14,6 +14,11 @@ on:
         description: 'Gradle 모듈 이름 (예: customer-service)'
         required: true
         type: string
+      module-path:
+        description: 'Gradle 상위 경로 (기본: services, 에이전트는 agents)'
+        required: false
+        type: string
+        default: 'services'
       skip-tests:
         description: '테스트 건너뛰기 (긴급 배포용)'
         required: false
@@ -45,16 +50,16 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Compile
-        run: ./gradlew :services:${{ inputs.service-name }}:compileJava --no-daemon
+        run: ./gradlew :${{ inputs.module-path }}:${{ inputs.service-name }}:compileJava --no-daemon
 
       - name: Test
         if: ${{ inputs.skip-tests == false }}
-        run: ./gradlew :services:${{ inputs.service-name }}:test --no-daemon
+        run: ./gradlew :${{ inputs.module-path }}:${{ inputs.service-name }}:test --no-daemon
 
       - name: Upload test report on failure
         if: failure() && inputs.skip-tests == false
         uses: actions/upload-artifact@v4
         with:
           name: test-report-${{ inputs.service-name }}
-          path: services/${{ inputs.service-name }}/build/reports/tests/
+          path: ${{ inputs.module-path }}/${{ inputs.service-name }}/build/reports/tests/
           retention-days: 7

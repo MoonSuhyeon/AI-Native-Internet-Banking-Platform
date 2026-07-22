@@ -440,7 +440,7 @@ services:
   auto-loan-review:
     build:
       context: .
-      dockerfile: services/auto-loan-review/Dockerfile
+      dockerfile: agents/auto-loan-review/Dockerfile
     container_name: ib-auto-loan-review
     ports:
       - "${AUTO_LOAN_REVIEW_APP_PORT:-8089}:8089"
@@ -484,7 +484,7 @@ services:
   review-ai-gateway:
     build:
       context: .
-      dockerfile: services/review-ai-gateway/Dockerfile
+      dockerfile: agents/review-ai-gateway/Dockerfile
     container_name: ib-review-ai-gateway
     ports:
       - "${AIGATEWAY_APP_PORT:-8088}:8088"
@@ -562,7 +562,7 @@ services:
 
   consultation-service:
     build:
-      context: services/consultation-service
+      context: agents/consultation
       dockerfile: Dockerfile
     container_name: ib-consultation-service
     ports:
@@ -596,7 +596,7 @@ services:
 
   goal-agent:
     build:
-      context: services/goal-agent
+      context: agents/goal-agent
       dockerfile: Dockerfile
     container_name: ib-goal-agent
     ports:

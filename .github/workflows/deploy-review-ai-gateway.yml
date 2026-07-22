@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'services/review-ai-gateway/**'
+      - 'agents/review-ai-gateway/**'
       - 'common/**'
       - 'build.gradle'
       - 'settings.gradle'
@@ -13,7 +13,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'services/review-ai-gateway/**'
+      - 'agents/review-ai-gateway/**'
       - 'common/**'
   workflow_dispatch:
 
@@ -24,6 +24,7 @@ jobs:
     uses: ./.github/workflows/reusable-java-build.yml
     with:
       service-name: review-ai-gateway
+      module-path: agents
 
   publish:
     if: github.event_name != 'pull_request'
@@ -34,6 +35,7 @@ jobs:
     uses: ./.github/workflows/reusable-docker-publish.yml
     with:
       service-name: review-ai-gateway
+      dockerfile-path: agents/review-ai-gateway/Dockerfile
 
   deploy:
     if: github.event_name != 'pull_request'

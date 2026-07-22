@@ -7,7 +7,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'services/data-tools/**'
+      - 'tools/data-tools/**'
       - '.github/workflows/publish-data-tools.yml'
       - '.github/workflows/reusable-docker-publish.yml'
   workflow_dispatch:
@@ -20,5 +20,5 @@ jobs:
     uses: ./.github/workflows/reusable-docker-publish.yml
     with:
       service-name: data-tools
-      build-context: services/data-tools
-      dockerfile-path: services/data-tools/Dockerfile
+      build-context: tools/data-tools
+      dockerfile-path: tools/data-tools/Dockerfile
