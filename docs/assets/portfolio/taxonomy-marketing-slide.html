@@ -1,0 +1,126 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>보안 이벤트 → 마케팅 액션 (Action + Property)</title>
+<style>
+*{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; margin:0; padding:0; }
+@page{ size:A4 landscape; margin:0; }
+:root{
+  --ink:#111827; --sub:#4B5563; --faint:#6B7280; --line:#E5E7EB;
+  --indigo:#1D4ED8; --indigo-bg:#EEF2FB;
+  --impl:#047857; --impl-bg:#ECFDF5; --impl-badge:#D1FAE5; --impl-bd:#6EE7B7;
+  --plan:#B45309; --plan-bg:#FFFBEB; --plan-badge:#FEF3C7; --terra:#C2410C;
+}
+html,body{ font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif; color:var(--ink); }
+.mono{ font-family:"Consolas",ui-monospace,monospace; }
+.slide{ width:297mm; height:209mm; padding:9mm 11mm; display:flex; flex-direction:column; }
+
+.head h1{ font-size:24px; font-weight:800; letter-spacing:-.01em; }
+.head p{ font-size:12px; color:var(--sub); margin-top:5px; }
+.head p b{ color:var(--ink); }
+.badge{ display:inline-block; font-size:10px; font-weight:800; padding:1px 8px; border-radius:20px; vertical-align:middle; }
+.b-impl{ color:var(--impl); background:var(--impl-badge); }
+.b-plan{ color:var(--plan); background:var(--plan-badge); }
+
+/* concept strip */
+.concept{ display:flex; align-items:center; gap:10px; margin-top:12px; }
+.pill{ font-size:12px; font-weight:800; padding:7px 15px; border-radius:10px; border:1px solid var(--line); box-shadow:0 3px 8px -5px rgba(0,0,0,.1); }
+.pill.a{ background:#fff; color:var(--ink); } .pill.a small{ color:var(--faint); font-weight:600; }
+.pill.p{ background:var(--impl-bg); color:var(--impl); border-color:var(--impl-bd); }
+.pill.m{ background:var(--plan-bg); color:var(--plan); border-color:#FCD34D; }
+.plus,.to{ font-size:17px; font-weight:800; color:var(--indigo); }
+
+/* table */
+table{ width:100%; border-collapse:separate; border-spacing:0; margin-top:12px; font-size:10px;
+       border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:0 5px 14px -8px rgba(0,0,0,.12); }
+thead th{ background:var(--indigo-bg); color:#1F2937; font-weight:800; font-size:11px;
+          padding:9px 9px; text-align:left; border-bottom:1px solid var(--line); }
+thead th .cb{ display:block; margin-top:2px; font-size:9px; font-weight:800; }
+.cb-impl{ color:var(--impl); } .cb-plan{ color:var(--plan); }
+tbody td{ padding:17px 9px; border-bottom:1px solid var(--line); vertical-align:middle; line-height:1.55; }
+tbody tr:last-child td{ border-bottom:none; }
+.ev{ font-family:"Consolas",monospace; font-size:10px; color:#1E3A8A; font-weight:700; line-height:1.5; }
+.ev small{ display:block; font-family:"Malgun Gothic"; font-size:9.5px; color:var(--faint); font-weight:400; margin-top:1px; }
+.prop{ font-family:"Consolas",monospace; font-size:9.4px; color:#065F46; line-height:1.65; }
+.prop .enum{ color:var(--faint); }
+.secu{ font-size:10px; color:#065F46; line-height:1.4; }
+.secu .m{ font-family:"Consolas",monospace; font-size:9px; }
+.kpi{ font-weight:800; color:#7C2D12; font-size:10.5px; line-height:1.4; }
+.scn{ font-size:10.3px; color:var(--ink); line-height:1.5; }
+.scn b{ color:var(--terra); }
+.scn code{ font-family:"Consolas",monospace; font-size:9px; background:#FEF3C7; padding:0 3px; border-radius:3px; color:#7C2D12; }
+.dtag{ font-size:8px; font-weight:800; padding:1px 4px; border-radius:3px; background:#F1F5F9; color:#64748B; }
+/* col shading: 2 Property·3 보안 = 구현(green) / 4 KPI·5 액션 = 설계(amber) */
+th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3){ background:var(--impl-bg); }
+th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5){ background:var(--plan-bg); }
+
+.foot{ margin-top:auto; padding-top:11px; border-top:1px solid var(--line); font-size:11.5px; color:var(--sub); line-height:1.5; }
+.foot b{ color:var(--ink); } .foot .k{ color:var(--impl); font-weight:800; }
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>보안 이벤트 → 마케팅 액션 : Action + Property 기반 자동화</h1>
+    <p>앞장 이벤트 택소노미를 <b>속성(Property)</b> 단위로 심화 — 이벤트가 '무엇'이 아니라 <b>'어떤 상태'</b>인지로 마케팅이 갈린다. 보안은 막고<span class="badge b-impl">구현</span>, 마케팅은 되돌린다<span class="badge b-plan">설계</span>. <b>제안된 속성 대부분이 이미 실제 컬럼으로 존재.</b></p>
+  </div>
+
+  <div class="concept">
+    <span class="pill a">Action <small>이벤트</small></span>
+    <span class="plus">＋</span>
+    <span class="pill p">Property <span style="font-weight:600">실제 컬럼</span></span>
+    <span class="to">→</span>
+    <span class="pill m">마케팅 액션 <span style="font-weight:600">상태 분기</span></span>
+  </div>
+
+  <table>
+    <thead><tr>
+      <th style="width:14%">Action · 소스</th>
+      <th style="width:26%">Property (실제 컬럼)<span class="cb cb-impl">구현 · 스키마 실재</span></th>
+      <th style="width:13%">보안 소비<span class="cb cb-impl">구현</span></th>
+      <th style="width:13%">마케팅 KPI<span class="cb cb-plan">설계</span></th>
+      <th style="width:34%">마케팅 액션 (상태 분기)<span class="cb cb-plan">설계</span></th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td class="ev">login_attempt<br>login_session<small>로그인 시도·세션</small></td>
+        <td class="prop">success_yn · failure_reason_code<br><span class="enum">(WRONG_PW / LOCKED / PW_EXPIRED / BAD_PIN)</span><br>device_type_code · channel_code · ip_country_code</td>
+        <td class="secu">무차별 대입 차단<br><span class="m">30분 10회 → BLOCK</span></td>
+        <td class="kpi">DAU · 재방문 리텐션</td>
+        <td class="scn"><code>fail=WRONG_PW</code> → <b>'비번 찾기'</b> 노출 · <code>OTP/PIN</code> → <b>'재전송·재시도'</b> · 미접속 → 재방문 푸시</td>
+      </tr>
+      <tr>
+        <td class="ev">mobile_auth<br>identity_verification<small>본인확인·가입</small></td>
+        <td class="prop">method_type_code <span class="enum">(SMS/PASS)</span><br>verified_yn · purpose_code <span class="enum">(flow_stage)</span></td>
+        <td class="secu">본인확인 CI<br>→ 동일인 식별</td>
+        <td class="kpi">온보딩 완주율</td>
+        <td class="scn"><code>verified_yn=T</code> → <b>'첫 계좌 개설 혜택'</b> 노출 · 인증 단계 이탈 → <b>즉시 쿠폰</b>으로 전환</td>
+      </tr>
+      <tr>
+        <td class="ev">certificate_use<small>거래 서명</small></td>
+        <td class="prop">purpose_code <span class="enum">(TXN_SIGN)</span> · verification_result_code<br>amount_segment <span class="dtag">결제계 연동</span></td>
+        <td class="secu">인증서 실패 차단<br><span class="m">10분 5회 → BLOCK</span></td>
+        <td class="kpi">활성화 · Time-to-Value</td>
+        <td class="scn">고액 인증 실패 → <b>'고객센터 연결'</b> · 소액 → <b>'재시도 유도'</b> · 첫 이체 미도달 → 활성화 넛지</td>
+      </tr>
+      <tr>
+        <td class="ev">password_history<small>비밀번호 변경</small></td>
+        <td class="prop">change_channel_code · change_reason_code</td>
+        <td class="secu">잦은 변경 모니터<br><span class="m">1일 3회 → MONITOR</span></td>
+        <td class="kpi">이탈 위험 신호</td>
+        <td class="scn">변경 = 관여 저하 신호 → <b>첫 거래까지 시간 단축 캠페인</b>으로 이탈 방어</td>
+      </tr>
+      <tr>
+        <td class="ev">customer_status_history<small>상태 전환</small></td>
+        <td class="prop">from_status · to_status <span class="enum">(→DORMANT)</span><br>tenure <span class="dtag">고객계</span> · grade <span class="dtag">고객계</span></td>
+        <td class="secu">상태 이력<br>· 감사 관리</td>
+        <td class="kpi">휴면율 · 이탈 예측</td>
+        <td class="scn">휴면 선행 신호 → <b>윈백 캠페인 자동 트리거</b> · <code>grade</code>별 차등 오퍼</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="foot">
+    <b>핵심 —</b> 제안된 속성 대부분이 <span class="k">이미 스키마 컬럼으로 실재</span> → '설계를 추가'가 아니라 <b>분석 이벤트에 프로퍼티로 노출</b>만 하면 됨.
+    &nbsp;·&nbsp; 도메인 밖: <span class="mono" style="font-size:10px">amount_segment·service_type</span>=결제계 · <span class="mono" style="font-size:10px">tenure·grade</span>=고객계 연동. &nbsp;·&nbsp; PII는 버킷·해시로 통제.
+  </div>
+
+</div>
+</body></html>

@@ -1,0 +1,124 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>이벤트 택소노미 슬라이드</title>
+<style>
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; }
+@page { size: A4 landscape; margin: 0; }
+:root{
+  --ink:#111827; --sub:#4B5563; --faint:#6B7280; --line:#E5E7EB;
+  --indigo:#1D4ED8; --grey-bg:#F3F4F6; --terra:#C2410C;
+  --impl:#047857; --impl-bg:#D1FAE5; --plan:#B45309; --plan-bg:#FEF3C7; --junc-bd:#4F46E5;
+}
+html,body{ font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif; color:var(--ink); }
+.slide{ width:297mm; height:209mm; padding:11mm 13mm; display:flex; flex-direction:column; }
+.mono{ font-family:"Consolas",ui-monospace,monospace; }
+
+.head h1{ font-size:27px; font-weight:800; letter-spacing:-.01em; }
+.head p{ font-size:14px; color:var(--sub); margin-top:6px; }
+.badge{ display:inline-block; font-size:12px; font-weight:800; padding:2px 10px; border-radius:20px; vertical-align:middle; }
+.b-impl{ color:var(--impl); background:var(--impl-bg); }
+.b-plan{ color:var(--plan); background:var(--plan-bg); }
+.sec-t{ font-size:16px; font-weight:800; display:flex; align-items:center; gap:9px; margin:0 0 9px; }
+
+.impl{ flex:0 0 auto; margin-top:12mm; }
+.pipe{ display:grid; grid-template-columns:1fr auto 1.55fr auto 1.35fr; align-items:stretch; }
+.card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:13px 15px;
+       box-shadow:0 4px 10px -5px rgba(0,0,0,.10); }
+.card.junc{ border:2px solid var(--junc-bd); background:#F7F9FF; }
+.card h3{ font-size:14.5px; font-weight:800; margin-bottom:7px; }
+.card .desc{ font-size:12px; color:var(--sub); line-height:1.5; }
+.arrow{ align-self:center; color:var(--indigo); font-size:24px; font-weight:800; padding:0 8px; }
+.chips{ display:flex; flex-direction:column; gap:5px; margin-top:3px; }
+.chip{ font-size:11px; padding:4px 8px; border-radius:6px; background:var(--grey-bg); color:#374151; }
+.chip b{ color:var(--indigo); }
+.consume{ display:flex; flex-direction:column; gap:8px; }
+.crow{ font-size:12px; line-height:1.4; }
+.crow .k{ font-weight:800; color:var(--indigo); }
+.crow .m{ font-family:"Consolas",monospace; font-size:10.5px; color:var(--faint); }
+
+.ext{ flex:1 1 auto; margin-top:11mm; display:flex; flex-direction:column; }
+.map{ display:grid; grid-template-columns:repeat(2,1fr); gap:9px 16px; }
+.mrow{ display:grid; grid-template-columns:0.85fr 1.15fr; gap:11px; align-items:start;
+       border:1px solid var(--line); border-left:4px solid var(--terra); border-radius:10px;
+       padding:10px 13px; background:#FFFDFB; }
+.mrow .ev{ font-family:"Consolas",monospace; font-size:11px; color:#7C2D12; line-height:1.45; }
+.mrow .use{ font-size:12.3px; color:var(--ink); line-height:1.45; }
+.mrow .use b{ color:var(--terra); }
+
+.foot{ margin-top:auto; border-top:1px solid var(--line); padding-top:10px;
+       font-size:12px; color:var(--sub); display:flex; justify-content:space-between; align-items:center; gap:14px; }
+.foot b{ color:var(--ink); }
+.tags{ font-family:"Consolas",monospace; font-size:10.5px; color:var(--faint); white-space:nowrap; }
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>이벤트 택소노미 — 하나의 이벤트 체계로 탐지·조사, 그리고 마케팅까지</h1>
+    <p>인증보안계가 생산한 <b>append-only 이벤트</b>를 FDS·조사 에이전트가 소비<span class="badge b-impl">구현</span> → 동일 스키마를 분석 스택으로 번역해 마케팅으로 확장<span class="badge b-plan">설계</span></p>
+  </div>
+
+  <div class="impl">
+    <div class="sec-t"><span class="badge b-impl">구현됨</span> 이벤트 택소노미 — 생산 → 접합점 → 소비</div>
+    <div class="pipe">
+      <div class="card">
+        <h3>① 생산 · 인증보안계</h3>
+        <div class="desc">로그인·인증·상태 행동을 <b>append-only 이벤트</b>로 표준화. 통제 어휘(CHECK)·PII 등급·낙관적 락·Soft Delete.</div>
+      </div>
+      <div class="arrow">▶</div>
+      <div class="card junc">
+        <h3>② 접합점 · 이벤트 로그 <span class="mono" style="font-weight:400;color:var(--faint);font-size:11px">(13종 · 6그룹)</span></h3>
+        <div class="chips">
+          <span class="chip"><b>로그인·세션·토큰</b> &nbsp;login_attempt · login_session · qr_login_token · api_token</span>
+          <span class="chip"><b>인증수단</b> &nbsp;certificate_use · mobile_auth · identity_verification &nbsp;|&nbsp; <b>자격</b> password_history</span>
+          <span class="chip"><b>고객상태</b> customer_status_history · grade_history &nbsp;|&nbsp; <b>감사</b> customer_access_log</span>
+          <span class="chip"><b>FDS</b> &nbsp;fds_detection · fds_incident</span>
+        </div>
+      </div>
+      <div class="arrow">▶</div>
+      <div class="card">
+        <h3>③ 소비 (구현)</h3>
+        <div class="consume">
+          <div class="crow"><span class="k">FDS 룰 엔진</span><br><span class="m">condition_json{window,threshold} → COUNT≥임계 → BLOCK/MONITOR</span> (3종 룰)</div>
+          <div class="crow"><span class="k">조사 에이전트</span> — read-back → 법적 책임 순 조사 <span class="m">(LangGraph)</span></div>
+          <div class="crow"><span class="k">감사</span> — <span class="m">customer_access_log</span> 행위자 추적</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ext">
+    <div class="sec-t"><span class="badge b-plan">확장 · 설계</span> 같은 이벤트를 분석 스택(Segment / Amplitude / GA4)으로 번역 → 마케팅 소비</div>
+    <div class="map">
+      <div class="mrow">
+        <div class="ev">identity_verification<br>signup</div>
+        <div class="use"><b>온보딩 퍼널 · 가입 전환율</b> — 본인확인 기관(NICE/KCB/SCI/PASS)별 성공률 비교로 이탈 지점 최적화</div>
+      </div>
+      <div class="mrow">
+        <div class="ev">login_attempt<br>login_session</div>
+        <div class="use"><b>재방문 · 리텐션 세그먼트</b> — 인증수단별(자사 인증서 <span class="mono">CERT_AXFUL</span>) 30일 리텐션·재방문율 비교</div>
+      </div>
+      <div class="mrow">
+        <div class="ev">customer_status_history<br>(→ DORMANT)</div>
+        <div class="use"><b>휴면 선행 신호 → 윈백 캠페인</b> — 마지막 로그인 후 경과로 이탈 예측, 자동 트리거</div>
+      </div>
+      <div class="mrow">
+        <div class="ev">certificate_use<br>(거래 서명)</div>
+        <div class="use"><b>활성화(Time-to-Value) · 이체 전환</b> — 첫 이체 도달률·소요시간, 금액 밴드로 세그먼트</div>
+      </div>
+      <div class="mrow">
+        <div class="ev">fds_detection</div>
+        <div class="use"><b>보안 마찰 ↔ 전환 영향</b> — CHALLENGE/BLOCK이 이체 전환·리텐션에 주는 영향 정량화</div>
+      </div>
+      <div class="mrow">
+        <div class="ev">password_history<br>customer_grade_history</div>
+        <div class="use"><b>계정 건강도 · 등급 세그먼트</b> — 잦은 변경/등급 전이를 CRM 세그먼트·리스크 신호로 재사용</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div>규제 도메인에서 검증된 이벤트 택소노미 → <b>코드 수정 없이 분석·마케팅 소비처로 확장.</b> PII는 버킷화·해시로 통제(금액→밴드, 계좌번호 수집 금지, CI 해시).</div>
+    <div class="tags">생산(append) · 접합점 · 소비(read-back) · 확장(analytics)</div>
+  </div>
+
+</div>
+</body></html>

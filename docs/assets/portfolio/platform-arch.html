@@ -1,0 +1,112 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>하네스·모니터링·배포</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
+@page{size:A4 landscape;margin:0;}
+:root{
+  --ink:#111827;--sub:#4B5563;--faint:#6B7280;--line:#E5E7EB;
+  --ind:#4F46E5;--ind-bg:#EEF0FE;--ind-bd:#C7CCFB;
+  --grn:#047857;--grn-bg:#ECFDF5;--grn-bd:#A7F3D0;
+  --blue:#1D4ED8;--blue-bg:#EEF2FB;--blue-bd:#C7D6F5;--slate:#334155;--slate-bg:#F1F5F9;
+}
+html,body{font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;color:var(--ink);}
+.mono{font-family:"Consolas",ui-monospace,monospace;}
+.slide{width:297mm;height:209mm;padding:8mm 11mm;display:flex;flex-direction:column;}
+.head h1{font-size:22px;font-weight:800;letter-spacing:-.01em;}
+.head p{font-size:10.5px;color:var(--sub);margin-top:3px;} .head p b{color:var(--ink);} .head p .m{font-family:"Consolas",monospace;font-size:9px;color:#9CA3AF;}
+
+.cols{display:grid;grid-template-columns:1.1fr 1fr 1.05fr;gap:12px;margin-top:13px;flex:1;}
+.col{display:flex;flex-direction:column;gap:11px;}
+.ch{text-align:center;font-size:12.5px;font-weight:800;padding:8px;border-radius:22px;}
+.ch.h{background:var(--ind-bg);color:#3730A3;} .ch.m{background:var(--grn-bg);color:#065F46;} .ch.d{background:var(--blue-bg);color:#1E3A8A;}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 14px;box-shadow:0 2px 8px -4px rgba(0,0,0,.08);}
+.card.hi-h{border-left:3px solid var(--ind);} .card.hi-m{border-left:3px solid var(--grn);} .card.hi-d{border-left:3px solid var(--blue);}
+.card .t{font-size:11.5px;font-weight:800;} .card.hi-h .t{color:var(--ind);} .card.hi-m .t{color:var(--grn);} .card.hi-d .t{color:var(--blue);}
+.card ul{list-style:none;margin-top:6px;display:flex;flex-direction:column;gap:5px;}
+.card li{font-size:10.2px;color:var(--sub);line-height:1.5;padding-left:10px;position:relative;} .card li::before{content:"·";position:absolute;left:2px;font-weight:800;color:var(--faint);}
+.card li b{color:var(--ink);} .card li .m{font-family:"Consolas",monospace;font-size:8.6px;color:var(--faint);}
+.impl{background:var(--ind-bg);border:1px solid var(--ind-bd);border-radius:9px;padding:13px 13px;}
+.impl .t{font-size:10px;font-weight:800;color:var(--ind);} .impl .d{font-size:9.2px;color:var(--sub);line-height:1.5;margin-top:2px;} .impl .d .m{font-family:"Consolas",monospace;font-size:8.4px;}
+
+.flowbar{background:var(--blue);color:#fff;border-radius:9px;padding:13px 10px;font-size:9.6px;font-weight:700;line-height:1.5;text-align:center;}
+.flowbar b{color:#DBE4FF;}
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>하네스 엔지니어링 · 모니터링 · 배포 (Platform Engineering)</h1>
+    <p><b>검증된 에이전트 하네스 재사용</b> · Prometheus/Grafana/Langfuse 관측 · <b>GitHub Actions → Docker → Oracle Cloud</b> &nbsp; <span class="m">※ 코드 · .github/workflows · infra 기반</span></p>
+  </div>
+
+  <div class="cols">
+    <!-- 하네스 -->
+    <div class="col">
+      <div class="ch h">① 하네스 엔지니어링 · Agent Harness</div>
+      <div class="card hi-h"><div class="t">공통 루프 (검증된 하네스 재사용)</div>
+        <ul>
+          <li><b>7노드 루프</b> 가설→계획→실행→반영→게이트→권고→HITL <span class="m">graph.py</span></li>
+          <li><b>혼합형 플래너</b> Tool Matrix 참고 + LLM 선택 <span class="m">planner · tool_matrix</span></li>
+          <li><b>경쟁 가설</b> 5종 시나리오 경합 <span class="m">hypotheses</span></li>
+          <li><b>조회 도구</b> RBAC · 조회 전용 <span class="m">tools</span></li>
+        </ul>
+      </div>
+      <div class="card hi-h"><div class="t">안전장치 · Governance</div>
+        <ul>
+          <li><b>HITL 게이트</b> 사람 승인 후에만 동작 발동</li>
+          <li><b>루프 가드</b> 예산·타임아웃 소진 시 종료 <span class="m">AgentLoopGuard · budget_left</span></li>
+          <li><b>의미 불일치 감지</b> <span class="m">SemanticDisagreementDetector</span></li>
+          <li><b>감사 불변성</b> <span class="m">AuditImmutabilityEnforcer</span></li>
+        </ul>
+      </div>
+      <div class="card hi-h"><div class="t">벤더 중립 LLM</div>
+        <ul><li>Mock / Claude 전환 · 지연 import · API 키 env <span class="m">llm.py · MockLlmClient · ToolAwareLlmClient</span></li></ul>
+      </div>
+      <div class="impl"><div class="t">구현 2종 (하네스 재사용)</div><div class="d"><b>fraud-investigation-agent</b> (Python · LangGraph)<br><b>review-ai-gateway</b> (Java · AgenticLoop) · <b>auto-loan-review</b> (심사 가드)</div></div>
+    </div>
+
+    <!-- 모니터링 -->
+    <div class="col">
+      <div class="ch m">② 모니터링 · Observability</div>
+      <div class="card hi-m"><div class="t">Metrics</div>
+        <ul><li><b>Prometheus → Grafana</b> 대시보드</li><li><b>Alertmanager</b> 알림 (Slack · healthchecks)</li></ul>
+      </div>
+      <div class="card hi-m"><div class="t">Logs</div>
+        <ul><li><b>Loki + Promtail</b> 로그 수집·조회</li><li><b>ELK</b> <span class="m">elasticsearch · kibana</span></li></ul>
+      </div>
+      <div class="card hi-m"><div class="t">LLM 관측 (에이전트)</div>
+        <ul><li><b>Langfuse</b> · <b>Phoenix</b> — 프롬프트·토큰·추론 추적 <span class="m">agent/tracing.py</span></li></ul>
+      </div>
+      <div class="card hi-m"><div class="t">Exporters · Health</div>
+        <ul><li><b>kafka-exporter ×3</b> (내부·KFTC·BOK)</li><li><b>blackbox-exporter</b> 엔드포인트 헬스체크</li></ul>
+      </div>
+      <div class="card hi-m"><div class="t">CI 품질 게이트</div>
+        <ul><li><b>web-ci</b> Vitest + RTL (PR 연동)</li><li><b>reusable-java-build</b> 빌드·테스트</li></ul>
+      </div>
+    </div>
+
+    <!-- 배포 -->
+    <div class="col">
+      <div class="ch d">③ 배포 · CI/CD & Deployment</div>
+      <div class="card hi-d"><div class="t">GitHub Actions — 서비스별 파이프라인</div>
+        <ul>
+          <li>서비스별 <span class="m">deploy-customer / deposit / loan / payment / api-gateway / review-ai-gateway …</span> (10+)</li>
+          <li>재사용 워크플로우 <span class="m">reusable-java-build · docker-publish · deploy-oracle</span></li>
+        </ul>
+      </div>
+      <div class="flowbar">빌드·테스트 → <b>Docker build</b> → registry <b>publish</b> → <b>Oracle Cloud</b> 배포</div>
+      <div class="card hi-d"><div class="t">IaC · 배포 대상</div>
+        <ul>
+          <li><b>docker-compose.prod</b> (서버 배포) <span class="m">docker-compose.server.yml</span></li>
+          <li><b>Kubernetes</b> 매니페스트 <span class="m">infra/k8s</span></li>
+          <li>Dockerfile <b>×15</b> (서비스별 멀티스테이지)</li>
+        </ul>
+      </div>
+      <div class="card hi-d"><div class="t">플랫폼 · 시크릿</div>
+        <ul><li><b>Vault</b> 시크릿 관리 · <b>MinIO</b> 오브젝트 · <b>schema-registry</b></li><li>Kafka Connect (Debezium) 커넥터 자동 등록 <span class="m">register-connectors.sh</span></li></ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body></html>

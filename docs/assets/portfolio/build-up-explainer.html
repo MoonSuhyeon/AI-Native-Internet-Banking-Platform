@@ -1,0 +1,120 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>작은 것부터 쌓는 전체 시스템</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
+@page{size:A4 landscape;margin:0;}
+:root{--ink:#111827;--sub:#374151;--faint:#6B7280;--line:#E5E7EB;
+  --c1:#0EA5A0;--c2:#2563EB;--c3:#7C3AED;--c4:#D97706;--c5:#DC2626;--sl:#F1F5F9;}
+html,body{font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;color:var(--ink);}
+.mono{font-family:"Consolas",ui-monospace,monospace;}
+.slide{width:297mm;height:209mm;padding:8mm 12mm;display:flex;flex-direction:column;}
+.head h1{font-size:22px;font-weight:800;letter-spacing:-.01em;}
+.head p{font-size:11.5px;color:var(--sub);margin-top:3px;} .head p b{color:var(--ink);}
+
+.lv{display:grid;grid-template-columns:38px 1fr;gap:11px;align-items:stretch;margin-top:9px;}
+.num{border-radius:10px;color:#fff;font-size:19px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.n1{background:var(--c1);}.n2{background:var(--c2);}.n3{background:var(--c3);}.n4{background:var(--c4);}.n5{background:var(--c5);}
+.body{border:1px solid var(--line);border-left:4px solid;border-radius:10px;padding:9px 14px;box-shadow:0 2px 8px -4px rgba(0,0,0,.08);}
+.b1{border-left-color:var(--c1);}.b2{border-left-color:var(--c2);}.b3{border-left-color:var(--c3);}.b4{border-left-color:var(--c4);}.b5{border-left-color:var(--c5);}
+.lt{font-size:13.5px;font-weight:800;} .lt .sub{font-size:10px;font-weight:600;color:var(--faint);}
+.row{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:5px;}
+.item{font-size:10.6px;color:var(--sub);line-height:1.45;}
+.item b{color:var(--ink);} .item .an{color:var(--c2);font-weight:700;} .item .m{font-family:"Consolas",monospace;font-size:9.4px;color:var(--faint);}
+.box{display:inline-block;border:1px solid #CBD5E1;border-radius:6px;padding:1px 7px;font-size:9.6px;font-weight:700;background:#fff;}
+.arrow{text-align:center;color:var(--faint);font-size:11px;font-weight:800;line-height:1;padding:2px 0;} .arrow b{color:var(--ink);}
+.mini{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.mini .ar{color:var(--faint);font-weight:800;font-size:11px;}
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>작은 조각부터 쌓아올리는 전체 시스템 — 개발 첫걸음용</h1>
+    <p><b>함수 한 개 → 서비스 1개 → 서비스들 연결 → 전체 시스템</b>. 아래로 갈수록 커집니다. <span style="color:var(--c2);font-weight:700">파란 글씨 = 쉬운 비유</span></p>
+  </div>
+
+  <div class="lv">
+    <div class="num n1">1</div>
+    <div class="body b1">
+      <div class="lt">가장 작은 조각 <span class="sub">— 프로그램은 이 3가지로 시작해요</span></div>
+      <div class="row">
+        <div class="item"><span class="box">함수</span> 일 하나 하는 코드 <span class="an">(≈ 레시피 한 단계 "계란 깨기")</span> · 예: 비밀번호 맞는지 확인</div>
+        <div class="item"><span class="box">데이터 한 줄</span> 기록 한 건 <span class="an">(≈ 엑셀 한 행)</span> · 예: 로그인 시도 1건 <span class="m">login_attempt</span></div>
+        <div class="item"><span class="box">요청 한 개</span> 서버에 보내는 부탁 <span class="an">(≈ 창구에 낸 신청서)</span> · 예: '로그인' 버튼 클릭</div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow">▼ &nbsp;<b>여러 개를 모으면</b></div>
+
+  <div class="lv">
+    <div class="num n2">2</div>
+    <div class="body b2">
+      <div class="lt">조각을 모으면 <span class="sub">— 뭉치가 됩니다</span></div>
+      <div class="row">
+        <div class="item"><b>함수 여러 개</b> → 한 가지 기능(로직) <span class="m">LoginService</span></div>
+        <div class="item"><b>데이터 줄 여러 개</b> → 표 하나(테이블) <span class="an">(≈ 엑셀 시트)</span> <span class="m">login_attempt</span></div>
+        <div class="item"><b>테이블 여러 개</b> → 데이터베이스(DB) <span class="an">(≈ 서류 캐비닛)</span> <span class="m">PostgreSQL</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow">▼ &nbsp;<b>기능 + DB를 한 덩어리로 묶으면</b></div>
+
+  <div class="lv">
+    <div class="num n3">3</div>
+    <div class="body b3">
+      <div class="lt">하나의 서비스(앱 1개) <span class="sub">— ≈ 회사의 '부서' 하나. 자기 일과 자기 서류함을 가짐</span></div>
+      <div class="row" style="margin-top:7px">
+        <div class="mini">
+          <span class="box">요청 받기 Controller</span><span class="ar">→</span><span class="box">일 처리 Service</span><span class="ar">→</span><span class="box">DB 저장 Repository</span><span class="ar">→</span><span class="box" style="background:#EDE9FE">전용 DB</span>
+        </div>
+      </div>
+      <div class="item" style="margin-top:5px"><span class="an">(≈ 부서의 접수창구 → 실무자 → 서류담당 → 서류함)</span> &nbsp; 예: <b>customer-service</b>(인증 담당) + <span class="m">customer-db</span></div>
+    </div>
+  </div>
+  <div class="arrow">▼ &nbsp;<b>이런 부서(서비스)가 여러 개 → 서로 협력해야 함</b></div>
+
+  <div class="lv">
+    <div class="num n4">4</div>
+    <div class="body b4">
+      <div class="lt">서비스들이 대화하는 법 <span class="sub">— 부서(서비스) 4개가 3가지 방법으로 소통</span></div>
+      <div class="row" style="margin-top:6px">
+        <div class="item"><span class="box">정문 경비 · API Gateway</span> 요청이 오면 <b>신분증(JWT) 확인</b> 후 알맞은 부서로 배달 <span class="an">(≈ 건물 정문 경비)</span></div>
+      </div>
+      <div class="row">
+        <div class="item"><span class="box">전화 · REST 호출</span> 지금 바로 다른 부서에 물어봄 <span class="an">(≈ 옆 부서에 전화)</span></div>
+        <div class="item"><span class="box">우편함 · Kafka</span> 사건을 적어두면 다른 부서가 <b>나중에</b> 읽어감 <span class="an">(≈ 사내 우편함·게시판)</span></div>
+      </div>
+      <div class="item" style="margin-top:5px">부서(서비스) 4개 : <b>인증</b> customer · <b>수신</b> deposit · <b>여신</b> loan · <b>결제</b> payment &nbsp;(각자 자기 DB)</div>
+    </div>
+  </div>
+  <div class="arrow">▼ &nbsp;<b>사용자 화면부터 감시·배포까지 다 합치면</b></div>
+
+  <div class="lv">
+    <div class="num n5">5</div>
+    <div class="body b5">
+      <div class="lt">전체 시스템 <span class="sub">— 위 조각들이 다 연결된 모습</span></div>
+      <div class="row" style="margin-top:6px">
+        <div class="mini" style="font-size:10.6px;font-weight:700">
+          <span class="box">사용자</span><span class="ar">→</span><span class="box">브라우저·앱 화면 <span style="font-weight:400" class="mono">Next.js</span></span><span class="ar">→</span>
+          <span class="box" style="background:#EEF2FB">정문 Gateway</span><span class="ar">→</span><span class="box">부서 4개 + 각 DB</span><span class="ar">↔</span>
+          <span class="box" style="background:#ECFDF5">우편함 Kafka</span><span class="ar">→</span><span class="box">외부 은행망 KFTC·BOK</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div class="item"><span class="box" style="background:#FEF2F2">감시 · 모니터링</span> 잘 돌아가나 CCTV·경보 <span class="an">(≈ 관제실)</span> <span class="m">Prometheus · Grafana</span></div>
+        <div class="item"><span class="box" style="background:#FEF2F2">배포 · CI/CD</span> 새 버전을 자동으로 설치 <span class="an">(≈ 건물에 새 설비 교체)</span> <span class="m">GitHub Actions → Docker</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:auto;border-top:2px solid var(--line);padding-top:12px;">
+    <div style="text-align:center;font-size:13px;font-weight:800;color:var(--ink);line-height:1.5;">
+      한 줄 정리 &nbsp;—&nbsp; <span style="color:var(--c1)">함수</span>를 모아 <span style="color:var(--c2)">기능·DB</span>를 만들고, 그걸 묶어 <span style="color:var(--c3)">서비스(부서)</span>가 되고,
+      서비스들을 <span style="color:var(--c4)">Gateway·Kafka</span>로 연결하면 <span style="color:var(--c5)">전체 시스템</span>이 됩니다.
+    </div>
+    <div style="text-align:center;font-size:10.5px;color:var(--faint);margin-top:6px;">
+      작은 것 → 큰 것 : &nbsp; 함수 → 테이블/DB → 서비스 1개 → 서비스 여러 개 연결 → 화면·감시·배포까지 = 전체
+    </div>
+  </div>
+
+</div>
+</body></html>

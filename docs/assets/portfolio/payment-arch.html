@@ -1,0 +1,105 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>결제계 아키텍처</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
+@page{size:A4 landscape;margin:0;}
+:root{
+  --ink:#111827;--sub:#4B5563;--faint:#6B7280;--line:#E5E7EB;
+  --blue:#1D4ED8;--blue-bg:#EEF2FB;
+  --teal:#0E8C80;--teal-bg:#E4F3F1;--teal-bd:#8ED8CE;
+  --amber:#B45309;--amber-bg:#FFFBEB;--amber-bd:#FCD34D;--red:#C2410C;
+}
+html,body{font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;color:var(--ink);}
+.mono{font-family:"Consolas",ui-monospace,monospace;}
+.slide{width:297mm;height:209mm;padding:9mm 12mm;display:flex;flex-direction:column;}
+.head h1{font-size:23px;font-weight:800;letter-spacing:-.01em;}
+.head p{font-size:11.5px;color:var(--sub);margin-top:4px;} .head p b{color:var(--ink);} .head p .note{color:var(--faint);}
+
+.main{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;margin-top:12px;flex:1;}
+.pipe{display:flex;flex-direction:column;}
+.pbox{background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 14px;box-shadow:0 3px 9px -5px rgba(0,0,0,.09);}
+.pbox .lab{font-size:10px;font-weight:800;color:var(--blue);letter-spacing:.02em;}
+.pbox .ttl{font-size:13px;font-weight:800;margin-top:1px;}
+.pbox .ttl .m{font-family:"Consolas",monospace;font-size:11px;color:var(--blue);font-weight:700;}
+.sub{display:flex;flex-direction:column;gap:4px;margin-top:7px;}
+.sub .s{font-size:10px;color:var(--sub);line-height:1.4;} .sub .s b{color:var(--ink);} .sub .s .m{font-family:"Consolas",monospace;font-size:9.2px;color:var(--faint);}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.chip{font-size:9.4px;padding:2px 7px;border-radius:5px;background:var(--blue-bg);color:#334155;} .chip .m{font-family:"Consolas",monospace;color:var(--blue);}
+.conn{text-align:center;color:var(--blue);font-size:14px;font-weight:800;line-height:1;padding:4px 0;position:relative;}
+.conn small{font-size:8.5px;font-weight:700;color:var(--faint);position:absolute;left:calc(50% + 12px);top:3px;white-space:nowrap;}
+.extlab{text-align:center;font-size:9.5px;color:var(--teal);font-weight:800;margin:4px 0 6px;}
+.ext{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.ebox{background:var(--teal-bg);border:1px solid var(--teal-bd);border-radius:10px;padding:9px 12px;}
+.ebox .el{font-size:9.5px;font-weight:800;color:var(--teal);}
+.ebox .et{font-size:12px;font-weight:800;margin-top:1px;}
+.ebox .ed{font-size:9.2px;color:var(--sub);line-height:1.45;margin-top:4px;} .ebox .ed .m{font-family:"Consolas",monospace;font-size:8.8px;color:var(--teal);}
+
+/* 복원력 / 배치 (우측 강조) */
+.res{background:var(--amber-bg);border:1.8px solid var(--amber-bd);border-radius:13px;padding:13px 15px;display:flex;flex-direction:column;box-shadow:0 4px 12px -6px rgba(180,83,9,.15);}
+.res .rh{font-size:14px;font-weight:800;color:var(--amber);}
+.res .rsub{font-size:10px;color:var(--sub);margin-top:3px;line-height:1.4;}
+.rstep{background:#fff;border:1px solid var(--amber-bd);border-radius:9px;padding:9px 12px;margin-top:9px;}
+.rstep .k{font-size:9px;font-weight:800;color:var(--faint);letter-spacing:.04em;}
+.rstep .t{font-size:11.5px;font-weight:800;margin-top:1px;}
+.rstep .t .warn{color:var(--red);}
+.rstep .d{font-size:9.3px;color:var(--sub);line-height:1.4;margin-top:2px;} .rstep .d .m{font-family:"Consolas",monospace;font-size:8.8px;}
+.rnote{margin-top:auto;padding-top:10px;font-size:10px;color:var(--amber);font-weight:700;line-height:1.4;}
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>결제계 — 이벤트 기반 지급·정산 엔진 아키텍처</h1>
+    <p><b>지급 지시 → Saga 오케스트레이션 → Outbox 이벤트 발행 → KFTC 청산·BOK 결제</b> &nbsp;·&nbsp; <span class="note">※ 이벤트 기반 지급·정산 엔진 · 코드 구조 기반 추정</span></p>
+  </div>
+
+  <div class="main">
+    <!-- 좌 : 지급 파이프라인 -->
+    <div class="pipe">
+      <div class="pbox">
+        <div class="lab">요청 · REQUEST</div>
+        <div class="ttl">지급 지시 <span class="m">PaymentInstruction</span> + 멱등성 <span class="m">IdempotencyKey</span></div>
+      </div>
+      <div class="conn">▼</div>
+      <div class="pbox">
+        <div class="lab">오케스트레이션 · SAGA</div>
+        <div class="ttl"><span class="m">PaymentOrchestrator</span>(출금) · <span class="m">InboundPaymentOrchestrator</span>(입금)</div>
+        <div class="sub">
+          <div class="s">├ 계좌 출금/입금 → <b>수신계 연동</b> <span class="m">ExternalCall (외부 호출 이력)</span></div>
+          <div class="s">├ 원장 기록 <b>복식부기</b> <span class="m">Ledger</span></div>
+          <div class="s">└ 상태 이력 <span class="m">StatusHistory · 이벤트 타입 F4/F6/F7 …</span></div>
+        </div>
+      </div>
+      <div class="conn">▼<small>Outbox 적재</small></div>
+      <div class="pbox">
+        <div class="lab">이벤트 발행 · OUTBOX 패턴</div>
+        <div class="ttl"><span class="m">OutboxMessage → OutboxPublisher → Kafka</span></div>
+        <div class="chips"><span class="chip">발행 신뢰성 보장 (at-least-once)</span><span class="chip">Kafka 3망 <span class="m">Internal · Kftc · Bok</span></span></div>
+      </div>
+      <div class="extlab">▼ 은행간 청산 · 최종 결제 (외부망)</div>
+      <div class="ext">
+        <div class="ebox">
+          <div class="el">KFTC 청산</div>
+          <div class="et">금융결제원 은행간 청산</div>
+          <div class="ed"><span class="m">KftcClearingTransaction</span><br>↕ KFTC Kafka (요청 / 응답 Consumer)</div>
+        </div>
+        <div class="ebox">
+          <div class="el">BOK 결제</div>
+          <div class="et">한국은행 최종 결제</div>
+          <div class="ed"><span class="m">BokSettlementTransaction</span><br>↕ BOK Kafka (응답 Consumer)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 우 : 배치 / 복원력 -->
+    <div class="res">
+      <div class="rh">배치 / 복원력 · RESILIENCE</div>
+      <div class="rsub">비동기 정산·타임아웃·실패를 감시하고 <b>보상(역거래)</b>으로 정합성을 지키는 계층 (Scheduler)</div>
+      <div class="rstep"><div class="k">SETTLEMENT</div><div class="t">정산 배치 (KFTC)</div><div class="d">청산 결과 대사·정산 <span class="m">KftcSettlementBatchWorker</span></div></div>
+      <div class="rstep"><div class="k">SCHEDULED</div><div class="t">예약 지급</div><div class="d">예약된 지급 지시 실행 <span class="m">ScheduledPaymentWorker</span></div></div>
+      <div class="rstep"><div class="k">TIMEOUT → 보상</div><div class="t">타임아웃 탐지 → <span class="warn">역거래</span></div><div class="d">응답 지연 감지 → 보상 트랜잭션 <span class="m">TimeoutDetectionWorker · Reversal</span></div></div>
+      <div class="rnote">Saga 보상 : 외부망 실패·타임아웃 시 원장 역분개로 정합성 복원 (fail-soft)</div>
+    </div>
+  </div>
+
+</div>
+</body></html>

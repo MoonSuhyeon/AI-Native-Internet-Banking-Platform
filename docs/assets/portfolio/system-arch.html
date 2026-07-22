@@ -1,0 +1,111 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>시스템 인프라 아키텍처</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
+@page{size:A4 landscape;margin:0;}
+:root{
+  --ink:#111827;--sub:#4B5563;--faint:#6B7280;--line:#E5E7EB;
+  --blue:#1D4ED8;--blue-bg:#EEF2FB;--indigo:#4F46E5;
+  --gold:#B0791C;--gold-bg:#FBF2DD;--gold-bd:#E4C68A;
+  --terra:#C2410C;--terra-bg:#FFF4ED;--terra-bd:#FBBF9B;
+  --grn:#047857;--grn-bg:#ECFDF5;--grn-bd:#A7F3D0;
+  --slate:#334155;--slate-bg:#F1F5F9;
+}
+html,body{font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;color:var(--ink);}
+.mono{font-family:"Consolas",ui-monospace,monospace;}
+.slide{width:297mm;height:209mm;padding:8mm 11mm;display:flex;flex-direction:column;gap:6px;}
+.head h1{font-size:22px;font-weight:800;letter-spacing:-.01em;}
+.head p{font-size:10.5px;color:var(--sub);margin-top:3px;} .head p b{color:var(--ink);}
+.arrow{text-align:center;color:var(--blue);font-size:12px;font-weight:800;line-height:1;} .arrow small{color:var(--faint);font-size:8.5px;font-weight:700;}
+
+.bar{border:1px solid var(--line);border-radius:9px;padding:7px 12px;box-shadow:0 2px 7px -4px rgba(0,0,0,.07);background:#fff;}
+.bar .bt{font-size:11.5px;font-weight:800;} .bar .bd{font-size:9.4px;color:var(--sub);margin-top:2px;} .bar .m{font-family:"Consolas",monospace;font-size:9px;color:var(--faint);}
+.client{background:var(--slate-bg);text-align:center;}
+
+.gw{display:grid;grid-template-columns:2.6fr 1fr;gap:9px;}
+.gwmain{background:var(--blue-bg);border-color:#C7D6F5;} .gwmain .bt{color:#1E3A8A;}
+.gwai{background:var(--terra-bg);border-color:var(--terra-bd);} .gwai .bt{color:#7C2D12;}
+
+.domains{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.dom{background:#fff;border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:9px;padding:8px 10px;box-shadow:0 2px 7px -4px rgba(0,0,0,.08);}
+.dom.d2{border-top-color:#0E8C80;} .dom.d3{border-top-color:#B45309;} .dom.d4{border-top-color:#C2410C;} .dom.d5{border-top-color:#6B7280;}
+.dom .dl{font-size:9px;font-weight:800;color:var(--faint);}
+.dom .dn{font-size:11.5px;font-weight:800;margin-top:1px;} .dom .dn .m{font-family:"Consolas",monospace;font-size:9px;color:var(--blue);}
+.dom .chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+.tag{font-size:8.3px;padding:1px 5px;border-radius:4px;background:var(--slate-bg);color:var(--slate);font-family:"Consolas",monospace;}
+.tag.db{background:#EDE9FE;color:#5B21B6;} .tag.cache{background:#FEF3C7;color:#92400E;} .tag.kfk{background:var(--grn-bg);color:var(--grn);}
+
+.kafka{background:var(--grn-bg);border:1.6px solid var(--grn-bd);border-radius:10px;padding:8px 13px;}
+.kafka .kt{font-size:12px;font-weight:800;color:var(--grn);}
+.kafka .kd{font-size:9.6px;color:#334155;margin-top:3px;line-height:1.5;} .kafka .kd b{color:var(--grn);} .kafka .kd .m{font-family:"Consolas",monospace;font-size:8.8px;}
+
+.ext{background:#fff;border:1px dashed var(--faint);border-radius:9px;padding:7px 12px;text-align:center;}
+.ext .et{font-size:10.5px;font-weight:800;color:var(--slate);} .ext .ed{font-size:9px;color:var(--sub);margin-top:1px;} .ext .m{font-family:"Consolas",monospace;font-size:8.6px;color:var(--faint);}
+
+.ai{background:var(--terra-bg);border:1.4px solid var(--terra-bd);border-radius:10px;padding:8px 13px;}
+.ai .at{font-size:11.5px;font-weight:800;color:#7C2D12;} .ai .ad{font-size:9.4px;color:var(--sub);margin-top:3px;line-height:1.5;} .ai .ad b{color:var(--terra);} .ai .ad .m{font-family:"Consolas",monospace;font-size:8.8px;}
+
+.flows{margin-top:9px;border:1px solid var(--line);border-radius:9px;padding:9px 13px;background:#FBFCFE;}
+.flows .ft{font-size:11px;font-weight:800;color:var(--slate);margin-bottom:5px;}
+.flrow{font-size:9.6px;color:var(--sub);line-height:1.7;} .flrow b{color:var(--ink);} .flrow .k{display:inline-block;min-width:64px;font-weight:800;color:var(--blue);} .flrow .m{font-family:"Consolas",monospace;font-size:8.8px;color:var(--faint);}
+.foot{display:grid;grid-template-columns:1.7fr 1fr;gap:9px;margin-top:9px;}
+.fbox{border:1px solid var(--line);border-radius:9px;padding:8px 12px;background:#FBFCFE;}
+.fbox .ft{font-size:10.5px;font-weight:800;color:var(--slate);} .fbox .fd{font-size:9.3px;color:var(--sub);margin-top:2px;line-height:1.5;} .fbox .m{font-family:"Consolas",monospace;font-size:8.6px;}
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>시스템 인프라 아키텍처 — Gateway · Kafka · 도메인 서비스 · AI 계층</h1>
+    <p>Spring Cloud Gateway(JWT 1회 검증) · 서비스별 PostgreSQL · <b>Kafka 3망</b>(내부·KFTC·BOK)+schema-registry+Connect(Outbox CDC) · AI 게이트웨이 · Prometheus/Grafana · <span class="mono" style="font-size:9px;color:#9CA3AF">※ docker-compose 기반</span></p>
+  </div>
+
+  <div class="bar client"><div class="bt">Client — Web · Mobile (Next.js)</div></div>
+  <div class="arrow">▼ <small>HTTPS · JWT</small></div>
+
+  <div class="gw">
+    <div class="bar gwmain"><div class="bt">API Gateway · gateway-service <span class="m">:8080</span></div><div class="bd"><b>JWT 1회 검증 → X-User 헤더 전파</b> · 라우팅 · 위조 헤더 제거 (Spring Cloud Gateway)</div></div>
+    <div class="bar gwai"><div class="bt">AI Gateway <span class="m">review-ai-gateway :8088</span></div><div class="bd">LLM 라우팅 · 프롬프트 게이트</div></div>
+  </div>
+  <div class="arrow">▼ <small>X-User-Id / Role 헤더 (Stateless)</small></div>
+
+  <div class="domains">
+    <div class="dom d1"><div class="dl">인증보안계</div><div class="dn"><span class="m">customer-service</span></div>
+      <div class="chips"><span class="tag db">customer-db</span><span class="tag cache">Redis 세션·토큰</span><span class="tag kfk">Kafka 내부</span></div></div>
+    <div class="dom d2"><div class="dl">수신계</div><div class="dn"><span class="m">deposit-service</span></div>
+      <div class="chips"><span class="tag db">deposit-db</span><span class="tag">→결제계 REST</span><span class="tag kfk">Kafka</span></div></div>
+    <div class="dom d3"><div class="dl">여신계</div><div class="dn"><span class="m">loan-service</span></div>
+      <div class="chips"><span class="tag db">loan-db</span><span class="tag db">common-db</span><span class="tag kfk">Outbox→Kafka</span></div></div>
+    <div class="dom d4"><div class="dl">결제계 (이중화 A/B)</div><div class="dn"><span class="m">payment-service ·-b</span></div>
+      <div class="chips"><span class="tag db">payment-db</span><span class="tag db">payment-db-b</span><span class="tag kfk">Outbox</span></div></div>
+    <div class="dom d5"><div class="dl">공통 · 마스터</div><div class="dn"><span class="m">master-service</span></div>
+      <div class="chips"><span class="tag db">master-db</span><span class="tag">코드·직원 디렉토리</span></div></div>
+  </div>
+  <div class="arrow">▼ <small>Outbox 패턴 (트랜잭션 → CDC) · 이벤트 발행/구독</small></div>
+
+  <div class="kafka">
+    <div class="kt">Kafka 이벤트 백본 <span class="mono" style="font-size:9px;font-weight:600;color:#6B7280">kafka:29092 (KRaft)</span></div>
+    <div class="kd"><b>3 논리망</b> : <b>내부 이벤트</b>(도메인 간) · <b>KFTC 청산</b>(은행간) · <b>BOK 결제</b>(최종결제) &nbsp;|&nbsp; <b>schema-registry</b>(Avro) · <b>kafka-connect</b>(Debezium Outbox CDC) · kafka-exporter×3</div>
+  </div>
+  <div class="arrow">▼ <small>외부 금융망 (개발환경 mock-responder)</small></div>
+  <div class="ext"><div class="et">외부 금융망 (mock)</div><div class="ed">KFTC 금융결제원 (은행간 청산) · BOK 한국은행 (최종 결제) &nbsp; <span class="m">mock-responder</span></div></div>
+
+  <div class="ai">
+    <div class="at">AI 에이전트 계층 <span class="mono" style="font-size:9px;font-weight:600;color:#9CA3AF">(Python · Spring)</span></div>
+    <div class="ad"><b>fraud-investigation-agent</b>(이상거래 조사·LangGraph) · <b>auto-loan-review</b>(여신 심사) · <b>consultation</b>(지출·만기) · <b>goal-agent</b>(저축) · <b>doc-agent</b>(문서) &nbsp;|&nbsp; 관측 <b>Langfuse · Phoenix</b> · <span class="m">ai-db</span></div>
+  </div>
+
+  <div class="flows">
+    <div class="ft">대표 요청 흐름 (End-to-End) — 스택 협력 방식</div>
+    <div class="flrow"><span class="k">인증</span> Client → <b>Gateway</b>(JWT 검증) → <b>customer-service</b> → <b>Redis</b>(세션·RT 회전) &nbsp;<span class="m">→ 이후 X-User 헤더로 전 서비스 Stateless 인가</span></div>
+    <div class="flrow"><span class="k">이체·결제</span> deposit/loan → <b>payment-service</b>(Ledger 복식부기) → <b>Outbox</b> → <b>Kafka</b> → <b>KFTC</b> 청산 → <b>BOK</b> 결제 &nbsp;<span class="m">(타임아웃 시 Reversal 보상)</span></div>
+    <div class="flrow"><span class="k">여신 심사</span> loan-service → <b>auto-loan-review</b>(사전심사·리스크) → <b>advisory</b>(공정성·편향 감사) → <b>HITL</b> 심사역 승인</div>
+    <div class="flrow"><span class="k">이상거래</span> 인증 이벤트 → <b>Kafka</b> → <b>fraud-investigation-agent</b>(경쟁 가설 조사·LangGraph) → HITL → 계정 차단</div>
+  </div>
+
+  <div class="foot">
+    <div class="fbox"><div class="ft">관측 · 운영 (Observability)</div><div class="fd">Prometheus + Grafana · Alertmanager · Loki/Promtail(로그) · ELK(elasticsearch·kibana) · Blackbox · kafka-exporter×3</div></div>
+    <div class="fbox"><div class="ft">플랫폼 인프라</div><div class="fd">Redis(세션·RT) · Vault(시크릿) · MinIO(오브젝트) · PostgreSQL ×10</div></div>
+  </div>
+
+</div>
+</body></html>

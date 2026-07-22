@@ -1,0 +1,330 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<title>이벤트 택소노미 스펙</title><style>
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }
+@page { size: A4; margin: 16mm 15mm; }
+html { font-size: 10.5px; }
+body {
+  font-family: "Malgun Gothic","맑은 고딕", system-ui, sans-serif;
+  color: #111827; line-height: 1.55; margin: 0;
+}
+h1 { font-size: 2.05em; font-weight: 800; letter-spacing: -.01em; margin: 0 0 .2em;
+     color: #111827; }
+h1 + blockquote { margin-top: .6em; }
+h2 { font-size: 1.35em; font-weight: 700; color: #1D4ED8; margin: 1.9em 0 .6em;
+     padding-bottom: .28em; border-bottom: 2px solid #E5E7EB; }
+h3 { font-size: 1.08em; font-weight: 700; color: #1F2937; margin: 1.3em 0 .5em; }
+p { margin: .5em 0; }
+strong { color: #111827; font-weight: 700; }
+a { color: #1D4ED8; text-decoration: none; }
+code { font-family: "Consolas","Cascadia Mono", ui-monospace, monospace;
+       font-size: .88em; background: #F3F4F6; color: #1F2937;
+       padding: .08em .35em; border-radius: 4px; }
+blockquote { margin: .8em 0; padding: .55em .9em; background: #F8FAFC;
+             border-left: 3px solid #C7D2FE; color: #475569; font-size: .96em; border-radius: 0 6px 6px 0; }
+blockquote p { margin: .25em 0; }
+table { border-collapse: collapse; width: 100%; margin: .8em 0; font-size: .93em;
+        page-break-inside: auto; }
+thead { background: #EEF2FB; }
+th, td { border: 1px solid #E5E7EB; padding: 6px 9px; text-align: left; vertical-align: top; }
+th { font-weight: 700; color: #1F2937; }
+tr { page-break-inside: avoid; }
+tbody tr:nth-child(even) { background: #FBFCFE; }
+td code, th code { background: #EAF0FB; color: #1E3A8A; }
+hr { border: 0; border-top: 1px solid #E5E7EB; margin: 1.6em 0; }
+h2, h3 { page-break-after: avoid; }
+em { color: #4B5563; }
+</style></head>
+<body><h1>이벤트 택소노미 스펙 — 인증보안계</h1>
+<blockquote>
+<p><strong>목적</strong>: 인증보안계에서 생산되는 사용자 행동을 <strong>append-only 이벤트로 표준화</strong>하고, FDS 룰 엔진·이상거래 조사 에이전트·감사가 <strong>동일한 이벤트 로그를 되읽어 소비</strong>하도록 정의한 택소노미.
+<strong>정본 기준</strong>: 실제 적용된 Flyway 마이그레이션(V2~V26). 컬럼·트리거는 <a href="../auth_security_ddl_design.md"><code>docs/auth_security_ddl_design.md</code></a> 정본을 따른다.
+<strong>한 줄 요약</strong>: <em>생산(append) → 접합점(이벤트 로그) → 소비(read-back)</em>. 로그를 &quot;기록&quot;이 아니라 &quot;판단 가능한 신호&quot;로 설계한다.</p>
+</blockquote>
+<hr />
+<h2>1. 설계 원칙 (택소노미 거버넌스)</h2>
+<table>
+<thead>
+<tr>
+  <th>#</th>
+  <th>원칙</th>
+  <th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td><strong>Append-only</strong></td>
+  <td>이벤트는 갱신·삭제하지 않고 새 행으로만 적재. 상태 변화는 이력 테이블에 누적(<code>*_history</code>, <code>login_attempt</code>, <code>certificate_use</code>, <code>fds_detection</code> …).</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><strong>네이밍 통제</strong></td>
+  <td><code>snake_case</code>, 접미사 규칙 — <code>_hash</code>(단방향 해시) · <code>_encrypted</code>(AES-256 암호문) · <code>_at</code>(TIMESTAMPTZ) · <code>_yn</code>(CHAR(1) T/F) · <code>_code</code>(코드값).</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><strong>값 집합 = 코드/CHECK로 고정</strong></td>
+  <td>자유서술 금지. 상태·유형은 <code>CHECK</code> 제약 + 도메인 상수(<code>cust_code_master</code> 소프트 참조, <strong>정본은 도메인 상수</strong>).</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><strong>PII 등급 명시</strong></td>
+  <td>주민번호=암호문(<code>rrn_encrypted</code>)만 보관·평문 미보관, 코드·비밀번호·PIN·토큰=해시, IP·UA=유사식별자.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><strong>낙관적 락 + Soft Delete</strong></td>
+  <td>모든 테이블에 <code>version</code>(JPA <code>@Version</code>) + <code>deleted_at</code>/<code>deleted_by</code>(full audit).</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><strong>버전 관리형 진화</strong></td>
+  <td>이벤트/컬럼 변경은 Flyway 마이그레이션으로만. 파괴적 변경은 신규 컬럼/테이블로(예: V18 <code>rrn_encrypted</code>·<code>consumed_yn</code> 추가).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. 이벤트 카탈로그</h2>
+<blockquote>
+<p>표기: <strong>PII/보안</strong> 열의 🔒=해시, 🔑=암호문, ⚠=유사식별자(IP/UA/디바이스). <strong>소비</strong> 열 — FDS=룰 엔진, AGENT=조사 에이전트, AUDIT=감사.</p>
+</blockquote>
+<h3>2.1 로그인 · 세션 · 토큰</h3>
+<table>
+<thead>
+<tr>
+  <th>이벤트</th>
+  <th>트리거</th>
+  <th>핵심 필드</th>
+  <th>소비</th>
+  <th>PII/보안</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>login_attempt</code></td>
+  <td>모든 로그인 시도(성공·실패)</td>
+  <td><code>attempted_login_id</code> · <code>channel_code</code> · <code>ip</code>(+<code>ip_country_code</code>) · <code>user_agent</code> · <code>device_fingerprint_hash</code> · <code>success_yn</code> · <code>failure_reason_code</code> · <code>login_attempted_at</code></td>
+  <td><strong>FDS</strong>(LOGIN·실패 횟수), <strong>AGENT</strong></td>
+  <td>🔒⚠ · <code>customer_id</code>/<code>device_id</code> nullable(미존재 ID·미등록 기기 시도 허용)</td>
+</tr>
+<tr>
+  <td><code>login_session</code></td>
+  <td>로그인 성공 시 세션 발급</td>
+  <td><code>session_id</code>(PK) · <code>session_status_code</code>(ACTIVE/EXPIRED/LOGGED_OUT/<strong>FORCED_OUT</strong>) · <code>mfa_completed_yn</code> · <code>session_expiry_at</code> · <code>session_end_reason_code</code></td>
+  <td>세션관리 · <strong>차단 실행</strong>(강제 종료=FORCED_OUT)</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td><code>qr_login_token</code></td>
+  <td>QR 로그인 플로우(PENDING→SCANNED→APPROVED)</td>
+  <td><code>qr_token_hash</code> · <code>qr_status_code</code> · <code>request_ip</code> · <code>scanned_at</code>/<code>approved_at</code></td>
+  <td>세션 발급</td>
+  <td>🔒 · <code>customer_id</code>(스캔 후)·<code>session_id</code>(승인 후) 확정</td>
+</tr>
+<tr>
+  <td><code>api_token</code></td>
+  <td>토큰 발급/폐기</td>
+  <td><code>token_type_code</code>(ACCESS/REFRESH/OAUTH) · <code>token_hash</code> · <code>token_issued_at</code>/<code>token_expiry_at</code>/<code>token_revoked_at</code></td>
+  <td>인증 전파 · Rotation</td>
+  <td>🔒 · 세션과 순환참조(DEFERRABLE)</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 인증수단 사용</h3>
+<table>
+<thead>
+<tr>
+  <th>이벤트</th>
+  <th>트리거</th>
+  <th>핵심 필드</th>
+  <th>소비</th>
+  <th>PII/보안</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>certificate_use</code></td>
+  <td>금융인증서 서명·검증(로그인/거래서명)</td>
+  <td><code>purpose_code</code>(LOGIN/TXN_SIGN/CONTRACT_SIGN) · <code>verification_result_code</code> · <code>failure_reason_code</code> · <code>signed_data_hash</code> · <code>request_ip</code> · <code>certificate_used_at</code></td>
+  <td><strong>FDS</strong>(CERT_USE·인증서 실패 횟수→CERT_FAIL_BLOCK), <strong>AGENT</strong></td>
+  <td>🔒⚠</td>
+</tr>
+<tr>
+  <td><code>mobile_auth</code></td>
+  <td>SMS/PASS 인증코드 발송·검증</td>
+  <td><code>method_type_code</code> · <code>telecom_carrier_code</code> · <code>recipient_phone_number</code> · <code>code_hash</code> · <code>verified_yn</code> · <code>attempt_count</code></td>
+  <td>본인확인 선행</td>
+  <td>🔒 · 전화번호(PII) · <code>customer_id</code> nullable(가입 전)</td>
+</tr>
+<tr>
+  <td><code>identity_verification</code></td>
+  <td>본인확인기관 확인 완료</td>
+  <td><code>agency_code</code>(NICE/KCB/SCI/PASS) · <code>ci_value</code>(연계정보) · <code>name</code>/<code>birth_date</code>/<code>gender</code> · <code>rrn_encrypted</code> · <code>consumed_yn</code> · <code>identity_verified_at</code></td>
+  <td>가입 · 동일인 식별</td>
+  <td>🔑 주민번호 암호문(평문 미보관, V18) · <code>customer_id</code> nullable(SIGNUP)</td>
+</tr>
+</tbody>
+</table>
+<h3>2.3 자격</h3>
+<table>
+<thead>
+<tr>
+  <th>이벤트</th>
+  <th>트리거</th>
+  <th>핵심 필드</th>
+  <th>소비</th>
+  <th>PII/보안</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>password_history</code></td>
+  <td>비밀번호 변경</td>
+  <td><code>password_hash</code> · <code>change_channel_code</code> · <code>change_reason_code</code> · <code>change_ip</code></td>
+  <td><strong>FDS</strong>(PW_CHANGE·잦은 변경 MONITOR)</td>
+  <td>🔒</td>
+</tr>
+</tbody>
+</table>
+<h3>2.4 고객 상태 이력 · 2.5 감사 <em>(고객계 도메인)</em></h3>
+<table>
+<thead>
+<tr>
+  <th>이벤트</th>
+  <th>트리거</th>
+  <th>핵심 필드</th>
+  <th>소비</th>
+  <th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>customer_status_history</code></td>
+  <td>고객 상태 전이</td>
+  <td><code>from_status</code>/<code>to_status</code>(ACTIVE/DORMANT/SUSPENDED/CLOSED) · <code>is_system_auto</code></td>
+  <td>생애주기·리텐션</td>
+  <td>고객계</td>
+</tr>
+<tr>
+  <td><code>customer_grade_history</code></td>
+  <td>고객 등급 변경</td>
+  <td>등급 전/후 · 사유</td>
+  <td>세그먼트</td>
+  <td>고객계</td>
+</tr>
+<tr>
+  <td><code>customer_access_log</code></td>
+  <td>직원의 고객정보 접근</td>
+  <td>actor(employee) · 대상 고객 · action</td>
+  <td><strong>AUDIT</strong></td>
+  <td>고객계(행위자 감사)</td>
+</tr>
+</tbody>
+</table>
+<h3>2.6 FDS</h3>
+<table>
+<thead>
+<tr>
+  <th>이벤트</th>
+  <th>트리거</th>
+  <th>핵심 필드</th>
+  <th>소비</th>
+  <th>PII/보안</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>fds_detection</code></td>
+  <td>FDS 룰 히트 시</td>
+  <td><code>fds_rule_id</code> · <code>event_type_code</code> · <code>event_reference_id</code>(거래계 soft ref) · <code>fds_detected_at</code> · <code>status_code</code>(PENDING/CONFIRMED/FALSE_POSITIVE)</td>
+  <td><strong>AGENT</strong>(get_fds_history) · 사고처리</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td><code>fds_incident</code></td>
+  <td>탐지 → 사고 처리</td>
+  <td><code>incident_type_code</code> · <code>process_status_code</code> · <code>fss_reported_yn</code>(금감원 신고) · <code>handler_employee_id</code></td>
+  <td>사고 대응</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>3. 소비 (Consumption) — 로그를 판단으로</h2>
+<h3>3.1 FDS 룰 엔진 (실제 구현)</h3>
+<ul>
+<li><code>fds_rule.condition_json = {window, threshold}</code> → <strong>시간창 내 이벤트 COUNT ≥ 임계 → BLOCK / CHALLENGE / MONITOR</strong>.</li>
+<li><code>fds_rule.target_event_code</code>(LOGIN/CERT_USE/PW_CHANGE/DEVICE_REG/TRANSFER)가 <strong>이벤트 타입 택소노미에 매핑</strong> → 임계·윈도우만 바꿔 코드 수정 없이 룰 확장.</li>
+<li>운영 룰(V8 시드): <code>LOGIN_FAIL_BLOCK_10</code>(30분 10회→BLOCK) · <code>CERT_FAIL_BLOCK_5</code>(10분 5회→BLOCK) · <code>PWD_CHANGE_MONITOR_3</code>(1일 3회→MONITOR).</li>
+<li>결과는 <code>fds_detection</code>(append) → BLOCK 시 즉시 차단(<code>CUST_060</code>).</li>
+</ul>
+<h3>3.2 조사 에이전트 (개인 프로젝트 · LangGraph)</h3>
+<ul>
+<li><code>get_auth_events</code>(login_attempt·certificate_use 등) · <code>get_fds_history</code>(fds_detection)를 <strong>read-back</strong>으로 조회.</li>
+<li>이상도 점수가 아니라 <strong>법적 책임 순 우선순위</strong>로 조사 큐 재정렬 → 경쟁 가설 평가 → 신뢰도 계산 → 권고 → HITL.</li>
+</ul>
+<h3>3.3 감사</h3>
+<ul>
+<li><code>customer_access_log</code> — 직원 행위자 기반 접근 감사.</li>
+</ul>
+<hr />
+<h2>4. 거버넌스 상세</h2>
+<table>
+<thead>
+<tr>
+  <th>항목</th>
+  <th>규칙</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>암호화/해시</strong></td>
+  <td><code>_encrypted</code>=AES-256 암호문(<code>rrn_encrypted</code>) · <code>_hash</code>=단방향(<code>password_hash</code>·<code>token_hash</code>·<code>pin_hash</code>·<code>cert_pin_hash</code>·<code>mobile_auth_code_hash</code>·<code>qr_token_hash</code>)</td>
+</tr>
+<tr>
+  <td><strong>PII 최소수집</strong></td>
+  <td>주민번호는 암호문만, 평문 미보관. 검증 1건=가입 1건(<code>consumed_yn</code>)으로 재사용 통제</td>
+</tr>
+<tr>
+  <td><strong>NULL FK 정책</strong></td>
+  <td>가입 전 본인확인(<code>mobile_auth</code>/<code>identity_verification</code>) · 미존재 ID 로그인 시도(<code>login_attempt</code>) 허용 → <strong>미가입·비정상 시도도 이벤트로 수집</strong></td>
+</tr>
+<tr>
+  <td><strong>코드 관리</strong></td>
+  <td>코드 컬럼=<code>cust_code_master</code> 소프트 참조(FK 미설정), 유효성은 도메인 상수에서 검증</td>
+</tr>
+<tr>
+  <td><strong>순환참조</strong></td>
+  <td><code>login_session.token_id ↔ api_token.session_id</code> DEFERRABLE — 세션→토큰→UPDATE→COMMIT 순</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. 확장 (예정)</h2>
+<table>
+<thead>
+<tr>
+  <th>컬럼</th>
+  <th>현재</th>
+  <th>연결 대상</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>fds_detection.event_reference_id</code></td>
+  <td><code>BIGINT</code>(soft ref)</td>
+  <td>거래계(결제/수신/여신) 이벤트</td>
+</tr>
+<tr>
+  <td><code>certificate_use.target_transaction_id</code></td>
+  <td><code>VARCHAR(50)</code>(soft ref)</td>
+  <td>거래계 거래 테이블</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>거래계 구축 시 위 두 컬럼 타입을 거래계 PK에 맞춰 동시 통일 → 인증 이벤트 택소노미를 <strong>거래 이벤트까지 확장</strong>.</p>
+</blockquote>
+<hr />
+<p><em>이 스펙이 증명하는 역량 — 통제 어휘 기반 이벤트 정의 · PII 등급별 거버넌스 · 룰 엔진/에이전트 이중 소비 · Flyway 버전 관리형 택소노미 진화.</em></p>
+</body></html>

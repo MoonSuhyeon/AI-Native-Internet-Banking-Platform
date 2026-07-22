@@ -1,0 +1,103 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>수신계 아키텍처</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
+@page{size:A4 landscape;margin:0;}
+:root{
+  --ink:#111827;--sub:#4B5563;--faint:#6B7280;--line:#E5E7EB;
+  --blue:#1D4ED8;--blue-bg:#EEF2FB;--blue-pill:#E0E7FF;
+  --grey-pill:#F3F4F6;--gold:#B0791C;--gold-bg:#FBF2DD;--gold-bd:#E4C68A;
+  --terra:#C2410C;--terra-pill:#FFEDD5;--terra-bg:#FFF4ED;--terra-bd:#FBBF9B;--red:#C2410C;
+}
+html,body{font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;color:var(--ink);}
+.mono{font-family:"Consolas",ui-monospace,monospace;}
+.slide{width:297mm;height:209mm;padding:8mm 11mm;display:flex;flex-direction:column;}
+.head h1{font-size:22px;font-weight:800;letter-spacing:-.01em;}
+.head p{font-size:11px;color:var(--sub);margin-top:3px;} .head p b{color:var(--ink);} .head p .note{color:var(--faint);}
+
+.cols{display:grid;grid-template-columns:1.05fr .95fr 1.1fr;gap:11px;margin-top:10px;flex:1;}
+.ch{text-align:center;font-size:12px;font-weight:800;padding:7px;border-radius:22px;margin-bottom:8px;}
+.ch.a{background:var(--blue-pill);color:#1E3A8A;} .ch.b{background:var(--grey-pill);color:#374151;} .ch.c{background:var(--terra-pill);color:#7C2D12;}
+
+/* 좌 : 도메인 파이프라인 */
+.pipe{display:flex;flex-direction:column;}
+.pb{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 11px;box-shadow:0 2px 7px -4px rgba(0,0,0,.08);}
+.pb .l{font-size:9px;font-weight:800;color:var(--blue);}
+.pb .t{font-size:11.5px;font-weight:800;margin-top:1px;}
+.pb .d{font-size:9px;color:var(--sub);line-height:1.4;margin-top:3px;} .pb .d .m{font-family:"Consolas",monospace;font-size:8.4px;color:var(--faint);}
+.pb .fds{font-size:9px;color:var(--red);font-weight:700;margin-top:3px;} .pb .fds .m{font-family:"Consolas",monospace;font-size:8.4px;}
+.cn{text-align:center;color:var(--blue);font-size:12px;font-weight:800;line-height:1;padding:2px 0;}
+
+/* 중 : 데이터 (접합점) */
+.data{background:var(--gold-bg);border:1.6px solid var(--gold-bd);border-radius:11px;padding:9px 12px;overflow:hidden;}
+.data .grp{margin-bottom:6px;}
+.data .gl{font-size:10px;font-weight:800;color:var(--gold);}
+.data .gt{font-family:"Consolas",monospace;font-size:8.7px;color:#5B4A1C;line-height:1.55;margin-top:1px;}
+
+/* 우 : 에이전트 */
+.agents{display:flex;flex-direction:column;gap:7px;}
+. readtag{}
+.rt{font-size:9.5px;font-weight:800;color:var(--terra);background:#fff;border:1px dashed var(--terra-bd);border-radius:7px;padding:5px 8px;text-align:center;}
+.ag{background:var(--terra-bg);border:1px solid var(--terra-bd);border-radius:9px;padding:8px 11px;}
+.ag .an{font-size:11.5px;font-weight:800;color:#7C2D12;}
+.ag .asvc{font-size:8.5px;font-weight:700;color:var(--terra);float:right;}
+.ag .ad{font-size:9.2px;color:var(--sub);line-height:1.4;margin-top:3px;clear:both;} .ag .ad .m{font-family:"Consolas",monospace;font-size:8.4px;color:var(--terra);}
+.orch{background:#fff;border:1px dashed var(--gold-bd);border-radius:9px;padding:8px 11px;margin-top:1px;}
+.orch .on{font-size:10.5px;font-weight:800;color:var(--gold);}
+.orch .od{font-size:9px;color:var(--sub);line-height:1.4;margin-top:2px;}
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>수신계와 B2C 자산관리 에이전트 아키텍처</h1>
+    <p>수신 도메인이 생산한 <b>상품·계좌·거래 데이터</b>를 <b>상품추천·저축목표·지출진단·만기 재예치 에이전트</b>가 소비 &nbsp;·&nbsp; <span class="note">※ 코드 구조 기반 추정 · 수신계 담당: 정혜영</span></p>
+  </div>
+
+  <div class="cols">
+    <!-- 좌 : 도메인 생산 -->
+    <div>
+      <div class="ch a">수신계 · 도메인 (데이터 생산)</div>
+      <div class="pipe">
+        <div class="pb"><div class="l">진입</div><div class="t">API Gateway → 본인 검증</div><div class="d"><span class="m">AuthenticatedCustomerValidator · X-User</span></div></div>
+        <div class="cn">▼</div>
+        <div class="pb"><div class="l">상품 · PRODUCT</div><div class="t">예금 · 적금 · 청약 카탈로그</div><div class="d">금리 · 우대특약 · 대상그룹 · 가입채널</div></div>
+        <div class="cn">▼ 가입</div>
+        <div class="pb"><div class="l">가입 · 계약 · CONTRACT</div><div class="t">상품 가입 → 계약 체결</div><div class="d">적용금리 · 특약 동의</div></div>
+        <div class="cn">▼ 개설</div>
+        <div class="pb"><div class="l">계좌 · ACCOUNT</div><div class="t">계좌 개설 · 상태 · 한도</div><div class="fds">◀ FDS 연동 <span class="m">fraud_flag · hold_amount</span></div></div>
+        <div class="cn">▼ 입출금</div>
+        <div class="pb"><div class="l">거래 · TRANSACTION</div><div class="t">입금 · 출금 · 이체</div><div class="d">멱등성 <span class="m">idempotency_key</span> · 낙관적 락 <span class="m">version</span></div></div>
+        <div class="cn">▼ 파생</div>
+        <div class="pb"><div class="l">이자 · 자동납입 · 연동</div><div class="t">이자 계산·지급 / 적금 정기납입</div><div class="d">Scheduler · 고객계(예금주) · 결제계(이체 <span class="m">v1</span>)</div></div>
+      </div>
+    </div>
+
+    <!-- 중 : 데이터 (접합점) -->
+    <div>
+      <div class="ch b">접합점 · 수신계 데이터</div>
+      <div class="data">
+        <div class="grp"><div class="gl">상품</div><div class="gt">deposit_product · savings_product · subscription_product<br>product_interest_rate · special_term · target_group · join_channel</div></div>
+        <div class="grp"><div class="gl">계약</div><div class="gt">contract · contract_applied_rate<br>contract_special_term_agreement</div></div>
+        <div class="grp"><div class="gl">계좌</div><div class="gt">account (fraud_flag · hold_amount · version)</div></div>
+        <div class="grp"><div class="gl">거래</div><div class="gt">transaction (idempotency_key · direction · amount)</div></div>
+        <div class="grp"><div class="gl">이자 · 납입</div><div class="gt">interest_history · payment_schedule<br>subscription_payment_recognition_history</div></div>
+        <div class="grp"><div class="gl">현금흐름 (파생)</div><div class="gt">CashFlowSummary — 월 수입 · 지출 · 잉여자금</div></div>
+      </div>
+    </div>
+
+    <!-- 우 : 에이전트 소비 -->
+    <div>
+      <div class="ch c">B2C 에이전트 · 데이터 소비</div>
+      <div class="agents">
+        <div class="rt">◀ 계좌 · 거래 · 현금흐름 데이터 read</div>
+        <div class="ag"><span class="asvc">deposit-service</span><div class="an">상품 추천</div><div class="ad">현금흐름 기반 개인화 예·적금 추천 <span class="m">CashflowBasedRecommendService · RecommendAgent</span></div></div>
+        <div class="ag"><span class="asvc">goal-agent</span><div class="an">저축 목표</div><div class="ad">목표 달성 가능성·필요 월저축 역산·대안 시나리오 <span class="m">analyze_cash_flow · evaluate_goal_feasibility</span></div></div>
+        <div class="ag"><span class="asvc">consultation-service</span><div class="an">지출 진단</div><div class="ad">지출 패턴 이상 탐지 <span class="m">spending_pattern_agent</span></div></div>
+        <div class="ag"><span class="asvc">consultation-service</span><div class="an">만기 재예치</div><div class="ad">만기 도래 → 재예치·상품 추천 <span class="m">maturity_agent · 상품 RAG</span></div></div>
+        <div class="orch"><div class="on">◇ 소득 안정화 오케스트레이터 <span style="font-weight:700;font-size:8.5px;color:#9CA3AF">[기획]</span></div><div class="od">위 4개 에이전트를 <b>고객 소득 안정화(B2C)</b> 하나의 축으로 연결 <span class="mono" style="font-size:8.4px">docs/plan/income-stability-orchestrator</span></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body></html>

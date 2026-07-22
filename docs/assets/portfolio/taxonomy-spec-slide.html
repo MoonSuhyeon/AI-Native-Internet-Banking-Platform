@@ -1,0 +1,152 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>이벤트 택소노미 스펙</title>
+<style>
+*{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; margin:0; padding:0; }
+@page{ size:A4 landscape; margin:0; }
+:root{
+  --ink:#111827; --sub:#4B5563; --faint:#6B7280; --line:#E5E7EB;
+  --indigo:#1D4ED8; --indigo-bg:#EEF2FB; --grey:#F3F4F6;
+  --impl:#047857; --impl-bg:#ECFDF5; --impl-badge:#D1FAE5;
+  --plan:#B45309; --plan-bg:#FFFBEB; --plan-badge:#FEF3C7; --terra:#C2410C;
+}
+html,body{ font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif; color:var(--ink); }
+.mono{ font-family:"Consolas",ui-monospace,monospace; }
+.slide{ width:297mm; height:209mm; padding:10mm 12mm; display:flex; flex-direction:column; }
+
+.head h1{ font-size:26px; font-weight:800; letter-spacing:-.01em; }
+.head p{ font-size:12.5px; color:var(--sub); margin-top:5px; }
+.badge{ display:inline-block; font-size:11px; font-weight:800; padding:2px 9px; border-radius:20px; vertical-align:middle; }
+.b-impl{ color:var(--impl); background:var(--impl-badge); }
+.b-plan{ color:var(--plan); background:var(--plan-badge); }
+.legend{ margin-top:8px; font-size:12px; color:var(--sub); display:flex; gap:18px; align-items:center; }
+.legend b{ color:var(--ink); }
+
+table{ width:100%; border-collapse:separate; border-spacing:0; margin-top:14px; font-size:11.5px;
+       border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:0 5px 14px -8px rgba(0,0,0,.12); }
+thead th{ background:var(--indigo-bg); color:#1F2937; font-weight:800; font-size:12px;
+          padding:12px 11px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
+tbody td{ padding:17px 11px; border-bottom:1px solid var(--line); vertical-align:middle; line-height:1.5; }
+tbody tr:last-child td{ border-bottom:none; }
+.ev{ font-family:"Consolas",monospace; font-size:11px; color:#1E3A8A; font-weight:700; line-height:1.6; }
+.src{ font-family:"Consolas",monospace; font-size:10.4px; color:#334155; line-height:1.6; }
+.pii{ font-family:"Consolas",monospace; font-size:10.4px; color:#475569; line-height:1.6; }
+.rule{ font-family:"Consolas",monospace; font-size:10.6px; color:#065F46; font-weight:700; }
+.dim{ color:#9CA3AF; }
+.tag{ font-size:9px; font-weight:800; padding:1px 5px; border-radius:4px; }
+.t-dom{ background:#F1F5F9; color:#64748B; }
+/* 구현 vs 설계 컬럼 음영 : KPI(4)·CRM(6)=설계(amber), 룰(5)=구현(green) */
+th:nth-child(4), td:nth-child(4), th:nth-child(6), td:nth-child(6){ background:var(--plan-bg); }
+th:nth-child(5), td:nth-child(5){ background:var(--impl-bg); }
+th .cbadge{ display:block; margin-top:3px; font-size:9px; font-weight:800; }
+.cb-impl{ color:var(--impl); } .cb-plan{ color:var(--plan); }
+
+.boxes{ display:grid; grid-template-columns:1fr 1.05fr 1.15fr; gap:16px; margin-top:auto; padding-top:14px; }
+.box{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px;
+      box-shadow:0 4px 10px -6px rgba(0,0,0,.10); display:flex; flex-direction:column; }
+.box.impl{ border:1.6px solid #6EE7B7; background:#F6FEFB; }
+.box h3{ font-size:14px; font-weight:800; margin-bottom:11px; display:flex; align-items:center; gap:7px; }
+.box ul{ list-style:none; display:flex; flex-direction:column; gap:7px; }
+.box li{ font-size:12px; color:var(--sub); line-height:1.6; padding-left:12px; position:relative; }
+.box li::before{ content:"·"; position:absolute; left:2px; color:var(--indigo); font-weight:800; }
+.box li b{ color:var(--ink); }
+.box .q{ font-size:12.5px; color:var(--impl); font-weight:700; margin-top:auto; padding-top:9px; }
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>이벤트 택소노미 스펙</h1>
+    <p>규제 도메인 백엔드 이벤트(인증보안계)를 <b>프로덕트·마케팅 분석 트래킹 플랜으로 번역</b> — 각 이벤트에 원본 소스 테이블을 명시.</p>
+    <div class="legend">
+      <span><span class="badge b-impl">구현</span> <b>룰(FDS)</b> = 실제 룰 엔진에서 소비(실행됨)</span>
+      <span><span class="badge b-plan">설계</span> <b>KPI · CRM</b> = 분석 스택으로 번역 시 확장 소비처</span>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr>
+      <th>이벤트명</th>
+      <th>트리거</th>
+      <th>핵심 파라미터 (PII)</th>
+      <th>KPI<span class="cbadge cb-plan">설계</span></th>
+      <th>룰 (FDS)<span class="cbadge cb-impl">구현</span></th>
+      <th>CRM<span class="cbadge cb-plan">설계</span></th>
+      <th>소스 (실제 테이블)</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td class="ev">login_request<br>→ success / failure</td>
+        <td>로그인 시도 → 검증 성공/실패</td>
+        <td class="pii">login_id · ip(유사식별)<br>failure_reason</td>
+        <td>로그인 성공률·실패율</td>
+        <td class="rule">FDS 30분 10회 → BLOCK</td>
+        <td>재방문 세그먼트</td>
+        <td class="src">login_attempt · login_session</td>
+      </tr>
+      <tr>
+        <td class="ev">otp_sent / identity_verified<br>/ cert_login_failure</td>
+        <td>인증번호 발송 → 본인확인(CI) / 인증서 실패</td>
+        <td class="pii">phone(마스킹) · ci·birth(해시)<br>result_code</td>
+        <td>OTP · 가입 전환율</td>
+        <td class="rule">FDS 10분 5회 → BLOCK</td>
+        <td>신규 웰컴</td>
+        <td class="src">mobile_auth · identity_verification<br>· certificate_use</td>
+      </tr>
+      <tr>
+        <td class="ev">password_changed</td>
+        <td>비밀번호 변경</td>
+        <td class="pii">change_channel · change_reason</td>
+        <td class="dim">—</td>
+        <td class="rule">FDS 1일 3회 → MONITOR</td>
+        <td class="dim">—</td>
+        <td class="src">password_history</td>
+      </tr>
+      <tr>
+        <td class="ev">transfer_completed <span style="color:#7C2D12">(Aha)</span></td>
+        <td>이체 성공</td>
+        <td class="pii">amount_band(버킷) · recipient_type</td>
+        <td>활성화율 (TTV)</td>
+        <td class="dim">—</td>
+        <td>크로스셀</td>
+        <td class="src">certificate_use(서명) · 결제계 <span class="tag t-dom">타 도메인</span></td>
+      </tr>
+      <tr>
+        <td class="ev">customer_status_changed</td>
+        <td>상태 전환</td>
+        <td class="pii">from_status · to_status</td>
+        <td>휴면율</td>
+        <td class="dim">—</td>
+        <td>윈백 캠페인</td>
+        <td class="src">customer_status_history</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="boxes">
+    <div class="box">
+      <h3>네이밍 &amp; 거버넌스</h3>
+      <ul>
+        <li><span class="mono">snake_case</span> · 화면명 아닌 <b>'비즈니스 이벤트'</b></li>
+        <li>공통 파라미터 <span class="mono">customer_id · event_time</span> 필수</li>
+        <li>값 <span class="mono">enum</span> 통제(= 백엔드 <span class="mono">CHECK</span>) · 버전관리(<span class="mono">Flyway</span>)</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>동일인 식별 &amp; 상태</h3>
+      <ul>
+        <li><b>동일인 식별</b> : 본인확인 <span class="mono">CI(해시)</span> → <span class="mono">user_id(=customer_id)</span></li>
+        <li>"한 사람 = 한 ID" 보장 (<span class="mono">V17 UNIQUE</span>) · 익명 추적 없음</li>
+        <li>상태전이 : 계정·세션 상태값 이력 관리</li>
+      </ul>
+    </div>
+    <div class="box impl">
+      <h3>소비의 핵심 — 실제 룰 엔진 <span class="badge b-impl">구현</span></h3>
+      <ul>
+        <li>FDS <span class="mono">condition_json {window, threshold}</span></li>
+        <li>→ 시간창 <span class="mono">COUNT ≥ 임계</span> → <span class="mono">BLOCK / MONITOR</span></li>
+      </ul>
+      <div class="q">"로그가 아닌 판정에 소비된다."</div>
+    </div>
+  </div>
+
+</div>
+</body></html>

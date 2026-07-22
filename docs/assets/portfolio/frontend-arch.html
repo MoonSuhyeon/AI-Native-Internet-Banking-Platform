@@ -1,0 +1,113 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>프론트엔드 아키텍처</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
+@page{size:A4 landscape;margin:0;}
+:root{
+  --ink:#111827;--sub:#4B5563;--faint:#6B7280;--line:#E5E7EB;
+  --blue:#1D4ED8;--blue-bg:#EEF2FB;--blue-bd:#C7D6F5;
+  --terra:#C2410C;--terra-bg:#FFF4ED;--terra-bd:#FBBF9B;
+  --gold:#B0791C;--gold-bg:#FBF2DD;--gold-bd:#E4C68A;
+  --grn:#047857;--grn-bg:#ECFDF5;--grn-bd:#A7F3D0;--slate:#334155;--slate-bg:#F1F5F9;
+}
+html,body{font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;color:var(--ink);}
+.mono{font-family:"Consolas",ui-monospace,monospace;}
+.slide{width:297mm;height:209mm;padding:9mm 12mm;display:flex;flex-direction:column;gap:11px;}
+.head h1{font-size:22px;font-weight:800;letter-spacing:-.01em;}
+.head p{font-size:10.5px;color:var(--sub);margin-top:3px;} .head p b{color:var(--ink);} .head p .m{font-family:"Consolas",monospace;font-size:9px;color:#9CA3AF;}
+.ar{text-align:center;color:var(--blue);font-size:12px;font-weight:800;line-height:1;} .ar small{color:var(--faint);font-size:8.5px;font-weight:700;}
+
+.users{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.ubox{border-radius:9px;padding:13px 12px;text-align:center;font-size:12px;font-weight:800;box-shadow:0 2px 7px -4px rgba(0,0,0,.08);}
+.ubox small{font-weight:600;font-size:9px;}
+.ubox.cust{background:var(--blue-bg);color:#1E3A8A;} .ubox.adm{background:var(--terra-bg);color:#7C2D12;}
+
+.router{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.rg{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:0 2px 8px -4px rgba(0,0,0,.09);}
+.rg.p{border-top:3px solid var(--blue);} .rg.a{border-top:3px solid var(--terra);}
+.rg .rt{font-size:11.5px;font-weight:800;} .rg.p .rt{color:var(--blue);} .rg.a .rt{color:var(--terra);}
+.rg .rt .m{font-family:"Consolas",monospace;font-size:9.5px;color:var(--faint);font-weight:700;}
+.rg .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.rc{font-size:8.8px;padding:2px 6px;border-radius:5px;background:var(--slate-bg);color:var(--slate);}
+.rg.p .rc b,.rg.a .rc b{font-weight:700;}
+
+.layer{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:0 2px 8px -4px rgba(0,0,0,.08);}
+.layer .lt{font-size:11.5px;font-weight:800;color:var(--slate);} .layer .lt .m{font-family:"Consolas",monospace;font-size:9px;color:var(--faint);font-weight:700;}
+.layer .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.chip{font-size:9px;padding:2px 7px;border-radius:5px;background:var(--slate-bg);color:var(--slate);}
+.chip .m{font-family:"Consolas",monospace;font-size:8.4px;}
+
+.apilayer{background:var(--gold-bg);border:1.6px solid var(--gold-bd);border-radius:11px;padding:13px 15px;}
+.apilayer .lt{font-size:12px;font-weight:800;color:var(--gold);}
+.agrid{display:grid;grid-template-columns:1.15fr 1.2fr 1fr;gap:9px;margin-top:6px;}
+.acol .ah{font-size:9.5px;font-weight:800;color:#8A5E12;}
+.acol .ad{font-family:"Consolas",monospace;font-size:8.5px;color:#5B4A1C;line-height:1.6;margin-top:1px;}
+
+.gw{background:var(--blue);color:#fff;border-radius:9px;padding:14px;text-align:center;font-size:12.5px;font-weight:800;}
+.gw small{display:block;font-size:9px;font-weight:600;color:#DBE4FF;margin-top:1px;}
+
+.foot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:auto;}
+.fbox{border:1px solid var(--line);border-radius:9px;padding:13px 14px;background:#FBFCFE;}
+.fbox .ft{font-size:10.5px;font-weight:800;color:var(--slate);} .fbox .fd{font-size:9.2px;color:var(--sub);margin-top:2px;line-height:1.5;} .fbox .m{font-family:"Consolas",monospace;font-size:8.5px;}
+.fbox.grn{background:var(--grn-bg);border-color:var(--grn-bd);} .fbox.grn .ft{color:var(--grn);}
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>프론트엔드 아키텍처 — Next.js 14 App Router (고객 · 직원 통합)</h1>
+    <p><b>React 18 · TypeScript · axios · Tailwind CSS · Vitest</b> · 2개 route group · 총 127 pages &nbsp; <span class="m">※ web/ 기준</span></p>
+  </div>
+
+  <div class="users">
+    <div class="ubox cust">고객 (Personal) <small>· 인터넷뱅킹 사용자</small></div>
+    <div class="ubox adm">직원 (Admin) <small>· 행원 · 심사역 · 리스크</small></div>
+  </div>
+  <div class="ar">▼</div>
+
+  <div class="router">
+    <div class="rg p"><div class="rt">고객 라우트 <span class="m">app/(personal)</span></div>
+      <div class="chips">
+        <span class="rc">dashboard</span><span class="rc">계좌조회 <b>accounts</b></span><span class="rc">이체·한도 <b>banking</b></span>
+        <span class="rc">인증서 <b>cert</b>(axful·fin·joint·biz)</span><span class="rc">대출신청 <b>loans</b></span><span class="rc">조회 <b>inquiry</b></span>
+        <span class="rc">계산기 <b>calculator</b></span><span class="rc">마이페이지</span><span class="rc">로그인·<b>PIN</b></span>
+      </div>
+    </div>
+    <div class="rg a"><div class="rt">직원 라우트 <span class="m">app/(admin)</span></div>
+      <div class="chips">
+        <span class="rc">dashboard</span><span class="rc">고객관리 <b>customers</b></span><span class="rc">이상거래 <b>fraud</b></span>
+        <span class="rc">여신심사 <b>loan·screening</b></span><span class="rc"><b>EDD·FATCA</b></span><span class="rc">상담 <b>consultation</b></span>
+        <span class="rc">감사 <b>audit·audit-log</b></span><span class="rc">회원상태 <b>member-status</b></span><span class="rc">AI·agent</span>
+      </div>
+    </div>
+  </div>
+  <div class="ar">▼ <small>페이지 → 컴포넌트 조합</small></div>
+
+  <div class="layer">
+    <div class="lt">Components — 기능별 폴더 <span class="m">components/</span> &nbsp;+ Tailwind · theme</div>
+    <div class="chips">
+      <span class="chip">layout</span><span class="chip">home</span><span class="chip">cert 인증서</span><span class="chip">loan</span><span class="chip">inquiry</span><span class="chip">biz</span><span class="chip">other-bank</span><span class="chip">chatbot 위젯</span>
+      <span class="chip">admin <span class="m">AdminSidebar · RoleGate</span></span><span class="chip">공통 <span class="m">MobileAuthField · PinManageModal</span></span>
+    </div>
+  </div>
+  <div class="ar">▼ <small>데이터 요청</small></div>
+
+  <div class="apilayer">
+    <div class="lt">데이터 · API 레이어 <span class="mono" style="font-size:9px;font-weight:600;color:#8A5E12">lib/ · axios</span></div>
+    <div class="agrid">
+      <div class="acol"><div class="ah">Base 클라이언트</div><div class="ad">api.ts — 401 인터셉터 · 토큰<br>NEXT_PUBLIC_API_URL → 게이트웨이</div></div>
+      <div class="acol"><div class="ah">도메인 API</div><div class="ad">customer-auth · deposit · loan<br>payment · master · other-bank</div></div>
+      <div class="acol"><div class="ah">AI · 유틸(테스트)</div><div class="ad">fraud-agent · advisory · auto-review · consultation<br>format · validation · transfer-routing (순수함수)</div></div>
+    </div>
+  </div>
+  <div class="ar">▼ <small>HTTPS · JWT</small></div>
+
+  <div class="gw">→ API Gateway (백엔드)<small>JWT 검증 → 도메인 서비스 (customer · deposit · loan · payment)</small></div>
+
+  <div class="foot">
+    <div class="fbox"><div class="ft">인증 · 권한</div><div class="fd">고객: 로그인·PIN·인증서 <span class="m">customer-auth-api</span><br>직원: RBAC 화면 제어 <span class="m">admin-auth · RoleGate</span></div></div>
+    <div class="fbox grn"><div class="ft">테스트 · 품질</div><div class="fd">Vitest + React Testing Library<br>순수함수 단위테스트 <span class="m">*.test.ts</span> (검증·이체라우팅·마스킹)</div></div>
+    <div class="fbox"><div class="ft">공통 관심사</div><div class="fd">theme(라이트/다크) · 코드값→명칭 변환<br>세션 카운트다운 · QR 폴링 상태머신</div></div>
+  </div>
+
+</div>
+</body></html>

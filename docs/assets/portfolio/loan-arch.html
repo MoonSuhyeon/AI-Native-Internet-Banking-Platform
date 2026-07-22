@@ -1,0 +1,99 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>여신계 아키텍처</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
+@page{size:A4 landscape;margin:0;}
+:root{
+  --ink:#111827;--sub:#4B5563;--faint:#6B7280;--line:#E5E7EB;
+  --blue:#1D4ED8;--blue-pill:#E0E7FF;--grey-pill:#F3F4F6;
+  --gold:#B0791C;--gold-bg:#FBF2DD;--gold-bd:#E4C68A;
+  --terra:#C2410C;--terra-pill:#FFEDD5;--terra-bg:#FFF4ED;--terra-bd:#FBBF9B;--red:#C2410C;
+  --grn:#047857;--grn-bg:#ECFDF5;--grn-bd:#6EE7B7;
+}
+html,body{font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;color:var(--ink);}
+.mono{font-family:"Consolas",ui-monospace,monospace;}
+.slide{width:297mm;height:209mm;padding:8mm 11mm;display:flex;flex-direction:column;}
+.head h1{font-size:22px;font-weight:800;letter-spacing:-.01em;}
+.head p{font-size:11px;color:var(--sub);margin-top:3px;} .head p b{color:var(--ink);} .head p .note{color:var(--faint);}
+
+.cols{display:grid;grid-template-columns:1fr .92fr 1.15fr;gap:11px;margin-top:10px;flex:1;}
+.ch{text-align:center;font-size:12px;font-weight:800;padding:7px;border-radius:22px;margin-bottom:8px;}
+.ch.a{background:var(--blue-pill);color:#1E3A8A;} .ch.b{background:var(--grey-pill);color:#374151;} .ch.c{background:var(--terra-pill);color:#7C2D12;}
+
+.pipe{display:flex;flex-direction:column;}
+.pb{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 11px;box-shadow:0 2px 7px -4px rgba(0,0,0,.08);}
+.pb .l{font-size:9px;font-weight:800;color:var(--blue);}
+.pb .t{font-size:11.5px;font-weight:800;margin-top:1px;}
+.pb .d{font-size:9px;color:var(--sub);line-height:1.4;margin-top:3px;} .pb .d .m{font-family:"Consolas",monospace;font-size:8.4px;color:var(--faint);}
+.cn{text-align:center;color:var(--blue);font-size:12px;font-weight:800;line-height:1;padding:2px 0;}
+
+.data{background:var(--gold-bg);border:1.6px solid var(--gold-bd);border-radius:11px;padding:9px 12px;}
+.data .grp{margin-bottom:6px;}
+.data .gl{font-size:10px;font-weight:800;color:var(--gold);}
+.data .gt{font-family:"Consolas",monospace;font-size:8.6px;color:#5B4A1C;line-height:1.55;margin-top:1px;}
+
+.agents{display:flex;flex-direction:column;gap:6px;}
+.rt{font-size:9.5px;font-weight:800;color:var(--terra);background:#fff;border:1px dashed var(--terra-bd);border-radius:7px;padding:5px 8px;text-align:center;}
+.ag{background:var(--terra-bg);border:1px solid var(--terra-bd);border-radius:9px;padding:7px 11px;}
+.ag .asvc{font-size:8.3px;font-weight:700;color:var(--terra);float:right;}
+.ag .an{font-size:11px;font-weight:800;color:#7C2D12;}
+.ag .ad{font-size:9px;color:var(--sub);line-height:1.4;margin-top:2px;clear:both;} .ag .ad .m{font-family:"Consolas",monospace;font-size:8.3px;color:var(--terra);}
+.guard{background:var(--grn-bg);border:1px solid var(--grn-bd);border-radius:9px;padding:7px 11px;}
+.guard .gn{font-size:10px;font-weight:800;color:var(--grn);}
+.guard .gd{font-size:8.9px;color:var(--sub);line-height:1.4;margin-top:2px;} .guard .gd .m{font-family:"Consolas",monospace;font-size:8.2px;color:var(--grn);}
+</style></head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <h1>여신계와 AI 심사 에이전트 아키텍처</h1>
+    <p>여신 생애주기 데이터(신청·심사·담보·상환)를 <b>사전심사 · 거절사유 · 공정성/편향 감사 · 정책 RAG 에이전트</b>가 소비 &nbsp;·&nbsp; <span class="note">※ 코드 구조 기반 추정 · 여신계 담당: 양혜민</span></p>
+  </div>
+
+  <div class="cols">
+    <!-- 좌 : 여신 생애주기 -->
+    <div>
+      <div class="ch a">여신계 · 도메인 (데이터 생산)</div>
+      <div class="pipe">
+        <div class="pb"><div class="l">신청 · 동의</div><div class="t">대출 신청 + 신용조회 동의</div><div class="d"><span class="m">LoanApplication · CreditConsent</span></div></div>
+        <div class="cn">▼ 심사</div>
+        <div class="pb"><div class="l">심사 · SCREENING</div><div class="t">신용 평가 + 담보 평가</div><div class="d">상환능력·리스크 등급 <span class="m">CreditEvaluation · Collateral</span></div></div>
+        <div class="cn">▼ 승인</div>
+        <div class="pb"><div class="l">계약 · CONTRACT</div><div class="t">여신 계약 체결 · 인증서</div><div class="d"><span class="m">LoanContract · LoanCertificate</span></div></div>
+        <div class="cn">▼ 실행</div>
+        <div class="pb"><div class="l">실행 · EXECUTION</div><div class="t">대출 실행 → 결제계</div><div class="d">지급 지시 <span class="m">loan_execution_pi_id</span> (PI 연동)</div></div>
+        <div class="cn">▼ 상환</div>
+        <div class="pb"><div class="l">상환 · 이자</div><div class="t">이자 발생 · 상환 · 자동이체</div><div class="d">연체 <span class="m">InterestAccrual · repayment · AutoDebit · overdue</span></div></div>
+        <div class="cn">▼ 종결</div>
+        <div class="pb"><div class="l">종결 · 회계</div><div class="t">상각·대위변제 · ECL · 결산</div><div class="d"><span class="m">LoanClosure · loan_ecl_summary · accounting</span></div></div>
+      </div>
+    </div>
+
+    <!-- 중 : 여신 데이터 -->
+    <div>
+      <div class="ch b">접합점 · 여신 데이터</div>
+      <div class="data">
+        <div class="grp"><div class="gl">신청 · 심사</div><div class="gt">loan_application · credit_consent · credit_evaluation<br>loan_review (ai_track · approver_bias · outbox)</div></div>
+        <div class="grp"><div class="gl">담보</div><div class="gt">collateral · collateral_evaluation</div></div>
+        <div class="grp"><div class="gl">계약 · 실행</div><div class="gt">loan_contract · loan_certificate (loan_execution_pi_id)</div></div>
+        <div class="grp"><div class="gl">상환 · 이자</div><div class="gt">repayment_transaction · interest_accrual<br>auto_debit_clearing_pending · overdue_accrual</div></div>
+        <div class="grp"><div class="gl">종결 · 손상</div><div class="gt">loan_closure (writeoff · subrogation) · loan_ecl_summary</div></div>
+        <div class="grp"><div class="gl">회계 · 감사</div><div class="gt">daily/monthly_accounting_summary<br>access_audit_log · ai_review_advice</div></div>
+      </div>
+    </div>
+
+    <!-- 우 : AI 심사 에이전트 -->
+    <div>
+      <div class="ch c">AI 심사 에이전트 · 데이터 소비</div>
+      <div class="agents">
+        <div class="rt">◀ 신청 · 재무 · 정책 데이터 read</div>
+        <div class="ag"><span class="asvc">auto-loan-review</span><div class="an">사전 심사</div><div class="ad">정책 조회·목적 분석·조건 재계산 → 리스크 등급 산출 <span class="m">PreReviewAgentService · RiskLevelDeriver · Tools</span></div></div>
+        <div class="ag"><span class="asvc">auto-loan-review</span><div class="an">거절 사유 초안</div><div class="ad">거절 시 사유·통지문 초안 생성 <span class="m">RejectionReasonAgentService</span></div></div>
+        <div class="ag"><span class="asvc">advisory-service</span><div class="an">공정성 · 편향 감사</div><div class="ad">승인자 편향 검증 → 공정성 리포트 <span class="m">AuditFairnessAgent · approver_bias</span></div></div>
+        <div class="ag"><span class="asvc">advisory-service</span><div class="an">정책 RAG</div><div class="ad">여신 정책 인용·근거 검색 <span class="m">AdvisoryRag · 정책 citation</span></div></div>
+        <div class="guard"><div class="gn">◇ 안전장치 · Governance</div><div class="gd">루프 가드·의미 불일치 감지 · 감사 불변성 · <b>HITL(심사역 승인)</b> <span class="m">AgentLoopGuard · SemanticDisagreementDetector · AuditImmutabilityEnforcer</span></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body></html>
