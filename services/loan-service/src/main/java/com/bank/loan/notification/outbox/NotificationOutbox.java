@@ -1,14 +1,10 @@
 package com.bank.loan.notification.outbox;
 
-import com.bank.common.persistence.BaseEntity;
+import com.bank.loan.common.outbox.AbstractRetryableOutbox;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,26 +18,17 @@ import java.time.OffsetDateTime;
  *
  * 라이프사이클: PENDING → SENT (성공) | FAILED → DEAD (재시도 상한 초과).
  * 멱등 키 (`eventTypeCd + referenceId + channelCd`) 로 동일 이벤트 재발행을 차단한다.
+ * 재시도 상태·전이 로직은 {@link AbstractRetryableOutbox} 참고.
  */
 @Getter
 @Entity
 @Table(name = "notification_outbox")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
-public class NotificationOutbox extends BaseEntity {
+public class NotificationOutbox extends AbstractRetryableOutbox {
 
-    public static final String STATUS_PENDING = "PENDING";
-    public static final String STATUS_SENT    = "SENT";
-    public static final String STATUS_FAILED  = "FAILED";
-    public static final String STATUS_DEAD    = "DEAD";
+    public static final String STATUS_SENT = "SENT";
 
     public static final int DEFAULT_MAX_ATTEMPT = 3;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "outbox_id")
-    private Long outboxId;
 
     /** 이벤트 종류. listener 가 publish 한 이벤트별 식별자. (APPLICATION_SUBMITTED, INSTALLMENT_PAID, ...) */
     @Column(name = "event_type_cd", nullable = false, length = 50)
@@ -60,27 +47,24 @@ public class NotificationOutbox extends BaseEntity {
     @ColumnTransformer(write = "?::jsonb")
     private String payload;
 
-    @Column(name = "status", nullable = false, length = 50)
-    private String status;
-
-    @Column(name = "attempt_no", nullable = false)
-    private int attemptNo;
-
-    @Column(name = "max_attempt", nullable = false)
-    private int maxAttempt;
-
-    @Column(name = "next_attempt_at", nullable = false)
-    private OffsetDateTime nextAttemptAt;
-
-    @Column(name = "last_error", length = 500)
-    private String lastError;
-
     @Column(name = "sent_at")
     private OffsetDateTime sentAt;
 
     /** 동일 이벤트 재발행 차단용. `eventTypeCd:referenceId:channelCd`. UNIQUE. */
     @Column(name = "idempotency_key", nullable = false, length = 200, unique = true)
     private String idempotencyKey;
+
+    @Builder
+    private NotificationOutbox(String status, int attemptNo, int maxAttempt, OffsetDateTime nextAttemptAt,
+                               String eventTypeCd, Long referenceId, String channelCd, String payload,
+                               String idempotencyKey) {
+        super(status, attemptNo, maxAttempt, nextAttemptAt);
+        this.eventTypeCd = eventTypeCd;
+        this.referenceId = referenceId;
+        this.channelCd = channelCd;
+        this.payload = payload;
+        this.idempotencyKey = idempotencyKey;
+    }
 
     public static String idempotencyKeyOf(String eventTypeCd, Long referenceId, String channelCd) {
         return eventTypeCd + ":" + referenceId + ":" + channelCd;
@@ -89,37 +73,5 @@ public class NotificationOutbox extends BaseEntity {
     public void markSent(OffsetDateTime at) {
         this.status = STATUS_SENT;
         this.sentAt = at;
-    }
-
-    /**
-     * 외부 송신 실패. attemptNo++, 백오프 nextAttemptAt = now + 2^attemptNo 분.
-     * maxAttempt 도달 시 DEAD 로 전이.
-     */
-    public void markFailed(String error, OffsetDateTime now) {
-        this.attemptNo = this.attemptNo + 1;
-        this.lastError = truncate(error, 500);
-        if (this.attemptNo >= this.maxAttempt) {
-            this.status = STATUS_DEAD;
-            this.nextAttemptAt = now;
-        } else {
-            this.status = STATUS_FAILED;
-            this.nextAttemptAt = now.plusMinutes(1L << Math.min(this.attemptNo, 10));
-        }
-    }
-
-    public void requeue(OffsetDateTime now) {
-        this.status = STATUS_PENDING;
-        this.attemptNo = 0;
-        this.nextAttemptAt = now;
-        this.lastError = null;
-    }
-
-    public void delayNextAttempt(OffsetDateTime nextAt) {
-        this.nextAttemptAt = nextAt;
-    }
-
-    private static String truncate(String s, int max) {
-        if (s == null) return null;
-        return s.length() <= max ? s : s.substring(0, max);
     }
 }
