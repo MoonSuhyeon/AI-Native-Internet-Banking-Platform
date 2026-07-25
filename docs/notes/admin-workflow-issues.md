@@ -44,7 +44,7 @@
 
 ### 구조 (대출과 다름: 게이트웨이 미경유, 직접 호출)
 - 프론트 `web/lib/consultation-api.ts` 베이스 = `NEXT_PUBLIC_CONSULTATION_API_URL` → `web/.env.local` 에 `http://localhost:8090`
-- consultation-service = Python(FastAPI), `agents/consultation/start-8087.bat` → uvicorn **8087**
+- consultation-service = Python(FastAPI), `uvicorn app.main:app --port 8087` (실행법은 `agents/consultation/README.md` 참고) → **8087**
 
 ### 원인
 1. **프론트 포트(8090) ↔ 서비스 포트(8087) 불일치** — 프론트는 8090으로 `POST /chatbot/features/{code}/execute` 호출하나 8090은 해당 경로에 **404**.

@@ -563,13 +563,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 실행 (Windows)
-
-```bat
-start-8087.bat
-```
-
-### 직접 실행
+### 실행
 
 ```bash
 CONSULTATION_KAFKA_ENABLED=false \
