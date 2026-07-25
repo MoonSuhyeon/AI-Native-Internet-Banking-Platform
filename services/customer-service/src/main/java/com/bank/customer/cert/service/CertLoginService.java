@@ -1,5 +1,6 @@
 package com.bank.customer.cert.service;
 
+import com.bank.common.security.Sha256;
 import com.bank.common.web.BusinessException;
 import com.bank.customer.cert.domain.Certificate;
 import com.bank.customer.cert.dto.CertLoginRequest;
@@ -20,9 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 
 @Slf4j
@@ -125,7 +123,7 @@ public class CertLoginService {
 
     private CertificateUse saveCertUse(Certificate cert, String ip, String resultCode, String failureReason) {
         // MVP: signedDataHash = serial + ip + timestamp 해시, signatureValue = certPinHash 또는 "N/A"
-        String signedData = sha256(cert.getCertificateSerialNumber() + ip + OffsetDateTime.now());
+        String signedData = Sha256.hex(cert.getCertificateSerialNumber() + ip + OffsetDateTime.now());
         String sigValue   = cert.getCertPinHash() != null ? cert.getCertPinHash() : "N/A";
 
         return certificateUseRepository.save(CertificateUse.builder()
@@ -153,15 +151,4 @@ public class CertLoginService {
         };
     }
 
-    private static String sha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) hex.append(String.format("%02x", b));
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 unavailable", e);
-        }
-    }
 }

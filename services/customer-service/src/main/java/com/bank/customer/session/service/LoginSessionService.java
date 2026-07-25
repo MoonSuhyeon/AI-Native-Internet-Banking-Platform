@@ -1,5 +1,6 @@
 package com.bank.customer.session.service;
 
+import com.bank.common.security.Sha256;
 import com.bank.customer.session.domain.ApiToken;
 import com.bank.customer.session.domain.LoginSession;
 import com.bank.customer.session.repository.ApiTokenRepository;
@@ -8,9 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -59,7 +57,7 @@ public class LoginSessionService {
                 .customerId(customerId)
                 .sessionId(sessionId)
                 .tokenTypeCode(ApiToken.TYPE_ACCESS)
-                .tokenHash(sha256(accessTokenRaw))
+                .tokenHash(Sha256.hex(accessTokenRaw))
                 .tokenIssuedChannelCode(ApiToken.CHANNEL_WEB)
                 .tokenIssuedAt(OffsetDateTime.now())
                 .tokenExpiryAt(accessExpiry)
@@ -70,7 +68,7 @@ public class LoginSessionService {
                 .customerId(customerId)
                 .sessionId(sessionId)
                 .tokenTypeCode(ApiToken.TYPE_REFRESH)
-                .tokenHash(sha256(refreshTokenRaw))
+                .tokenHash(Sha256.hex(refreshTokenRaw))
                 .tokenIssuedChannelCode(ApiToken.CHANNEL_WEB)
                 .tokenIssuedAt(OffsetDateTime.now())
                 .tokenExpiryAt(refreshExpiry)
@@ -92,15 +90,4 @@ public class LoginSessionService {
                 .forEach(t -> t.revoke("LOGOUT"));
     }
 
-    private static String sha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) hex.append(String.format("%02x", b));
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 unavailable", e);
-        }
-    }
 }

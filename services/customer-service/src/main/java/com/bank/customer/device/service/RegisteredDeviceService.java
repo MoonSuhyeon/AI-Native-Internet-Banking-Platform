@@ -1,5 +1,6 @@
 package com.bank.customer.device.service;
 
+import com.bank.common.security.Sha256;
 import com.bank.common.web.BusinessException;
 import com.bank.customer.device.domain.RegisteredDevice;
 import com.bank.customer.device.dto.RegisterDeviceRequest;
@@ -10,9 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @Service
@@ -23,7 +21,7 @@ public class RegisteredDeviceService {
 
     @Transactional
     public RegisteredDeviceResponse register(Long customerId, RegisterDeviceRequest req, String ip) {
-        String hash = sha256(req.deviceIdentifier());
+        String hash = Sha256.hex(req.deviceIdentifier());
 
         // 이미 등록된 기기면 마지막 사용 시각만 갱신
         return deviceRepository
@@ -93,15 +91,4 @@ public class RegisteredDeviceService {
                 .orElseThrow(() -> new BusinessException(CustomerErrorCode.CUST_070));
     }
 
-    public static String sha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) hex.append(String.format("%02x", b));
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 unavailable", e);
-        }
-    }
 }

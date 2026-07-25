@@ -1,5 +1,6 @@
 package com.bank.customer.mobileauth.service;
 
+import com.bank.common.security.Sha256;
 import com.bank.common.web.BusinessException;
 import com.bank.customer.crypto.CryptoService;
 import com.bank.customer.identity.domain.IdentityVerification;
@@ -17,9 +18,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 
@@ -56,7 +54,7 @@ public class MobileAuthService {
                 .mobileAuthMethodTypeCode(req.methodTypeCode())
                 .mobileAuthTelecomCarrierCode(req.telecomCarrierCode())
                 .mobileAuthRecipientPhoneNumber(req.phoneNumber())
-                .mobileAuthCodeHash(sha256(code))
+                .mobileAuthCodeHash(Sha256.hex(code))
                 .mobileAuthPurposeCode(req.purposeCode())
                 .mobileAuthRequestIp(ip)
                 .mobileAuthRequestChannelCode(MobileAuth.CHANNEL_WEB)
@@ -93,7 +91,7 @@ public class MobileAuthService {
 
         auth.recordAttempt();
 
-        if (!sha256(req.code()).equals(auth.getMobileAuthCodeHash())) {
+        if (!Sha256.hex(req.code()).equals(auth.getMobileAuthCodeHash())) {
             auth.fail("WRONG_CODE");
             throw new BusinessException(CustomerErrorCode.CUST_092);
         }
@@ -139,15 +137,4 @@ public class MobileAuthService {
         return String.format("%06d", new SecureRandom().nextInt(1_000_000));
     }
 
-    private static String sha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) hex.append(String.format("%02x", b));
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 unavailable", e);
-        }
-    }
 }
