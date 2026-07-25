@@ -3,7 +3,6 @@ package com.bank.deposit.config;
 import com.bank.deposit.domain.entity.*;
 import com.bank.deposit.domain.enums.*;
 import com.bank.deposit.repository.*;
-import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;

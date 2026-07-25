@@ -1,6 +1,5 @@
 package com.bank.deposit.service;
 
-import com.bank.deposit.domain.entity.Account;
 import com.bank.deposit.domain.entity.Contract;
 import com.bank.deposit.domain.entity.PaymentSchedule;
 import com.bank.deposit.domain.enums.PaymentStatus;

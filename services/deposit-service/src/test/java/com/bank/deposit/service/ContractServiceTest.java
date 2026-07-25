@@ -1,8 +1,6 @@
 package com.bank.deposit.service;
 
 import com.bank.deposit.domain.entity.Contract;
-import com.bank.deposit.domain.entity.ContractAppliedRate;
-import com.bank.deposit.domain.entity.ContractSpecialTermAgreement;
 import com.bank.deposit.domain.entity.Product;
 import com.bank.deposit.domain.enums.*;
 import com.bank.deposit.exception.BusinessException;

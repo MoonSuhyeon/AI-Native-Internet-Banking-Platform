@@ -1,7 +1,6 @@
 package com.bank.deposit.dto.response;
 
 import com.bank.deposit.domain.entity.Product;
-import com.bank.deposit.domain.entity.SavingsProduct;
 import com.bank.deposit.domain.entity.TargetGroup;
 import com.bank.deposit.domain.enums.ProductStatus;
 import com.bank.deposit.domain.enums.ProductType;

@@ -3,7 +3,6 @@ package com.bank.deposit.service;
 import com.bank.deposit.domain.entity.Account;
 import com.bank.deposit.domain.entity.Contract;
 import com.bank.deposit.domain.entity.PaymentSchedule;
-import com.bank.deposit.domain.entity.Transaction;
 import com.bank.deposit.domain.enums.*;
 import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;

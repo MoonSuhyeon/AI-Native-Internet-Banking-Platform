@@ -12,7 +12,6 @@ import com.bank.loan.dsr.domain.DsrCalculation;
 import com.bank.loan.dsr.repository.DsrCalculationRepository;
 import com.bank.loan.guarantor.service.GuarantorPolicyValidator;
 import com.bank.loan.notification.channel.KafkaChannelAdapter;
-import com.bank.loan.notification.event.LoanApprovedEvent;
 import com.bank.loan.notification.outbox.NotificationOutboxAppender;
 import com.bank.loan.product.domain.LoanProduct;
 import com.bank.loan.product.repository.LoanProductRepository;

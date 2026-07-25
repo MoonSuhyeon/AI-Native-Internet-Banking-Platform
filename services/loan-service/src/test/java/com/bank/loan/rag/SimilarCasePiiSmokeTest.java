@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * P2 케이스 청크 PII 유출 smoke 테스트 — Phase E (E3-7).

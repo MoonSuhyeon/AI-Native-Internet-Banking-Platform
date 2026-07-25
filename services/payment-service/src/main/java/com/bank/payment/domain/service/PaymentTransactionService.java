@@ -3,7 +3,6 @@ package com.bank.payment.domain.service;
 import com.bank.payment.common.IdGenerator;
 import com.bank.payment.common.LedgerFailureSimulator;
 import com.bank.payment.common.exception.LedgerBalanceMismatchException;
-import com.bank.payment.common.exception.LedgerInsertFailureException;
 import com.bank.payment.domain.ExternalCall;
 import com.bank.payment.domain.IdempotencyKey;
 import com.bank.payment.domain.Ledger;

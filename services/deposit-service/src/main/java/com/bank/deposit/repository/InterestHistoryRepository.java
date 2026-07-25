@@ -1,7 +1,6 @@
 package com.bank.deposit.repository;
 
 import com.bank.deposit.domain.entity.InterestHistory;
-import com.bank.deposit.domain.enums.InterestReason;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
