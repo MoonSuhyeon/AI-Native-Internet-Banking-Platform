@@ -86,6 +86,6 @@ llm:
 
 logging:
   file:
-    name: ${LOG_DIR:/logs}/review-ai-gateway.log
+    name: ${LOG_DIR:C:/logs/internet-banking}/review-ai-gateway.log
   level:
     root: INFO

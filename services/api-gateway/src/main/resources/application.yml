@@ -118,6 +118,6 @@ management:
 
 logging:
   file:
-    name: ${LOG_DIR:/logs}/api-gateway.log
+    name: ${LOG_DIR:C:/logs/internet-banking}/api-gateway.log
   level:
     root: INFO

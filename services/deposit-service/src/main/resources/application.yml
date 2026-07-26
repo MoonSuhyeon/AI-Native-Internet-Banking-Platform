@@ -72,7 +72,7 @@ client:
 
 logging:
   file:
-    name: ${LOG_DIR:/logs}/deposit-service.log
+    name: ${LOG_DIR:C:/logs/internet-banking}/deposit-service.log
   level:
     root: INFO
     org.springframework.web: INFO

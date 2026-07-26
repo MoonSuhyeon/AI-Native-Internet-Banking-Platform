@@ -56,6 +56,6 @@ springdoc:
 
 logging:
   file:
-    name: ${LOG_DIR:/logs}/master-service.log
+    name: ${LOG_DIR:C:/logs/internet-banking}/master-service.log
   level:
     root: INFO

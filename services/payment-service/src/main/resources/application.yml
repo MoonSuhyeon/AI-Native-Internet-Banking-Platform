@@ -86,7 +86,7 @@ payment:
       consumer-group: ${INTERNAL_CONSUMER_GROUP:payment-internal}
 logging:
   file:
-    name: ${LOG_DIR:/logs}/payment-service.log
+    name: ${LOG_DIR:C:/logs/internet-banking}/payment-service.log
   level:
     root: INFO
 
