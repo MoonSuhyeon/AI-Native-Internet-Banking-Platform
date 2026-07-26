@@ -30,6 +30,14 @@ try:
 except ImportError:
     sys.exit("pyyaml 필요: pip install -r eval/requirements.txt")
 
+# 같은 폴더의 .env(gitignore됨)에서 OPENAI_API_KEY 등을 자동 로드 — quest2와 동일 방식.
+# CI 처럼 .env 가 없으면 no-op(환경변수/Secret 사용).
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+except ImportError:
+    pass
+
 STUB = os.getenv("EVAL_STUB", "").lower() in ("1", "true", "yes")
 MODEL = os.getenv("EVAL_MODEL", "gpt-4o-mini")
 BASE_URL = os.getenv("EVAL_BASE_URL") or None  # None = 실제 OpenAI
