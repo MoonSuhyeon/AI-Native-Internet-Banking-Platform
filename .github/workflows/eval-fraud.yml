@@ -1,0 +1,25 @@
+name: Fraud Agent Eval
+
+# fraud-investigation-agent 변경 시 LangGraph 루프 평가(pytest)를 자동 실행한다.
+# 평가 항목: 경로 분기(case_h1 vs case_h2)·fail-closed(case_deceased 즉시 종료)·HITL 게이트(권고까지만, 미실행).
+# TRIAGE_LLM_PROVIDER 미설정 = mock 모드 → 스크립트 응답으로 LLM 키 없이 결정적 검증.
+on:
+  push:
+    branches: [main]
+    paths: ['agents/fraud-investigation-agent/**']
+  pull_request:
+    paths: ['agents/fraud-investigation-agent/**']
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agents/fraud-investigation-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: pytest tests/ -v
