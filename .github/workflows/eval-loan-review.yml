@@ -1,0 +1,19 @@
+name: Auto-Loan-Review Eval
+
+# auto-loan-review(여신 자동심사 에이전트) 변경 시 JUnit 테스트를 자동 실행한다.
+# PurposeAnalysisServiceTest 등 58건이 StubLlmClient(기본, ai.llm.provider=stub) 로 돌아
+# LLM 키 없이 결정적으로 검증된다. (프롬프트/모델 교체 시 파이프라인 회귀 방지)
+# ※ 실 Gemini 출력 "품질" 평가(plausibility 범위·RedFlag 감지율 LIVE 측정)는 별도 — GEMINI_API_KEY 필요.
+on:
+  push:
+    branches: [main]
+    paths: ['agents/auto-loan-review/**']
+  pull_request:
+    paths: ['agents/auto-loan-review/**']
+
+jobs:
+  eval:
+    uses: ./.github/workflows/reusable-java-build.yml
+    with:
+      service-name: auto-loan-review
+      module-path: agents
