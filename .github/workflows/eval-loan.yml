@@ -1,0 +1,39 @@
+name: Loan Purpose-Analysis Eval
+
+# auto-loan-review 의 purpose_analysis 프롬프트/LLM 로직 변경 시 LLM 출력 "품질"을 평가한다.
+# stub JUnit(파이프라인 회귀)과 달리, 실제 OpenAI 로 7개 케이스의 plausibility 범위·RedFlag 감지율을 채점.
+# - STUB 스텝: 키 없이도 러너·채점 구조를 항상 검증(파이프라인 깨짐 방지).
+# - LIVE 스텝: OPENAI_API_KEY Secret 이 설정된 경우에만 실제 호출 채점.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agents/auto-loan-review/src/main/resources/prompts/**'
+      - 'agents/auto-loan-review/src/main/java/com/bank/ai/llm/**'
+      - 'agents/auto-loan-review/eval/**'
+  pull_request:
+    paths:
+      - 'agents/auto-loan-review/src/main/resources/prompts/**'
+      - 'agents/auto-loan-review/src/main/java/com/bank/ai/llm/**'
+      - 'agents/auto-loan-review/eval/**'
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agents/auto-loan-review
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      # 필요 시 모델/엔드포인트 오버라이드: EVAL_MODEL, EVAL_BASE_URL
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r eval/requirements.txt
+      - name: 구조 검증 (STUB — 키 불필요)
+        run: EVAL_STUB=1 python eval/purpose_analysis_eval.py
+      - name: LIVE 품질 평가 (OPENAI_API_KEY 설정 시에만)
+        if: ${{ env.OPENAI_API_KEY != '' }}
+        run: python eval/purpose_analysis_eval.py
