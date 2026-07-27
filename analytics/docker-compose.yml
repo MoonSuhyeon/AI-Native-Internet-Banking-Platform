@@ -1,0 +1,44 @@
+# 실시간 분석 스택 (Kafka → Spark → Redis) — 필요할 때만 기동하는 격리 compose.
+# 루트 스택(kafka·redis)이 떠 있는 상태에서 그 네트워크에 붙어 payment.completed 를 소비한다.
+#
+# 기동:
+#   1) 루트 스택 먼저: docker compose up -d kafka redis  (+ payment-service)
+#   2) docker network ls 로 네트워크 이름 확인(기본 internet-banking_default)
+#   3) docker compose -f analytics/docker-compose.yml up
+# 확인:
+#   docker exec -it <redis> redis-cli KEYS 'fraud:velocity:*'
+#   docker exec -it <redis> redis-cli SMEMBERS fraud:velocity:alerts
+services:
+  fraud-velocity-stream:
+    image: apache/spark:3.5.1
+    command:
+      - /bin/sh
+      - -c
+      - >
+        pip install --quiet redis &&
+        /opt/spark/bin/spark-submit
+        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+        /app/fraud_velocity_stream.py
+    environment:
+      KAFKA_BOOTSTRAP: kafka:29092
+      KAFKA_TOPIC: payment.completed
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      CHECKPOINT_DIR: /checkpoints/fraud-velocity
+      WINDOW: "5 minutes"
+      SLIDE: "1 minute"
+      VELOCITY_THRESHOLD: "10"
+    volumes:
+      - ./:/app:ro
+      - fraud-velocity-checkpoints:/checkpoints
+    networks:
+      - ib
+
+volumes:
+  fraud-velocity-checkpoints:
+
+networks:
+  ib:
+    # 루트 스택의 kafka·redis 가 있는 네트워크. 실제 이름은 `docker network ls` 로 확인해 맞춘다.
+    external: true
+    name: internet-banking_default
