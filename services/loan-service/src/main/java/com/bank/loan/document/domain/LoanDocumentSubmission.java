@@ -48,4 +48,9 @@ public class LoanDocumentSubmission {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    /** doc-agent.routed 로 재판정된 검증 상태를 반영한다. */
+    public void updateVerifyStatus(String verifyStatus) {
+        this.verifyStatus = verifyStatus;
+    }
 }

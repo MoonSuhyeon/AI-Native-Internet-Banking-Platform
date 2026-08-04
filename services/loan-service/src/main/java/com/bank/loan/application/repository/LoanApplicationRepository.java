@@ -14,6 +14,9 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
 
     Optional<LoanApplication> findByApplIdAndDeletedAtIsNull(Long applId);
 
+    /** doc-agent 이벤트는 내부 PK 가 아니라 신청번호(applNo)로 대상을 지목한다. */
+    Optional<LoanApplication> findByApplNoAndDeletedAtIsNull(String applNo);
+
     List<LoanApplication> findByCustomerIdAndDeletedAtIsNullOrderByApplIdDesc(Long customerId);
 
     /**
