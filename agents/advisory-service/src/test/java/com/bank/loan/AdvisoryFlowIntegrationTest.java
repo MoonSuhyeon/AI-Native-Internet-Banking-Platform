@@ -1,5 +1,6 @@
 package com.bank.loan;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.bank.loan.advisory.domain.ReviewAdvisoryAck;
 import com.bank.loan.advisory.domain.ReviewAdvisoryReport;
 import com.bank.loan.advisory.domain.ReviewAdvisoryRule;
@@ -80,7 +81,23 @@ class AdvisoryFlowIntegrationTest extends AbstractLoanIntegrationTest {
                 .build());
         Long advrId = report.getAdvrId();
 
-        // 3. 약정 → 409 LOAN_192
+        // 게이트는 DB 를 직접 보지 않고 AdvisoryClient 로 advisory-service 를 HTTP 조회한다
+        // (LoanContractService·LoanReviewApproverService 동일). 베이스 하네스의 기본 스텁은
+        // 빈 배열을 돌려주므로, 이 revId 에 한해 CRITICAL 리포트를 반환하도록 덮어쓴다.
+        // 덮어쓰지 않으면 게이트가 볼 리포트가 없어 통제가 검증되지 않는다.
+        ADVISORY_MOCK.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/advisory/reports"))
+                .withQueryParam("revId", WireMock.equalTo(String.valueOf(revId)))
+                .atPriority(1)
+                .willReturn(WireMock.aResponse().withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                [{"advrId":%d,"revId":%d,"advisoryTypeCd":"REREVIEW_RECOMMEND",
+                                  "severityCd":"CRITICAL","advrStatusCd":"OPEN",
+                                  "advrTitle":"DSR 한도 초과 승인","advrSummary":"통합 테스트",
+                                  "targetReviewerId":"99201"}]
+                                """.formatted(advrId, revId))));
+
+        // 3. 약정 → 422 LOAN_201 (CRITICAL 미확인)
         mockMvc.perform(post("/api/loan-contracts")
                         .contentType(MediaType.APPLICATION_JSON).content(contractBody(applId)))
                 // 4-eye 승인 경로와 동일한 통제 코드를 쓴다.
@@ -107,6 +124,20 @@ class AdvisoryFlowIntegrationTest extends AbstractLoanIntegrationTest {
         List<ReviewAdvisoryAck> acks = ackRepo.findByAdvrIdOrderByAckedAtAsc(advrId);
         assertThat(acks).hasSize(1);
         assertThat(acks.get(0).getAckResponseCd()).isEqualTo(ReviewAdvisoryAck.RESPONSE_MAINTAIN);
+
+        // ack 결과를 advisory 조회에도 반영한다(운영에서는 advisory-service 가 상태를
+        // ACKED 로 갱신해 반환). 그래야 게이트가 열리는 것까지 검증된다.
+        ADVISORY_MOCK.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/advisory/reports"))
+                .withQueryParam("revId", WireMock.equalTo(String.valueOf(revId)))
+                .atPriority(0)
+                .willReturn(WireMock.aResponse().withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                [{"advrId":%d,"revId":%d,"advisoryTypeCd":"REREVIEW_RECOMMEND",
+                                  "severityCd":"CRITICAL","advrStatusCd":"ACKED",
+                                  "advrTitle":"DSR 한도 초과 승인","advrSummary":"통합 테스트",
+                                  "targetReviewerId":"99201"}]
+                                """.formatted(advrId, revId))));
 
         // 5. 약정 재시도 → 201
         MvcResult contractResult = mockMvc.perform(post("/api/loan-contracts")
