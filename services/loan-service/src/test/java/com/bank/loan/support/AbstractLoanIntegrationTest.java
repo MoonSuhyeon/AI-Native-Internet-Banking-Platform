@@ -4,6 +4,8 @@ import com.bank.loan.application.domain.LoanApplication;
 import com.bank.loan.application.repository.LoanApplicationRepository;
 import com.bank.loan.collateral.domain.Collateral;
 import com.bank.loan.collateral.repository.CollateralRepository;
+import com.bank.loan.review.domain.LoanReview;
+import com.bank.loan.review.repository.LoanReviewRepository;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -190,6 +192,7 @@ public abstract class AbstractLoanIntegrationTest {
 
     @Autowired protected LoanApplicationRepository applicationRepository;
     @Autowired protected CollateralRepository collateralRepository;
+    @Autowired protected LoanReviewRepository reviewRepository;
 
     private Long cachedProdId;
 
@@ -228,6 +231,33 @@ public abstract class AbstractLoanIntegrationTest {
     /** FK 를 만족하는 신청 1건을 저장하고 applId 를 돌려준다. */
     protected Long saveTestApplication() {
         return saveTestApplication(LoanApplication.STATUS_REJECTED, null);
+    }
+
+    /**
+     * FK 를 만족하는 본심사 1건(신청 포함)을 저장하고 revId 를 돌려준다.
+     * review_advisory_report.rev_id → loan_review(rev_id) FK 용.
+     *
+     * <p>loan_review.appl_id 는 UNIQUE 이므로 호출할 때마다 새 신청을 만든다.
+     */
+    protected Long saveTestReview() {
+        return saveTestReview(LoanReview.DECISION_APPROVED);
+    }
+
+    /** 결정 코드를 지정해 본심사 1건을 저장하고 revId 를 돌려준다. */
+    protected Long saveTestReview(String decisionCd) {
+        boolean approved = LoanReview.DECISION_APPROVED.equals(decisionCd);
+        return reviewRepository.save(LoanReview.builder()
+                .applId(saveTestApplication())
+                .revTypeCd(LoanReview.TYPE_MANUAL)
+                .revStatusCd(LoanReview.STATUS_COMPLETED)
+                .revDecisionCd(decisionCd)
+                .approvedAmount(approved ? 30_000_000L : null)
+                .approvedRateBps(approved ? 500 : null)
+                .approvedPeriodMo(approved ? 24 : null)
+                .reviewerId(1L)
+                .reviewedAt(OffsetDateTime.now())
+                .approvedAt(approved ? OffsetDateTime.now() : null)
+                .build()).getRevId();
     }
 
     /**

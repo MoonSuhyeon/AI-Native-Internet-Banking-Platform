@@ -1,12 +1,14 @@
 package com.bank.loan.advisory;
 
 import com.bank.loan.advisory.domain.ReviewAdvisoryReport;
+import com.bank.loan.advisory.domain.ReviewAdvisoryRule;
 import com.bank.loan.advisory.domain.audit.AiAuditOpinion;
 import com.bank.loan.advisory.domain.audit.ReviewerRiskScore;
 import com.bank.loan.advisory.dto.AiAuditOpinionResponse;
 import com.bank.loan.advisory.dto.QuarantineReportResponse;
 import com.bank.loan.advisory.dto.ReviewerRiskScoreResponse;
 import com.bank.loan.advisory.repository.ReviewAdvisoryReportRepository;
+import com.bank.loan.advisory.repository.ReviewAdvisoryRuleRepository;
 import com.bank.loan.advisory.repository.audit.AiAuditOpinionRepository;
 import com.bank.loan.advisory.repository.audit.ReviewerRiskScoreRepository;
 import com.bank.loan.advisory.service.AuditOpinionQueryService;
@@ -31,7 +33,27 @@ class AuditOpinionQueryIntegrationTest extends AbstractLoanIntegrationTest {
     @Autowired AiAuditOpinionRepository       opinionRepo;
     @Autowired ReviewerRiskScoreRepository    riskRepo;
     @Autowired ReviewAdvisoryReportRepository reportRepo;
+    @Autowired ReviewAdvisoryRuleRepository   ruleRepo;
     @Autowired AuditOpinionQueryService       queryService;
+
+    /** review_advisory_report.rule_id FK 용. 클래스당 1회. */
+    private Long testRuleId;
+
+    private Long ensureRule() {
+        if (testRuleId == null) {
+            testRuleId = ruleRepo.save(ReviewAdvisoryRule.builder()
+                    .ruleCd("RULE_AUDITQ_" + java.util.UUID.randomUUID().toString().substring(0, 8))
+                    .ruleName("감사의견 조회 테스트 룰")
+                    .advisoryTypeCd("BIAS_DETECTION")
+                    .ruleCategoryCd("REVIEWER_DEVIATION")
+                    .severityCd(ReviewAdvisoryReport.SEVERITY_WARN)
+                    .ruleVersion("v1.0")
+                    .activeYn("Y")
+                    .ruleDesc("테스트용")
+                    .build()).getRuleId();
+        }
+        return testRuleId;
+    }
 
     @Test
     void advrId_로_감사_의견_조회() {
@@ -108,18 +130,20 @@ class AuditOpinionQueryIntegrationTest extends AbstractLoanIntegrationTest {
     void quarantinedReports_격리_리포트_최신순_반환() {
         OffsetDateTime now = OffsetDateTime.now();
 
-        ReviewAdvisoryReport older = quarantineReport(80_001L, 90_001L, now.minusHours(2));
-        ReviewAdvisoryReport newer = quarantineReport(80_002L, 90_002L, now.minusHours(1));
-        reportRepo.save(older);
-        reportRepo.save(newer);
+        // review_advisory_report 는 rev_id·rule_id 에 FK 가 걸려 있어 실제 부모 row 가 필요하다.
+        Long olderAdvrId = reportRepo.save(
+                quarantineReport(saveTestReview(), 90_001L, now.minusHours(2))).getAdvrId();
+        Long newerAdvrId = reportRepo.save(
+                quarantineReport(saveTestReview(), 90_002L, now.minusHours(1))).getAdvrId();
 
         List<QuarantineReportResponse> results = queryService.quarantinedReports();
 
+        // 저장 시 생성된 advrId 로 비교한다. 이전에는 revId 값을 advrId 목록에서 찾아
+        // 항상 -1 이 나오는 상태였다.
         List<Long> advrIds = results.stream().map(QuarantineReportResponse::advrId).toList();
+        assertThat(advrIds).contains(olderAdvrId, newerAdvrId);
         // newer 가 먼저 (quarantined_at DESC)
-        int newerIdx = advrIds.indexOf(80_002L);
-        int olderIdx = advrIds.indexOf(80_001L);
-        assertThat(newerIdx).isLessThan(olderIdx);
+        assertThat(advrIds.indexOf(newerAdvrId)).isLessThan(advrIds.indexOf(olderAdvrId));
     }
 
     // ── helpers ──────────────────────────────────────────────────
@@ -127,7 +151,7 @@ class AuditOpinionQueryIntegrationTest extends AbstractLoanIntegrationTest {
     private ReviewAdvisoryReport quarantineReport(Long revId, Long reviewerId, OffsetDateTime quarantinedAt) {
         ReviewAdvisoryReport r = ReviewAdvisoryReport.builder()
                 .revId(revId)
-                .ruleId(1L)
+                .ruleId(ensureRule())
                 .advisoryTypeCd("BIAS_DETECTION")
                 .severityCd(ReviewAdvisoryReport.SEVERITY_WARN)
                 .advrStatusCd(ReviewAdvisoryReport.STATUS_QUARANTINE)

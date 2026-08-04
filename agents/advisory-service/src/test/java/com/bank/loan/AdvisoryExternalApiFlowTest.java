@@ -53,11 +53,11 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
         advrIdA = reportRepo.save(buildReport(REVIEWER_A,
                 ReviewAdvisoryReport.SEVERITY_CRITICAL, ruleIdDsr,
-                "API-A-2060", randomId())).getAdvrId();
+                "API-A-2060", saveTestReview())).getAdvrId();   // rev_id FK 충족
 
         advrIdB = reportRepo.save(buildReport(REVIEWER_B,
                 ReviewAdvisoryReport.SEVERITY_WARN, ruleIdDsr,
-                "API-B-2060", randomId())).getAdvrId();
+                "API-B-2060", saveTestReview())).getAdvrId();   // rev_id FK 충족
     }
 
     // ============================================================

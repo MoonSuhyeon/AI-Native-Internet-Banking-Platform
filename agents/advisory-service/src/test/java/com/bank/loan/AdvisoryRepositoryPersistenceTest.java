@@ -86,8 +86,10 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
 
     @Test
     void Report_save_후_revId_조회_및_상태_전이() {
-        Long revId  = randomId();
-        Long ruleId = randomId();
+        // review_advisory_report 는 rev_id → loan_review, rule_id → review_advisory_rule
+        // 로 FK 가 걸려 있어 실제 부모 row 가 필요하다.
+        Long revId  = saveTestReview();
+        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_PERSIST"), "Y")).getRuleId();
         ReviewAdvisoryReport saved = reportRepo.save(buildReport(revId, ruleId, ReviewAdvisoryReport.SEVERITY_CRITICAL));
 
         List<ReviewAdvisoryReport> found = reportRepo
@@ -121,8 +123,9 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
     @Test
     void Report_target_reviewer_별_조회() {
         Long reviewerId = randomId();
-        reportRepo.save(buildReport(randomId(), randomId(), ReviewAdvisoryReport.SEVERITY_WARN, reviewerId));
-        reportRepo.save(buildReport(randomId(), randomId(), ReviewAdvisoryReport.SEVERITY_INFO, reviewerId));
+        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_TARGET"), "Y")).getRuleId();
+        reportRepo.save(buildReport(saveTestReview(), ruleId, ReviewAdvisoryReport.SEVERITY_WARN, reviewerId));
+        reportRepo.save(buildReport(saveTestReview(), ruleId, ReviewAdvisoryReport.SEVERITY_INFO, reviewerId));
 
         List<ReviewAdvisoryReport> rows = reportRepo
                 .findByTargetReviewerIdAndDeletedAtIsNullOrderByGeneratedAtDesc(reviewerId);
@@ -135,7 +138,8 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
 
     @Test
     void Signal_append_only_저장_및_audit_적재() {
-        Long advrId = randomId();
+        // review_advisory_signal.advr_id → review_advisory_report(advr_id) FK
+        Long advrId = saveTestAdvisoryReport();
         signalRepo.save(buildSignal(advrId, "REJECT_RATE_DEVIATION", OffsetDateTime.now().minusMinutes(2)));
         signalRepo.save(buildSignal(advrId, "DSR_OVERRIDE",          OffsetDateTime.now().minusMinutes(1)));
 
@@ -153,7 +157,8 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
 
     @Test
     void Ack_같은_리포트에_다수_적재_가능() {
-        Long advrId = randomId();
+        // review_advisory_ack.advr_id → review_advisory_report(advr_id) FK
+        Long advrId = saveTestAdvisoryReport();
         OffsetDateTime t1 = OffsetDateTime.now().minusMinutes(2);
         OffsetDateTime t2 = OffsetDateTime.now();
         ackRepo.save(buildAck(advrId, ReviewAdvisoryAck.RESPONSE_NEEDS_MORE_INFO, t1));
@@ -211,6 +216,16 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
                 .activeYn(activeYn)
                 .ruleDesc("슬라이스 테스트용 룰")
                 .build();
+    }
+
+    /**
+     * FK 를 만족하는 리포트 1건(본심사·룰 포함)을 저장하고 advrId 를 돌려준다.
+     * review_advisory_signal / _ack 의 advr_id FK 용.
+     */
+    private Long saveTestAdvisoryReport() {
+        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_CHILD"), "Y")).getRuleId();
+        return reportRepo.save(
+                buildReport(saveTestReview(), ruleId, ReviewAdvisoryReport.SEVERITY_WARN)).getAdvrId();
     }
 
     private static ReviewAdvisoryReport buildReport(Long revId, Long ruleId, String severity) {
