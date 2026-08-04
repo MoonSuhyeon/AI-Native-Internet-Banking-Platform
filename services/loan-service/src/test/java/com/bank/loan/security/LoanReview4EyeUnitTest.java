@@ -6,6 +6,7 @@ import com.bank.loan.application.domain.LoanApplication;
 import com.bank.loan.application.repository.LoanApplicationRepository;
 import com.bank.loan.review.domain.LoanReview;
 import com.bank.loan.review.dto.ApproverApproveRequest;
+import com.bank.loan.review.metrics.ReviewAdoptionMetrics;
 import com.bank.loan.review.repository.LoanReviewRepository;
 import com.bank.loan.review.service.LoanReviewApproverService;
 import com.bank.loan.support.LoanErrorCode;
@@ -49,6 +50,7 @@ class LoanReview4EyeUnitTest {
     @Mock private CurrentActorProvider currentActorProvider;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private AdvisoryClient advisoryClient;
+    @Mock private ReviewAdoptionMetrics adoptionMetrics;
 
     private LoanReviewApproverService service;
 
@@ -60,7 +62,7 @@ class LoanReview4EyeUnitTest {
         service = new LoanReviewApproverService(
                 reviewRepository, applicationRepository,
                 statusHistoryPublisher, currentActorProvider,
-                eventPublisher, advisoryClient
+                eventPublisher, advisoryClient, adoptionMetrics
         );
 
         application = LoanApplication.builder()

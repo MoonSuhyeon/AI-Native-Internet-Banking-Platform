@@ -12,6 +12,7 @@ import com.bank.loan.notification.event.LoanApprovedEvent;
 import com.bank.loan.review.domain.LoanReview;
 import com.bank.loan.review.dto.ApproverApproveRequest;
 import com.bank.loan.review.dto.LoanReviewResponse;
+import com.bank.loan.review.metrics.ReviewAdoptionMetrics;
 import com.bank.loan.review.repository.LoanReviewRepository;
 import com.bank.loan.support.LoanErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class LoanReviewApproverService {
     private final CurrentActorProvider currentActor;
     private final ApplicationEventPublisher eventPublisher;
     private final AdvisoryClient advisoryClient;
+    private final ReviewAdoptionMetrics adoptionMetrics;
 
     /**
      * 승인자 최종 확정.
@@ -100,6 +102,9 @@ public class LoanReviewApproverService {
         } else {
             application.markRejected();
         }
+
+        // 심사가 최종 확정된 시점 — AI 권고 채택 여부와 4-eye 판정을 계측한다.
+        adoptionMetrics.recordFinalDecision(review, req.approverDecisionCd());
 
         statusHistoryPublisher.publish(StatusChangeEvent.of(
                 DOMAIN_CD, TARGET_REVIEW, review.getRevId(),
