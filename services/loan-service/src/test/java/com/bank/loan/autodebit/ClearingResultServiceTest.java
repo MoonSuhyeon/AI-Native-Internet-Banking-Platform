@@ -47,7 +47,7 @@ class ClearingResultServiceTest {
                 eq("AUTO-100-200-20260601"), isNull(), eq("PI-1"));
         RepayInstallmentRequest req = reqCap.getValue();
         assertThat(req.installmentNo()).isEqualTo(3);
-        assertThat(req.channelCd()).isEqualTo("INBOUND");
+        assertThat(req.channelCd()).isEqualTo("AUTO_DEBIT");
         assertThat(req.valueDate()).isEqualTo("20260601");
         assertThat(p.getStatus()).isEqualTo(AutoDebitClearingPending.STATUS_DONE);
     }

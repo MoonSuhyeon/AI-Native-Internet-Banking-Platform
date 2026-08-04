@@ -1,0 +1,50 @@
+name: Deploy loan-service
+
+# loan-service 는 build.gradle 의 sourceSets 로 agents/advisory-service 소스를
+# 직접 컴파일하므로(별도 Gradle 모듈 아님) 해당 경로도 트리거에 포함한다.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/loan-service/**'
+      - 'agents/advisory-service/**'
+      - 'common/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/deploy-loan-service.yml'
+      - '.github/workflows/reusable-*.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/loan-service/**'
+      - 'agents/advisory-service/**'
+      - 'common/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/reusable-java-build.yml
+    with:
+      service-name: loan-service
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/reusable-docker-publish.yml
+    with:
+      service-name: loan-service
+
+  deploy:
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    needs: publish
+    permissions: {}
+    uses: ./.github/workflows/reusable-deploy-ssh.yml
+    with:
+      service-name: loan-service
+      image-tag: ${{ needs.publish.outputs.image-tag }}
+    secrets: inherit

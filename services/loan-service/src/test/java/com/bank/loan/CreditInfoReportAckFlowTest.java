@@ -11,6 +11,7 @@ import com.bank.loan.creditreport.service.CreditInfoReportDispatchService;
 import com.bank.loan.creditreport.service.CreditInfoReportService;
 import com.bank.loan.support.AbstractLoanIntegrationTest;
 import com.bank.common.web.BusinessException;
+import com.bank.loan.support.LoanErrorCode;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -69,7 +70,8 @@ class CreditInfoReportAckFlowTest extends AbstractLoanIntegrationTest {
 
         assertThatThrownBy(() -> reportService.ack(submitted.crptId(), req))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("LOAN_151");
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(LoanErrorCode.LOAN_151);
 
         // MVC 레이어도 동일 응답
         String body = String.format("{\"externalAckNo\":\"ACK-PRE-002\",\"ackedAt\":\"%s\"}",

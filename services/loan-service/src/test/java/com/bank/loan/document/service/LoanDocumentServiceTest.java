@@ -11,6 +11,7 @@ import com.bank.loan.document.domain.LoanDocument;
 import com.bank.loan.document.dto.LoanDocumentResponse;
 import com.bank.loan.document.repository.LoanDocumentRepository;
 import com.bank.loan.document.repository.LoanDocumentSubmissionRepository;
+import com.bank.loan.document.storage.LoanDocumentStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,7 @@ class LoanDocumentServiceTest {
     @Mock LoanDocumentSubmissionRepository submissionRepository;
     @Mock LoanApplicationRepository applicationRepository;
     @Mock DocAgentClient docAgentClient;
+    @Mock LoanDocumentStorage storage;
     @Mock CurrentActorProvider currentActor;
     @Mock StatusHistoryPublisher statusHistoryPublisher;
 

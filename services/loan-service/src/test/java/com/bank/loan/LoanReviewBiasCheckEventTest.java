@@ -97,7 +97,7 @@ class LoanReviewBiasCheckEventTest extends AbstractLoanIntegrationTest {
                 .isEqualTo(LoanBiasCheckRequestedPayload.EVENT_TYPE_CD);
         assertThat(outbox.get().getReferenceId()).isEqualTo(manualRevId);
         assertThat(outbox.get().getStatus()).isEqualTo(NotificationOutbox.STATUS_PENDING);
-        assertThat(outbox.get().getPayload()).contains("\"revId\":" + manualRevId);
+        assertThat(payloadOf(outbox.get()).path("revId").asLong()).isEqualTo(manualRevId);
         assertThat(outbox.get().getPayload()).contains("BIAS_CHECK_REQUESTED");
     }
 
@@ -139,7 +139,7 @@ class LoanReviewBiasCheckEventTest extends AbstractLoanIntegrationTest {
 
         assertThat(outbox).isPresent();
         assertThat(outbox.get().getReferenceId()).isEqualTo(autoRevId);
-        assertThat(outbox.get().getPayload()).contains("\"applId\":" + autoApplId);
+        assertThat(payloadOf(outbox.get()).path("applId").asLong()).isEqualTo(autoApplId);
     }
 
     // ====================================================================
@@ -214,5 +214,18 @@ class LoanReviewBiasCheckEventTest extends AbstractLoanIntegrationTest {
                                 {"idvMethodCd":"PASS_APP","idvTargetCd":"BORROWER","mobileNo":"01011112033"}
                                 """))
                 .andExpect(status().isCreated());
+    }
+
+    /**
+     * outbox payload 는 jsonb 컬럼이라 저장 시 키 순서와 공백이 재정렬된다.
+     * 직렬화 형태에 기대지 않도록 파싱해서 값으로 검증한다.
+     */
+    private com.fasterxml.jackson.databind.JsonNode payloadOf(NotificationOutbox outbox) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readTree(outbox.getPayload());
+        } catch (Exception e) {
+            throw new IllegalStateException("outbox payload 파싱 실패", e);
+        }
     }
 }

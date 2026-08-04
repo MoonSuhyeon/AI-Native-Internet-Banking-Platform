@@ -1,6 +1,7 @@
 package com.bank.loan;
 
 import com.bank.common.web.BusinessException;
+import com.bank.loan.support.LoanErrorCode;
 import com.bank.loan.application.domain.LoanApplication;
 import com.bank.loan.application.repository.LoanApplicationRepository;
 import com.bank.loan.creditreport.domain.CreditInfoReport;
@@ -99,7 +100,8 @@ class CreditInfoReportRetryFlowTest extends AbstractLoanIntegrationTest {
 
         assertThatThrownBy(() -> reportService.retry(submitted.crptId()))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("LOAN_152");
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(LoanErrorCode.LOAN_152);
 
         mockMvc.perform(post("/api/credit-info-reports/{crptId}/retry", submitted.crptId()))
                 .andExpect(status().isConflict())

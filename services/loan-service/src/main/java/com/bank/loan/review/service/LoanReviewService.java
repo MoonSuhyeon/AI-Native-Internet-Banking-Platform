@@ -159,7 +159,9 @@ public class LoanReviewService {
             approvedPeriod = req.approvedPeriodMo() != null
                     ? req.approvedPeriodMo()
                     : application.getRequestedPeriodMo();
-            approvedAt = now;
+            // 편향 검증을 거치는 경우 이 시점의 결정은 아직 확정이 아니다.
+            // approvedAt 은 승인자 단계(approverApprove)에서 찍는다.
+            approvedAt = biasCheckEnabled ? null : now;
         }
 
         LoanReview saved = repository.save(LoanReview.builder()

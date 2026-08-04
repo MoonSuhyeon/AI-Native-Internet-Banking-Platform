@@ -118,20 +118,24 @@ class LoanReviewOpsToolsTest extends AbstractLoanIntegrationTest {
     @Test @Order(20)
     void expire_bias_reviewing_대상_만료() throws Exception {
         // applId2 run → BIAS_REVIEWING 상태로 준비
-        mockMvc.perform(post("/api/loan-applications/{id}/review", applId2)
+        MvcResult runResult = mockMvc.perform(post("/api/loan-applications/{id}/review", applId2)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"revTypeCd":"MANUAL","revDecisionCd":"APPROVED","reviewerId":20370102}
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.revStatusCd").value("BIAS_REVIEWING"));
+                .andExpect(jsonPath("$.data.revStatusCd").value("BIAS_REVIEWING"))
+                .andReturn();
+        long revId = extractData(runResult).get("revId").asLong();
 
-        // olderThanDays=0 → 지금 이전 reviewedAt 인 BIAS_REVIEWING 전부 만료
+        // olderThanDays=0 → 지금 이전 reviewedAt 인 BIAS_REVIEWING 전부 만료.
+        // DB 컨테이너를 여러 테스트 클래스가 공유하므로 다른 클래스가 남긴 BIAS_REVIEWING
+        // 도 함께 걸린다. 전체 건수가 아니라 "이 테스트가 만든 건이 포함됐는지"를 본다.
         mockMvc.perform(post("/api/internal/loan-reviews/expire-bias-reviewing")
                         .param("olderThanDays", "0"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.processed").value(1))
-                .andExpect(jsonPath("$.data.expiredRevIds").isArray());
+                .andExpect(jsonPath("$.data.expiredRevIds").isArray())
+                .andExpect(jsonPath("$.data.expiredRevIds[?(@ == %d)]".formatted(revId)).exists());
     }
 
     @Test @Order(21)

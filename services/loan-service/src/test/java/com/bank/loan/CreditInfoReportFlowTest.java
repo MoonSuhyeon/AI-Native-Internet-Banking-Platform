@@ -14,8 +14,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -113,12 +116,20 @@ class CreditInfoReportFlowTest extends AbstractLoanIntegrationTest {
     }
 
     @Test @Order(13)
-    void 이력_목록_2건() throws Exception {
+    void 이력_목록_계약자동발행_포함_3건() throws Exception {
+        // 계약 체결 시 ContractCreditReportListener 가 NEW_LOAN 을 자동발행한다(@Async + AFTER_COMMIT).
+        // 따라서 수동 2건(NEW_LOAN, DELINQUENCY) + 자동 1건 = 3건이다.
+        // 자동발행은 비동기라 도착 시점이 고정되지 않으므로 조건 대기로 확인한다.
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
+                mockMvc.perform(get("/api/loan-contracts/{cntrId}/credit-info-reports", cntrId))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.data.totalCount").value(3)));
+
+        // 적재 순서는 비동기 도착 순서에 좌우되므로 위치가 아니라 구성으로 검증한다.
         mockMvc.perform(get("/api/loan-contracts/{cntrId}/credit-info-reports", cntrId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalCount").value(2))
-                .andExpect(jsonPath("$.data.items[0].crptTypeCd").value("NEW_LOAN"))
-                .andExpect(jsonPath("$.data.items[1].crptTypeCd").value("DELINQUENCY"));
+                .andExpect(jsonPath("$.data.items[*].crptTypeCd")
+                        .value(containsInAnyOrder("NEW_LOAN", "NEW_LOAN", "DELINQUENCY")));
     }
 
     @Test @Order(14)

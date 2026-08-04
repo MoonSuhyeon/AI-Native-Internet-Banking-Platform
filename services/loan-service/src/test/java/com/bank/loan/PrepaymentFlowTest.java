@@ -44,9 +44,21 @@ class PrepaymentFlowTest extends AbstractLoanIntegrationTest {
     @Autowired
     private LoanApplicationRepository applicationRepository;
 
-    private static final String CNTR_START_A = "20270101"; // 미래
-    private static final String CNTR_START_B = "20230101"; // 과거
-    private static final String ROLLOVER_BASE_B = "20230302";
+    // 계약 시작일은 실제 오늘을 기준으로 잡는다.
+    // 고정 일자를 박아두면 시간이 흐르면서 전제가 뒤집힌다 — 미래 계약은 언젠가 과거가 되어
+    // 회차가 연체로 바뀌고, 과거 계약은 만기를 넘겨 잔여개월 0 → 중도상환 수수료 0 이 된다
+    // (만기 후 상환은 '중도'가 아니므로 프로덕션이 맞다).
+    private static final java.time.format.DateTimeFormatter YMD =
+            java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
+
+    /** 계약 A — 연체 회차가 하나도 없어야 한다(분배에서 overdue=0 검증). 항상 미래 시작. */
+    private static final String CNTR_START_A =
+            java.time.LocalDate.now().plusMonths(6).withDayOfMonth(1).format(YMD);
+
+    /** 계약 B — 연체 회차가 있으면서 잔여기간도 남아야 한다. 3개월 전 시작 → 회차1·2 연체, 잔여 9개월. */
+    private static final String CNTR_START_B =
+            java.time.LocalDate.now().minusMonths(3).withDayOfMonth(1).format(YMD);
+    private static final String ROLLOVER_BASE_B = java.time.LocalDate.now().format(YMD);
     private static final long   CONTRACTED_AMOUNT = 12_000_000L;
     private static final int    PERIOD_MONTHS     = 12;
     private static final int    RATE_BPS          = 600;

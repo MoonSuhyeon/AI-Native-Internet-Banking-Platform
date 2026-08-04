@@ -86,13 +86,16 @@ public class CalendarSeederBatchService {
     }
 
     private HolidayInfo resolveHoliday(LocalDate d) {
-        DayOfWeek dow = d.getDayOfWeek();
-        if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) {
-            return new HolidayInfo(false, TYPE_WEEKEND, dow == DayOfWeek.SATURDAY ? "토요일" : "일요일");
-        }
+        // 공휴일 판정이 주말보다 앞선다. 신정처럼 공휴일이 주말에 겹치면 어느 쪽이든
+        // 비영업일(N)이라 영업일 계산은 같지만, WEEKEND/"일요일" 로 덮어쓰면 무슨 공휴일이었는지가
+        // 사라져 대체공휴일 판단과 휴일 보고에서 쓸 수 없게 된다.
         String name = FIXED_HOLIDAYS.get(d.format(MMDD));
         if (name != null) {
             return new HolidayInfo(false, TYPE_PUBLIC, name);
+        }
+        DayOfWeek dow = d.getDayOfWeek();
+        if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) {
+            return new HolidayInfo(false, TYPE_WEEKEND, dow == DayOfWeek.SATURDAY ? "토요일" : "일요일");
         }
         return new HolidayInfo(true, null, null);
     }
