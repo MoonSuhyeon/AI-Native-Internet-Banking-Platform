@@ -30,7 +30,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": { "unit": "short", "color": { "mode": "thresholds" },
           "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } },
@@ -49,7 +49,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": { "unit": "short", "color": { "mode": "thresholds" },
           "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } },
@@ -68,7 +68,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": { "unit": "currencyUSD", "color": { "mode": "thresholds" },
           "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 20 }] } },
@@ -87,7 +87,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": { "unit": "percentunit", "color": { "mode": "thresholds" },
           "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 0.9 }, { "color": "green", "value": 0.95 }] } },
@@ -106,7 +106,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
       "id": 5,
@@ -133,7 +133,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
       "id": 6,
@@ -152,7 +152,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
       "id": 7,
@@ -179,7 +179,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
       "id": 8,
@@ -198,7 +198,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
       "id": 9,
@@ -221,7 +221,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
       "id": 10,
@@ -240,7 +240,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
       "id": 11,
@@ -267,7 +267,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 41 },
       "id": 12,
@@ -286,7 +286,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "bfmta2uf2mebka" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "currencyUSD" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 41 },
       "id": 13,
