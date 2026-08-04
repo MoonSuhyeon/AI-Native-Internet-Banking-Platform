@@ -1,0 +1,20 @@
+# loan-service 테스트 프로파일.
+#
+# 이 파일이 없어 test 프로파일이 application.yml 로 폴백했고, 거기서 기본값 없이
+# 환경변수를 요구하는 두 항목(CRYPTO_KEY_BASE64 / LOAN_APP_PORT) 때문에
+# ApplicationContext 로드가 실패해 통합 테스트 전체가 무너졌다.
+#   Caused by: java.lang.IllegalArgumentException: Illegal base64 character 24
+#     → CryptoService 빈 생성 실패
+#
+# customer-service · deposit-service 와 동일한 관례를 따른다.
+# datasource 는 정의하지 않는다 — loan-service 통합 테스트는 Testcontainers
+# (@ServiceConnection) 로 실제 Postgres 를 띄우므로 여기서 덮으면 안 된다.
+
+# 테스트 전용 더미 AES-256 키(32바이트 Base64) — CryptoService 빈 초기화용.
+# 운영 키는 CRYPTO_KEY_BASE64 환경변수로 주입한다.
+crypto:
+  key-base64: bG9hbi1zZXJ2aWNlLWRldi1hZXMta2V5LTMyYnl0ZXM=
+
+# 테스트는 MockMvc 중심이라 실제 포트를 잡지 않는다. 0 = 랜덤 포트.
+server:
+  port: 0
