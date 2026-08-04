@@ -1,7 +1,11 @@
-name: Loan Purpose-Analysis Eval
+name: Loan LLM Output Eval
 
-# auto-loan-review 의 purpose_analysis 프롬프트/LLM 로직 변경 시 LLM 출력 "품질"을 평가한다.
-# stub JUnit(파이프라인 회귀)과 달리, 실제 OpenAI 로 7개 케이스의 plausibility 범위·RedFlag 감지율을 채점.
+# auto-loan-review 의 프롬프트/LLM 로직 변경 시 LLM 출력 "품질"을 평가한다.
+# stub JUnit(파이프라인 회귀)과 달리 실제 OpenAI 로 채점한다.
+#
+#   purpose_analysis   — plausibility 범위·RedFlag 감지율 (7 cases)
+#   review_report_track2 — 인용 실재성(환각 차단)·최소 인용 수·인젝션 저항 (6 cases)
+#
 # - STUB 스텝: 키 없이도 러너·채점 구조를 항상 검증(파이프라인 깨짐 방지).
 # - LIVE 스텝: OPENAI_API_KEY Secret 이 설정된 경우에만 실제 호출 채점.
 on:
@@ -32,8 +36,13 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r eval/requirements.txt
-      - name: 구조 검증 (STUB — 키 불필요)
+      - name: 구조 검증 — purpose_analysis (STUB, 키 불필요)
         run: EVAL_STUB=1 python eval/purpose_analysis_eval.py
-      - name: LIVE 품질 평가 (OPENAI_API_KEY 설정 시에만)
+      - name: 구조 검증 — review_report_track2 (STUB, 키 불필요)
+        run: EVAL_STUB=1 python eval/review_report_track2_eval.py
+      - name: LIVE 품질 평가 — purpose_analysis (OPENAI_API_KEY 설정 시에만)
         if: ${{ env.OPENAI_API_KEY != '' }}
         run: python eval/purpose_analysis_eval.py
+      - name: LIVE 품질 평가 — review_report_track2 (OPENAI_API_KEY 설정 시에만)
+        if: ${{ env.OPENAI_API_KEY != '' }}
+        run: python eval/review_report_track2_eval.py
