@@ -17,9 +17,17 @@ public final class Sha256 {
 
     /** 입력 문자열의 SHA-256 해시를 소문자 16진 문자열로 반환한다. */
     public static String hex(String input) {
+        return hex(input.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * 바이트 배열의 SHA-256 해시를 소문자 16진 문자열로 반환한다.
+     * 업로드 파일 무결성 해시(loan_document.doc_hash) 등 바이너리 입력용.
+     */
+    public static String hex(byte[] input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            byte[] hash = digest.digest(input);
             StringBuilder hex = new StringBuilder(hash.length * 2);
             for (byte b : hash) {
                 hex.append(String.format("%02x", b));

@@ -301,9 +301,11 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CRYPTO_KEY_BASE64: ${CRYPTO_KEY_BASE64:-aW50ZXJuZXQtYmFuay1kZXYta2V5LTMyYnl0ZXMhISE=}
       LOG_DIR: /logs
+      LOAN_DOCUMENT_STORAGE_DIR: /var/lib/loan-documents
       SPRING_FLYWAY_REPAIR_ON_MIGRATE: "true"
     volumes:
       - C:/logs/internet-banking:/logs
+      - loan-document-data:/var/lib/loan-documents
     depends_on:
       loan-db:
         condition: service_healthy
@@ -977,6 +979,7 @@ volumes:
   customer-db-data:
   deposit-db-data:
   loan-db-data:
+  loan-document-data:
   common-db-data:
   payment-db-data:
   payment-db-b-data:
