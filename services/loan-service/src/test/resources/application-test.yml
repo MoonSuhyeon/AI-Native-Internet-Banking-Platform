@@ -18,3 +18,16 @@ crypto:
 # 테스트는 MockMvc 중심이라 실제 포트를 잡지 않는다. 0 = 랜덤 포트.
 server:
   port: 0
+
+# 편향 검증 단계 기본값. 대부분의 플로우 테스트는 REVIEWER_DECIDED → COMPLETED
+# 직행을 가정하므로 꺼 둔다.
+#
+# 편향 플로우 자체를 검증하는 테스트는 클래스에 아래를 붙여 켠다.
+#   @TestPropertySource(properties = "loan.review.bias-check.enabled=true")
+#
+# 이 값을 AbstractLoanIntegrationTest 의 @DynamicPropertySource 에 두면
+# 우선순위가 최상이라 개별 클래스가 덮을 수 없다. 그래서 여기에 둔다.
+loan:
+  review:
+    bias-check:
+      enabled: false

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.UUID;
 
@@ -54,6 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *   52) from/to 형식 오류(yyyy-MM-dd) → 400
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestPropertySource(properties = "loan.review.bias-check.enabled=true")
 class LoanReviewAutoDecideFlowTest extends AbstractLoanIntegrationTest {
 
     private static final long AMOUNT  = 30_000_000L;

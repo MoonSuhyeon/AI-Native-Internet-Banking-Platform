@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.UUID;
 
@@ -35,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 날짜 격리: 연도 2036 사용.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestPropertySource(properties = "loan.review.bias-check.enabled=true")
 class LoanReviewApproverApproveTest extends AbstractLoanIntegrationTest {
 
     private static Long prodId;
@@ -69,10 +71,14 @@ class LoanReviewApproverApproveTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(20)
     void pending_approver_목록_2건() throws Exception {
+        // 전역 개수를 단언하지 않는다 — 통합 테스트가 Postgres 컨테이너를 공유하므로
+        // 다른 테스트 클래스가 만든 PENDING_APPROVER 건이 함께 조회된다.
+        // 이 클래스가 준비한 두 건이 목록에 있는지만 확인한다.
         mockMvc.perform(get("/api/loan-reviews/pending-approver"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(2));
+                .andExpect(jsonPath("$.data[?(@.applId == %d)]".formatted(applId1)).exists())
+                .andExpect(jsonPath("$.data[?(@.applId == %d)]".formatted(applId2)).exists());
     }
 
     @Test @Order(30)
@@ -180,10 +186,13 @@ class LoanReviewApproverApproveTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(50)
     void 완료_후_pending_approver_목록_비어있음() throws Exception {
+        // 마찬가지로 전역 개수가 아니라, 이 클래스가 확정한 두 건이 목록에서
+        // 빠졌는지를 확인한다.
         mockMvc.perform(get("/api/loan-reviews/pending-approver"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(0));
+                .andExpect(jsonPath("$.data[?(@.applId == %d)]".formatted(applId1)).doesNotExist())
+                .andExpect(jsonPath("$.data[?(@.applId == %d)]".formatted(applId2)).doesNotExist());
     }
 
     // ====================================================================
@@ -191,11 +200,14 @@ class LoanReviewApproverApproveTest extends AbstractLoanIntegrationTest {
     // ====================================================================
 
     private void preparePendingApprover(Long applId, long reviewerId, String decisionCd) throws Exception {
+        // 심사원은 요청 바디가 아니라 인증 주체에서 결정된다(LoanReviewService: reviewerId(actorId)).
+        // RunReviewRequest 에는 reviewerId 필드 자체가 없으므로 X-User-Id 로 지정해야 한다.
         MvcResult r = mockMvc.perform(post("/api/loan-applications/{id}/review", applId)
+                        .header("X-User-Id", String.valueOf(reviewerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"revTypeCd":"MANUAL","revDecisionCd":"%s","reviewerId":%d}
-                                """.formatted(decisionCd, reviewerId)))
+                                {"revTypeCd":"MANUAL","revDecisionCd":"%s"}
+                                """.formatted(decisionCd)))
                 .andExpect(status().isCreated()).andReturn();
         Long revId = extractData(r).get("revId").asLong();
 
@@ -211,6 +223,7 @@ class LoanReviewApproverApproveTest extends AbstractLoanIntegrationTest {
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/loan-applications/{id}/review/acknowledge-bias", applId)
+                        .header("X-User-Id", String.valueOf(reviewerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())

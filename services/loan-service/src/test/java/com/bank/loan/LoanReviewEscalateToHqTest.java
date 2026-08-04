@@ -9,6 +9,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.UUID;
 
@@ -31,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 날짜 격리: customerId 기반 연도 2037 사용.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestPropertySource(properties = "loan.review.bias-check.enabled=true")
 class LoanReviewEscalateToHqTest extends AbstractLoanIntegrationTest {
 
     private static Long prodId;

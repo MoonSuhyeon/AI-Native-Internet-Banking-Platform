@@ -110,7 +110,13 @@ public abstract class AbstractLoanIntegrationTest {
 
         r.add("spring.kafka.bootstrap-servers", KAFKA::getBootstrapServers);
 
-        r.add("loan.review.bias-check.enabled", () -> "false");
+        // loan.review.bias-check.enabled 는 여기서 고정하지 않는다.
+        // @DynamicPropertySource 는 우선순위가 최상이라 개별 테스트 클래스가
+        // @TestPropertySource 로 덮을 수 없어, 편향 검증 플로우를 검증하는 테스트가
+        // 통과 불가능한 상태가 됐었다(#25 에서 작성 → #47 에서 전역 비활성화).
+        // 기본값 false 는 application-test.yml 에 두고, 편향 플로우 테스트는
+        // @TestPropertySource 로 true 를 지정한다.
+
         // 가심사→ceval→DSR 자동 트리거(비동기)는 테스트의 수동 ceval/DSR 호출과 같은 appl_id 에
         // 충돌(unique 위반)하므로 통합테스트에서는 끈다. 각 플로우는 값을 직접 통제한다.
         r.add("loan.auto-trigger.enabled", () -> "false");
@@ -140,14 +146,21 @@ public abstract class AbstractLoanIntegrationTest {
         String roles = "ROLE_STAFF,ROLE_OPS,ROLE_SENIOR_REVIEWER,ROLE_INTERNAL,"
                 + "ROLE_TELLER,ROLE_DEPUTY_MANAGER,ROLE_BRANCH_MANAGER,"
                 + "ROLE_HQ_REVIEWER,ROLE_COMPLIANCE,ROLE_ADMIN";
+        // 헤더는 RequestPostProcessor(.with) 가 아니라 빌더의 .header() 로 지정한다.
+        //
+        // .with(request -> request.addHeader(...)) 는 defaultRequest 병합이 끝난 뒤
+        // 실제 요청 객체에 직접 append 하므로, 테스트가 자기 X-User-Id 를 지정해도
+        // 헤더가 두 개가 되고 GatewayHeaderAuthFilter 는 첫 번째(기본값)를 읽는다.
+        // 그 결과 호출자 신원을 바꿀 수 없어 4-eye 위반·권한 거부 같은 네거티브
+        // 테스트가 전부 200 으로 통과해 버렸다.
+        //
+        // .header() 로 지정하면 MockHttpServletRequestBuilder 병합 규칙이 적용되어
+        // 테스트가 같은 헤더를 지정한 경우 테스트 값이 우선한다.
         return MockMvcBuilders.webAppContextSetup(wac)
                 .apply(SecurityMockMvcConfigurers.springSecurity())
                 .defaultRequest(MockMvcRequestBuilders.get("/")
-                        .with(request -> {
-                            request.addHeader("X-User-Id", "1");
-                            request.addHeader("X-User-Role", roles);
-                            return request;
-                        }))
+                        .header("X-User-Id", "1")
+                        .header("X-User-Role", roles))
                 .build();
     }
 
