@@ -74,11 +74,12 @@ public class OnlineRepaymentService {
                         cntrId, req.installmentNo(), RepaymentSchedule.VERSION_INITIAL)
                 .orElseThrow(() -> new BusinessException(LoanErrorCode.LOAN_090,
                         "cntrId=" + cntrId + ", installmentNo=" + req.installmentNo()));
-        if (!schedule.isPayable()) {
-            throw new BusinessException(LoanErrorCode.LOAN_091, "current=" + schedule.currentStatus());
-        }
-
         // 2) 멱등성 — payIdemKey 로 기존 tx 확인
+        //
+        // 회차 상태 검사보다 먼저 한다. 상환이 성공하면 회차가 PAID 로 바뀌므로,
+        // 상태 검사를 앞에 두면 같은 Idempotency-Key 로 재시도해도 원래 결과 대신
+        // LOAN_091(409) 이 돌아간다. 응답을 못 받고 재시도하는 상황이 멱등성이
+        // 존재하는 이유이므로, 그 경로가 막히면 멱등성이 무력화된다.
         String payIdemKey = buildPayIdemKey(cntrId, schedule.getRschId(), idempotencyKey);
         var existing = txRepository.findByIdempotencyKey(payIdemKey);
         if (existing.isPresent()) {
@@ -88,6 +89,11 @@ public class OnlineRepaymentService {
                         "이전 결제 시도가 실패했습니다. 새 Idempotency-Key 로 재시도하세요.");
             }
             return RepaymentTransactionResponse.of(tx);
+        }
+
+        // 3) 회차 상태 검사 — 멱등 재시도가 아닌데 이미 납부된 경우
+        if (!schedule.isPayable()) {
+            throw new BusinessException(LoanErrorCode.LOAN_091, "current=" + schedule.currentStatus());
         }
 
         // 3) 계약번호 조회 (수취인 통장 표시용)

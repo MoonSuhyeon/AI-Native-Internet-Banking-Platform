@@ -91,9 +91,12 @@ class OnlineRepaymentFlowTest extends AbstractLoanIntegrationTest {
                 .andExpect(jsonPath("$.data.channelCd").value("WEB"))
                 .andReturn();
 
-        // piId 설정 확인 (WireMock 기본 stub 반환값)
-        String piId = extractData(result).get("piId").asText();
-        assertThat(piId).isEqualTo("PI-TEST-001");
+        // piId 설정 확인 (WireMock 기본 stub 반환값).
+        // RepaymentTransactionResponse 는 piId 를 노출하지 않으므로(V24 로 DB 컬럼만 추가됨)
+        // 적재된 엔티티에서 확인한다.
+        Long rtxId = extractData(result).get("rtxId").asLong();
+        assertThat(txRepository.findById(rtxId).orElseThrow().getPiId())
+                .isEqualTo("PI-TEST-001");
 
         // 회차1 PAID 전이 확인
         mockMvc.perform(get("/api/loan-contracts/{c}/repayment-schedules", cntrId))
@@ -120,14 +123,16 @@ class OnlineRepaymentFlowTest extends AbstractLoanIntegrationTest {
     }
 
     @Test @Order(12)
-    void 이미_PAID_회차_재시도_422() throws Exception {
+    void 이미_PAID_회차_재시도_409() throws Exception {
         mockMvc.perform(post("/api/loan-contracts/{c}/repayments/online", cntrId)
                         .header("Idempotency-Key", "onl-dup-" + UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "installmentNo":1, "channelCd":"WEB" }
                                 """))
-                .andExpect(status().isUnprocessableEntity())
+                // LOAN_091 은 CONFLICT(409) 로 정의돼 있다. "이미 납부됨"은 상태 충돌이므로
+                // 409 가 맞고, 422 를 기대하던 쪽이 낡았다.
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("LOAN_091"));
     }
 
