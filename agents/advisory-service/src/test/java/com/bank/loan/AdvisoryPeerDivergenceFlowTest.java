@@ -90,7 +90,7 @@ class AdvisoryPeerDivergenceFlowTest extends AbstractLoanIntegrationTest {
         Long applId = applicationRepo.save(LoanApplication.builder()
                 .applNo("ADVP_2050_" + UUID.randomUUID().toString().substring(0, 12))
                 .customerId(2_050_000L + (long) (Math.random() * 999_999))
-                .prodId(99_999L)
+                .prodId(ensureTestProduct())   // loan_application.prod_id FK 충족
                 .channelCd("TEST")
                 .requestedAmount(10_000_000L)
                 .requestedPeriodMo(24)

@@ -50,7 +50,7 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
 
     @Test
     void DsrRule_DSR_FAIL_본심사_APPROVED_시_CRITICAL_발화() {
-        Long applId = randomId();
+        Long applId = saveTestApplication();   // loan_review.appl_id FK 충족
         Long revId = saveReview(applId, LoanReview.DECISION_APPROVED).getRevId();
         saveDsr(applId, DsrCalculation.STATUS_FAIL, 4500, 4000);
 
@@ -66,7 +66,7 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
 
     @Test
     void DsrRule_DSR_PASS_빈_결과() {
-        Long applId = randomId();
+        Long applId = saveTestApplication();   // loan_review.appl_id FK 충족
         Long revId = saveReview(applId, LoanReview.DECISION_APPROVED).getRevId();
         saveDsr(applId, DsrCalculation.STATUS_PASS, 3500, 4000);
 
@@ -75,7 +75,7 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
 
     @Test
     void DsrRule_본심사_REJECTED_빈_결과() {
-        Long applId = randomId();
+        Long applId = saveTestApplication();   // loan_review.appl_id FK 충족
         Long revId = saveReview(applId, LoanReview.DECISION_REJECTED).getRevId();
         saveDsr(applId, DsrCalculation.STATUS_FAIL, 4500, 4000);
 
@@ -84,7 +84,7 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
 
     @Test
     void DsrRule_DSR_미존재_빈_결과() {
-        Long revId = saveReview(randomId(), LoanReview.DECISION_APPROVED).getRevId();
+        Long revId = saveReview(saveTestApplication(), LoanReview.DECISION_APPROVED).getRevId();
         assertThat(dsrRule.evaluate(RuleContext.sync(revId))).isEmpty();
     }
 
@@ -94,9 +94,9 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
 
     @Test
     void LtvRule_LTV_FAIL_본심사_APPROVED_시_CRITICAL_발화() {
-        Long applId = randomId();
+        Long applId = saveTestApplication();   // loan_review.appl_id FK 충족
         Long revId = saveReview(applId, LoanReview.DECISION_APPROVED).getRevId();
-        saveLtv(applId, randomId(), LtvCalculation.STATUS_FAIL, 8500, 7000);
+        saveLtv(applId, saveTestCollateral(applId), LtvCalculation.STATUS_FAIL, 8500, 7000);
 
         var results = ltvRule.evaluate(RuleContext.sync(revId));
 
@@ -107,9 +107,9 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
 
     @Test
     void LtvRule_LTV_PASS_빈_결과() {
-        Long applId = randomId();
+        Long applId = saveTestApplication();   // loan_review.appl_id FK 충족
         Long revId = saveReview(applId, LoanReview.DECISION_APPROVED).getRevId();
-        saveLtv(applId, randomId(), LtvCalculation.STATUS_PASS, 6500, 7000);
+        saveLtv(applId, saveTestCollateral(applId), LtvCalculation.STATUS_PASS, 6500, 7000);
 
         assertThat(ltvRule.evaluate(RuleContext.sync(revId))).isEmpty();
     }
@@ -120,7 +120,7 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
 
     @Test
     void Evaluator_DSR_FAIL_시나리오_리포트_시그널_적재() {
-        Long applId = randomId();
+        Long applId = saveTestApplication();   // loan_review.appl_id FK 충족
         Long revId = saveReview(applId, LoanReview.DECISION_APPROVED).getRevId();
         saveDsr(applId, DsrCalculation.STATUS_FAIL, 4600, 4000);
 
@@ -140,7 +140,7 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
         master.deactivate();
         master = ruleRepo.saveAndFlush(master);
         try {
-            Long applId = randomId();
+            Long applId = saveTestApplication();   // loan_review.appl_id FK 충족
             Long revId = saveReview(applId, LoanReview.DECISION_APPROVED).getRevId();
             saveDsr(applId, DsrCalculation.STATUS_FAIL, 4700, 4000);
 
@@ -161,7 +161,7 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
 
     @Test
     void Ack_등록_후_리포트_ACKED_전이_및_미해결_CRITICAL_빈_결과() {
-        Long applId = randomId();
+        Long applId = saveTestApplication();   // loan_review.appl_id FK 충족
         Long revId = saveReview(applId, LoanReview.DECISION_APPROVED).getRevId();
         saveDsr(applId, DsrCalculation.STATUS_FAIL, 4400, 4000);
         evaluator.evaluate(RuleContext.sync(revId));

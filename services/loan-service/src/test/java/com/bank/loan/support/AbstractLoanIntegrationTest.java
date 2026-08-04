@@ -1,5 +1,11 @@
 package com.bank.loan.support;
 
+import com.bank.loan.application.domain.LoanApplication;
+import com.bank.loan.application.repository.LoanApplicationRepository;
+import com.bank.loan.collateral.domain.Collateral;
+import com.bank.loan.collateral.repository.CollateralRepository;
+
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -9,6 +15,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
@@ -24,6 +31,10 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 
 /**
@@ -166,5 +177,89 @@ public abstract class AbstractLoanIntegrationTest {
 
     protected JsonNode extractData(MvcResult result) throws Exception {
         return om.readTree(result.getResponse().getContentAsString()).get("data");
+    }
+
+    // ====================================================================
+    // FK 를 만족하는 최소 픽스처
+    //
+    // loan_application.prod_id → loan_product(prod_id),
+    // loan_review.appl_id      → loan_application(appl_id) 로 FK 가 걸려 있다(V1).
+    // 임의의 랜덤 id 로 자식 row 를 넣으면 DataIntegrityViolationException 이 난다.
+    // 실제 부모 row 를 만들어 쓰도록 공용 헬퍼를 둔다.
+    // ====================================================================
+
+    @Autowired protected LoanApplicationRepository applicationRepository;
+    @Autowired protected CollateralRepository collateralRepository;
+
+    private Long cachedProdId;
+
+    /**
+     * FK 를 만족하는 테스트용 상품 1건. 클래스(=컨텍스트) 당 한 번만 만든다.
+     *
+     * <p>리포지토리로 직접 만들지 않고 생성 API 를 쓴다. JPA 는 모든 컬럼을 명시
+     * INSERT 하므로 DB DEFAULT 가 적용되지 않아, NOT NULL 컬럼이 마이그레이션으로
+     * 늘어날 때마다(V10 min_guarantor_count 등) 픽스처를 따라 고쳐야 한다.
+     * 서비스 계층을 태우면 기본값 채움이 한 곳에서 유지된다.
+     */
+    protected Long ensureTestProduct() {
+        if (cachedProdId != null) {
+            return cachedProdId;
+        }
+        try {
+            MvcResult r = mockMvc.perform(MockMvcRequestBuilders.post("/api/loan-products")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "prodCd":"%s","prodName":"테스트 상품","loanTypeCd":"CREDIT",
+                                      "repaymentMethodCd":"EQUAL","rateTypeCd":"FIXED","baseRateBps":500,
+                                      "minAmount":1000000,"maxAmount":500000000,
+                                      "minPeriodMo":6,"maxPeriodMo":360,
+                                      "collateralRequiredYn":"N","guarantorRequiredYn":"N"
+                                    }
+                                    """.formatted("TESTPROD_" + UUID.randomUUID().toString().substring(0, 12))))
+                    .andReturn();
+            cachedProdId = extractData(r).get("prodId").asLong();
+            return cachedProdId;
+        } catch (Exception e) {
+            throw new IllegalStateException("테스트 상품 생성 실패", e);
+        }
+    }
+
+    /** FK 를 만족하는 신청 1건을 저장하고 applId 를 돌려준다. */
+    protected Long saveTestApplication() {
+        return saveTestApplication(LoanApplication.STATUS_REJECTED, null);
+    }
+
+    /**
+     * FK 를 만족하는 담보 1건을 저장하고 colId 를 돌려준다.
+     * ltv_calculation.col_id → collateral(col_id) FK 용.
+     */
+    protected Long saveTestCollateral(Long applId) {
+        return collateralRepository.save(Collateral.builder()
+                .applId(applId)
+                .colTypeCd("APARTMENT")
+                .colStatusCd(Collateral.STATUS_REGISTERED)
+                .colNo("TESTCOL_" + UUID.randomUUID().toString().substring(0, 12))
+                .declaredValue(300_000_000L)
+                .currencyCd("KRW")
+                .seniorLienYn("N")
+                .seniorLienAmount(0L)
+                .build()).getColId();
+    }
+
+    /** 상태·자금용도를 지정해 신청 1건을 저장하고 applId 를 돌려준다. */
+    protected Long saveTestApplication(String applStatusCd, String loanPurposeCd) {
+        return applicationRepository.save(LoanApplication.builder()
+                .applNo("TESTAPP_" + UUID.randomUUID().toString().substring(0, 12))
+                .customerId(2_040_000L + ThreadLocalRandom.current().nextLong(99_999))
+                .prodId(ensureTestProduct())
+                .channelCd("TEST")
+                .requestedAmount(10_000_000L)
+                .requestedPeriodMo(24)
+                .loanPurposeCd(loanPurposeCd)
+                .repaymentMethodCd("EQUAL")
+                .applStatusCd(applStatusCd)
+                .appliedAt(OffsetDateTime.now())
+                .build()).getApplId();
     }
 }

@@ -88,7 +88,7 @@ class AdvisoryBiasBatchFlowTest extends AbstractLoanIntegrationTest {
         return applicationRepo.save(LoanApplication.builder()
                 .applNo("ADVB_2040_" + UUID.randomUUID().toString().substring(0, 12))
                 .customerId(2_040_000L + (long) (Math.random() * 99_999))
-                .prodId(99_999L)
+                .prodId(ensureTestProduct())   // loan_application.prod_id FK 충족
                 .channelCd("TEST")
                 .requestedAmount(10_000_000L)
                 .requestedPeriodMo(24)
