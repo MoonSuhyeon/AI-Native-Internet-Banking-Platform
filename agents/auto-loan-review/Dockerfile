@@ -13,13 +13,13 @@ COPY agents/auto-loan-review/build.gradle agents/auto-loan-review/build.gradle
 # gradle.properties의 Windows JDK 경로는 컨테이너 내에서 유효하지 않으므로 제거
 RUN sed -i '/org\.gradle\.java\.home/d' gradle.properties
 
-RUN gradle :services:auto-loan-review:dependencies --no-daemon -q 2>/dev/null || true
+RUN gradle :agents:auto-loan-review:dependencies --no-daemon -q 2>/dev/null || true
 
 # 소스 복사 + bootJar 빌드
 COPY common/src common/src
 COPY agents/auto-loan-review/src agents/auto-loan-review/src
 
-RUN gradle :services:auto-loan-review:bootJar --no-daemon -q
+RUN gradle :agents:auto-loan-review:bootJar --no-daemon -q
 
 # =============================================================================
 # Stage 2: Runtime — JRE 17 최소 이미지

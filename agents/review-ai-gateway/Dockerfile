@@ -13,13 +13,13 @@ COPY agents/review-ai-gateway/build.gradle agents/review-ai-gateway/build.gradle
 # gradle.properties의 Windows JDK 경로는 컨테이너 내에서 유효하지 않으므로 제거
 RUN sed -i '/org\.gradle\.java\.home/d' gradle.properties
 
-RUN gradle :services:review-ai-gateway:dependencies --no-daemon -q 2>/dev/null || true
+RUN gradle :agents:review-ai-gateway:dependencies --no-daemon -q 2>/dev/null || true
 
 # 소스 복사 + bootJar 빌드
 COPY common/src common/src
 COPY agents/review-ai-gateway/src agents/review-ai-gateway/src
 
-RUN gradle :services:review-ai-gateway:bootJar --no-daemon -q
+RUN gradle :agents:review-ai-gateway:bootJar --no-daemon -q
 
 # =============================================================================
 # Stage 2: Runtime — JRE 17 최소 이미지

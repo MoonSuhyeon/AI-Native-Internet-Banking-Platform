@@ -7,12 +7,12 @@ COPY agents/doc-agent/build.gradle agents/doc-agent/build.gradle
 
 RUN sed -i '/org\.gradle\.java\.home/d' gradle.properties
 
-RUN gradle :services:doc-agent:dependencies --no-daemon -q 2>/dev/null || true
+RUN gradle :agents:doc-agent:dependencies --no-daemon -q 2>/dev/null || true
 
 COPY common/src common/src
 COPY agents/doc-agent/src agents/doc-agent/src
 
-RUN gradle :services:doc-agent:bootJar --no-daemon -q
+RUN gradle :agents:doc-agent:bootJar --no-daemon -q
 
 FROM eclipse-temurin:17-jre-alpine AS runtime
 WORKDIR /app
