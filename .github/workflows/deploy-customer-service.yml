@@ -36,10 +36,10 @@ jobs:
       service-name: customer-service
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     needs: publish
     permissions: {}
-    uses: ./.github/workflows/reusable-deploy-oracle.yml
+    uses: ./.github/workflows/reusable-deploy-ssh.yml
     with:
       service-name: customer-service
       image-tag: ${{ needs.publish.outputs.image-tag }}

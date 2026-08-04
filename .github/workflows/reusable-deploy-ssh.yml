@@ -1,18 +1,18 @@
 # =============================================================================
-# Reusable Workflow — Oracle Cloud SSH 배포
+# Reusable Workflow — SSH 배포 (호스트 무관)
 #
 # 동작:
-#   1. Oracle 서버 SSH 접속
+#   1. 대상 서버 SSH 접속
 #   2. ~/app 에서 docker compose pull <service>
 #   3. docker compose up -d <service> (변경된 컨테이너만 재시작)
 #   4. 헬스체크 (선택)
 #
-# 사전 조건 (Oracle 서버 ~/app/ 에 미리 있어야 함):
-#   - docker-compose.prod.yml (infra/oracle/bootstrap.sh 가 배치)
+# 사전 조건 (배포 서버 ~/app/ 에 미리 있어야 함):
+#   - docker-compose.prod.yml (부트스트랩 스크립트가 배치)
 #   - .env.prod
 #   - GHCR 로그인 (docker login ghcr.io)
 # =============================================================================
-name: Reusable Deploy Oracle
+name: Reusable Deploy via SSH
 
 on:
   workflow_call:
@@ -37,25 +37,25 @@ on:
         type: boolean
         default: false
     secrets:
-      ORACLE_SSH_HOST:
+      DEPLOY_SSH_HOST:
         required: true
-      ORACLE_SSH_USER:
+      DEPLOY_SSH_USER:
         required: true
-      ORACLE_SSH_KEY:
+      DEPLOY_SSH_KEY:
         required: true
 
 jobs:
   deploy:
-    name: Deploy ${{ inputs.service-name }} to Oracle
+    name: Deploy ${{ inputs.service-name }} via SSH
     runs-on: ubuntu-latest
     permissions: {}
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.ORACLE_SSH_HOST }}
-          username: ${{ secrets.ORACLE_SSH_USER }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
             cd ~/app

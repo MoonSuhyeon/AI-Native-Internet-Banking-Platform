@@ -8,7 +8,7 @@ on:
       - 'agents/consultation/**'
       - '.github/workflows/deploy-consultation-service.yml'
       - '.github/workflows/reusable-docker-publish.yml'
-      - '.github/workflows/reusable-deploy-oracle.yml'
+      - '.github/workflows/reusable-deploy-ssh.yml'
   workflow_dispatch:
 
 jobs:
@@ -23,9 +23,10 @@ jobs:
       dockerfile-path: agents/consultation/Dockerfile
 
   deploy:
+    if: vars.DEPLOY_ENABLED == 'true'
     needs: publish
     permissions: {}
-    uses: ./.github/workflows/reusable-deploy-oracle.yml
+    uses: ./.github/workflows/reusable-deploy-ssh.yml
     with:
       service-name: consultation-service
       image-tag: ${{ needs.publish.outputs.image-tag }}

@@ -38,10 +38,10 @@ jobs:
       dockerfile-path: agents/review-ai-gateway/Dockerfile
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     needs: publish
     permissions: {}
-    uses: ./.github/workflows/reusable-deploy-oracle.yml
+    uses: ./.github/workflows/reusable-deploy-ssh.yml
     with:
       service-name: review-ai-gateway
       image-tag: ${{ needs.publish.outputs.image-tag }}

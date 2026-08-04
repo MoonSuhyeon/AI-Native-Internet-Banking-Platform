@@ -1,7 +1,8 @@
 name: Deploy infra
 
-# infra/docker/docker-compose.prod.yml 변경시 Oracle 서버에 동기화 + 전체 재기동.
+# infra/docker/docker-compose.prod.yml 변경시 배포 서버에 동기화 + 전체 재기동.
 # .env.prod 는 서버에만 존재하므로 건드리지 않는다.
+# 저장소 변수 DEPLOY_ENABLED=true 일 때만 실행 (배포 서버 미구성 시 스킵).
 on:
   push:
     branches: [main]
@@ -21,7 +22,8 @@ on:
 
 jobs:
   deploy:
-    name: Sync compose & infra files to Oracle
+    if: vars.DEPLOY_ENABLED == 'true'
+    name: Sync compose & infra files to server
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,9 +34,9 @@ jobs:
       - name: Copy infra files via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.ORACLE_SSH_HOST }}
-          username: ${{ secrets.ORACLE_SSH_USER }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           source: "infra/docker/docker-compose.prod.yml,infra/prometheus/**,infra/grafana/**,infra/ai-db/**"
           target: "~/app/"
           overwrite: true
@@ -42,9 +44,9 @@ jobs:
       - name: Reload compose
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.ORACLE_SSH_HOST }}
-          username: ${{ secrets.ORACLE_SSH_USER }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
             cd ~/app

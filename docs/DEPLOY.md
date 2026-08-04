@@ -1,144 +1,142 @@
-# 서버 배포 가이드
+# 배포 가이드
 
-이 문서는 axfulbank 프로젝트를 네이버 클라우드 서버에 배포하는 방법을 설명합니다.
-
----
-
-## 서버 정보
-
-| 항목 | 내용 |
-|---|---|
-| 클라우드 | 네이버 클라우드 플랫폼 (NCP) |
-| 공인 IP | 팀 내부 공유 |
-| OS | Ubuntu 24.04 |
-| 접속 포트 | 8080 (백엔드 API) |
+> 최종 갱신: 2026-08-04
+> **현재 이 저장소에는 배포 서버가 연결돼 있지 않다.** 배포 잡은 저장소 변수
+> `DEPLOY_ENABLED` 로 게이트되어 기본 스킵된다. 새 서버를 붙이는 절차는 §3.
 
 ---
 
-## 서버 접속 방법
+## 1. 배포 구조
 
-```bash
-ssh root@<서버_IP>
+CI 에서 이미지를 빌드해 GHCR 에 올리고, 서버는 그것을 pull 만 한다.
+서버에서 소스를 빌드하지 않는다(재현성 · 서버 리소스 · 롤백 때문).
+
+```
+push(main)
+   ↓
+[test]     reusable-java-build.yml       Gradle 테스트
+   ↓
+[publish]  reusable-docker-publish.yml   이미지 빌드 → ghcr.io push (SHA 태그)
+   ↓
+[deploy]   reusable-deploy-ssh.yml       서버 SSH → compose pull → up -d
+           ※ vars.DEPLOY_ENABLED == 'true' 일 때만 실행
 ```
 
-비밀번호는 네이버 클라우드 콘솔에서 확인합니다.
-> 콘솔 → Server → 서버 선택 → 서버 관리 및 설정 변경 → 관리자 비밀번호 확인
+서버에서 실제로 도는 정의는 `infra/docker/docker-compose.prod.yml` 하나다.
 
----
+### 서비스별 워크플로
 
-## 배포 구성
-
-로컬 개발용 `docker-compose.yml`과 별도로 서버 전용 `docker-compose.server.yml`을 사용합니다.
-
-**포함된 서비스:**
-
-| 서비스 | 포트 | 설명 |
+| 워크플로 | 대상 | test 잡 |
 |---|---|---|
-| gateway-service | 8080 | API 진입점 (이걸 통해 외부 접속) |
-| customer-service | 8081 | 고객/인증 |
-| deposit-service | 8082 | 예금/계좌 |
-| loan-service | 8083 | 대출 |
-| payment-service | 8084 | 이체/결제 |
-| master-service | 8085 | 공통 데이터 |
-| DB 6개 + Redis + Kafka | - | 인프라 |
+| `deploy-api-gateway.yml` | api-gateway | ✅ |
+| `deploy-customer-service.yml` | customer-service | ✅ |
+| `deploy-deposit-service.yml` | deposit-service | ✅ |
+| `deploy-payment-service.yml` | payment-service | ✅ |
+| `deploy-review-ai-gateway.yml` | review-ai-gateway | ✅ |
+| `deploy-consultation-service.yml` | consultation-service (Python) | — |
+| `deploy-infra.yml` | compose · prometheus · grafana 파일 SCP 동기화 | — |
 
-모니터링, AI 에이전트, Langfuse 등은 서버 자원 절약을 위해 제외했습니다.
+> ⚠️ **loan-service 전용 배포 워크플로가 없다.** 새 서버 구축 시 추가 필요.
 
----
+### 트리거 경로 함정
 
-## 처음 배포할 때
-
-### 1단계 — 서버 준비
-
-```bash
-# 서버 접속 후
-git clone https://github.com/Fast-Campus-Reboot-Campus/internet_banking.git
-cd internet_banking
-mkdir -p /app/logs
-```
-
-### 2단계 — DB + 인프라 먼저 띄우기
-
-앱 서비스가 DB에 연결해야 하므로 DB를 먼저 실행합니다.
-
-```bash
-docker compose -f docker-compose.server.yml up -d \
-  customer-db deposit-db loan-db common-db payment-db master-db redis kafka
-```
-
-모두 healthy 상태가 될 때까지 기다립니다.
-
-```bash
-docker compose -f docker-compose.server.yml ps
-```
-
-### 3단계 — 앱 서비스 빌드 및 실행
-
-처음 빌드는 10~20분 정도 걸립니다 (Gradle이 Java 코드를 컴파일합니다).
-
-```bash
-docker compose -f docker-compose.server.yml up -d --build \
-  customer-service deposit-service loan-service payment-service master-service
-```
-
-### 4단계 — gateway 실행
-
-모든 앱 서비스가 healthy 상태가 된 후 gateway를 실행합니다.
-
-```bash
-docker compose -f docker-compose.server.yml up -d --build gateway-service
-```
-
-### 5단계 — 접속 확인
-
-```bash
-curl http://localhost:8080/actuator/health
-```
-
-외부에서는 `http://<서버_IP>:8080` 으로 접속합니다.
+`deploy-*.yml` 대부분이 `common/**` · `build.gradle` · `settings.gradle` 을 경로
+필터에 포함한다. **이 셋 중 하나만 고쳐도 서비스 5개가 동시에 재배포된다.**
+모듈 추가·삭제 리팩토링 시 유의.
 
 ---
 
-## 코드 업데이트 후 재배포
+## 2. 시크릿 · 변수
 
-main 브랜치에 변경사항이 머지된 경우:
+| 이름 | 종류 | 용도 |
+|---|---|---|
+| `DEPLOY_ENABLED` | **Variable** | `'true'` 일 때만 deploy 잡 실행. 미설정이면 스킵(= 현재 상태) |
+| `DEPLOY_SSH_HOST` | Secret | 배포 서버 주소 |
+| `DEPLOY_SSH_USER` | Secret | SSH 계정 |
+| `DEPLOY_SSH_KEY` | Secret | SSH 개인키 |
+| `OPENAI_API_KEY` | Secret | LLM eval LIVE 채점. 없으면 STUB 구조검증만 수행 |
+| `GITHUB_TOKEN` | — | GHCR push 용. **GitHub 이 자동 제공, 설정 불필요** |
+
+설정 위치: 저장소 → Settings → Secrets and variables → Actions
+(Secrets 탭과 Variables 탭이 분리돼 있다. `DEPLOY_ENABLED` 는 **Variables**)
+
+> 포크는 원본 저장소의 시크릿을 상속받지 않는다. 배포가 필요 없는 포크에서
+> `DEPLOY_ENABLED` 를 켜지 않으면 CI 는 test · publish 까지만 돌고 초록색을 유지한다.
+
+---
+
+## 3. 새 배포 서버 붙이는 절차
+
+### 3-1. 서버 사전 준비
 
 ```bash
-git pull origin main
+# Docker + compose plugin 설치 후
+mkdir -p ~/app && cd ~/app
 
-# 변경된 서비스만 재빌드 (예: loan-service만 변경된 경우)
-docker compose -f docker-compose.server.yml up -d --build loan-service
+# GHCR 로그인 (이미지 pull 권한)
+echo "$GITHUB_PAT" | docker login ghcr.io -u <github-user> --password-stdin
+
+# .env.prod 작성 (커밋 금지 — .env.prod.sample 참고)
+vi .env.prod
+```
+
+`.env.prod` 에는 각 DB 비밀번호, `JWT_SECRET`, `CRYPTO_KEY_BASE64`,
+`GITHUB_OWNER`, 서비스별 `*_IMAGE_TAG` 가 들어간다.
+
+### 3-2. compose 파일 배치 후 최초 기동
+
+`deploy-infra.yml` 이 `infra/**` 를 `~/app/` 으로 SCP 동기화한다. 최초 1회는 수동으로 올려도 된다.
+
+```bash
+docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod pull
+docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+### 3-3. GitHub 설정
+
+1. Secrets 에 `DEPLOY_SSH_HOST` · `DEPLOY_SSH_USER` · `DEPLOY_SSH_KEY` 등록
+2. Variables 에 `DEPLOY_ENABLED = true` 등록
+3. 다음 push 부터 deploy 잡이 활성화된다
+
+### 3-4. 확인
+
+```bash
+docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod ps
+curl -fsS http://<host>:8080/actuator/health
 ```
 
 ---
 
-## 알려진 문제
+## 4. 운영 메모
 
-### loan-service Flyway 버그
+### 리소스 상한
+`infra/docker/docker-compose.prod.yml` 의 `mem_limit` 값은 **Oracle Cloud Free Tier
+24GB 기준**으로 잡혀 있다(합계 약 14GB). 다른 스펙의 서버로 옮기면 조정할 것.
 
-`V35__seed_admin_demo_data.sql`이 존재하지 않는 테이블에 데이터를 넣으려 해서 loan-service 기동이 실패합니다.
+### 로컬 실행과의 차이
+로컬은 `docker-compose.yml` + `start.ps1` 을 쓴다. 로컬은 인프라만 컨테이너로
+띄우고 앱은 `bootRun` 하는 구성이라 prod 와 실행 방식이 다르다.
 
-**임시 조치**: `docker-compose.server.yml`에 `SPRING_FLYWAY_TARGET: "34"` 설정으로 V35 이후 시드 데이터를 건너뜁니다. 앱 기능에는 영향 없고 어드민 화면의 데모 데이터만 없는 상태입니다.
+### 컨테이너·볼륨 정리
+compose 에서 서비스를 제거해도 서버의 기존 컨테이너·볼륨은 자동 삭제되지 않는다.
 
-**해결 방법**: loan-service 담당자가 아래 4개 테이블의 CREATE TABLE 마이그레이션을 추가하면 됩니다.
-- `review_advisory_rule`
-- `review_advisory_report`
-- `ai_audit_opinion`
-- `advisory_document`
-
-추가 완료 후 `docker-compose.server.yml`에서 `SPRING_FLYWAY_TARGET: "34"` 줄을 제거하면 됩니다.
+```bash
+docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
+docker volume ls        # 볼륨은 --remove-orphans 로 지워지지 않음
+docker volume rm <name>
+```
 
 ---
 
-## 서비스 중단 및 재시작
+## 5. 이력
 
-```bash
-# 전체 중단
-docker compose -f docker-compose.server.yml down
-
-# 전체 중단 + 데이터 삭제 (초기화)
-docker compose -f docker-compose.server.yml down -v
-
-# 특정 서비스만 재시작
-docker compose -f docker-compose.server.yml restart loan-service
-```
+- **NCP(네이버 클라우드) 배포 세트 제거 (2026-08-04)** — 서버에서 `git pull` 후
+  직접 빌드하는 방식이었다. GHCR 방식과 중복이고 test 잡 · 이미지 태그 · 롤백이
+  없어 열등하므로 `deploy.yml` 과 `docker-compose.server.yml` 을 제거했다.
+  시크릿도 `DEPLOY_*` / `ORACLE_SSH_*` 두 세트로 갈려 있던 것을 `DEPLOY_SSH_*` 로 통일.
+- **`reusable-deploy-oracle.yml` → `reusable-deploy-ssh.yml` 개명 (2026-08-04)** —
+  특정 클라우드 종속 이름 제거.
+- **loan-service Flyway V35 이슈 해소** — 구 문서에 기록돼 있던
+  "V35 가 없는 테이블에 시드해 기동 실패" 문제는 해결됐다. 어드바이저리 시드가
+  advisory 스트림으로 이전되어 V35 에는 주석만 남아 있고, 우회용
+  `SPRING_FLYWAY_TARGET` 설정도 제거됐다.
