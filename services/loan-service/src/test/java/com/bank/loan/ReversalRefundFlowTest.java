@@ -48,7 +48,7 @@ class ReversalRefundFlowTest extends AbstractLoanIntegrationTest {
     private RepaymentTransactionRepository txRepository;
 
     private static final String CNTR_START_DATE = "20320201";
-    private static final String DUE_DATE_M1     = "20320301";  // 2032-03-01 (월)
+    private static final String DUE_DATE_M1     = "20320302";  // 20320301 삼일절 → 휴일 보정
     private static final String DUE_DATE_M2     = "20320401";  // 2032-04-01 (목)
     private static final long   CONTRACTED_AMOUNT = 12_000_000L;
     private static final int    PERIOD_MONTHS     = 12;

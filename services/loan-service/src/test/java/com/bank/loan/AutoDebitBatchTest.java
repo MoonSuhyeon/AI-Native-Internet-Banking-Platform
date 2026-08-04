@@ -23,13 +23,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * 자동이체 일배치 통합 테스트.
  *
- * 세팅 (cntrStartDate=20260101 고정 → 1회차 due_date=20260201):
+ * 세팅 (cntrStartDate=20260101 고정 → 1회차 due_date=20260202):
+ *
+ * 2026-02-01 이 일요일이라 휴일 보정(V8 + 영업일 캘린더 V9)으로 납기가 20260202 로
+ * 밀린다. 자동이체는 due_date = baseDate 로 정확히 매칭하므로 baseDate 도 맞춰야 한다.
  *   - 계약 A: auto_debit_yn=Y, racct VERIFIED → 처리 대상
  *   - 계약 B: auto_debit_yn=N, racct VERIFIED → skip
  *
  * 시나리오:
  *   10) 매칭 없는 baseDate → 0건
- *   11) 1차 실행 baseDate=20260201 → total=2, processed=1, skipped=1
+ *   11) 1차 실행 baseDate=20260202 → total=2, processed=1, skipped=1
  *   12) A 회차1 = PAID, B 회차1 = DUE 확인
  *   13) A 거래목록 1건 (channelCd=AUTO_DEBIT)
  *   14) 동일 baseDate 재실행 → total=1(B만 DUE 남음), processed=0, skipped=1
@@ -43,7 +46,7 @@ class AutoDebitBatchTest extends AbstractLoanIntegrationTest {
     private LoanApplicationRepository applicationRepository;
 
     private static final String CNTR_START_DATE = "20260101";
-    private static final String DUE_DATE_OF_FIRST_INSTALLMENT = "20260201";
+    private static final String DUE_DATE_OF_FIRST_INSTALLMENT = "20260202";
     private static final long CONTRACTED_AMOUNT = 12_000_000L;
     private static final int  PERIOD_MONTHS     = 12;
     private static final int  RATE_BPS          = 600;

@@ -33,7 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *   11) baseDate=20300202 → 회차1 OVERDUE, dlq 신규 ACTIVE, dlq_days=1, STAGE_0
  *   12) 동일 baseDate 재실행 → 멱등 (스냅샷 중복 없음, 회차 그대로)
  *   13) baseDate=20300206 → dlq_days=5, STAGE_1, 스냅샷 2건
- *   14) baseDate=20300302 → 회차2도 OVERDUE, principal/interest 누적
+ *   14) baseDate=20300305 → 회차2도 OVERDUE, principal/interest 누적
+ *       (회차2 납기 20300301 은 삼일절이라 20300304 로 보정됨)
  *   15) 활성 dlq 조회 OK
  *   16) 스냅샷 목록 조회 (3건)
  *   17) 회차1·2 수동 상환 후 다음 rollover → RESOLVED
@@ -48,7 +49,7 @@ class DelinquencyFlowTest extends AbstractLoanIntegrationTest {
 
     private static final String CNTR_START_DATE = "20300101";
     private static final String DUE_1 = "20300201";
-    private static final String DUE_2 = "20300301";
+    private static final String DUE_2 = "20300304";  // 20300301 삼일절 → 휴일 보정
     private static final long CONTRACTED_AMOUNT = 12_000_000L;
     private static final int  PERIOD_MONTHS     = 12;
     private static final int  RATE_BPS          = 600;
@@ -121,7 +122,7 @@ class DelinquencyFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(14)
     void 회차2_overdue_누적() throws Exception {
-        mockMvc.perform(post("/api/internal/delinquency/rollover").param("baseDate", "20300302"))
+        mockMvc.perform(post("/api/internal/delinquency/rollover").param("baseDate", "20300305"))
                 .andExpect(status().isOk());
 
         MvcResult result = mockMvc.perform(get("/api/loan-contracts/{cntrId}/delinquency", cntrId))
@@ -142,7 +143,7 @@ class DelinquencyFlowTest extends AbstractLoanIntegrationTest {
                 .andExpect(jsonPath("$.data.totalCount").value(3))
                 .andExpect(jsonPath("$.data.items[0].snapshotDate").value("20300202"))
                 .andExpect(jsonPath("$.data.items[1].snapshotDate").value("20300206"))
-                .andExpect(jsonPath("$.data.items[2].snapshotDate").value("20300302"));
+                .andExpect(jsonPath("$.data.items[2].snapshotDate").value("20300305"));
     }
 
     @Test @Order(16)
@@ -150,7 +151,7 @@ class DelinquencyFlowTest extends AbstractLoanIntegrationTest {
         repay(cntrId, 1);
         repay(cntrId, 2);
 
-        mockMvc.perform(post("/api/internal/delinquency/rollover").param("baseDate", "20300303"))
+        mockMvc.perform(post("/api/internal/delinquency/rollover").param("baseDate", "20300306"))
                 .andExpect(status().isOk());
         // 자기 dlq 가 RESOLVED 됐는지는 다음 테스트의 LOAN_100 응답으로 검증
     }
