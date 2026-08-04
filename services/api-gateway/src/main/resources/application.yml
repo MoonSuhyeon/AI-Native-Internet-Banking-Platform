@@ -88,12 +88,6 @@ spring:
           predicates:
             - Path=/api/v1/payments/**
 
-        # 마스터(공통코드) 도메인 (JWT 필요)
-        - id: master
-          uri: http://${MASTER_SERVICE_HOST:localhost}:${MASTER_SERVICE_PORT:8085}
-          predicates:
-            - Path=/api/codes/**
-
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-please-change-in-production-min-32-chars-long}
   access-token-validity: 600000    # 10분 (밀리초)

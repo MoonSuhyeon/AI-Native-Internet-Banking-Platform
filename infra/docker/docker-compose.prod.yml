@@ -98,23 +98,6 @@ services:
       timeout: 5s
       retries: 5
 
-  master-db:
-    image: postgres:16-alpine
-    container_name: ib-master-db
-    <<: *default-restart
-    logging: *default-logging
-    environment:
-      POSTGRES_DB: ${MASTER_DB_NAME:-master_db}
-      POSTGRES_USER: ${MASTER_DB_USER:-master}
-      POSTGRES_PASSWORD: ${MASTER_DB_PASSWORD}
-    volumes:
-      - master-db-data:/var/lib/postgresql/data
-    mem_limit: 384m
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${MASTER_DB_USER:-master} -d ${MASTER_DB_NAME:-master_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   common-db:
     image: postgres:16-alpine
@@ -333,21 +316,6 @@ services:
       kafka:
         condition: service_healthy
 
-  master-service:
-    image: ghcr.io/${GITHUB_OWNER}/master-service:${MASTER_IMAGE_TAG:-latest}
-    container_name: ib-master-service
-    <<: *default-restart
-    logging: *default-logging
-    env_file: ../../.env.prod
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      MASTER_DB_HOST: master-db
-      REDIS_HOST: redis
-    mem_limit: 512m
-    depends_on:
-      master-db:
-        condition: service_healthy
-
   ai-service:
     image: ghcr.io/${GITHUB_OWNER}/ai-service:${AI_IMAGE_TAG:-latest}
     container_name: ib-ai-service
@@ -419,8 +387,6 @@ services:
       LOAN_SERVICE_PORT: 8083
       PAYMENT_SERVICE_HOST: payment-service
       PAYMENT_SERVICE_PORT: 8084
-      MASTER_SERVICE_HOST: master-service
-      MASTER_SERVICE_PORT: 8085
       # AI(auto-loan-review)·상담은 게이트웨이 미경유 구조 → 라우트 없음(의도적).
       # redis 는 api-gateway 가 사용하지 않음 → 미설정.
     ports:
@@ -431,7 +397,6 @@ services:
       - deposit-service
       - loan-service
       - payment-service
-      - master-service
 
   consultation-service:
     image: ghcr.io/${GITHUB_OWNER}/consultation-service:${CONSULTATION_IMAGE_TAG:-latest}
@@ -472,7 +437,6 @@ volumes:
   deposit-db-data:
   loan-db-data:
   payment-db-data:
-  master-db-data:
   common-db-data:
   ai-db-data:
   redis-data:

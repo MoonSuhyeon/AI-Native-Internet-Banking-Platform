@@ -90,22 +90,6 @@ services:
       timeout: 5s
       retries: 5
 
-  master-db:
-    image: postgres:16-alpine
-    container_name: ib-master-db
-    environment:
-      POSTGRES_DB: ${MASTER_DB_NAME:-master_db}
-      POSTGRES_USER: ${MASTER_DB_USER:-master}
-      POSTGRES_PASSWORD: ${MASTER_DB_PASSWORD:-master}
-    volumes:
-      - master-db-data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${MASTER_DB_USER:-master} -d ${MASTER_DB_NAME:-master_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   ai-db:
     image: pgvector/pgvector:pg16
     container_name: ib-ai-db
@@ -356,39 +340,6 @@ services:
       retries: 10
       start_period: 180s
 
-  master-service:
-    build:
-      context: .
-      dockerfile: services/master-service/Dockerfile
-    container_name: ib-master-service
-    ports:
-      - "${MASTER_APP_PORT:-8085}:8085"
-    environment:
-      MASTER_APP_PORT: 8085
-      MASTER_DB_HOST: master-db
-      MASTER_DB_PORT: 5432
-      MASTER_DB_NAME: ${MASTER_DB_NAME:-master_db}
-      MASTER_DB_USER: ${MASTER_DB_USER:-master}
-      MASTER_DB_PASSWORD: ${MASTER_DB_PASSWORD:-master}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      CRYPTO_KEY_BASE64: ${CRYPTO_KEY_BASE64:-aW50ZXJuZXQtYmFuay1kZXYta2V5LTMyYnl0ZXMhISE=}
-      LOG_DIR: /app/logs
-    volumes:
-      - /app/logs:/app/logs
-    depends_on:
-      master-db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q UP"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 180s
-
   api-gateway:
     build:
       context: .
@@ -410,8 +361,6 @@ services:
       LOAN_SERVICE_PORT: ${LOAN_APP_PORT:-8083}
       PAYMENT_SERVICE_HOST: payment-service
       PAYMENT_SERVICE_PORT: ${PAYMENT_APP_PORT:-8084}
-      MASTER_SERVICE_HOST: master-service
-      MASTER_SERVICE_PORT: ${MASTER_APP_PORT:-8085}
       AI_SERVICE_HOST: auto-loan-review
       AI_SERVICE_PORT: ${AUTO_LOAN_REVIEW_APP_PORT:-8089}
     volumes:
@@ -425,8 +374,6 @@ services:
         condition: service_healthy
       payment-service:
         condition: service_started
-      master-service:
-        condition: service_healthy
       auto-loan-review:
         condition: service_healthy
     restart: unless-stopped
@@ -627,7 +574,6 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://axfulbank.store}
         NEXT_PUBLIC_DEPOSIT_API_URL: https://axfulbank.store
         NEXT_PUBLIC_LOAN_API_URL: https://axfulbank.store
-        NEXT_PUBLIC_MASTER_API_URL: https://axfulbank.store
         NEXT_PUBLIC_PAYMENT_API_URL: https://axfulbank.store
         NEXT_PUBLIC_AI_API_URL: https://axfulbank.store
         NEXT_PUBLIC_AUTO_REVIEW_API_URL: https://axfulbank.store
@@ -894,7 +840,6 @@ volumes:
   common-db-data:
   payment-db-data:
   payment-db-b-data:
-  master-db-data:
   ai-db-data:
   redis-data:
   kafka-data:

@@ -1,5 +1,0 @@
-// master-service: 의존성/플러그인은 루트 build.gradle 의 subprojects 블록에서 일괄 관리
-
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-}
