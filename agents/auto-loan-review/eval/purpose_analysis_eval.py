@@ -23,6 +23,7 @@ import os
 import re
 import sys
 import json
+import pathlib
 from pathlib import Path
 
 try:
@@ -41,7 +42,16 @@ except ImportError:
 STUB = os.getenv("EVAL_STUB", "").lower() in ("1", "true", "yes")
 MODEL = os.getenv("EVAL_MODEL", "gpt-4o-mini")
 BASE_URL = os.getenv("EVAL_BASE_URL") or None  # None = 실제 OpenAI
-PROMPT_PATH = Path(__file__).resolve().parents[1] / "src/main/resources/prompts/purpose_analysis_v1.yml"
+def _resolve_prompt(filename: str) -> pathlib.Path:
+    """운영 레포와 포트폴리오 레포 양쪽에서 동작하도록 프롬프트 경로를 찾는다."""
+    here = pathlib.Path(__file__).resolve().parent
+    for cand in (here / "prompts" / filename,                              # 포트폴리오 레포
+                 here.parent / "src/main/resources/prompts" / filename):   # 운영 레포
+        if cand.exists():
+            return cand
+    raise FileNotFoundError("프롬프트를 찾을 수 없음: " + filename)
+
+PROMPT_PATH = _resolve_prompt("purpose_analysis_v1.yml")
 
 FLAGS = {
     "VAGUE_PURPOSE", "AMOUNT_PERSONA_MISMATCH", "PURPOSE_PRODUCT_MISMATCH",
