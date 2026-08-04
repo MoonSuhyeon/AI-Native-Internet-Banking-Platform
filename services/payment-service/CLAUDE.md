@@ -152,7 +152,7 @@
 | 박제(Snapshot) | 외부 응답을 결제계 DB에 영구 저장. 이후 변경 없음 |
 | 멱등키 | 재시도 시 deposit이 직전 응답을 반환하게 하는 키 |
 | 거래분개(ledger) | 결제계 내부 회계 차/대변 분개. 한 결제에 2~4건 발생 |
-| deposit common_transaction | 통장 거래내역 row. 결제계 ledger와 별개 개념 |
+| deposit deposit_transactions | 통장 거래내역 row. 결제계 ledger와 별개 개념. (합의서 v1.0 의 `common_transaction` 은 미구현 통합모델 테이블명이었고, 실제 deposit-service 는 `deposit_transactions` 를 사용 — V18 에서 유령 테이블 제거) |
 | 청산대기(CLEARING_PENDING) | KFTC 외부망 송신 후 정산 전 임시 계정 상태 |
 | Outbox 워커 | 결제계 DB Outbox 테이블 → Kafka 비동기 발행 워커 |
 | Saga / 보상 트랜잭션 | 외부 자금 변동 후 실패 시 역 호출로 원상복구하는 패턴 (P-014) |
