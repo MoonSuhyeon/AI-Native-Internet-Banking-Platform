@@ -55,7 +55,8 @@ public class AutoDebitCallbackService {
 
         RepayInstallmentRequest installmentReq = new RepayInstallmentRequest(
                 schedule.getInstallmentNo(),
-                "INBOUND",
+                // 원장 채널 정본 — AccountingSummaryQuery·V39 시드와 일치시킨다.
+                "AUTO_DEBIT",
                 baseDate
         );
 

@@ -94,7 +94,7 @@ class AutoDebitBatchTest extends AbstractLoanIntegrationTest {
         mockMvc.perform(get("/api/loan-contracts/{cntrId}/repayments", cntrIdA))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalCount").value(1))
-                .andExpect(jsonPath("$.data.items[0].channelCd").value("INBOUND"))
+                .andExpect(jsonPath("$.data.items[0].channelCd").value("AUTO_DEBIT"))
                 .andExpect(jsonPath("$.data.items[0].rtxStatusCd").value("SUCCESS"));
     }
 

@@ -63,7 +63,11 @@ public class AutoDebitBatchService {
     private static final Logger log = LoggerFactory.getLogger(AutoDebitBatchService.class);
 
     // 원장 기록용 채널 (RepaymentTransaction.channel_cd) — 자동이체 식별값
-    private static final String CHANNEL_AUTO_DEBIT = "INBOUND";
+    // 원장(repayment_transaction.channel_cd) 자동이체 식별값.
+    // 회계 요약 집계(AccountingSummaryQuery)와 시드(V39)가 AUTO_DEBIT 을 정본으로 쓴다.
+    // 과거 INBOUND 로 적재하던 탓에 일일·월별 회계 요약의 자동이체 건수가 0 이었다.
+    // payment-service 호출 채널(OPEN_BANKING)과는 별개 필드다.
+    private static final String CHANNEL_AUTO_DEBIT = "AUTO_DEBIT";
     // payment-service 호출 채널 CHECK: WEB/MOBILE/BRANCH/ATM/OPEN_BANKING (INBOUND은 타행→당행 수신 전용이라 OUT 이체엔 사용 불가)
     private static final String PAYMENT_CHANNEL_OPEN_BANKING = "OPEN_BANKING";
 
