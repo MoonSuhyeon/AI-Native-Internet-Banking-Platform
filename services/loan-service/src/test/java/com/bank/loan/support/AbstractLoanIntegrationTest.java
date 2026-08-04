@@ -83,7 +83,12 @@ public abstract class AbstractLoanIntegrationTest {
         AUTO_REVIEW_MOCK.stubFor(WireMock.post(WireMock.urlEqualTo("/api/ai/auto-review/evaluate"))
                 .willReturn(WireMock.aResponse().withStatus(200)
                         .withHeader("Content-Type", "application/json")
-                        .withBody("{\"track\":\"TRACK_3\",\"pd\":0.120000,\"rationale\":\"통합테스트 기본 stub\"}")));
+                        // auto-review 컨트롤러는 ApiResponse 봉투로 감싸 반환한다
+                        // (AutoReviewEvaluateClient 가 ApiResponse<T> 로 역직렬화).
+                        // 맨몸 객체를 주면 data 가 null 이 되어 결과가 null 로 떨어진다.
+                        .withBody("{\"code\":\"OK\",\"message\":\"OK\",\"data\":"
+                                + "{\"track\":\"TRACK_3\",\"pd\":0.120000,"
+                                + "\"rationale\":\"통합테스트 기본 stub\"}}")));
 
         ADVISORY_MOCK = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         ADVISORY_MOCK.start();

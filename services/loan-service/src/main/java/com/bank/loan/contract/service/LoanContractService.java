@@ -17,6 +17,9 @@ import com.bank.loan.maturity.service.MaturityService;
 import com.bank.loan.product.domain.LoanProduct;
 import com.bank.loan.product.repository.LoanProductRepository;
 import com.bank.loan.notification.event.ContractSignedEvent;
+import com.bank.loan.advisory.AdvisoryClient;
+import com.bank.loan.advisory.AdvisoryReportSummary;
+import com.bank.loan.review.repository.LoanReviewRepository;
 import com.bank.loan.support.LoanErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -67,6 +70,31 @@ public class LoanContractService {
     private final StatusHistoryPublisher statusHistoryPublisher;
     private final CurrentActorProvider currentActor;
     private final ApplicationEventPublisher eventPublisher;
+    private final LoanReviewRepository reviewRepository;
+    private final AdvisoryClient advisoryClient;
+
+    /**
+     * CRITICAL 어드바이저리가 미확인 상태면 약정 체결을 막는다.
+     *
+     * <p>같은 통제가 4-eye 승인 경로(LoanReviewApproverService)에는 있었으나
+     * 약정 체결 경로에는 없어, 편향 경고가 미해결인 채로 약정이 체결될 수 있었다.
+     * AdvisoryFlowIntegrationTest 가 이 동작을 검증하고 있었지만 구현이 없어
+     * 실패하던 것을 통제 추가로 해소한다.
+     *
+     * <p>본심사가 없으면(어드바이저리 대상 자체가 없으므로) 통과시킨다.
+     */
+    private void assertNoCriticalUnackedAdvisory(Long applId) {
+        reviewRepository.findByApplIdAndDeletedAtIsNull(applId).ifPresent(review -> {
+            List<AdvisoryReportSummary> reports = advisoryClient.getReports(review.getRevId());
+            boolean hasUnackedCritical = reports.stream()
+                    .filter(r -> "CRITICAL".equals(r.severityCd()))
+                    .anyMatch(r -> !"ACKED".equals(r.advrStatusCd())
+                            && !"RESOLVED".equals(r.advrStatusCd()));
+            if (hasUnackedCritical) {
+                throw new BusinessException(LoanErrorCode.LOAN_201);
+            }
+        });
+    }
 
     @Transactional
     public LoanContractResponse create(CreateContractRequest req) {
@@ -76,6 +104,8 @@ public class LoanContractService {
         if (!application.isApproved()) {
             throw new BusinessException(LoanErrorCode.LOAN_060);
         }
+
+        assertNoCriticalUnackedAdvisory(application.getApplId());
 
         validateGuarantorsSigned(application.getApplId());
 

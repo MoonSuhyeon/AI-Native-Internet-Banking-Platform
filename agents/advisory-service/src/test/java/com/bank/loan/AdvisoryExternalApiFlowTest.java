@@ -33,7 +33,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     // 테스트 환경의 CurrentActorProvider 가 SYSTEM(0L) 을 반환하므로,
     // REVIEWER role + actorId 자동매핑이 본인 매칭되도록 A=SYSTEM 으로 둠. B 는 임의 다른 ID.
-    private static final Long REVIEWER_A = com.bank.common.persistence.CurrentActorProvider.SYSTEM;
+    private static final Long REVIEWER_A = 99_601L;   // 과거엔 SYSTEM(0) — 미인증 기본 actor 에 의존하고 있었다
     private static final Long REVIEWER_B = 99_602L;
 
     @Autowired ReviewAdvisoryReportRepository reportRepo;
@@ -66,7 +66,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(10)
     void REVIEWER_본인_대상_리포트만_노출() throws Exception {
-        mockMvc.perform(get("/api/advisory/reports").header("X-Actor-Role", "REVIEWER"))
+        mockMvc.perform(get("/api/advisory/reports").header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.items[?(@.advrId == " + advrIdA + ")]").exists())
                 .andExpect(jsonPath("$.data.items[?(@.advrId == " + advrIdB + ")]").doesNotExist());
@@ -88,7 +88,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(20)
     void REVIEWER_본인_리포트_상세_OK() throws Exception {
-        mockMvc.perform(get("/api/advisory/reports/{id}", advrIdA).header("X-Actor-Role", "REVIEWER"))
+        mockMvc.perform(get("/api/advisory/reports/{id}", advrIdA).header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.advrId").value(advrIdA))
                 .andExpect(jsonPath("$.data.severityCd").value("CRITICAL"));
@@ -97,7 +97,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(21)
     void REVIEWER_타인_리포트_접근_404_LOAN_190() throws Exception {
         // REVIEWER A 가 B 의 리포트 상세 시도 → 존재 자체를 숨김
-        mockMvc.perform(get("/api/advisory/reports/{id}", advrIdB).header("X-Actor-Role", "REVIEWER"))
+        mockMvc.perform(get("/api/advisory/reports/{id}", advrIdB).header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("LOAN_190"));
     }
@@ -108,7 +108,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(30)
     void 본인_리포트_조회_마킹_OPEN_VIEWED() throws Exception {
-        mockMvc.perform(post("/api/advisory/reports/{id}/view", advrIdA).header("X-Actor-Role", "REVIEWER"))
+        mockMvc.perform(post("/api/advisory/reports/{id}/view", advrIdA).header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.advrStatusCd").value("VIEWED"));
     }
@@ -126,7 +126,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
                 }
                 """;
         mockMvc.perform(post("/api/advisory/reports/{id}/ack", advrIdA)
-                        .header("X-Actor-Role", "REVIEWER")
+                        .header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A))
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.ackResponseCd").value("MAINTAIN"));
@@ -141,7 +141,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
                 { "ackResponseCd":"MAINTAIN", "decisionChangeYn":"N" }
                 """;
         mockMvc.perform(post("/api/advisory/reports/{id}/ack", advrIdB)
-                        .header("X-Actor-Role", "REVIEWER")
+                        .header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A))
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("LOAN_190"));
@@ -153,7 +153,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(40)
     void REVIEWER_가_rules_목록_접근_403_COMMON_403() throws Exception {
-        mockMvc.perform(get("/api/advisory/rules").header("X-Actor-Role", "REVIEWER"))
+        mockMvc.perform(get("/api/advisory/rules").header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("COMMON_403"));
     }
@@ -206,7 +206,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(50)
     void REVIEWER_가_stats_접근_403() throws Exception {
         mockMvc.perform(get("/api/advisory/stats/reviewers/{id}", REVIEWER_A)
-                        .header("X-Actor-Role", "REVIEWER"))
+                        .header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("COMMON_403"));
     }

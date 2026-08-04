@@ -47,9 +47,13 @@ class AutoReviewEvaluateClientTest {
                 .andExpect(header("X-Internal-Token", TOKEN))
                 .andRespond(withSuccess("""
                         {
-                          "track": "TRACK_1",
-                          "pd": 0.023456,
-                          "rationale": "CB 우량, DSR 양호, 자동 승인"
+                          "code": "OK",
+                          "message": "OK",
+                          "data": {
+                            "track": "TRACK_1",
+                            "pd": 0.023456,
+                            "rationale": "CB 우량, DSR 양호, 자동 승인"
+                          }
                         }
                         """, MediaType.APPLICATION_JSON));
 
@@ -66,9 +70,13 @@ class AutoReviewEvaluateClientTest {
         server.expect(requestTo(BASE_URL + EVALUATE_PATH))
                 .andRespond(withSuccess("""
                         {
-                          "track": "TRACK_2",
-                          "pd": 0.412000,
-                          "rationale": "PD 임계값 초과, 자동 반려"
+                          "code": "OK",
+                          "message": "OK",
+                          "data": {
+                            "track": "TRACK_2",
+                            "pd": 0.412000,
+                            "rationale": "PD 임계값 초과, 자동 반려"
+                          }
                         }
                         """, MediaType.APPLICATION_JSON));
 
@@ -84,9 +92,13 @@ class AutoReviewEvaluateClientTest {
         server.expect(requestTo(BASE_URL + EVALUATE_PATH))
                 .andRespond(withSuccess("""
                         {
-                          "track": "TRACK_3",
-                          "pd": 0.185000,
-                          "rationale": "중간 위험군, 심사원 배정 필요"
+                          "code": "OK",
+                          "message": "OK",
+                          "data": {
+                            "track": "TRACK_3",
+                            "pd": 0.185000,
+                            "rationale": "중간 위험군, 심사원 배정 필요"
+                          }
                         }
                         """, MediaType.APPLICATION_JSON));
 

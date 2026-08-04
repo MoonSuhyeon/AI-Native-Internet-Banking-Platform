@@ -6,7 +6,9 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -38,6 +40,8 @@ class BreakGlassAccessControlTest extends AbstractLoanIntegrationTest {
     private static final long ACTOR_COMP  = 789L;  // COMPLIANCE 담당자
     private static final long ACTOR_HQ    = 888L;  // 본사 담당자
 
+    @Autowired JdbcTemplate jdbc;
+
     private Long prodId;
     private Long applId;
 
@@ -51,6 +55,15 @@ class BreakGlassAccessControlTest extends AbstractLoanIntegrationTest {
         runDsrPass(applId);
         runIdv(applId);
         createReview(applId);
+
+        // 신청에 지점을 배정한다.
+        //
+        // checkScope 는 "지점장 && (branch_id 가 null 이거나 본인 지점과 일치)" 면 접근을
+        // 허용한다 — 지점 미배정(인터넷 채널) 건은 지점장 누구나 볼 수 있다는 의도된 정책.
+        // 생성 API 에는 branchId 필드가 없어(V29 로 추가된 컬럼) 신청이 항상 미배정으로
+        // 만들어졌고, 그 결과 "타지점 지점장 거부" 시나리오가 성립하지 않아
+        // 접근이 허용되고 있었다. 지점을 0001 로 지정해 ACTOR_BM(0002)을 실제 타지점으로 만든다.
+        jdbc.update("UPDATE loan_application SET branch_id = ? WHERE appl_id = ?", "0001", applId);
     }
 
     // ─── 역할별 접근 제어 ───────────────────────────────────────────────────

@@ -83,8 +83,11 @@ class AdvisoryFlowIntegrationTest extends AbstractLoanIntegrationTest {
         // 3. 약정 → 409 LOAN_192
         mockMvc.perform(post("/api/loan-contracts")
                         .contentType(MediaType.APPLICATION_JSON).content(contractBody(applId)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("LOAN_192"));
+                // 4-eye 승인 경로와 동일한 통제 코드를 쓴다.
+                // LOAN_192 는 "본심사가 BIAS_REVIEWING 상태가 아님"(편향 검증 단계)이라
+                // 어드바이저리 미확인 차단과는 다른 사유이며, 상태도 409 가 아니라 422 다.
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value("LOAN_201"));
 
         // 4. ack — service-level (외부 컨트롤러는 Phase 4 산출물)
         ReviewAdvisoryAck ack = ackService.acknowledge(advrId,
