@@ -29,14 +29,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * 메모리 룰: 배치성 테스트는 다른 연도 사용 — 본 테스트는 2033 년.
  *
- * 세팅 (cntrStartDate=20330101 → 회차1 due=20330201, 회차2 due=20330301, autoDebit=N):
+ * 세팅 (cntrStartDate=20330101, autoDebit=N):
  *
- *   10) baseDate=20330202 → 회차1 OVERDUE, dlq new ACTIVE, dlq_days=1, STAGE_0
+ * 회차 납기는 휴일 보정(V8 + 영업일 캘린더 V9)을 거친다. 2033-02-01·03-01(삼일절)이
+ * 휴일이라 실제 납기는 회차1=20330202, 회차2=20330302 로 하루씩 밀린다.
+ * 롤오버는 dueDate < baseDate 인 회차를 찾으므로 baseDate 도 그만큼 뒤로 잡는다.
+ * (보정 도입 전 기준인 20330201/20330301 을 가정하면 연체가 잡히지 않는다.)
+ *
+ *   10) baseDate=20330203 → 회차1 OVERDUE, dlq new ACTIVE, dlq_days=1, STAGE_0
  *                          → DELINQUENCY/OPENED 신고 1건
- *   11) baseDate=20330206 → dlq_days=5, STAGE_1 — 내부 단계 (신고 X). 자기 cntr 보고 그대로 1건
- *   12) baseDate=20330303 → 회차2도 OVERDUE, dlq_days=30, STAGE_2 — STAGE_ADVANCED 1건 추가 (총 2)
- *   13) baseDate=20330303 재실행 → 멱등 (총 2 그대로)
- *   14) 회차1·2 상환 후 baseDate=20330304 → RESOLVED → RESOLUTION 신고 1건 추가 (총 3)
+ *   11) baseDate=20330207 → dlq_days=5, STAGE_1 — 내부 단계 (신고 X). 자기 cntr 보고 그대로 1건
+ *   12) baseDate=20330304 → 회차2도 OVERDUE, dlq_days=30, STAGE_2 — STAGE_ADVANCED 1건 추가 (총 2)
+ *   13) baseDate=20330304 재실행 → 멱등 (총 2 그대로)
+ *   14) 회차1·2 상환 후 baseDate=20330305 → RESOLVED → RESOLUTION 신고 1건 추가 (총 3)
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CreditInfoReportAutoEmitFlowTest extends AbstractLoanIntegrationTest {
@@ -66,7 +71,7 @@ class CreditInfoReportAutoEmitFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(10)
     void opened_자동_신고() throws Exception {
-        rollover("20330202");
+        rollover("20330203");
 
         // NEW_LOAN(1) + DELINQUENCY_OPENED(1) = 2
         awaitCntrReportCount(2);
@@ -74,14 +79,17 @@ class CreditInfoReportAutoEmitFlowTest extends AbstractLoanIntegrationTest {
         CreditInfoReport opened = findLastByReason("DELINQUENCY_OPENED");
         assertThat(opened.getCrptTypeCd()).isEqualTo("DELINQUENCY");
         assertThat(opened.getCrptAgencyCd()).isEqualTo("KCB");
-        assertThat(opened.getCrptStatusCd()).isEqualTo("SENT");
+        // 자동 발화는 REQUESTED 까지다. SENT 로의 전이는 outbox 를 픽업하는
+        // 별도 디스패치 배치(CreditInfoReportDispatchController)의 몫이며
+        // 본 테스트 범위가 아니다.
+        assertThat(opened.getCrptStatusCd()).isEqualTo("REQUESTED");
         assertThat(opened.getDlqId()).isNotNull();
-        assertThat(opened.getReportPayload()).contains("dlqStartDate").contains("20330202");
+        assertThat(opened.getReportPayload()).contains("dlqStartDate").contains("20330203");
     }
 
     @Test @Order(11)
     void stage_1_은_내부_단계_신고_없음() throws Exception {
-        rollover("20330206");
+        rollover("20330207");
 
         // 카운트 2 유지 — 잠시 기다리지만 새 row 생기면 안 됨
         try { Thread.sleep(500); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
@@ -90,19 +98,20 @@ class CreditInfoReportAutoEmitFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(12)
     void stage_2_진입은_STAGE_ADVANCED_자동_신고() throws Exception {
-        rollover("20330303");
+        rollover("20330304");
 
         // +1 → 3
         awaitCntrReportCount(3);
         CreditInfoReport adv = findLastByReason("DELINQUENCY_STAGE_ADVANCED");
         assertThat(adv.getCrptTypeCd()).isEqualTo("DELINQUENCY");
-        assertThat(adv.getReportPayload()).contains("\"toStage\":\"STAGE_2\"");
+        // payload 는 콜론 뒤 공백을 포함해 직렬화된다("toStage": "STAGE_2").
+        assertThat(adv.getReportPayload()).contains("\"toStage\": \"STAGE_2\"");
     }
 
     @Test @Order(13)
     void 같은_baseDate_재실행은_멱등() throws Exception {
         int before = countCntrReports();
-        rollover("20330303");
+        rollover("20330304");
         try { Thread.sleep(500); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
         assertThat(countCntrReports()).isEqualTo(before);
     }
@@ -111,7 +120,7 @@ class CreditInfoReportAutoEmitFlowTest extends AbstractLoanIntegrationTest {
     void 해소_자동_신고() throws Exception {
         repay(cntrId, 1);
         repay(cntrId, 2);
-        rollover("20330304");
+        rollover("20330305");
 
         awaitCntrReportCount(4);
         CreditInfoReport resolved = findLastByReason("DELINQUENCY_RESOLVED");
@@ -129,8 +138,10 @@ class CreditInfoReportAutoEmitFlowTest extends AbstractLoanIntegrationTest {
     }
 
     private void awaitCntrReportCount(int expected) {
-        await().atMost(Duration.ofSeconds(5))
-                .pollInterval(Duration.ofMillis(50))
+        // 신고 적재는 @Async + AFTER_COMMIT 이라 rollover 응답 이후에 도착한다.
+        // rollover 가 훑는 계약 수가 데모 시드(V37~V42)로 늘어 여유를 둔다.
+        await().atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(500))
                 .until(() -> countCntrReports() >= expected);
     }
 
