@@ -180,11 +180,12 @@ class LoanReviewFlowTest extends AbstractLoanIntegrationTest {
                   "revTypeCd":"MANUAL",
                   "revDecisionCd":"REJECTED",
                   "rejectReasonCd":"POLICY_VIOLATION",
-                  "revRemark":"내부 정책 위반",
-                  "reviewerId":99001
+                  "revRemark":"내부 정책 위반"
                 }
                 """;
+        // 심사원은 인증 주체에서 결정된다(RunReviewRequest 에 reviewerId 필드 없음).
         mockMvc.perform(post("/api/loan-applications/{applId}/review", rejectApplId)
+                        .header("X-User-Id", "99001")
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.revDecisionCd").value("REJECTED"))
@@ -270,11 +271,11 @@ class LoanReviewFlowTest extends AbstractLoanIntegrationTest {
                   "revDecisionCd":"APPROVED",
                   "approvedAmount":20000000,
                   "approvedRateBps":420,
-                  "approvedPeriodMo":24,
-                  "reviewerId":99002
+                  "approvedPeriodMo":24
                 }
                 """;
         mockMvc.perform(post("/api/loan-applications/{applId}/review", overrideApplId)
+                        .header("X-User-Id", "99002")
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.approvedAmount").value(20000000))
@@ -346,11 +347,11 @@ class LoanReviewFlowTest extends AbstractLoanIntegrationTest {
                   "revDecisionCd":"REJECTED",
                   "rejectReasonCd":"POLICY_REVIEW",
                   "revRemark":"심사 정정 - 정책 재검토",
-                  "revisitReasonCd":"APPEAL",
-                  "reviewerId":99010
+                  "revisitReasonCd":"APPEAL"
                 }
                 """;
         mockMvc.perform(patch("/api/loan-applications/{applId}/review", approveApplId)
+                        .header("X-User-Id", "99010")
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.revDecisionCd").value("REJECTED"))
@@ -378,11 +379,11 @@ class LoanReviewFlowTest extends AbstractLoanIntegrationTest {
         String body = """
                 {
                   "revDecisionCd":"APPROVED",
-                  "revisitReasonCd":"NEW_EVIDENCE",
-                  "reviewerId":99011
+                  "revisitReasonCd":"NEW_EVIDENCE"
                 }
                 """;
         mockMvc.perform(patch("/api/loan-applications/{applId}/review", rejectApplId)
+                        .header("X-User-Id", "99011")
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.revDecisionCd").value("APPROVED"))

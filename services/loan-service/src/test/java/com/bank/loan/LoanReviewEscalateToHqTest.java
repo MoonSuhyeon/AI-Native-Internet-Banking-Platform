@@ -184,19 +184,36 @@ class LoanReviewEscalateToHqTest extends AbstractLoanIntegrationTest {
     }
 
     private void preparePendingApprover(Long applId, long reviewerId, String decision) throws Exception {
-        mockMvc.perform(post("/api/loan-applications/{id}/review", applId)
+        // 심사원은 요청 바디가 아니라 인증 주체에서 결정된다
+        // (RunReviewRequest 에 reviewerId 필드가 없어 바디 값은 무시된다).
+        MvcResult r = mockMvc.perform(post("/api/loan-applications/{id}/review", applId)
+                        .header("X-User-Id", String.valueOf(reviewerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "revTypeCd":"MANUAL","revDecisionCd":"%s",
-                                  "reviewerId":%d,"approvedAmount":30000000,
+                                  "approvedAmount":30000000,
                                   "approvedRateBps":500,"approvedPeriodMo":36
                                 }
-                                """.formatted(decision, reviewerId)))
+                                """.formatted(decision)))
+                .andExpect(status().isCreated()).andReturn();
+        Long revId = extractData(r).get("revId").asLong();
+
+        // 편향 검증이 켜져 있으므로 REVIEWER_DECIDED → BIAS_REVIEWING 으로 간다.
+        // acknowledge-bias 는 리포트 1건 이상을 전제로 하므로 먼저 적재한다.
+        mockMvc.perform(post("/api/internal/loan-reviews/{revId}/bias-report", revId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "severityCd":"LOW","summary":"이상 없음","findings":[],
+                                  "model":"claude-opus-4-7","modelVersion":"20250514",
+                                  "promptHash":"ok","inputToken":500,"outputToken":100,"latencyMs":600
+                                }
+                                """))
                 .andExpect(status().isCreated());
 
-        // bias-check disabled → 바로 PENDING_APPROVER 로 전이되지 않으므로 acknowledge-bias 호출
         mockMvc.perform(post("/api/loan-applications/{id}/review/acknowledge-bias", applId)
+                        .header("X-User-Id", String.valueOf(reviewerId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk());
