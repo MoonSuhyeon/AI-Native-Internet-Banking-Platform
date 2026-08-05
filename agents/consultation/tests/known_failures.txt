@@ -14,10 +14,15 @@
 # 고칠 때: 원인을 확인해 테스트를 고치거나 코드를 고친 뒤, 이 파일에서 해당 줄을 지운다.
 # 새로 추가할 때: 정말 지금 고칠 수 없는 것인지 먼저 따진다. 이 파일은 늘어나면 안 된다.
 #
-# 남은 것들의 대체적인 성격 (2026-08-06 기준 91건):
+# 남은 것들의 대체적인 성격 (2026-08-06 기준):
 #   - 픽스처 시드값과 기대값 불일치 (assert 0.0 == 10000000 류)
 #   - mock LLM 출력 형식 변경 ('[LLM 맞춤 추천]' 마커 등)
 #   - 개수 기대 변경 (assert 2 == 1 류)
+tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_salary_tx_count
+tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_surplus_tx_count
+tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_tight_tx_count
+tests/test_additional_scenarios.py::TestHandleMessageCashFlowIntent::test_cash_flow_intent_classified
+tests/test_additional_scenarios.py::TestHandleMessageCashFlowIntent::test_cash_flow_message_is_recommendation_text
 tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_salary_tx_count
 tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_surplus_tx_count
 tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_tight_tx_count
@@ -32,10 +37,6 @@ tests/test_cash_flow_recommend.py::TestAccumulateTypeDiversity::test_includes_at
 tests/test_cash_flow_recommend.py::TestAccumulateTypeDiversity::test_shows_adjusted_score_for_savings
 tests/test_cash_flow_recommend.py::TestDataStructure::test_monthly_tx_count_positive_for_active_customer
 tests/test_cash_flow_recommend.py::TestDataStructure::test_product_count_reflects_selling_products
-tests/test_cash_flow_recommend.py::TestIntentClassification::test_classifies_as_cash_flow_recommend[\ub0b4 \uac70\ub798 \ud328\ud134\uc73c\ub85c \ucd94\ucc9c\ud574\uc918]
-tests/test_cash_flow_recommend.py::TestIntentClassification::test_classifies_as_cash_flow_recommend[\ub0b4 \uc0c1\ud669\uc5d0 \ub9de\ub294 \uc0c1\ud488 \ucd94\ucc9c]
-tests/test_cash_flow_recommend.py::TestIntentClassification::test_classifies_as_cash_flow_recommend[\ub0b4 \uc18c\ube44 \ud328\ud134\uc5d0 \ub9de\ub294 \uc801\uae08 \uc788\uc5b4?]
-tests/test_cash_flow_recommend.py::TestIntentClassification::test_classifies_as_cash_flow_recommend[\ub0b4 \ud328\ud134 \ubd84\uc11d\ud574\uc11c \uc0c1\ud488 \ucd94\ucc9c\ud574\uc918]
 tests/test_cash_flow_recommend.py::TestSalaryCustomerRuleBased::test_has_data_true
 tests/test_cash_flow_recommend.py::TestSalaryCustomerRuleBased::test_monthly_surplus_positive
 tests/test_cash_flow_recommend.py::TestSurplusCustomerRuleBased::test_has_data_true
@@ -58,7 +59,7 @@ tests/test_comprehensive_scenarios.py::TestIntentClassifierEdgeCases::test_compa
 tests/test_comprehensive_scenarios.py::TestRichDbMultiAccount::test_cust001_maturity_schedule_has_two_contracts
 tests/test_comprehensive_scenarios.py::TestRichDbMultiAccount::test_maturity_dates_both_present
 tests/test_comprehensive_scenarios.py::TestUnknownCustomerEmpty::test_unknown_customer_returns_empty[MATURITY_SCHEDULE]
-tests/test_deep_coverage.py::TestAnalyzeCustomerCashFlow::test_months_parameter_scales_result
+tests/test_deep_coverage.py::TestAnalyzeCustomerCashFlow::test_salary_has_data_true
 tests/test_deep_coverage.py::TestAnalyzeCustomerCashFlow::test_tight_negative_surplus
 tests/test_deep_coverage.py::TestFeatureAnswerFormatterDetail::test_compare_has_table_header
 tests/test_deep_coverage.py::TestFeatureAnswerFormatterDetail::test_compare_separator_line

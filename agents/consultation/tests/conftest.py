@@ -454,9 +454,9 @@ def rich_db() -> Session:
         """))
 
         # ── 거래: CUST001 3건(계좌1), CUST002 1건 ─────────────────────────────
-        conn.execute(text("""
+        conn.execute(text(f"""
             INSERT INTO deposit_transactions VALUES
-            (1,'TX-001',1,'TRANSFER','COMPLETED',10000,'2026-05-01','2026-05-01'),
+            (1,'TX-001',1,'TRANSFER','COMPLETED',10000,{_days_ago(34)},{_days_ago(34)}),
             (2,'TX-002',1,'TRANSFER','PENDING',50000,'2026-05-10','2026-05-10'),
             (3,'TX-003',2,'DEPOSIT','COMPLETED',100000,'2026-05-15','2026-05-15'),
             (4,'TX-004',3,'TRANSFER','COMPLETED',20000,'2026-05-20','2026-05-20')
@@ -482,6 +482,18 @@ def rich_service(rich_db: Session) -> ChatbotService:
 #   CUST_SURPLUS : 목돈형 (총 잔액 50,000,000원, 잉여자금 많음)
 #   CUST_TIGHT   : 긴축형 (지출 > 입금, 잉여자금 음수)
 #   CUST_NODATA  : 계좌는 있으나 거래 없음 (has_data=False)
+
+
+# ── 거래일 헬퍼 ───────────────────────────────────────────────────────────────
+# 현금흐름 분석이 now-90일 컷오프로 거래를 거르므로 **고정 날짜를 쓰면 안 된다.**
+# 작성 시점에는 통과하다가 달력이 지나가면 조용히 "거래 없음"이 되어
+# has_data=False·monthly_surplus=0 으로 무너진다 (실제로 그렇게 깨져 있었다).
+# 테스트 하네스 규약 5번 참조.
+def _days_ago(n: int) -> str:
+    """n일 전 날짜 (YYYY-MM-DD). 컷오프 안쪽에 머물도록 상대값으로 만든다."""
+    from datetime import datetime, timedelta, timezone
+    return (datetime.now(timezone.utc) - timedelta(days=n)).strftime("%Y-%m-%d")
+
 
 @pytest.fixture()
 def cashflow_db() -> Session:
@@ -542,33 +554,33 @@ def cashflow_db() -> Session:
         """))
 
         # ── 거래: CUST_SALARY (급여 3M 입금 3회 + 고정지출 2회) ───────────────
-        conn.execute(text("""
+        conn.execute(text(f"""
             INSERT INTO deposit_transactions VALUES
-            (101,'CF-TX-101',10,'DEPOSIT','COMPLETED',3000000,'2026-03-25','2026-03-25'),
-            (102,'CF-TX-102',10,'DEPOSIT','COMPLETED',3000000,'2026-04-25','2026-04-25'),
-            (103,'CF-TX-103',10,'DEPOSIT','COMPLETED',3000000,'2026-05-25','2026-05-25'),
-            (104,'CF-TX-104',10,'WITHDRAWAL','COMPLETED',800000,'2026-03-01','2026-03-01'),
-            (105,'CF-TX-105',10,'WITHDRAWAL','COMPLETED',800000,'2026-04-01','2026-04-01'),
-            (106,'CF-TX-106',10,'WITHDRAWAL','COMPLETED',800000,'2026-05-01','2026-05-01'),
-            (107,'CF-TX-107',10,'TRANSFER','COMPLETED',200000,'2026-03-15','2026-03-15'),
-            (108,'CF-TX-108',10,'TRANSFER','COMPLETED',200000,'2026-04-15','2026-04-15')
+            (101,'CF-TX-101',10,'DEPOSIT','COMPLETED',3000000,{_days_ago(70)},{_days_ago(70)}),
+            (102,'CF-TX-102',10,'DEPOSIT','COMPLETED',3000000,{_days_ago(40)},{_days_ago(40)}),
+            (103,'CF-TX-103',10,'DEPOSIT','COMPLETED',3000000,{_days_ago(10)},{_days_ago(10)}),
+            (104,'CF-TX-104',10,'WITHDRAWAL','COMPLETED',800000,{_days_ago(85)},{_days_ago(85)}),
+            (105,'CF-TX-105',10,'WITHDRAWAL','COMPLETED',800000,{_days_ago(64)},{_days_ago(64)}),
+            (106,'CF-TX-106',10,'WITHDRAWAL','COMPLETED',800000,{_days_ago(34)},{_days_ago(34)}),
+            (107,'CF-TX-107',10,'TRANSFER','COMPLETED',200000,{_days_ago(80)},{_days_ago(80)}),
+            (108,'CF-TX-108',10,'TRANSFER','COMPLETED',200000,{_days_ago(50)},{_days_ago(50)})
         """))
 
         # ── 거래: CUST_SURPLUS (대형 예금 이동) ──────────────────────────────
-        conn.execute(text("""
+        conn.execute(text(f"""
             INSERT INTO deposit_transactions VALUES
-            (201,'CF-TX-201',20,'DEPOSIT','COMPLETED',20000000,'2026-01-05','2026-01-05'),
-            (202,'CF-TX-202',20,'DEPOSIT','COMPLETED',15000000,'2026-02-10','2026-02-10'),
-            (203,'CF-TX-203',20,'WITHDRAWAL','COMPLETED',5000000,'2026-03-20','2026-03-20')
+            (201,'CF-TX-201',20,'DEPOSIT','COMPLETED',20000000,{_days_ago(89)},{_days_ago(89)}),
+            (202,'CF-TX-202',20,'DEPOSIT','COMPLETED',15000000,{_days_ago(88)},{_days_ago(88)}),
+            (203,'CF-TX-203',20,'WITHDRAWAL','COMPLETED',5000000,{_days_ago(75)},{_days_ago(75)})
         """))
 
         # ── 거래: CUST_TIGHT (지출 > 입금) ───────────────────────────────────
-        conn.execute(text("""
+        conn.execute(text(f"""
             INSERT INTO deposit_transactions VALUES
-            (301,'CF-TX-301',30,'DEPOSIT','COMPLETED',500000,'2026-03-25','2026-03-25'),
-            (302,'CF-TX-302',30,'WITHDRAWAL','COMPLETED',700000,'2026-03-01','2026-03-01'),
-            (303,'CF-TX-303',30,'WITHDRAWAL','COMPLETED',700000,'2026-04-01','2026-04-01'),
-            (304,'CF-TX-304',30,'WITHDRAWAL','COMPLETED',700000,'2026-05-01','2026-05-01')
+            (301,'CF-TX-301',30,'DEPOSIT','COMPLETED',500000,{_days_ago(70)},{_days_ago(70)}),
+            (302,'CF-TX-302',30,'WITHDRAWAL','COMPLETED',700000,{_days_ago(85)},{_days_ago(85)}),
+            (303,'CF-TX-303',30,'WITHDRAWAL','COMPLETED',700000,{_days_ago(64)},{_days_ago(64)}),
+            (304,'CF-TX-304',30,'WITHDRAWAL','COMPLETED',700000,{_days_ago(34)},{_days_ago(34)})
         """))
 
         # ── 거래: CUST_NODATA (없음) ─────────────────────────────────────────
