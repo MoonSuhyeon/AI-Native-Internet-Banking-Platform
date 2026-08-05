@@ -13,6 +13,8 @@ dependencyManagement {
 }
 
 dependencies {
+    // 에이전트 실행 골격(추적·감사·재시도). docs/decisions/agent-harness-consolidation.md
+    implementation project(':agents:harness-core')
     // ── Spring AI (BOM 관리 — 버전 생략) ─────────────────────────────────
     implementation 'org.springframework.ai:spring-ai-openai'                                       // Gemini OpenAI-compat LLM 클라이언트 (A1)
     implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding'             // E1: RAG 임베딩 (Vertex AI text-embedding-005)

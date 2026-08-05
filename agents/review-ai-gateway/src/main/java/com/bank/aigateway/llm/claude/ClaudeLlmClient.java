@@ -8,7 +8,7 @@ import com.bank.aigateway.llm.ToolAwareLlmClient;
 import com.bank.aigateway.llm.agentic.ClaudeAgenticResponse;
 import com.bank.aigateway.llm.agentic.ToolCall;
 import com.bank.aigateway.llm.agentic.ToolDefinition;
-import com.bank.aigateway.observability.LangfuseService;
+import com.bank.harness.trace.AgentTracer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -43,8 +43,9 @@ public class ClaudeLlmClient implements LlmClient, ToolAwareLlmClient {
     private final ClaudeProperties props;
     private final ObjectMapper objectMapper;
 
-    @Autowired(required = false)
-    private LangfuseService langfuse;
+    // 추적이 꺼진 환경에서는 NoOpAgentTracer 가 주입된다.
+    // null 검사를 도메인 코드에 두지 않기 위한 것이다.
+    private final AgentTracer tracer;
 
     @Override
     public LlmResponse complete(LlmRequest request) {
@@ -132,23 +133,19 @@ public class ClaudeLlmClient implements LlmClient, ToolAwareLlmClient {
         String body = buildBodyWithTools(systemPrompt, messages, tools);
         HttpClient client = buildHttpClient();
 
-        String traceId = langfuse != null ? langfuse.newTraceId() : null;
-        if (langfuse != null) {
-            langfuse.trace(traceId, "audit-analysis",
-                    java.util.Map.<String, Object>of("model", props.getModel()),
-                    java.util.List.of("review-ai-gateway"));
-        }
+        // 재시도 전체를 하나의 실행으로 묶는다. 시도마다 별개 trace 를 만들면
+        // "몇 번 만에 성공했는가"가 흩어져 보이지 않는다.
+        try (var trace = tracer.startTrace("audit-analysis",
+                java.util.Map.<String, Object>of("model", props.getModel()))) {
 
         for (int attempt = 1; attempt <= props.getMaxAttempts(); attempt++) {
             try {
                 Instant start = Instant.now();
                 ClaudeAgenticResponse response = doRequestWithTools(client, body);
-                if (langfuse != null) {
-                    langfuse.generation(traceId, "completeWithTools", props.getModel(),
-                            messages.toString(), response.textContent(),
-                            response.inputTokens(), response.outputTokens(),
-                            start, Instant.now());
-                }
+                trace.recordGeneration("completeWithTools", props.getModel(),
+                        messages.toString(), response.textContent(),
+                        response.inputTokens(), response.outputTokens(),
+                        start, Instant.now());
                 return response;
             } catch (LlmException e) {
                 if (attempt == props.getMaxAttempts()) throw e;
@@ -157,6 +154,7 @@ public class ClaudeLlmClient implements LlmClient, ToolAwareLlmClient {
             }
         }
         throw new LlmException("Claude tool-use 호출 최대 재시도 초과");
+        }
     }
 
     private String buildBodyWithTools(String systemPrompt, ArrayNode messages, List<ToolDefinition> tools) {

@@ -30,7 +30,9 @@ class RagSearchServiceTest {
     @BeforeEach
     void setUp() {
         var props = new RagSearchProperties(0.7, 0.5, 5);
-        service = new RagSearchService(jdbcClient, new StubEmbeddingClient(), props, metricsRecorder);
+        // 추적은 이 테스트의 관심사가 아니다. NoOp 구현을 넣어 관측 유무와 무관하게 검증한다.
+        service = new RagSearchService(jdbcClient, new StubEmbeddingClient(), props, metricsRecorder,
+                new com.bank.harness.trace.NoOpAgentTracer());
     }
 
     @Test

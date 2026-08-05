@@ -1,6 +1,8 @@
 package com.bank.ai.llm.client;
 
-import com.bank.ai.langfuse.LangfuseService;
+import com.bank.harness.trace.AgentTracer;
+
+import java.util.Map;
 import com.bank.ai.llm.support.LlmRequestRateMeter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +43,9 @@ public class GeminiOpenAiCompatLlmClient implements LlmClient {
     private final OpenAiChatModel chatModel;
     private final LlmRequestRateMeter rateMeter;
 
-    @Autowired(required = false)
-    private LangfuseService langfuse;
+    // required = false 가 아니다. 추적이 꺼진 환경에서는 NoOpAgentTracer 가 주입된다 —
+    // 관측 유무가 도메인 코드의 분기로 새어나오지 않게 하려는 것이다.
+    private final AgentTracer tracer;
 
     @Override
     public <T> T call(LlmRequest request, Class<T> outputSchema) {
@@ -72,11 +75,12 @@ public class GeminiOpenAiCompatLlmClient implements LlmClient {
         log.debug("GeminiOpenAiCompatLlmClient: promptId={} chars={}", request.promptId(),
                 content != null ? content.length() : 0);
 
-        if (langfuse != null) {
-            String traceId = langfuse.newTraceId();
-            langfuse.trace(traceId, "auto-loan-review", null, List.of("auto-loan-review"));
+        // 관측 도구가 무엇인지 여기서는 모른다. AgentTracer 구현이 정한다.
+        // NoOp 구현이 있으므로 null 검사도 필요 없다.
+        try (var trace = tracer.startTrace("auto-loan-review",
+                Map.of("promptId", request.promptId()))) {
             var usage = response.getMetadata().getUsage();
-            langfuse.generation(traceId, request.promptId(), "gemini",
+            trace.recordGeneration(request.promptId(), "gemini",
                     request.userContent(), content,
                     usage != null ? (int) usage.getPromptTokens() : null,
                     usage != null ? (int) usage.getCompletionTokens() : null,

@@ -1,6 +1,6 @@
 package com.bank.ai.rag.search;
 
-import com.bank.ai.langfuse.LangfuseService;
+import com.bank.harness.trace.AgentTracer;
 import com.bank.ai.metrics.AgentMetricsRecorder;
 import com.bank.ai.rag.embedding.EmbeddingClient;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -43,8 +43,7 @@ public class RagSearchService implements RagSearchBackend {
     private final RagSearchProperties props;
     private final AgentMetricsRecorder metricsRecorder;
 
-    @Autowired(required = false)
-    private LangfuseService langfuse;
+    private final AgentTracer tracer;
 
     /**
      * 하이브리드 검색.
@@ -85,10 +84,8 @@ public class RagSearchService implements RagSearchBackend {
             if (results.isEmpty()) {
                 metricsRecorder.recordRagSearchMiss(corpus);
             }
-            if (langfuse != null) {
-                String traceId = langfuse.newTraceId();
-                langfuse.trace(traceId, "auto-loan-review", null, List.of("auto-loan-review"));
-                langfuse.span(traceId, "rag-search",
+            try (var trace = tracer.startTrace("rag-search", java.util.Map.of("corpus", corpus))) {
+                trace.recordSpan("rag-search",
                         java.util.Map.of("corpus", corpus, "query", query),
                         java.util.Map.of("chunkCount", results.size()),
                         start, end);

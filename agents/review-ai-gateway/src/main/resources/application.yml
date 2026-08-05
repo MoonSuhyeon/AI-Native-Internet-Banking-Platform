@@ -66,11 +66,22 @@ aigateway:
   agent:
     max-turns: 5   # 근거: 정상종료 run turns p95 + run당 토큰예산 역산 중 min (docs/plan/agent-loop-limits-metrics-plan.md)
 
-langfuse:
-  enabled: ${LANGFUSE_ENABLED:false}
-  secret-key: ${LANGFUSE_SECRET_KEY:}
-  public-key: ${LANGFUSE_PUBLIC_KEY:}
-  host: ${LANGFUSE_HOST:http://localhost:3001}
+harness:
+  tracing:
+    enabled: ${HARNESS_TRACING_ENABLED:false}
+
+    # OTLP 수집 지점. 도구를 바꾸려면 이 값만 바꾼다 — 코드는 그대로다.
+    #   Langfuse : http://<host>/api/public/otel/v1/traces
+    #   Phoenix  : http://<host>:6006/v1/traces
+    #   Collector: http://otel-collector:4318/v1/traces
+    endpoint: ${HARNESS_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
+
+    # 인증 헤더. Langfuse 는 public:secret 을 Base64 로 묶은 Basic 인증을 쓴다.
+    headers: ${HARNESS_TRACING_HEADERS:}
+
+    # gen_ai.system — 모델 제공자별 비용·지연을 가르는 축
+    system: anthropic
+    service: review-ai-gateway
 
 llm:
   provider: ${LLM_PROVIDER:mock}

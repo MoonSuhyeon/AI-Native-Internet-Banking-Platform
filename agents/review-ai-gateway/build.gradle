@@ -2,6 +2,8 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
+    // 에이전트 실행 골격(추적·감사·재시도). docs/decisions/agent-harness-consolidation.md
+    implementation project(':agents:harness-core')
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'

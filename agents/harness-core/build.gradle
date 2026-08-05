@@ -1,0 +1,21 @@
+// harness-core: 에이전트 실행 골격의 도메인 무관 부품.
+//
+// 통합 배경과 "무엇을 합치고 무엇을 두는가"의 기준은
+// docs/decisions/agent-harness-consolidation.md 참조.
+//
+// 이 모듈에는 도메인 타입이 들어오지 않는다. 대출 심사 의견도, 사기 점수도 모른다.
+// 들어오는 순간 다른 도메인이 쓸 수 없게 되고, 그러면 하네스가 아니다.
+
+// 라이브러리 모듈이므로 실행 가능 JAR 를 만들지 않는다.
+bootJar { enabled = false }
+jar { enabled = true }
+
+dependencies {
+    // OpenTelemetry — 추적의 표준 인터페이스.
+    // Langfuse·Phoenix 같은 도구는 exporter 로 갈아끼운다.
+    // 특정 도구의 SDK 를 직접 부르면 그 도구에 잠기고, 실제로 그렇게 잠겨 있었다.
+    implementation 'io.opentelemetry:opentelemetry-api:1.42.1'
+    implementation 'io.opentelemetry:opentelemetry-sdk:1.42.1'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.42.1'
+    implementation 'io.opentelemetry.semconv:opentelemetry-semconv-incubating:1.27.0-alpha'
+}
