@@ -53,10 +53,24 @@ common:
 # 대출 도메인 전용 설정
 loan:
   document:
-    # 신청서류 원본 보관 경로. 비워두면 임시 디렉터리를 쓴다(로컬/테스트 전용).
-    # 컨테이너 환경에서는 반드시 영속 볼륨을 가리켜야 한다 — 임시 디렉터리는 재기동 시 사라져
-    # 업로드된 서류의 다운로드가 조용히 실패한다.
-    storage-dir: "${LOAN_DOCUMENT_STORAGE_DIR:}"
+    storage:
+      # filesystem(기본) | s3
+      # 다중 인스턴스 배포에서는 s3 여야 한다 — filesystem 은 인스턴스마다 저장소가 갈라져
+      # 업로드를 받지 않은 노드로 다운로드 요청이 가면 실패한다.
+      # 기본이 filesystem 인 이유: compose 의 MinIO 가 profiles:["doc"] 라 기본 스택에 없다.
+      type: "${LOAN_DOCUMENT_STORAGE_TYPE:filesystem}"
+
+      # [filesystem] 원본 보관 경로. 비우면 임시 디렉터리(로컬/테스트 전용).
+      # 컨테이너에서는 반드시 영속 볼륨을 가리켜야 한다 — 임시 디렉터리는 재기동 시 사라져
+      # 업로드된 서류의 다운로드가 조용히 실패한다.
+      dir: "${LOAN_DOCUMENT_STORAGE_DIR:}"
+
+      # [s3] MinIO/S3 접속 정보. type=s3 일 때만 쓰인다.
+      endpoint: "${STORAGE_ENDPOINT:http://localhost:9000}"
+      access-key: "${STORAGE_ACCESS_KEY:minioadmin}"
+      secret-key: "${STORAGE_SECRET_KEY:minioadmin}"
+      region: "${STORAGE_REGION:us-east-1}"
+      bucket: "${LOAN_DOCUMENT_BUCKET:loan-documents}"
   batch:
     eod-cron: "${LOAN_EOD_CRON:0 0 1 * * *}"  # 기본 새벽 1시 KST
     eom-cron: "${LOAN_EOM_CRON:0 0 3 1 * *}"  # 기본 매월 1일 03:00 KST

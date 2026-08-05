@@ -3,6 +3,8 @@
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-batch'
+    // 신청서류 원본 보관(MinIO/S3). doc-agent 와 같은 버전을 쓴다.
+    implementation 'software.amazon.awssdk:s3:2.26.12'
     testImplementation 'org.springframework.batch:spring-batch-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.wiremock:wiremock-standalone:3.9.1'

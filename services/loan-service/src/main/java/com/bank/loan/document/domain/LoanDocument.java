@@ -81,6 +81,10 @@ public class LoanDocument extends BaseEntity {
     @Column(name = "retention_until", length = 8)
     private String retentionUntil;
 
+    /** 원본 파일 파기 시각. null 이면 원본 보관 중. 메타데이터는 파기 후에도 유지된다. */
+    @Column(name = "purged_at")
+    private OffsetDateTime purgedAt;
+
     /** 상태 전이만 수행. soft delete (deleted_at/by) 는 BaseEntity.softDelete() 로 별도 호출. */
     public void markDeleted() {
         this.docStatusCd = STATUS_DELETED;
@@ -88,6 +92,19 @@ public class LoanDocument extends BaseEntity {
 
     public void markRetained(String retentionUntil) {
         this.retentionUntil = retentionUntil;
+    }
+
+    /**
+     * 보존기한이 지나 원본을 파기했음을 기록한다.
+     * 서류 row 자체는 남긴다 — 무엇을 언제 파기했는지가 증빙이기 때문이다.
+     */
+    public void markPurged(OffsetDateTime purgedAt) {
+        this.purgedAt = purgedAt;
+    }
+
+    /** 원본이 이미 파기됐는가. 파기된 서류는 다운로드할 수 없다. */
+    public boolean isPurged() {
+        return this.purgedAt != null;
     }
 
     /**

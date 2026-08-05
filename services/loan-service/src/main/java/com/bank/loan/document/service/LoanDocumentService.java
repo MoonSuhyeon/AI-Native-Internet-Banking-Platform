@@ -89,6 +89,10 @@ public class LoanDocumentService {
     public LoanDocumentDownload download(Long docId) {
         LoanDocument doc = repository.findByDocIdAndDeletedAtIsNull(docId)
                 .orElseThrow(() -> new BusinessException(LoanErrorCode.LOAN_041));
+        if (doc.isPurged()) {
+            // 보존기한이 지나 원본을 파기한 서류. 메타데이터는 남아 있지만 내려줄 실물이 없다.
+            throw new BusinessException(LoanErrorCode.LOAN_041);
+        }
         return new LoanDocumentDownload(
                 doc.getDocName(),
                 doc.getMimeType(),

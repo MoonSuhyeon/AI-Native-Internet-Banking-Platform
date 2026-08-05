@@ -33,9 +33,16 @@ public final class EarlyRepaymentFeePolicy {
         if (amount <= 0 || totalMonths <= 0 || remainingMonths <= 0) return 0L;
         int bps = DEFAULT_EARLY_REPAYMENT_FEE_BPS;
         if (bps <= 0) return 0L;
+
+        // 잔여기간은 총기간을 넘을 수 없다.
+        // 호출부는 remainingMonths = max(0, totalMonths - elapsedMonths) 로 넘기는데,
+        // 계약 시작일이 미래면 elapsedMonths 가 음수가 되어 잔여 > 총기간이 된다.
+        // 그대로 두면 비율이 100% 를 넘어 만기 전액 기준보다 큰 수수료가 나온다.
+        int effectiveRemaining = Math.min(remainingMonths, totalMonths);
+
         return BigDecimal.valueOf(amount)
                 .multiply(BigDecimal.valueOf(bps), MC)
-                .multiply(BigDecimal.valueOf(remainingMonths), MC)
+                .multiply(BigDecimal.valueOf(effectiveRemaining), MC)
                 .divide(BPS_TO_DECIMAL, MC)
                 .divide(BigDecimal.valueOf(totalMonths), MC)
                 .setScale(0, RoundingMode.HALF_EVEN)
