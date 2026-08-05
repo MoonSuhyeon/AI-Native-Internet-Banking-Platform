@@ -1,1 +1,2 @@
 com.bank.harness.trace.HarnessTracingConfig
+com.bank.harness.audit.HarnessAuditConfig
