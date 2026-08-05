@@ -687,7 +687,7 @@ class TestRateGuideExcludeKeywords:
     def military_db(self, db):
         with db.get_bind().begin() as conn:
             conn.execute(__import__("sqlalchemy").text("""
-                INSERT INTO deposit_banking_products VALUES
+                INSERT INTO deposit_banking_products (banking_product_id, deposit_product_name, deposit_product_type, description, base_interest_rate, min_join_amount, max_join_amount, min_period_month, max_period_month, is_early_termination_allowed, is_tax_benefit_available, deposit_product_status) VALUES
                 (201,'장병내일준비적금','SAVINGS','군인전용A',5.0,1000,1000000,12,24,0,1,'SELLING'),
                 (202,'군인우대예금','DEPOSIT','군인전용B',4.5,100000,10000000,12,36,1,1,'SELLING'),
                 (203,'군무원전용예금','DEPOSIT','군무원전용',4.0,100000,10000000,12,36,1,1,'SELLING')

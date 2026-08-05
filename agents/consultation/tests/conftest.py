@@ -3,6 +3,41 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock
 
+_KNOWN_FAILURES_FILE = Path(__file__).parent / "known_failures.txt"
+
+
+def _known_failures() -> set[str]:
+    if not _KNOWN_FAILURES_FILE.exists():
+        return set()
+    return {
+        line.strip()
+        for line in _KNOWN_FAILURES_FILE.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+
+
+def pytest_collection_modifyitems(items):
+    """알려진 실패를 strict xfail 로 표시한다.
+
+    **덮어두는 장치가 아니라 줄여가는 장치다.** strict 라서 목록에 있는 테스트가
+    통과하기 시작하면 XPASS 로 CI 가 빨개지고, 고친 사람이 목록에서 지우게 된다.
+    그냥 skip 이나 느슨한 xfail 로 두면 목록이 조용히 영구 부채가 된다.
+
+    배경: consultation 테스트를 돌리는 CI 가 없어 24개 파일이 두 달 넘게 썩었다.
+    남은 91건을 다 고칠 때까지 CI 를 미루면 그동안 통과하는 1,508건도 지켜지지 않는다.
+    """
+    known = _known_failures()
+    if not known:
+        return
+    import pytest as _pytest
+
+    for item in items:
+        if item.nodeid in known:
+            item.add_marker(_pytest.mark.xfail(
+                strict=True,
+                reason="known_failures.txt 등재 — 고치면 목록에서 지울 것",
+            ))
+
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session

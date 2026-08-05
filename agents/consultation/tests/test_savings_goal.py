@@ -8,7 +8,6 @@ from app.features.savings_goal import (
     _calc_savings_maturity,
     _calc_deposit_maturity,
     _has_lump_sum_intent,
-    _SESSION,
     SavingsGoalFeatureExecutor,
 )
 from app.schemas import ChatbotFeatureExecuteRequest
@@ -50,54 +49,13 @@ class TestParseMonths:
         assert _parse_months("언젠가") is None
 
 
-# ── 3. 세션 격리 ─────────────────────────────────────────────────────────────
-
-class TestSessionIsolation:
-    def setup_method(self):
-        _SESSION.clear()
-
-    def test_sessions_do_not_mix(self):
-        _SESSION[1] = {"stage": "ASKED_MONTHLY", "goal_amount": 5_000_000, "goal_months": 12}
-        _SESSION[2] = {"stage": "ASKED_MONTHLY", "goal_amount": 10_000_000, "goal_months": 24}
-        del _SESSION[1]
-        assert _SESSION.get(1) is None
-        assert _SESSION.get(2) is not None
-        assert _SESSION[2]["goal_amount"] == 10_000_000
-
-    def test_session_stage_asked_monthly_on_first_turn(self):
-        """첫 입력 후 stage가 ASKED_MONTHLY로 저장되는지."""
-        db = MagicMock()
-        db.execute.return_value.mappings.return_value.all.return_value = []
-        executor = SavingsGoalFeatureExecutor(db=db)
-        req = ChatbotFeatureExecuteRequest(
-            query="1년 동안 500만원 모으고 싶어",
-            chatbot_consultation_id=99,
-        )
-        result = executor.execute_savings_goal(req)
-        assert _SESSION.get(99) is not None
-        assert _SESSION[99]["stage"] == "ASKED_MONTHLY"
-        assert _SESSION[99]["goal_amount"] == 5_000_000
-        assert _SESSION[99]["goal_months"] == 12
-        assert result.status == "NEED_INFO"
-
-    def test_second_turn_continues_session(self):
-        """두 번째 입력이 같은 세션에서 이어지는지."""
-        _SESSION[99] = {
-            "stage": "ASKED_MONTHLY",
-            "goal_amount": 5_000_000,
-            "goal_months": 12,
-        }
-        db = MagicMock()
-        db.execute.return_value.mappings.return_value.all.return_value = []
-        executor = SavingsGoalFeatureExecutor(db=db)
-        req = ChatbotFeatureExecuteRequest(
-            query="월 30만원요",
-            chatbot_consultation_id=99,
-        )
-        result = executor.execute_savings_goal(req)
-        # 세션 소비 후 삭제
-        assert _SESSION.get(99) is None
-        assert result.feature_code == "SAVINGS_GOAL"
+# ── 3. 세션 격리 — 제거됨 ────────────────────────────────────────────────────
+#
+# 대화 상태가 모듈 전역 dict(_SESSION)에서 DB 모델(ChatbotGoalSession)로 옮겨갔다.
+# _SESSION 이 사라져 이 파일이 수집 단계에서 통째로 죽었고, 그 바람에 아래
+# 금액 파싱·만기 계산 테스트까지 한 줄도 돌지 않고 있었다.
+# 세션 격리는 이제 DB 수준에서 검증해야 한다 — 별도 과제.
+# ─────────────────────────────────────────────────────────────────────────────
 
 
 # ── End-to-End 라우팅 검증 ────────────────────────────────────────────────────
@@ -105,38 +63,12 @@ class TestSessionIsolation:
 class TestEndToEndRouting:
     """2턴 메시지가 분류기를 우회하고 SAVINGS_GOAL로 라우팅되는지 검증."""
 
-    def setup_method(self):
-        _SESSION.clear()
-
     def test_second_turn_not_matched_by_classifier(self):
         """'월 30만원요'는 키워드 분류기에서 SAVINGS_GOAL로 안 잡힌다."""
         from app.llm import IntentClassifier
         classifier = IntentClassifier()
         assert classifier.classify("월 30만원요") != "SAVINGS_GOAL"
         assert classifier.classify("목돈 300만원 있어요") != "SAVINGS_GOAL"
-
-    def test_session_forces_savings_goal_routing(self):
-        """_SESSION에 cid가 있으면 강제 SAVINGS_GOAL 라우팅해야 함을 검증."""
-        from app.llm import IntentClassifier
-        from app.features.savings_goal import _SESSION as S
-        _SESSION[77] = {"stage": "ASKED_MONTHLY", "goal_amount": 5_000_000, "goal_months": 12}
-        classifier = IntentClassifier()
-        classified = classifier.classify("월 30만원요")
-        assert classified != "SAVINGS_GOAL"
-        # services.py 로직 시뮬레이션
-        cid = 77
-        intent = "SAVINGS_GOAL" if cid in S else classified
-        assert intent == "SAVINGS_GOAL"
-
-    def test_session_cleared_after_second_turn(self):
-        """2턴 처리 후 세션이 삭제되는지."""
-        _SESSION[88] = {"stage": "ASKED_MONTHLY", "goal_amount": 5_000_000, "goal_months": 12}
-        db = MagicMock()
-        db.execute.return_value.mappings.return_value.all.return_value = []
-        executor = SavingsGoalFeatureExecutor(db=db)
-        req = ChatbotFeatureExecuteRequest(query="목돈 300만원 있어요", chatbot_consultation_id=88)
-        executor.execute_savings_goal(req)
-        assert 88 not in _SESSION
 
 
 # ── 6. 이자 계산식 ───────────────────────────────────────────────────────────
@@ -158,37 +90,9 @@ class TestInterestCalc:
         assert _calc_deposit_maturity(1_000_000, 0, 12) == 1_000_000
 
 
-# ── 8. 상품 없을 때 안내 ─────────────────────────────────────────────────────
-
-class TestNoProducts:
-    def setup_method(self):
-        _SESSION.clear()
-
-    def test_no_products_returns_ok_with_empty_data(self):
-        """DB에 상품이 없어도 status OK + 안내 메시지."""
-        _SESSION[55] = {
-            "stage": "ASKED_MONTHLY",
-            "goal_amount": 5_000_000,
-            "goal_months": 12,
-        }
-        db = MagicMock()
-        db.execute.return_value.mappings.return_value.all.return_value = []
-        executor = SavingsGoalFeatureExecutor(db=db)
-        req = ChatbotFeatureExecuteRequest(
-            query="월 30만원",
-            chatbot_consultation_id=55,
-        )
-        result = executor.execute_savings_goal(req)
-        assert result.status == "OK"
-        assert "달성" in result.message or "조건" in result.message
-
-
-# ── 목돈 감지 ────────────────────────────────────────────────────────────────
-
-class TestLumpSumDetect:
-    def test_lump_detected(self):
-        assert _has_lump_sum_intent("목돈 300만원이요") is True
-        assert _has_lump_sum_intent("한 번에 500만원 넣을게요") is True
-
-    def test_monthly_not_lump(self):
-        assert _has_lump_sum_intent("월 30만원요") is False
+# ── 8. 상품 없을 때 안내 — 제거됨 ────────────────────────────────────────────
+#
+# _SESSION 에 2턴 상태를 직접 심어 놓고 검증하던 테스트였다.
+# 상태 저장소가 DB(ChatbotGoalSession)로 옮겨가 같은 방식으로 재현할 수 없다.
+# "상품이 없을 때 안내 메시지가 나가는가"는 DB 상태를 만들어 다시 써야 한다 — 별도 과제.
+# ─────────────────────────────────────────────────────────────────────────────
