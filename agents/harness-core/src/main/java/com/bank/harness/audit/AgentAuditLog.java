@@ -21,4 +21,13 @@ public interface AgentAuditLog {
 
     /** 대상의 가장 최근 기록. */
     Optional<AgentAuditEntry> findLatest(String subjectType, String subjectId);
+
+    /**
+     * 대상의 가장 최근 기록 중 판단 종류가 일치하는 것.
+     *
+     * <p>한 대상에 판단이 여러 번 있을 수 있다. 사기조사는 사건 하나에 권고와
+     * 승인 후 실행이 따로 남고, 그 사이에 사람이 있어 합칠 수 없다. 종류를 좁히지
+     * 않으면 언제나 마지막 기록만 나와 <b>"이 사건의 권고를 다오"를 물을 수 없다.</b>
+     */
+    Optional<AgentAuditEntry> findLatest(String subjectType, String subjectId, String decisionKind);
 }

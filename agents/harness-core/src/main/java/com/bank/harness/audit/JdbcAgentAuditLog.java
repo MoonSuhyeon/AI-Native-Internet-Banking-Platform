@@ -26,20 +26,39 @@ public class JdbcAgentAuditLog implements AgentAuditLog {
             INSERT INTO harness_audit_log
                 (agent_name, subject_type, subject_id, trace_id,
                  request_json, output_json, tool_calls_json, raw_llm_response,
-                 pii_masked, fallback_reason, recorded_at)
+                 pii_masked, fallback_reason, recorded_at,
+                 decision_kind, actor_id, actor_roles)
             VALUES
                 (:agentName, :subjectType, :subjectId, :traceId,
                  CAST(:requestJson AS JSONB), CAST(:outputJson AS JSONB),
                  CAST(:toolCallsJson AS JSONB), :rawLlmResponse,
-                 :piiMasked, :fallbackReason, :recordedAt)
+                 :piiMasked, :fallbackReason, :recordedAt,
+                 :decisionKind, :actorId, CAST(:actorRoles AS JSONB))
             """;
 
-    private static final String FIND_LATEST_SQL = """
+    private static final String SELECT_COLUMNS = """
             SELECT agent_name, subject_type, subject_id, trace_id,
                    request_json, output_json, tool_calls_json, raw_llm_response,
-                   pii_masked, fallback_reason, recorded_at
+                   pii_masked, fallback_reason, recorded_at,
+                   decision_kind, actor_id, actor_roles
               FROM harness_audit_log
+            """;
+
+    private static final String FIND_LATEST_SQL = SELECT_COLUMNS + """
              WHERE subject_type = :subjectType AND subject_id = :subjectId
+             ORDER BY recorded_at DESC, id DESC
+             LIMIT 1
+            """;
+
+    /**
+     * 판단 종류를 좁혀 찾는다.
+     *
+     * <p>이것이 없으면 한 대상에 판단이 둘 이상일 때 언제나 마지막 것만 나온다.
+     * 사기조사에서 실제로 그랬다 — 권고를 물으면 실행 기록이 돌아왔다.
+     */
+    private static final String FIND_LATEST_BY_KIND_SQL = SELECT_COLUMNS + """
+             WHERE subject_type = :subjectType AND subject_id = :subjectId
+               AND decision_kind = :decisionKind
              ORDER BY recorded_at DESC, id DESC
              LIMIT 1
             """;
@@ -67,19 +86,39 @@ public class JdbcAgentAuditLog implements AgentAuditLog {
                 new MapSqlParameterSource()
                         .addValue("subjectType", subjectType)
                         .addValue("subjectId", subjectId),
-                (rs, i) -> new AgentAuditEntry(
-                        rs.getString("agent_name"),
-                        rs.getString("subject_type"),
-                        rs.getString("subject_id"),
-                        rs.getString("trace_id"),
-                        rs.getString("request_json"),
-                        rs.getString("output_json"),
-                        rs.getString("tool_calls_json"),
-                        rs.getString("raw_llm_response"),
-                        rs.getBoolean("pii_masked"),
-                        rs.getString("fallback_reason"),
-                        rs.getTimestamp("recorded_at").toInstant()));
+                JdbcAgentAuditLog::mapRow);
         return rows.stream().findFirst();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<AgentAuditEntry> findLatest(String subjectType, String subjectId,
+                                                String decisionKind) {
+        List<AgentAuditEntry> rows = jdbc.query(FIND_LATEST_BY_KIND_SQL,
+                new MapSqlParameterSource()
+                        .addValue("subjectType", subjectType)
+                        .addValue("subjectId", subjectId)
+                        .addValue("decisionKind", decisionKind),
+                JdbcAgentAuditLog::mapRow);
+        return rows.stream().findFirst();
+    }
+
+    private static AgentAuditEntry mapRow(java.sql.ResultSet rs, int i) throws java.sql.SQLException {
+        return new AgentAuditEntry(
+                rs.getString("agent_name"),
+                rs.getString("subject_type"),
+                rs.getString("subject_id"),
+                rs.getString("trace_id"),
+                rs.getString("request_json"),
+                rs.getString("output_json"),
+                rs.getString("tool_calls_json"),
+                rs.getString("raw_llm_response"),
+                rs.getBoolean("pii_masked"),
+                rs.getString("fallback_reason"),
+                rs.getTimestamp("recorded_at").toInstant(),
+                rs.getString("decision_kind"),
+                rs.getString("actor_id"),
+                rs.getString("actor_roles"));
     }
 
     private static MapSqlParameterSource params(AgentAuditEntry e) {
@@ -94,6 +133,9 @@ public class JdbcAgentAuditLog implements AgentAuditLog {
                 .addValue("rawLlmResponse", e.rawLlmResponse())
                 .addValue("piiMasked", e.piiMasked())
                 .addValue("fallbackReason", e.fallbackReason())
-                .addValue("recordedAt", Timestamp.from(e.recordedAt()));
+                .addValue("recordedAt", Timestamp.from(e.recordedAt()))
+                .addValue("decisionKind", e.decisionKind())
+                .addValue("actorId", e.actorId())
+                .addValue("actorRoles", e.actorRoles());
     }
 }

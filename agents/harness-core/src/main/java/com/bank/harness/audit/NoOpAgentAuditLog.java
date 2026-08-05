@@ -20,4 +20,10 @@ public class NoOpAgentAuditLog implements AgentAuditLog {
     public Optional<AgentAuditEntry> findLatest(String subjectType, String subjectId) {
         return Optional.empty();
     }
+
+    @Override
+    public Optional<AgentAuditEntry> findLatest(String subjectType, String subjectId,
+                                                String decisionKind) {
+        return Optional.empty();
+    }
 }

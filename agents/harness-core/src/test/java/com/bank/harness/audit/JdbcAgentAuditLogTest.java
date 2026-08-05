@@ -164,6 +164,68 @@ class JdbcAgentAuditLogTest {
                 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // 행위자·판단종류 — 5단계(fraud)에서 드러난 구멍을 메운 뒤 추가
+    // ─────────────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("한 대상에 판단이 둘이면 종류로 좁혀 찾을 수 있다")
+    void 판단종류로_좁혀_조회() {
+        Instant earlier = Instant.now().minus(1, ChronoUnit.HOURS);
+        // 권고 → (사람 승인) → 실행. 실행이 나중에 기록된다.
+        auditLog.record(new AgentAuditEntry("fraud-investigation", "FRAUD_CASE", "ALT-1",
+                "t-rec", "{}", "{\"recommendation\":\"FREEZE\"}", "[]", null,
+                true, null, earlier, "RECOMMENDATION", null, "[]"));
+        auditLog.record(new AgentAuditEntry("fraud-investigation", "FRAUD_CASE", "ALT-1",
+                "t-exe", "{}", "{\"executed\":true}", "[]", null,
+                true, null, Instant.now(), "ACTION_EXECUTION", "emp-9001", "[\"FRAUD_OFFICER\"]"));
+
+        assertThat(auditLog.findLatest("FRAUD_CASE", "ALT-1"))
+                .as("종류를 안 좁히면 마지막 기록이 나온다")
+                .hasValueSatisfying(e -> assertThat(e.decisionKind()).isEqualTo("ACTION_EXECUTION"));
+
+        assertThat(auditLog.findLatest("FRAUD_CASE", "ALT-1", "RECOMMENDATION"))
+                .as("좁히지 못하면 '이 사건의 권고를 다오'를 물을 수 없다")
+                .hasValueSatisfying(e -> {
+                    assertThat(e.decisionKind()).isEqualTo("RECOMMENDATION");
+                    assertThat(e.outputJson()).contains("FREEZE");
+                });
+    }
+
+    @Test
+    @DisplayName("행위자는 컬럼으로 남아 되짚을 수 있다")
+    void 행위자_기록() {
+        auditLog.record(new AgentAuditEntry("fraud-investigation", "FRAUD_CASE", "ALT-2",
+                "t-exe", "{}", "{}", "[]", null,
+                true, null, Instant.now(), "ACTION_EXECUTION", "emp-7", "[\"FRAUD_OFFICER\"]"));
+
+        assertThat(auditLog.findLatest("FRAUD_CASE", "ALT-2"))
+                .hasValueSatisfying(e -> {
+                    assertThat(e.actorId()).isEqualTo("emp-7");
+                    assertThat(e.actorRoles()).contains("FRAUD_OFFICER");
+                });
+
+        // actor 를 payload 가 아니라 컬럼으로 올린 이유가 이 질의다.
+        Integer byActor = jdbc.getJdbcTemplate().queryForObject(
+                "SELECT count(*) FROM harness_audit_log WHERE actor_id = 'emp-7'", Integer.class);
+        assertThat(byActor).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("사람이 개입하지 않은 판단은 행위자가 비어 있고 종류는 DECISION 이다")
+    void 자율판단_기본값() {
+        auditLog.record(entry("LOAN_REVIEW", "9002", "trace-auto", "{}"));
+
+        assertThat(auditLog.findLatest("LOAN_REVIEW", "9002"))
+                .hasValueSatisfying(e -> {
+                    assertThat(e.decisionKind()).isEqualTo(AgentAuditEntry.KIND_DECISION);
+                    assertThat(e.actorId())
+                            .as("자율 판단이었다는 사실이 NULL 로 남는다")
+                            .isNull();
+                    assertThat(e.actorRoles()).isEqualTo("[]");
+                });
+    }
+
     private static AgentAuditEntry entry(String type, String id, String traceId, String requestJson) {
         return new AgentAuditEntry("auto-loan-review", type, id, traceId,
                 requestJson, "{\"decision\":\"APPROVE\"}", "[]", "원문 응답",

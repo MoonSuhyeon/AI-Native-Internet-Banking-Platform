@@ -33,11 +33,64 @@ CREATE TABLE IF NOT EXISTS harness_audit_log (
 
     pii_masked          BOOLEAN         NOT NULL DEFAULT TRUE,
     fallback_reason     VARCHAR(64),
-    recorded_at         TIMESTAMPTZ     NOT NULL DEFAULT now()
+    recorded_at         TIMESTAMPTZ     NOT NULL DEFAULT now(),
+
+    -- ── 아래 셋은 5단계(fraud)에서 드러난 구멍을 메운 것이다 ──────────────
+    --
+    -- decision_kind 값 집합은 **애플리케이션이 통제하고 DB CHECK 를 두지 않는다.**
+    --   에이전트마다 판단의 종류가 다르고(RECOMMENDATION·ACTION_EXECUTION·DECISION …)
+    --   새 에이전트가 붙을 때마다 값이 는다. CHECK 를 걸면 그때마다 마이그레이션이
+    --   필요하고, 사본 3벌을 동시에 못 고치면 그 에이전트만 기록이 거부된다 —
+    --   감사가 거부되는 것이 값이 자유로운 것보다 나쁘다.
+    --   무심코 CHECK 를 추가하지 말 것. 값 집합 검증은 계약 대조 테스트가 맡는다.
+    -- decision_kind: 한 대상에 판단이 여러 번 있을 수 있다. 사기조사는 사건 하나에
+    --   권고(RECOMMENDATION)와 승인 후 실행(ACTION_EXECUTION)이 따로 남는다. 둘 사이에
+    --   사람이 있어 거부될 수 있으므로 합칠 수 없다. 구분자가 없으면 "이 사건의 권고를
+    --   다오"를 물을 수 없고 최신 1건만 나온다.
+    decision_kind       VARCHAR(32)     NOT NULL DEFAULT 'DECISION',
+
+    -- actor_id / actor_roles: 사람 승인을 받는 에이전트에서 "누가 승인했는가"는
+    --   부수 정보가 아니라 감사의 핵심이다. 지급정지·STR 을 걸 수 있는 사기조사에서
+    --   특히 그렇다. 도메인 지식이 아니라 HITL 이 있는 곳이면 어디나 있는 값이라
+    --   payload 가 아니라 컬럼으로 둔다 — JSON 안에 있으면 질의할 수 없고
+    --   에이전트마다 이름이 달라진다.
+    -- 자율 판단(사람 개입 없음)이면 NULL 이다. 그것도 사실이라 남긴다.
+    actor_id            VARCHAR(64),
+    actor_roles         JSONB           NOT NULL DEFAULT '[]'
 );
+
+-- ============================================================================
+-- 기존 배포 환경용 업그레이드 shim — 신규 배포에는 아무 효과가 없다
+--
+-- **위 CREATE TABLE 이 언제나 최신 전체 스키마다.** 신규 DB 는 CREATE 한 번으로
+-- 끝나고 아래 ALTER 는 전부 스킵된다. 아래를 읽지 않아도 스키마를 알 수 있어야 한다.
+--
+-- 그럼에도 이 블록이 필요한 이유: CREATE TABLE IF NOT EXISTS 는 기존 테이블을 만나면
+-- **통째로 건너뛰므로** 이미 만들어진 DB 에는 새 컬럼이 생기지 않는다.
+-- 초기화 스크립트를 반복 실행하는 에이전트(consultation 기동, goal-agent init_db.py)가
+-- 여기 해당한다.
+--
+-- 컬럼을 추가할 때는 **CREATE 와 이 블록을 함께** 고친다. CREATE 최신화를 빠뜨리면
+-- 신규 배포만 조용히 옛 스키마가 된다.
+-- ============================================================================
+ALTER TABLE harness_audit_log
+    ADD COLUMN IF NOT EXISTS decision_kind VARCHAR(32) NOT NULL DEFAULT 'DECISION';
+ALTER TABLE harness_audit_log
+    ADD COLUMN IF NOT EXISTS actor_id      VARCHAR(64);
+ALTER TABLE harness_audit_log
+    ADD COLUMN IF NOT EXISTS actor_roles   JSONB NOT NULL DEFAULT '[]';
 
 CREATE INDEX IF NOT EXISTS ix_harness_audit_subject
     ON harness_audit_log (subject_type, subject_id, recorded_at DESC);
+
+-- "이 사건의 권고를 다오" — 판단 종류를 좁혀 최신 1건을 찾는 경로.
+CREATE INDEX IF NOT EXISTS ix_harness_audit_subject_kind
+    ON harness_audit_log (subject_type, subject_id, decision_kind, recorded_at DESC);
+
+-- "이 사람이 무엇을 승인했는가" — 행위자로 되짚는 경로.
+-- 이 질의가 가능해지는 것이 actor 를 컬럼으로 올린 이유다.
+CREATE INDEX IF NOT EXISTS ix_harness_audit_actor
+    ON harness_audit_log (actor_id, recorded_at DESC);
 
 -- 추적에서 감사로 되짚어 가기 위한 인덱스
 CREATE INDEX IF NOT EXISTS ix_harness_audit_trace
