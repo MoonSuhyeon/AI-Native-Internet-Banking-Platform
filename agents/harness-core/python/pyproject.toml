@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "harness-core"
+version = "0.1.0"
+description = "에이전트 실행 골격의 도메인 무관 부품 — Python 런타임 쪽 계약"
+requires-python = ">=3.11"
+
+# 계약 모듈은 표준 라이브러리만 쓴다.
+# 저장 구현은 쓰는 쪽이 이미 갖고 있는 드라이버를 쓰므로 여기서 강제하지 않는다 —
+# fraud-investigation-agent 에는 ORM 이 없고, 계약을 쓰려고 ORM 을 얹게 하면
+# 무거워서 감사를 안 붙이게 된다. 그게 애초의 문제였다.
+dependencies = []
+
+[project.optional-dependencies]
+sqlalchemy = ["SQLAlchemy>=2.0"]
+psycopg = ["psycopg[binary]>=3.2"]
+
+[tool.setuptools]
+packages = ["harness_core"]
