@@ -49,12 +49,22 @@ public class AuditImmutabilityVerifier implements ApplicationRunner {
         log.info("[audit] INSERT-ONLY 트리거 검증 완료");
     }
 
+    /**
+     * 제품명이 아니라 URL 로 판별한다.
+     *
+     * <p>H2 를 {@code MODE=PostgreSQL} 로 띄우면 제품명이 PostgreSQL 로 보고돼
+     * 트리거 검증에 걸린다. URL 에는 항상 h2 가 남는다.
+     *
+     * <p>판별에 실패하면 검증을 건너뛴다. DB 종류를 모르는 상태에서 기동을 막으면
+     * 감사와 무관한 이유로 서비스가 뜨지 못한다.
+     */
     private boolean isH2() {
         try (var conn = dataSource.getConnection()) {
-            return "H2".equalsIgnoreCase(conn.getMetaData().getDatabaseProductName());
+            String url = conn.getMetaData().getURL();
+            return url != null && url.toLowerCase().contains("h2");
         } catch (Exception e) {
-            log.warn("[audit] DB 종류 판별 실패 — 트리거 검증을 진행한다", e);
-            return false;
+            log.warn("[audit] DB 종류 판별 실패 — 트리거 검증을 건너뛴다", e);
+            return true;
         }
     }
 }

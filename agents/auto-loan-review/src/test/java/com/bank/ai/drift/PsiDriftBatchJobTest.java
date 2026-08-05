@@ -31,6 +31,10 @@ import static org.assertj.core.api.Assertions.within;
 @Testcontainers
 @SpringBootTest(properties = {
         "spring.datasource.hikari.maximum-pool-size=3",
+        // 이 테스트는 드리프트/공정성 전용 스키마만 올린다(감사 테이블 없음).
+        // 감사 불변성 검증기가 기동을 막지 않도록 끈다 — 검증기는 제 일을 한 것이다.
+        "harness.audit.enabled=false",
+
         "spring.flyway.locations=classpath:db/drift-pg-migration",
         "spring.batch.jdbc.initialize-schema=always",
         "spring.autoconfigure.exclude=" +

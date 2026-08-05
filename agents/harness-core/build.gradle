@@ -18,4 +18,12 @@ dependencies {
     implementation 'io.opentelemetry:opentelemetry-sdk:1.42.1'
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.42.1'
     implementation 'io.opentelemetry.semconv:opentelemetry-semconv-incubating:1.27.0-alpha'
+
+    // 감사 저장소는 JSONB·트리거처럼 PostgreSQL 고유 기능에 기대므로
+    // H2 로는 검증되지 않는다. 실제 엔진에서 돌려야 한다.
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testRuntimeOnly 'org.postgresql:postgresql'
 }
+
+ext['testcontainers.version'] = '1.21.0'

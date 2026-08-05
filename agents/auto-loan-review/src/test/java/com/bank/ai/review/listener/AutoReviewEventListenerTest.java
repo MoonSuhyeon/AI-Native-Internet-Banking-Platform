@@ -64,6 +64,9 @@ class AutoReviewEventListenerTest {
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
 
+    @Mock
+    private com.bank.harness.audit.AgentAuditLog harnessAuditLog;
+
     private AutoReviewEventListener listener;
 
     private static final TrackDecision TRACK3_DECISION =
@@ -84,6 +87,9 @@ class AutoReviewEventListenerTest {
         listener = new AutoReviewEventListener(
                 purposeAnalysisService, reviewReportService, preReviewAgentService,
                 ragRetrievalService, loanServiceClient, auditLogService,
+                // harness 공통 감사·추적. 이 테스트의 관심사가 아니므로 기록만 받아 버린다.
+                harnessAuditLog,
+                new com.bank.harness.trace.NoOpAgentTracer(),
                 new AuditLogProperties(true, false),
                 metricsRecorder,
                 objectMapper);

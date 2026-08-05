@@ -64,6 +64,8 @@ public class AutoReviewEventListener {
     private final RagRetrievalService ragRetrievalService;
     private final LoanServiceClient loanServiceClient;
     private final AuditLogService auditLogService;
+    private final com.bank.harness.audit.AgentAuditLog agentAuditLog;
+    private final com.bank.harness.trace.AgentTracer tracer;
     private final AuditLogProperties auditLogProperties;
     private final AgentMetricsRecorder metricsRecorder;
     private final ObjectMapper objectMapper;
@@ -144,6 +146,13 @@ public class AutoReviewEventListener {
             var auditRecord = AgentAuditRecord.from(
                     event, opinion, objectMapper, auditLogProperties.includeRawLlmResponse());
             auditLogService.record(auditRecord);
+
+            // harness 공통 감사에도 남긴다(이중 기록).
+            //
+            // 감사 추적은 겹치는 구간 없이 갈아타면 안 된다. 새 경로가 운영에서 검증되기 전에
+            // 옛 경로를 끊으면, 문제가 생겼을 때 그 구간의 기록이 아예 없다.
+            // 옛 경로(agent_audit_log) 제거는 새 경로 검증 후 별도 단계로 둔다.
+            recordHarnessAudit(event, auditRecord);
 
             // 감사 로그 크기 메트릭 — opinionJson UTF-8 byte 기준
             if (agentOpinionJson != null) {
@@ -230,5 +239,36 @@ public class AutoReviewEventListener {
         if (req.creditScoreProxy() != null)      parts.add("신용점수 " + req.creditScoreProxy());
         if (req.delinquencyHistory24m() != null) parts.add("연체 " + req.delinquencyHistory24m() + "건");
         return parts.isEmpty() ? null : String.join(" ", parts) + " 유사 케이스";
+    }
+
+    /**
+     * harness 공통 감사 기록.
+     *
+     * <p>도메인 값을 일반 필드로 옮긴다. revId → subjectId, track 은 판단의 성질이므로
+     * 출력 JSON 안에 넣는다 — AI 권고 채택률(TRACK_1/2 대 심사역 결정) 계측의 축이라
+     * 잃으면 안 되는 값이다.
+     */
+    private void recordHarnessAudit(AutoReviewEvaluatedEvent event, AgentAuditRecord record) {
+        try {
+            String outputWithTrack = objectMapper.writeValueAsString(java.util.Map.of(
+                    "track", record.track(),
+                    "opinion", objectMapper.readTree(record.opinionJson())));
+
+            agentAuditLog.record(new com.bank.harness.audit.AgentAuditEntry(
+                    "auto-loan-review",
+                    "LOAN_REVIEW",
+                    String.valueOf(record.revId()),
+                    tracer.currentTraceId(),
+                    record.requestSnapshotJson(),
+                    outputWithTrack,
+                    record.toolCallsJson(),
+                    record.rawLlmResponse(),
+                    true,
+                    record.fallbackReason(),
+                    java.time.Instant.now()));
+        } catch (Exception e) {
+            // 감사 실패가 파이프라인을 막지 않는다 — 옛 경로에는 이미 남았다.
+            log.error("[audit] harness 감사 기록 실패 revId={}", event.revId(), e);
+        }
     }
 }

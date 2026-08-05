@@ -16,9 +16,10 @@ import javax.sql.DataSource;
  * 감사가 필요 없는 환경(로컬 실험)에서 테이블을 강제하지 않기 위한 것이지,
  * 운영에서 끄라는 뜻이 아니다.
  */
+// 설정 자체는 항상 로드한다. 끄더라도 NoOp 빈은 나와야 한다 —
+// 기능을 끄는 것이 의존하는 쪽을 깨뜨리면 안 된다.
 @AutoConfiguration
 @EnableConfigurationProperties(HarnessAuditConfig.HarnessAuditProperties.class)
-@ConditionalOnProperty(name = "harness.audit.enabled", matchIfMissing = true)
 public class HarnessAuditConfig {
 
     @ConfigurationProperties(prefix = "harness.audit")
@@ -26,8 +27,9 @@ public class HarnessAuditConfig {
     }
 
     @Bean
-    public AgentAuditLog agentAuditLog(NamedParameterJdbcTemplate jdbc) {
-        return new JdbcAgentAuditLog(jdbc);
+    public AgentAuditLog agentAuditLog(NamedParameterJdbcTemplate jdbc,
+                                       HarnessAuditProperties props) {
+        return props.enabled() ? new JdbcAgentAuditLog(jdbc) : new NoOpAgentAuditLog();
     }
 
     /**
@@ -37,7 +39,7 @@ public class HarnessAuditConfig {
      * 운영에서 끄면 감사 보장이 사라진다.
      */
     @Bean
-    @ConditionalOnProperty(name = "harness.audit.verify-immutability", matchIfMissing = true)
+    @ConditionalOnProperty(name = "harness.audit.enabled", matchIfMissing = true)
     public AuditImmutabilityVerifier auditImmutabilityVerifier(DataSource dataSource,
                                                                NamedParameterJdbcTemplate jdbc) {
         return new AuditImmutabilityVerifier(dataSource, jdbc);
