@@ -24,8 +24,8 @@ data:
 
   # 게이트웨이가 참조하는 서비스 호스트 (k8s Service DNS)
   CUSTOMER_SERVICE_HOST: "customer-service"
-  DEPOSIT_SERVICE_HOST: "deposit-service"
+  DEPOSIT_SERVICE_HOST: "core-banking"
   LOAN_SERVICE_HOST: "loan-service"
-  PAYMENT_SERVICE_HOST: "payment-service"
+  PAYMENT_SERVICE_HOST: "core-banking"
   MASTER_SERVICE_HOST: "master-service"
   AI_SERVICE_HOST: "ai-service"

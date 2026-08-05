@@ -65,14 +65,14 @@ scrape_configs:
       - labels:
           level:
 
-  - job_name: deposit-service
+  - job_name: core-banking
     static_configs:
       - targets:
           - localhost
         labels:
-          job: deposit-service
-          application: deposit-service
-          __path__: /logs/deposit-service.log
+          job: core-banking
+          application: core-banking
+          __path__: /logs/core-banking.log
     pipeline_stages:
       - regex:
           expression: '.* \[.*\] (?P<level>INFO|WARN|ERROR|DEBUG) .*'
@@ -87,20 +87,6 @@ scrape_configs:
           job: loan-service
           application: loan-service
           __path__: /logs/loan-service.log
-    pipeline_stages:
-      - regex:
-          expression: '.* \[.*\] (?P<level>INFO|WARN|ERROR|DEBUG) .*'
-      - labels:
-          level:
-
-  - job_name: payment-service
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: payment-service
-          application: payment-service
-          __path__: /logs/payment-service.log
     pipeline_stages:
       - regex:
           expression: '.* \[.*\] (?P<level>INFO|WARN|ERROR|DEBUG) .*'

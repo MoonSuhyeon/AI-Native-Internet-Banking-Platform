@@ -44,20 +44,22 @@ services:
       timeout: 5s
       retries: 5
 
-  deposit-db:
+  # 수신·결제 통합 DB. 스키마 둘(deposit / payment)을 한 데이터베이스에 담아
+  # 자행이체를 단일 트랜잭션으로 처리한다 (docs/decisions/core-banking-merge.md).
+  core-banking-db:
     image: postgres:16-alpine
-    container_name: ib-deposit-db
+    container_name: ib-core-banking-db
     <<: *default-restart
     logging: *default-logging
     environment:
-      POSTGRES_DB: ${DEPOSIT_DB_NAME:-deposit_db}
-      POSTGRES_USER: ${DEPOSIT_DB_USER:-deposit}
-      POSTGRES_PASSWORD: ${DEPOSIT_DB_PASSWORD}
+      POSTGRES_DB: ${CORE_BANKING_DB_NAME:-core_banking}
+      POSTGRES_USER: ${CORE_BANKING_DB_USER:-core}
+      POSTGRES_PASSWORD: ${CORE_BANKING_DB_PASSWORD}
     volumes:
-      - deposit-db-data:/var/lib/postgresql/data
-    mem_limit: 384m
+      - core-banking-db-data:/var/lib/postgresql/data
+    mem_limit: 512m
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DEPOSIT_DB_USER:-deposit} -d ${DEPOSIT_DB_NAME:-deposit_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${CORE_BANKING_DB_USER:-core} -d ${CORE_BANKING_DB_NAME:-core_banking}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -79,25 +81,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  payment-db:
-    image: postgres:16-alpine
-    container_name: ib-payment-db
-    <<: *default-restart
-    logging: *default-logging
-    environment:
-      POSTGRES_DB: ${PAYMENT_DB_NAME:-payment_db}
-      POSTGRES_USER: ${PAYMENT_DB_USER:-payment}
-      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
-    volumes:
-      - payment-db-data:/var/lib/postgresql/data
-    mem_limit: 384m
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PAYMENT_DB_USER:-payment} -d ${PAYMENT_DB_NAME:-payment_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
 
   common-db:
     image: postgres:16-alpine
@@ -249,20 +232,26 @@ services:
       redis:
         condition: service_healthy
 
-  deposit-service:
-    image: ghcr.io/${GITHUB_OWNER}/deposit-service:${DEPOSIT_IMAGE_TAG:-latest}
-    container_name: ib-deposit-service
+  # 수신 + 결제 병합 서비스.
+  core-banking:
+    image: ghcr.io/${GITHUB_OWNER}/core-banking:${CORE_BANKING_IMAGE_TAG:-latest}
+    container_name: ib-core-banking
     <<: *default-restart
     logging: *default-logging
     env_file: ../../.env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DEPOSIT_DB_HOST: deposit-db
+      CORE_BANKING_APP_PORT: 8082
+      BANK_CODE: "A"
+      CORE_BANKING_DB_HOST: core-banking-db
       REDIS_HOST: redis
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    mem_limit: 768m
+      KFTC_KAFKA_BOOTSTRAP: kafka:29092
+      BOK_KAFKA_BOOTSTRAP: kafka:29092
+      INTERNAL_KAFKA_BOOTSTRAP: kafka:29092
+    mem_limit: 1g
     depends_on:
-      deposit-db:
+      core-banking-db:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -293,27 +282,6 @@ services:
       kafka:
         condition: service_healthy
       schema-registry:
-        condition: service_healthy
-
-  payment-service:
-    image: ghcr.io/${GITHUB_OWNER}/payment-service:${PAYMENT_IMAGE_TAG:-latest}
-    container_name: ib-payment-service
-    <<: *default-restart
-    logging: *default-logging
-    env_file: ../../.env.prod
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      # payment-service application.yml 기본값이 8080 이므로 명시 필요
-      PAYMENT_APP_PORT: 8084
-      PAYMENT_DB_HOST: payment-db
-      DEPOSIT_DB_HOST: deposit-db
-      REDIS_HOST: redis
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    mem_limit: 768m
-    depends_on:
-      payment-db:
-        condition: service_healthy
-      kafka:
         condition: service_healthy
 
   ai-service:
@@ -381,11 +349,11 @@ services:
       # 라우팅 대상 — api-gateway 변수명은 *_SERVICE_HOST / *_SERVICE_PORT (레거시의 *_APP_PORT 아님)
       CUSTOMER_SERVICE_HOST: customer-service
       CUSTOMER_SERVICE_PORT: 8081
-      DEPOSIT_SERVICE_HOST: deposit-service
+      DEPOSIT_SERVICE_HOST: core-banking
       DEPOSIT_SERVICE_PORT: 8082
       LOAN_SERVICE_HOST: loan-service
       LOAN_SERVICE_PORT: 8083
-      PAYMENT_SERVICE_HOST: payment-service
+      PAYMENT_SERVICE_HOST: core-banking
       PAYMENT_SERVICE_PORT: 8084
       # AI(auto-loan-review)·상담은 게이트웨이 미경유 구조 → 라우트 없음(의도적).
       # redis 는 api-gateway 가 사용하지 않음 → 미설정.
@@ -394,9 +362,8 @@ services:
     mem_limit: 512m
     depends_on:
       - customer-service
-      - deposit-service
+      - core-banking
       - loan-service
-      - payment-service
 
   consultation-service:
     image: ghcr.io/${GITHUB_OWNER}/consultation-service:${CONSULTATION_IMAGE_TAG:-latest}
@@ -417,7 +384,7 @@ services:
     env_file: ../../.env.prod
     mem_limit: 256m
     depends_on:
-      deposit-db:
+      core-banking-db:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -434,9 +401,8 @@ services:
 
 volumes:
   customer-db-data:
-  deposit-db-data:
+  core-banking-db-data:
   loan-db-data:
-  payment-db-data:
   common-db-data:
   ai-db-data:
   redis-data:

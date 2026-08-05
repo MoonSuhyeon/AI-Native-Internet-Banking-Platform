@@ -135,7 +135,7 @@ groups:
     rules:
       - alert: OutboxBacklogHigh
         expr: |
-          payment_outbox_pending{application="payment-service"} > 50
+          payment_outbox_pending{application="core-banking"} > 50
         for: 2m
         labels:
           severity: warning
@@ -145,7 +145,7 @@ groups:
 
       - alert: OutboxBacklogCritical
         expr: |
-          payment_outbox_pending{application="payment-service"} > 200
+          payment_outbox_pending{application="core-banking"} > 200
         for: 1m
         labels:
           severity: critical
@@ -155,7 +155,7 @@ groups:
 
       - alert: KafkaDlqIncrease
         expr: |
-          increase(payment_kafka_dlq_total{application="payment-service"}[5m]) > 0
+          increase(payment_kafka_dlq_total{application="core-banking"}[5m]) > 0
         for: 0m
         labels:
           severity: critical
@@ -165,7 +165,7 @@ groups:
 
       - alert: CompensationRateHigh
         expr: |
-          sum(increase(payment_compensation_total{application="payment-service"}[5m])) > 5
+          sum(increase(payment_compensation_total{application="core-banking"}[5m])) > 5
         for: 0m
         labels:
           severity: critical
@@ -175,7 +175,7 @@ groups:
 
       - alert: IncompletePaymentHigh
         expr: |
-          payment_instruction_incomplete{application="payment-service"} > 100
+          payment_instruction_incomplete{application="core-banking"} > 100
         for: 5m
         labels:
           severity: warning

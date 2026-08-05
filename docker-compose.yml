@@ -23,19 +23,21 @@ services:
       timeout: 5s
       retries: 5
 
-  deposit-db:
+  # A은행 코어뱅킹 DB. 수신(deposit)·결제(payment) 두 스키마를 한 데이터베이스에 담는다.
+  # 자행이체를 하나의 트랜잭션으로 처리하기 위한 전제다 (docs/decisions/core-banking-merge.md).
+  core-banking-db-a:
     image: postgres:16-alpine
-    container_name: ib-deposit-db
+    container_name: ib-core-banking-db-a
     environment:
-      POSTGRES_DB: ${DEPOSIT_DB_NAME:-deposit_db}
-      POSTGRES_USER: ${DEPOSIT_DB_USER:-deposit}
-      POSTGRES_PASSWORD: ${DEPOSIT_DB_PASSWORD:-deposit}
+      POSTGRES_DB: ${CORE_BANKING_DB_NAME:-core_banking}
+      POSTGRES_USER: ${CORE_BANKING_DB_USER:-core}
+      POSTGRES_PASSWORD: ${CORE_BANKING_DB_PASSWORD:-core}
     ports:
-      - "${DEPOSIT_DB_PORT:-5433}:5432"
+      - "${CORE_BANKING_DB_PORT_A:-5433}:5432"
     volumes:
-      - deposit-db-data:/var/lib/postgresql/data
+      - core-banking-db-a-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DEPOSIT_DB_USER:-deposit} -d ${DEPOSIT_DB_NAME:-deposit_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${CORE_BANKING_DB_USER:-core} -d ${CORE_BANKING_DB_NAME:-core_banking}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -74,37 +76,23 @@ services:
       timeout: 5s
       retries: 5
 
-  payment-db:
+  # B은행(다온뱅크) 코어뱅킹 DB.
+  # 병합 전에는 B가 Mock 이라 저장할 곳이 없었다. 이제 A와 같은 구조의 실제 DB를 갖는다 —
+  # 타행이체가 실제로 도착했는지 확인할 대상이 생겼다는 뜻이다.
+  core-banking-db-b:
     image: postgres:16-alpine
-    container_name: ib-payment-db
+    container_name: ib-core-banking-db-b
     environment:
-      POSTGRES_DB: ${PAYMENT_DB_NAME:-payment_db}
-      POSTGRES_USER: ${PAYMENT_DB_USER:-payment}
-      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment}
+      POSTGRES_DB: core_banking_b
+      POSTGRES_USER: core
+      POSTGRES_PASSWORD: core
     ports:
-      - "${PAYMENT_DB_PORT:-5435}:5432"
+      # doc-agent-db가 5440을 쓰므로 충돌 회피용 5441
+      - "${CORE_BANKING_DB_PORT_B:-5441}:5432"
     volumes:
-      - payment-db-data:/var/lib/postgresql/data
+      - core-banking-db-b-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PAYMENT_DB_USER:-payment} -d ${PAYMENT_DB_NAME:-payment_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  payment-db-b:
-    image: postgres:16-alpine
-    container_name: ib-payment-db-b
-    environment:
-      POSTGRES_DB: payment_b
-      POSTGRES_USER: payment
-      POSTGRES_PASSWORD: payment
-    ports:
-      # doc-agent-db가 5440을 쓰므로(start.ps1 DOC_AGENT_DB_PORT) 충돌 회피용 5441
-      - "${PAYMENT_DB_B_PORT:-5441}:5432"
-    volumes:
-      - payment-db-b-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U payment -d payment_b"]
+      test: ["CMD-SHELL", "pg_isready -U core -d core_banking_b"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -157,7 +145,7 @@ services:
 
   # 결제계 Kafka 토픽 원샷 프로비저닝.
   # 단일 broker(auto-create=false)에 결제계 18개 토픽을 선생성하고 종료한다.
-  # init-topics.sh(payment-service/infra)를 마운트해 kafka:29092 대상으로 1회 실행.
+  # init-topics.sh(core-banking/infra)를 마운트해 kafka:29092 대상으로 1회 실행.
   payment-topic-init:
     image: apache/kafka:3.8.0
     container_name: ib-payment-topic-init
@@ -167,7 +155,7 @@ services:
     environment:
       KAFKA_BOOTSTRAP: kafka:29092
     volumes:
-      - ./services/payment-service/infra/init-topics.sh:/init-topics.sh:ro
+      - ./services/core-banking/infra/init-topics.sh:/init-topics.sh:ro
     entrypoint: ["/bin/bash", "/init-topics.sh"]
     restart: "no"
 
@@ -243,30 +231,38 @@ services:
       retries: 5
 
 
-  deposit-service:
+  # A은행 코어뱅킹 — 수신(deposit) + 결제(payment) 단일 서비스.
+  # 병합 이유는 docs/decisions/core-banking-merge.md 참조.
+  core-banking-a:
     build:
       context: .
-      dockerfile: services/deposit-service/Dockerfile
-    container_name: ib-deposit-service
+      dockerfile: services/core-banking/Dockerfile
+    container_name: ib-core-banking-a
     ports:
-      - "${DEPOSIT_APP_PORT:-8082}:8082"
+      - "${CORE_BANKING_PORT_A:-8082}:8082"
     environment:
-      DEPOSIT_APP_PORT: 8082
-      DEPOSIT_DB_HOST: deposit-db
-      DEPOSIT_DB_PORT: 5432
-      DEPOSIT_DB_NAME: ${DEPOSIT_DB_NAME:-deposit_db}
-      DEPOSIT_DB_USER: ${DEPOSIT_DB_USER:-deposit}
-      DEPOSIT_DB_PASSWORD: ${DEPOSIT_DB_PASSWORD:-deposit}
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      CRYPTO_KEY_BASE64: ${CRYPTO_KEY_BASE64:-aW50ZXJuZXQtYmFuay1kZXYta2V5LTMyYnl0ZXMhISE=}
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_FLYWAY_REPAIR_ON_MIGRATE: "true"
-      SPRING_FLYWAY_VALIDATE_ON_MIGRATE: "false"
+      CORE_BANKING_APP_PORT: 8082
+      BANK_CODE: "A"
+      CORE_BANKING_DB_HOST: core-banking-db-a
+      CORE_BANKING_DB_PORT: 5432
+      CORE_BANKING_DB_NAME: ${CORE_BANKING_DB_NAME:-core_banking}
+      CORE_BANKING_DB_USER: ${CORE_BANKING_DB_USER:-core}
+      CORE_BANKING_DB_PASSWORD: ${CORE_BANKING_DB_PASSWORD:-core}
+      CUSTOMER_SERVICE_URL: http://customer-service:8081
+      KFTC_KAFKA_BOOTSTRAP: kafka:29092
+      BOK_KAFKA_BOOTSTRAP: kafka:29092
+      INTERNAL_KAFKA_BOOTSTRAP: kafka:29092
+      KFTC_CONSUMER_GROUP: core-banking-kftc-a
+      BOK_CONSUMER_GROUP: core-banking-bok-a
+      INTERNAL_CONSUMER_GROUP: core-banking-internal-a
+      SPRING_KAFKA_LISTENER_MISSING_TOPICS_FATAL: "false"
+      APP_CORS_ENABLED: "true"
       LOG_DIR: /logs
     volumes:
       - C:/logs/internet-banking:/logs
     depends_on:
-      deposit-db:
+      core-banking-db-a:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -301,7 +297,16 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CRYPTO_KEY_BASE64: ${CRYPTO_KEY_BASE64:-aW50ZXJuZXQtYmFuay1kZXYta2V5LTMyYnl0ZXMhISE=}
       LOG_DIR: /logs
+      # 서류 원본 보관. 기본 스택은 filesystem + 영속 볼륨을 쓴다.
+      # MinIO 로 바꾸려면 --profile doc 로 minio 를 띄우고 아래 두 줄을 바꾼다:
+      #   LOAN_DOCUMENT_STORAGE_TYPE: s3
+      #   STORAGE_ENDPOINT: http://minio:9000
+      LOAN_DOCUMENT_STORAGE_TYPE: ${LOAN_DOCUMENT_STORAGE_TYPE:-filesystem}
       LOAN_DOCUMENT_STORAGE_DIR: /var/lib/loan-documents
+      LOAN_DOCUMENT_BUCKET: ${LOAN_DOCUMENT_BUCKET:-loan-documents}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-http://minio:9000}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-minioadmin}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-minioadmin}
       SPRING_FLYWAY_REPAIR_ON_MIGRATE: "true"
     volumes:
       - C:/logs/internet-banking:/logs
@@ -322,81 +327,45 @@ services:
       retries: 10
       start_period: 60s
 
-  payment-service:
+  # B은행(다온뱅크) — 타행이체 상대 은행.
+  #
+  # 병합 전에는 payment-service 를 mock 프로필로 띄워 수신계를 가짜로 대체했다.
+  # 그 Mock 은 아무것도 저장하지 않아서 "송금이 도착했는지" 확인할 대상이 없었다.
+  # 이제 A와 똑같은 코어뱅킹을 자기 DB로 띄운다 — 실제 계좌에 실제로 입금된다.
+  core-banking-b:
     build:
       context: .
-      dockerfile: services/payment-service/Dockerfile
-    container_name: ib-payment-service
+      dockerfile: services/core-banking/Dockerfile
+    container_name: ib-core-banking-b
     ports:
-      - "${PAYMENT_APP_PORT:-8084}:8084"
+      - "${CORE_BANKING_PORT_B:-8180}:8082"
     environment:
-      PAYMENT_APP_PORT: 8084
-      PAYMENT_DB_HOST: payment-db
-      PAYMENT_DB_PORT: 5432
-      PAYMENT_DB_NAME: ${PAYMENT_DB_NAME:-payment_db}
-      PAYMENT_DB_USER: ${PAYMENT_DB_USER:-payment}
-      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment}
-      KFTC_KAFKA_BOOTSTRAP: kafka:29092
-      BOK_KAFKA_BOOTSTRAP: kafka:29092
-      INTERNAL_KAFKA_BOOTSTRAP: kafka:29092
-      SPRING_KAFKA_LISTENER_MISSING_TOPICS_FATAL: "false"
-      LOG_DIR: /logs
-      DEPOSIT_ACCOUNT_URL: http://deposit-service:${DEPOSIT_APP_PORT:-8082}
-      DEPOSIT_BALANCE_URL: http://deposit-service:${DEPOSIT_APP_PORT:-8082}
-    volumes:
-      - C:/logs/internet-banking:/logs
-    depends_on:
-      payment-db:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      payment-topic-init:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep -q UP"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
-
-  payment-service-b:
-    build:
-      context: .
-      dockerfile: services/payment-service/Dockerfile
-    container_name: ib-payment-service-b
-    ports:
-      - "8180:8084"
-    environment:
-      PAYMENT_APP_PORT: 8084
+      SPRING_PROFILES_ACTIVE: docker
+      CORE_BANKING_APP_PORT: 8082
       BANK_CODE: "B"
-      SPRING_PROFILES_ACTIVE: "mock"
-      APP_CORS_ENABLED: "true"
-      PAYMENT_DB_HOST: payment-db-b
-      PAYMENT_DB_PORT: 5432
-      PAYMENT_DB_NAME: payment_b
-      PAYMENT_DB_USER: payment
-      PAYMENT_DB_PASSWORD: payment
+      CORE_BANKING_DB_HOST: core-banking-db-b
+      CORE_BANKING_DB_PORT: 5432
+      CORE_BANKING_DB_NAME: core_banking_b
+      CORE_BANKING_DB_USER: core
+      CORE_BANKING_DB_PASSWORD: core
       KFTC_KAFKA_BOOTSTRAP: kafka:29092
       BOK_KAFKA_BOOTSTRAP: kafka:29092
       INTERNAL_KAFKA_BOOTSTRAP: kafka:29092
-      KFTC_CONSUMER_GROUP: payment-kftc-b
-      BOK_CONSUMER_GROUP: payment-bok-b
-      INTERNAL_CONSUMER_GROUP: payment-internal-b
+      KFTC_CONSUMER_GROUP: core-banking-kftc-b
+      BOK_CONSUMER_GROUP: core-banking-bok-b
+      INTERNAL_CONSUMER_GROUP: core-banking-internal-b
       SPRING_KAFKA_LISTENER_MISSING_TOPICS_FATAL: "false"
+      APP_CORS_ENABLED: "true"
       LOG_DIR: /logs
-      DEPOSIT_ACCOUNT_URL: http://deposit-service:8082
-      DEPOSIT_BALANCE_URL: http://deposit-service:8082
     volumes:
       - C:/logs/internet-banking:/logs
     depends_on:
-      payment-db-b:
+      core-banking-db-b:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      payment-topic-init:
-        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep -q UP"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/actuator/health | grep -q UP"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -450,7 +419,8 @@ services:
     ports:
       - "${CONSULTATION_APP_PORT:-8087}:8087"
     environment:
-      CONSULTATION_DATABASE_URL: postgresql+psycopg://${DEPOSIT_DB_USER:-deposit}:${DEPOSIT_DB_PASSWORD:-deposit}@deposit-db:5432/${DEPOSIT_DB_NAME:-deposit_db}
+      # 수신 데이터는 core_banking DB 의 deposit 스키마로 옮겨졌다.
+      CONSULTATION_DATABASE_URL: postgresql+psycopg://${CORE_BANKING_DB_USER:-core}:${CORE_BANKING_DB_PASSWORD:-core}@core-banking-db-a:5432/${CORE_BANKING_DB_NAME:-core_banking}?options=-csearch_path%3Ddeposit
       CONSULTATION_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONSULTATION_KAFKA_ENABLED: "false"
       CONSULTATION_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -464,7 +434,7 @@ services:
     volumes:
       - C:/logs/internet-banking:/logs
     depends_on:
-      deposit-db:
+      core-banking-db-a:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8087/health || exit 1"]
@@ -479,7 +449,7 @@ services:
     command: >
       sh -c "pip install --quiet kafka-python-ng==2.2.3 && python /app/responder.py"
     volumes:
-      - ./services/payment-service/mock:/app:ro
+      - ./services/core-banking/mock:/app:ro
     environment:
       KFTC_BOOTSTRAP: kafka:29092
       BOK_BOOTSTRAP:  kafka:29092
@@ -680,12 +650,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:-internet-banking-jwt-secret-key-must-be-at-least-32-chars!!}
       CUSTOMER_SERVICE_HOST: customer-service
       CUSTOMER_SERVICE_PORT: 8081
-      DEPOSIT_SERVICE_HOST: deposit-service
-      DEPOSIT_SERVICE_PORT: ${DEPOSIT_APP_PORT:-8082}
+      DEPOSIT_SERVICE_HOST: core-banking-a
+      DEPOSIT_SERVICE_PORT: 8082
       LOAN_SERVICE_HOST: loan-service
       LOAN_SERVICE_PORT: ${LOAN_APP_PORT:-8083}
-      PAYMENT_SERVICE_HOST: payment-service
-      PAYMENT_SERVICE_PORT: ${PAYMENT_APP_PORT:-8084}
+      # 결제도 같은 서비스로 간다 — 병합 후 하나의 코어뱅킹이다.
+      PAYMENT_SERVICE_HOST: core-banking-a
+      PAYMENT_SERVICE_PORT: 8082
       AI_SERVICE_HOST: auto-loan-review
       AI_SERVICE_PORT: ${AUTO_LOAN_REVIEW_APP_PORT:-8089}
     volumes:
@@ -693,11 +664,9 @@ services:
     depends_on:
       customer-service:
         condition: service_healthy
-      deposit-service:
+      core-banking-a:
         condition: service_healthy
       loan-service:
-        condition: service_healthy
-      payment-service:
         condition: service_healthy
       auto-loan-review:
         condition: service_healthy
@@ -977,12 +946,11 @@ services:
 
 volumes:
   customer-db-data:
-  deposit-db-data:
+  core-banking-db-a-data:
+  core-banking-db-b-data:
   loan-db-data:
   loan-document-data:
   common-db-data:
-  payment-db-data:
-  payment-db-b-data:
 
   ai-db-data:
   redis-data:

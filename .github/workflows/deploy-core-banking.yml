@@ -1,0 +1,49 @@
+name: Deploy core-banking
+
+# core-banking 은 수신(deposit) + 결제(payment) 병합 모듈이다.
+# 병합 배경은 docs/decisions/core-banking-merge.md 참조.
+# deploy-deposit-service.yml / deploy-payment-service.yml 을 대체한다.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/core-banking/**'
+      - 'common/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/deploy-core-banking.yml'
+      - '.github/workflows/reusable-*.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/core-banking/**'
+      - 'common/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/reusable-java-build.yml
+    with:
+      service-name: core-banking
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/reusable-docker-publish.yml
+    with:
+      service-name: core-banking
+
+  deploy:
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    needs: publish
+    permissions: {}
+    uses: ./.github/workflows/reusable-deploy-ssh.yml
+    with:
+      service-name: core-banking
+      image-tag: ${{ needs.publish.outputs.image-tag }}
+    secrets: inherit
