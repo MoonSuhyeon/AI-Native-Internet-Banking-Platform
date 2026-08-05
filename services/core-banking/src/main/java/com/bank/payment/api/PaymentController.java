@@ -32,7 +32,9 @@ import java.util.Map;
  * 자행 동기 완결 → 200 OK.
  */
 @RestController
-@RequestMapping("/api/v1/payments")
+// context-path 가 /api 이므로 여기서는 /api 를 붙이지 않는다.
+// 외부 URL 은 병합 전과 동일한 /api/v1/payments 다.
+@RequestMapping("/v1/payments")
 public class PaymentController {
 
     private final PaymentOrchestrator paymentOrchestrator;

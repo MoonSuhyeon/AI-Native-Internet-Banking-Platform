@@ -3,12 +3,12 @@ package com.bank.payment.domain.service;
 import com.bank.payment.common.IdGenerator;
 import com.bank.payment.domain.ExternalCall;
 import com.bank.payment.domain.PaymentInstruction;
-import com.bank.payment.outbound.feign.DepositAccountClient;
-import com.bank.payment.outbound.feign.DepositBalanceClient;
-import com.bank.payment.outbound.feign.dto.AccountInquiryData;
+import com.bank.payment.outbound.ledger.AccountQueryPort;
+import com.bank.payment.outbound.ledger.LedgerPort;
+import com.bank.payment.outbound.ledger.dto.AccountInquiryData;
 import com.bank.payment.common.exception.DepositInboundFailureException;
-import com.bank.payment.outbound.feign.dto.BalanceTxData;
-import com.bank.payment.outbound.feign.dto.DepositRequest;
+import com.bank.payment.outbound.ledger.dto.BalanceTxData;
+import com.bank.payment.outbound.ledger.dto.DepositRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,8 +26,8 @@ import java.util.UUID;
 public class InboundPaymentOrchestratorImpl implements InboundPaymentOrchestrator {
 
     private final PaymentTransactionService txService;
-    private final DepositAccountClient depositAccountClient;
-    private final DepositBalanceClient depositBalanceClient;
+    private final AccountQueryPort depositAccountClient;
+    private final LedgerPort depositBalanceClient;
     private final IdGenerator idGenerator;
 
     @Override

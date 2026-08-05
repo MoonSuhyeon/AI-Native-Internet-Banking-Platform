@@ -13,19 +13,22 @@ import com.bank.payment.domain.ExternalCall;
 import com.bank.payment.domain.KftcClearingTransaction;
 import com.bank.payment.domain.Ledger;
 import com.bank.payment.domain.PaymentInstruction;
-import com.bank.payment.outbound.feign.DepositAccountClient;
-import com.bank.payment.outbound.feign.DepositBalanceClient;
-import com.bank.payment.outbound.feign.DepositErrorMapper;
-import com.bank.payment.outbound.feign.dto.AccountInquiryData;
-import com.bank.payment.outbound.feign.dto.BalanceTxData;
-import com.bank.payment.outbound.feign.dto.DepositRequest;
-import com.bank.payment.outbound.feign.dto.WithdrawCancelData;
-import com.bank.payment.outbound.feign.dto.WithdrawRequest;
+import com.bank.payment.outbound.ledger.AccountQueryPort;
+import com.bank.payment.outbound.ledger.LedgerPort;
+import com.bank.payment.outbound.ledger.DepositErrorMapper;
+import com.bank.payment.outbound.ledger.dto.AccountInquiryData;
+import com.bank.payment.outbound.ledger.dto.BalanceTxData;
+import com.bank.payment.outbound.ledger.dto.DepositRequest;
+import com.bank.payment.outbound.ledger.dto.WithdrawCancelData;
+import com.bank.payment.outbound.ledger.dto.WithdrawRequest;
 import com.bank.payment.config.PaymentMetrics;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import com.bank.payment.common.DepositFailureSimulator;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -49,28 +52,44 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
     private static final long BOK_ROUTING_THRESHOLD = 1_000_000_000L;
 
     private final PaymentTransactionService txService;
-    private final DepositAccountClient depositAccountClient;
-    private final DepositBalanceClient depositBalanceClient;
+    private final AccountQueryPort depositAccountClient;
+    private final LedgerPort depositBalanceClient;
     private final IdGenerator idGenerator;
     private final ObjectMapper objectMapper;
     private final PaymentMetrics metrics;
+    private final DepositFailureSimulator depositFailureSimulator;
+
+    /**
+     * 자행이체의 자금 이동을 하나의 트랜잭션으로 묶는 데 쓴다.
+     *
+     * <p>@Transactional 애너테이션이 아니라 프로그래밍 방식을 쓰는 이유는 두 가지다.
+     * 첫째, 같은 빈 안에서 호출하면 프록시를 거치지 않아 애너테이션이 무시된다.
+     * 둘째, 롤백 이후 catch 블록에서 실패를 기록해야 하는데, 메서드 전체를
+     * @Transactional 로 감싸면 그 기록조차 rollback-only 트랜잭션 안에서 일어나 실패한다.
+     * 템플릿을 쓰면 자금 이동만 감싸고 실패 기록은 그 바깥에서 새 트랜잭션으로 남길 수 있다.
+     */
+    private final TransactionTemplate transactionTemplate;
 
     @Value("${payment.bank-code:A}")
     private String bankCode;
 
     public PaymentOrchestratorImpl(
             PaymentTransactionService txService,
-            DepositAccountClient depositAccountClient,
-            DepositBalanceClient depositBalanceClient,
+            AccountQueryPort depositAccountClient,
+            LedgerPort depositBalanceClient,
             IdGenerator idGenerator,
             ObjectMapper objectMapper,
-            PaymentMetrics metrics) {
+            PaymentMetrics metrics,
+            DepositFailureSimulator depositFailureSimulator,
+            PlatformTransactionManager transactionManager) {
         this.txService = txService;
         this.depositAccountClient = depositAccountClient;
         this.depositBalanceClient = depositBalanceClient;
         this.idGenerator = idGenerator;
         this.objectMapper = objectMapper;
         this.metrics = metrics;
+        this.depositFailureSimulator = depositFailureSimulator;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     @Override
@@ -107,13 +126,18 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
 
             txService.authorize(pi.getPaymentInstructionId(), pi.getVersion());
 
-            // Step 3: 출금(B-3) + 입금(B-4) — 트랜잭션 밖
-            withdrawStep = step3_withdraw(pi, command);
-            BalanceTxData depositResult = step3b_deposit(pi, command);
-
-            // TX-2: 분개 2건 + COMPLETED + Outbox + 멱등키완료
-            PaymentResult result = txService.txStep4(pi, withdrawStep.txData(), depositResult, command,
-                    validation.senderHolderName(), validation.receiverHolderName());
+            // 출금 + 입금 + 분개 + COMPLETED + Outbox 를 하나의 트랜잭션으로 처리한다.
+            // 수신계가 같은 프로세스·같은 DataSource 로 들어오면서 가능해졌다.
+            // 중간에 무엇이 실패하든 롤백이 전부 되돌리므로 보상 호출(B-5)이 필요 없다.
+            // 타행이체는 이렇게 할 수 없다 — 상대 은행 DB 에는 트랜잭션을 걸 수 없기 때문이다.
+            final WithdrawStepResult[] holder = new WithdrawStepResult[1];
+            PaymentResult result = transactionTemplate.execute(status -> {
+                holder[0] = step3_withdraw(pi, command);
+                BalanceTxData depositResult = step3b_deposit(pi, command);
+                return txService.txStep4(pi, holder[0].txData(), depositResult, command,
+                        validation.senderHolderName(), validation.receiverHolderName());
+            });
+            withdrawStep = holder[0];
             metrics.paymentCompleted(pi.getRequestedAt());
             return result;
 
@@ -148,17 +172,12 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
                 return txService.txStepFail(freshPi, fc, failedEventTypeFor(fc), "AUTHORIZED");
             }
 
-            // TX-A: AUTHORIZED→REVERSING + 이력 2건
-            // pi.getVersion()=0 → authorize 후 DB version=1 → txMarkReversing WHERE version=1 → version=2
-            txService.txMarkReversing(pi, pi.getVersion() + 1, "AUTHORIZED");
-
-            // B-5: 출금취소 (TX 밖)
-            step3c_withdrawCancel(pi, command, withdrawStep.callId(), withdrawStep.txData());
-
-            // TX-B: REVERSING→FAILED + 이력 2건 + Outbox + 멱등키
-            // WHERE version=2 → version=3
+            // 출금 이후 실패했더라도 보상할 것이 없다 — 출금·입금이 한 트랜잭션이므로
+            // 이미 롤백으로 되돌아갔다. 남은 일은 실패를 기록하는 것뿐이고,
+            // 그 기록은 롤백된 트랜잭션 바깥에서 새 트랜잭션으로 남는다.
+            String fc = DepositErrorMapper.toFailureCategory(e.getDepositResponseCode());
             metrics.paymentFailed();
-            return txService.txCompleteReversal(pi, command.idempotencyKey(), pi.getVersion() + 2);
+            return txService.txStepFail(freshPi, fc, failedEventTypeFor(fc), "AUTHORIZED");
 
         } catch (LedgerInsertFailureException e) {
             // F5: txStep4 분개 INSERT 실패 → txStep4 전체 롤백 → AUTHORIZED v1 복귀 → 보상 필수 (P-002)
@@ -175,15 +194,10 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
                 return new PaymentResult(piId, pi.getTransactionNo(), "FAILED", "SYSTEM_ERROR", null);
             }
 
-            // TX-A: AUTHORIZED→REVERSING + 이력 2건 (freshPi.version=1 → WHERE version=1, DB version→2)
-            txService.txMarkReversing(freshPi, freshPi.getVersion(), "AUTHORIZED");
-
-            // B-5: 출금취소 (TX 밖, compensation_target_call_id=원 B-3 callId)
-            step3c_withdrawCancel(freshPi, command, withdrawStep.callId(), withdrawStep.txData());
-
-            // TX-B: REVERSING→FAILED + 이력 2건 + Outbox + 멱등키 (freshPi.version+1=2 → WHERE version=2, DB version→3)
+            // 분개 실패도 같은 트랜잭션 안이므로 출금·입금까지 함께 롤백됐다.
+            // 보상 없이 실패만 기록한다.
             metrics.paymentFailed();
-            return txService.txCompleteReversal(freshPi, command.idempotencyKey(), freshPi.getVersion() + 1);
+            return txService.txStepFail(freshPi, "SYSTEM_ERROR", "SYSTEM_FAILURE_DETECTED", "AUTHORIZED");
         }
     }
 
@@ -369,6 +383,10 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
             case "OWNER_INQUIRY_FAILED" -> "OWNER_INQUIRY_FAILED";
             case "ACCOUNT_RESTRICTED"   -> "ACCOUNT_CHECK_FAILED";
             case "ACCOUNT_CLOSED"       -> "ACCOUNT_CHECK_FAILED";
+            // 시스템 장애는 업무 거절과 구분해서 남긴다.
+            // 예전에는 보상 진입(txMarkReversing)이 이 이벤트를 남겼는데, 자행이체가
+            // 단일 트랜잭션이 되면서 보상 단계가 사라져 여기로 옮겼다.
+            case "SYSTEM_ERROR"         -> "SYSTEM_FAILURE_DETECTED";
             // 안전망: 위 5개 외 예상치 못한 code 진입 시 — 실제 경로에서는 미사용
             default                     -> "PAYMENT_FAILED";
         };
@@ -591,6 +609,10 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
     // ── Step 3b: 입금 (B-4, 트랜잭션 밖, 자행 수신) ──────────────────────────
     // DEP-0000 외 응답 코드 → DepositInboundFailureException (보상 필요 신호, P-002)
     private BalanceTxData step3b_deposit(PaymentInstruction pi, PaymentCommand command) {
+        // 출금이 끝난 뒤 입금에서 터지는 경로(F8)를 테스트에서 재현하기 위한 이음새.
+        // 운영에서는 no-op 이다.
+        depositFailureSimulator.checkAndThrow(command.receiverAccountNo());
+
         String piId = pi.getPaymentInstructionId();
         String callIdemKey = piId + "-BALANCE_DEPOSIT-RECEIVER-1";
 

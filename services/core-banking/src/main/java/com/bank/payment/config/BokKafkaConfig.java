@@ -23,6 +23,9 @@ import java.util.Map;
 @Configuration
 public class BokKafkaConfig {
 
+    @Value("${payment.kafka.missing-topics-fatal:true}")
+    private boolean missingTopicsFatal;
+
     @Value("${payment.kafka.bok.bootstrap-servers}")
     private String bootstrapServers;
 
@@ -67,7 +70,10 @@ public class BokKafkaConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(bokConsumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
-        factory.setMissingTopicsFatal(true);
+        // 토픽 자동생성이 꺼진 운영 환경에서는 토픽 부재를 기동 실패로 다뤄야 한다(P-009).
+        // 다만 Kafka 가 아예 없는 환경(수신계 컨트롤러 슬라이스 테스트 등)에서는
+        // 이 때문에 컨텍스트가 죽으므로 프로퍼티로 내릴 수 있게 한다. 기본값은 그대로 true.
+        factory.setMissingTopicsFatal(missingTopicsFatal);
 
         // DLQ 라우팅: 1초 간격 3회 재시도 후 bok.network.response.dlq (KftcKafkaConfig 대칭)
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(

@@ -1,4 +1,4 @@
-package com.bank.payment.outbound.feign.dto;
+package com.bank.payment.outbound.ledger.dto;
 
 /**
  * B-5 POST /api/v1/balances/withdraw/cancel 요청 본문.

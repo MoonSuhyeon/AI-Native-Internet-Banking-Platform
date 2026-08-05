@@ -1,60 +1,34 @@
-package com.bank.payment.outbound.feign;
+package com.bank.payment.outbound.ledger;
 
-import com.bank.payment.outbound.feign.dto.BalanceInquiryData;
-import com.bank.payment.outbound.feign.dto.BalanceTxData;
-import com.bank.payment.outbound.feign.dto.DepositRequest;
-import com.bank.payment.outbound.feign.dto.DepositResponse;
-import com.bank.payment.outbound.feign.dto.LimitInquiryData;
-import com.bank.payment.outbound.feign.dto.WithdrawCancelData;
-import com.bank.payment.outbound.feign.dto.WithdrawRequest;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import com.bank.payment.outbound.ledger.dto.BalanceInquiryData;
+import com.bank.payment.outbound.ledger.dto.BalanceTxData;
+import com.bank.payment.outbound.ledger.dto.DepositRequest;
+import com.bank.payment.outbound.ledger.dto.DepositResponse;
+import com.bank.payment.outbound.ledger.dto.LimitInquiryData;
+import com.bank.payment.outbound.ledger.dto.WithdrawCancelData;
+import com.bank.payment.outbound.ledger.dto.WithdrawRequest;
 
-@FeignClient(
-    name = "deposit-balance",
-    url = "${deposit.balance.url:http://localhost:8082}",
-    configuration = DepositFeignConfig.class,
-    primary = false
-)
-public interface DepositBalanceClient {
+/**
+ * 원장(입출금) 포트.
+ *
+ * <p>병합 전에는 deposit-service 를 향한 {@code @FeignClient} 였다. HTTP 호출이었기 때문에
+ * 출금과 입금이 각각 별개의 원격 트랜잭션이었고, 그 사이 실패를 {@link #withdrawCancel}
+ * 보상으로 되돌려야 했다. 이제 같은 프로세스·같은 DataSource 라 호출자의 트랜잭션에
+ * 참여한다.
+ *
+ * <p>다만 {@link #withdrawCancel} 은 남긴다 — 타행이체는 상대 은행 응답을 기다리는 동안
+ * 우리 쪽 출금이 이미 커밋돼 있어야 하므로, 여전히 보상이 유일한 되돌리기 수단이다.
+ */
+public interface LedgerPort {
 
-    // B-1 잔액조회 — D-REQ-3: deposit에 /balances 전용 endpoint 없음. 해결 전 mock 의존.
-    @GetMapping("/api/v1/balances/{accountNo}")
-    DepositResponse<BalanceInquiryData> getBalance(@PathVariable("accountNo") String accountNo);
+    DepositResponse<BalanceInquiryData> getBalance(String accountNo);
 
-    // B-2 한도조회 — D-REQ-4: deposit에 /limits endpoint 없음. 해결 전 mock 의존.
-    @GetMapping("/api/v1/limits/{accountNo}")
-    DepositResponse<LimitInquiryData> getLimit(
-            @PathVariable("accountNo") String accountNo,
-            @RequestParam(value = "date", required = false) String date);
+    DepositResponse<LimitInquiryData> getLimit(String accountNo, String date);
 
-    // B-3 출금 (멱등키 @RequestHeader)
-    // deposit 실제 경로: POST /api/transactions/withdraw (TransactionController.java:46)
-    // 실패(4xx/5xx) 시 DepositFeignErrorDecoder → DepositInboundFailureException
-    @PostMapping("/api/transactions/withdraw")
-    BalanceTxData withdraw(
-            @RequestHeader("X-Idempotency-Key") String idempotencyKey,
-            @RequestBody WithdrawRequest request);
+    BalanceTxData withdraw(String idempotencyKey, WithdrawRequest request);
 
-    // B-4 입금 (멱등키 @RequestHeader)
-    // deposit 실제 경로: POST /api/transactions/deposit (TransactionController.java:39)
-    // 실패(4xx/5xx) 시 DepositFeignErrorDecoder → DepositInboundFailureException
-    @PostMapping("/api/transactions/deposit")
-    BalanceTxData deposit(
-            @RequestHeader("X-Idempotency-Key") String idempotencyKey,
-            @RequestBody DepositRequest request);
+    BalanceTxData deposit(String idempotencyKey, DepositRequest request);
 
-    // B-5 출금취소 — deposit 실제 엔드포인트: PATCH /api/transactions/{transactionId}/cancel
-    // bare Transaction 직렬화(200 OK) → WithdrawCancelData(@JsonIgnoreProperties lean 수신).
-    // X-Idempotency-Key: deposit이 무시하지만 무해하므로 유지.
-    @PatchMapping("/api/transactions/{transactionId}/cancel")
-    WithdrawCancelData withdrawCancel(
-            @RequestHeader("X-Idempotency-Key") String idempotencyKey,
-            @PathVariable("transactionId") Long transactionId);
+    /** 출금 취소(보상). 타행이체 실패 경로에서만 쓴다. */
+    WithdrawCancelData withdrawCancel(String idempotencyKey, Long transactionId);
 }

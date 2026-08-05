@@ -41,7 +41,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ActiveProfiles("mock")
+// deposit Mock 을 걷어냈다. 이제 같은 프로세스의 실제 수신계 원장에 붙는다.
+// fault-injection 은 F5(분개 INSERT 실패) 주입용 이음새로만 남는다.
+@ActiveProfiles("fault-injection")
 @Import(AbstractPaymentIntegrationTest.KafkaTestOverride.class)
 public abstract class AbstractPaymentIntegrationTest {
 
@@ -81,7 +83,14 @@ public abstract class AbstractPaymentIntegrationTest {
 
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry r) {
-        r.add("spring.datasource.url",      POSTGRES::getJdbcUrl);
+        // 운영 설정과 동일하게 search_path 를 잡는다.
+        // JPA 는 스스로 수식하지만 MyBatis 매퍼는 수식 없이 쓰므로 payment 가 경로에 있어야 한다.
+        // Testcontainers 의 getJdbcUrl() 은 이미 쿼리 파라미터를 달고 나올 수 있으므로
+        // 구분자를 상황에 맞게 고른다. ? 를 두 번 붙이면 파라미터가 통째로 무시된다.
+        r.add("spring.datasource.url", () -> {
+            String url = POSTGRES.getJdbcUrl();
+            return url + (url.contains("?") ? "&" : "?") + "currentSchema=deposit,payment";
+        });
         r.add("spring.datasource.username", POSTGRES::getUsername);
         r.add("spring.datasource.password", POSTGRES::getPassword);
 
@@ -100,9 +109,13 @@ public abstract class AbstractPaymentIntegrationTest {
     @BeforeEach
     void truncateAll() {
         jdbc.execute(
-            "TRUNCATE TABLE payment_instruction, idempotency_key, ledger, external_call, " +
-            "outbox_message, status_history, kftc_clearing_transaction, bok_settlement_transaction CASCADE"
+            "TRUNCATE TABLE payment.payment_instruction, payment.idempotency_key, payment.ledger, " +
+            "payment.external_call, payment.outbox_message, payment.status_history, " +
+            "payment.kftc_clearing_transaction, payment.bok_settlement_transaction CASCADE"
         );
+        // 수신계도 함께 비운다. 잔액이 테스트 간에 이월되면 "이체 후 잔액" 단언이 무의미해진다.
+        jdbc.execute("TRUNCATE TABLE deposit.deposit_transactions, deposit.deposit_accounts CASCADE");
+        seedAccounts();
     }
 
     /**
@@ -131,11 +144,97 @@ public abstract class AbstractPaymentIntegrationTest {
         body.put("channel",                      channel);
         body.put("receiverPassbookSenderDisplay", "이몽룡");
 
-        return post("/api/v1/payments")
+        return post("/v1/payments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Idempotency-Key", idempotencyKey)
                 .header("X-User-Id",         userId)
                 .header("X-Auth-Token-Id",   authTokenId)
                 .content(om.writeValueAsString(body));
+    }
+
+    // ====================================================================
+    // 수신계 시드
+    // ====================================================================
+
+    /** 이체 송신 계좌 — 잔액 20억(BOK 거액이체 10억까지 통과). */
+    protected static final String SENDER_S1 = "12345678901234";
+    /** 이체 수신 계좌 — 정상. */
+    protected static final String RECEIVER_S1 = "12345678905678";
+    /** 잔액 500만 — 600만 이체 시 INSUFFICIENT_BALANCE. */
+    protected static final String SENDER_F1 = "77770000000001";
+    /** CLOSED 계좌 — 입금 시도 시 거절. */
+    protected static final String RECEIVER_CLOSED = "99990000000003";
+    /**
+     * 출금 후 입금 단계에서 실패시키는 수신 계좌.
+     *
+     * <p>계좌는 정상이고, DepositFailureSimulator 가 입금 시점에만 예외를 던진다.
+     * CLOSED 계좌로 대체하면 출금 이전 검증에서 걸려 정작 검증하려던 경로를 지나가지 않는다.
+     */
+    protected static final String RECEIVER_F8 = "12345678909999";
+    /** 분개 INSERT 를 실패시키는 수신 계좌 — LedgerFailureSimulator 가 이 번호를 보고 던진다. */
+    protected static final String RECEIVER_F5 = "88880000";
+
+    /**
+     * 매 테스트마다 계좌를 새로 심는다.
+     *
+     * <p>Mock 을 걷어낸 뒤로 이체는 실제 잔액을 움직인다. 계좌를 초기화하지 않으면
+     * 앞 테스트의 잔액이 이월돼 "이체 후 잔액" 단언이 무의미해진다.
+     */
+    protected void seedAccounts() {
+        // 계좌는 계약을, 계약은 상품을 참조한다(FK). 운영에서는 시더가 상품을 넣지만
+        // 테스트 프로필에서는 시더가 돌지 않으므로 여기서 최소한만 직접 심는다.
+        jdbc.update("""
+                INSERT INTO deposit.deposit_banking_products
+                    (banking_product_id, deposit_product_type, deposit_product_name)
+                VALUES (1, 'DEPOSIT', '결제 테스트용 예금')
+                ON CONFLICT (banking_product_id) DO NOTHING
+                """);
+
+        seedAccount(SENDER_S1,       "CUST-S1", 2_000_000_000L, "ACTIVE");
+        seedAccount(RECEIVER_S1,     "CUST-S2",     1_000_000L, "ACTIVE");
+        seedAccount(SENDER_F1,       "CUST-F1",     5_000_000L, "ACTIVE");
+        seedAccount(RECEIVER_CLOSED, "CUST-C1",             0L, "CLOSED");
+        // F8 은 입금 단계에서 터뜨리는 시나리오라 계좌는 정상이어야 한다.
+        // 출금까지 간 뒤 실패해야 롤백을 검증할 수 있다.
+        seedAccount(RECEIVER_F8,     "CUST-F8",     1_000_000L, "ACTIVE");
+        // F5 는 분개 단계에서 터뜨리는 시나리오라 계좌 자체는 정상이어야 한다.
+        seedAccount(RECEIVER_F5,     "CUST-F5",     1_000_000L, "ACTIVE");
+    }
+
+    protected void seedAccount(String accountNo, String customerId, long balance, String status) {
+        // 계좌번호에서 계약 id 를 유도한다 — 테스트끼리 겹치지 않으면서 재실행에도 같은 값이 나온다.
+        // 계좌번호 길이가 제각각이라(8~14자리) 끝에서 최대 9자리만 취한다.
+        int from = Math.max(0, accountNo.length() - 9);
+        long contractId = Long.parseLong(accountNo.substring(from));
+
+        jdbc.update("""
+                INSERT INTO deposit.deposit_contracts
+                    (contract_id, contract_number, customer_id, banking_product_id,
+                     join_amount, contract_interest_rate, final_interest_rate,
+                     contract_period_month, started_at, join_channel)
+                VALUES (?, ?, ?, 1, 0, 0.00, 0.00, 12, '20250101', 'WEB')
+                ON CONFLICT (contract_id) DO NOTHING
+                """,
+                contractId, "TEST-" + accountNo, customerId);
+
+        jdbc.update("""
+                INSERT INTO deposit.deposit_accounts
+                    (account_number, customer_id, contract_id, account_type, bank_code,
+                     account_alias, balance, currency, account_password,
+                     daily_withdraw_limit, atm_withdraw_limit,
+                     account_status, opened_at)
+                VALUES (?, ?, ?, 'DEPOSIT', '004', ?, ?, 'KRW',
+                        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+                        2000000000, 2000000000, ?, '20250101')
+                """,
+                accountNo, customerId, contractId,
+                customerId + " 계좌", balance, status);
+    }
+
+    /** 계좌 잔액 조회 — 이체가 실제로 돈을 움직였는지 확인용. */
+    protected long balanceOf(String accountNo) {
+        return jdbc.queryForObject(
+                "SELECT balance FROM deposit.deposit_accounts WHERE account_number = ?",
+                java.math.BigDecimal.class, accountNo).longValue();
     }
 }

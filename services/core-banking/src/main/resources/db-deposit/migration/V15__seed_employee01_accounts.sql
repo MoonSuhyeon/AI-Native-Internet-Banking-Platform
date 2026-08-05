@@ -1,0 +1,11 @@
+-- [MOVED] 시드 데이터는 환경별 분리를 위해 db-deposit/seed/employee01-accounts.sql 로 이관하고
+-- DemoDataSeeder 가 실행한다.
+--
+-- 이 파일이 마이그레이션이었을 때의 문제:
+--   deposit_contracts.banking_product_id → deposit_banking_products FK 를 참조하는데,
+--   상품은 마이그레이션이 아니라 시더가 넣는다. 즉 마이그레이션이 시더보다 먼저 돌기 때문에
+--   깨끗한 DB 에 처음부터 적용하면 항상 FK 위반으로 실패했다.
+--   증분 배포만 하는 동안에는 드러나지 않았고, 테스트는 H2 + ddl-auto 라 마이그레이션을
+--   아예 돌리지 않아 아무도 알아채지 못했다.
+--
+-- 기존 환경에서 flyway 체크섬 오류가 발생하면 `flyway repair` 실행 후 재기동하세요.

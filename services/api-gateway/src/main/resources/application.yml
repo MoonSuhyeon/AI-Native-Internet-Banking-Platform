@@ -71,6 +71,9 @@ spring:
             - Path=/api/v1/internal/customers/**,/api/v1/internal/party/**,/api/v1/internal/compliance/**,/api/v1/internal/fds/**
 
         # 예금·수신 도메인 (JWT 필요)
+        # deposit / payment 는 병합 후 같은 서비스(core-banking)로 간다.
+        # 라우트를 하나로 합치지 않은 것은 의도적이다 — 경로 목록이 도메인별로 남아 있어야
+        # 어떤 API 가 어느 도메인 것인지 읽힌다. 대상 호스트만 같다.
         - id: deposit
           uri: http://${DEPOSIT_SERVICE_HOST:localhost}:${DEPOSIT_SERVICE_PORT:8082}
           predicates:

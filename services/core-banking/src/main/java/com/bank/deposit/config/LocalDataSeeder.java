@@ -4,17 +4,31 @@ import com.bank.deposit.domain.entity.*;
 import com.bank.deposit.domain.enums.*;
 import com.bank.deposit.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+@Slf4j
 @Component
-@Profile({"local", "docker"})
+// 시드를 실행할 환경.
+//
+// 이 목록이 이 클래스에서 가장 중요한 줄이다. 예전에 시드를 마이그레이션에서 이 시더로
+// 옮기면서 프로필을 local/docker 로만 열어둔 결과, 배포 환경(prod)에는 데모 데이터가
+// 사라졌다. 그래서 데모 계좌가 필요했던 사람이 "무조건 실행되는" 마이그레이션으로 되돌아갔고
+// (V15), 그것이 마이그레이션 체인을 깨뜨렸다.
+//
+// 즉 규약을 어긴 것이 문제가 아니라 규약이 그 사람의 문제를 풀어주지 못한 것이 문제였다.
+// 시연 환경에서도 시드가 돌게 열어두어야 같은 우회가 반복되지 않는다.
+// 실제 고객 데이터가 있는 환경에서는 이 프로필을 켜지 않는다.
+@Profile({"local", "docker", "demo", "prod"})
 @RequiredArgsConstructor
 public class LocalDataSeeder implements ApplicationRunner {
 
@@ -36,6 +50,9 @@ public class LocalDataSeeder implements ApplicationRunner {
             seedDemoCustomerAccounts();
             seedDemoCustomerTransactions();
             seedDemoLoginAccounts();
+            // 9001(홍길동) 계좌·계약·거래. refreshHongKildongDemoData() 가 이 데이터를 전제로
+            // 잔액과 날짜만 갱신하므로 반드시 그보다 먼저 실행한다.
+            seedEmployeeDemoAccounts();
             refreshHongKildongDemoData();
             return;
         }
@@ -741,5 +758,31 @@ public class LocalDataSeeder implements ApplicationRunner {
 
     private BigDecimal bd(String value) {
         return new BigDecimal(value);
+    }
+
+    /**
+     * 9001(홍길동) 데모 계좌 시드.
+     *
+     * <p>원래 {@code V15__seed_employee01_accounts.sql} 마이그레이션이었다. 그 SQL 이
+     * 참조하는 상품(deposit_banking_products)은 마이그레이션이 아니라 이 시더가 넣기 때문에,
+     * 마이그레이션으로 두면 깨끗한 DB 에서 항상 FK 위반으로 실패했다. 순서를 바로잡기 위해
+     * 시더로 옮겼다.
+     *
+     * <p>SQL 은 Java 로 옮겨쓰지 않고 리소스로 남겼다 — 82줄짜리 INSERT 를 문자열로 끌고
+     * 오는 것보다 SQL 파일로 두는 편이 읽고 고치기 쉽다. 스크립트 자체가
+     * {@code ON CONFLICT DO NOTHING} 이라 여러 번 실행해도 안전하다.
+     */
+    private void seedEmployeeDemoAccounts() {
+        ClassPathResource script = new ClassPathResource("db-deposit/seed/employee01-accounts.sql");
+        if (!script.exists()) {
+            log.warn("[seed] employee01-accounts.sql 없음 — 9001 데모 계좌를 건너뛴다");
+            return;
+        }
+        try (var connection = jdbcTemplate.getDataSource().getConnection()) {
+            ScriptUtils.executeSqlScript(connection, script);
+        } catch (Exception e) {
+            // 데모 데이터 실패가 기동을 막지는 않게 한다. 없으면 화면이 비어 보일 뿐이다.
+            log.error("[seed] 9001 데모 계좌 시드 실패", e);
+        }
     }
 }

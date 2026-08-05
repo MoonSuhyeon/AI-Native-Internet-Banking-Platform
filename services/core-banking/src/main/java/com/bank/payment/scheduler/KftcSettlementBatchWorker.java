@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -24,6 +25,15 @@ import java.util.List;
  *    1건 실패가 나머지 막지 않도록 예외 격리 (TimeoutDetectionWorker 패턴).
  */
 @Slf4j
+/**
+ * 결제계 백그라운드 워커.
+ *
+ * <p>{@code payment.scheduler.enabled=false} 로 끌 수 있다. 병합 이후 수신계 슬라이스
+ * 테스트가 같은 애플리케이션 정의를 공유하게 되면서, 이 워커들이 함께 떠서 존재하지 않는
+ * 결제 테이블(H2)을 주기적으로 조회하다 컨텍스트를 깨뜨렸다. 도메인별 가벼운 테스트가
+ * 상대 도메인의 배치까지 짊어지지 않도록 스위치를 둔다. 기본값은 켜짐이다.
+ */
+@ConditionalOnProperty(name = "payment.scheduler.enabled", matchIfMissing = true)
 @Component
 @RequiredArgsConstructor
 public class KftcSettlementBatchWorker {

@@ -1,4 +1,4 @@
-package com.bank.payment.outbound.feign.dto;
+package com.bank.payment.outbound.ledger.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;

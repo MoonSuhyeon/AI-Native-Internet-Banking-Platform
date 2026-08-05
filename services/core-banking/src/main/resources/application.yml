@@ -1,0 +1,125 @@
+server:
+  # deposit 이 쓰던 context-path 를 유지한다.
+  # payment 컨트롤러는 매핑에서 /api 를 떼어 /v1/payments 로 바꿨으므로
+  # 외부에서 보이는 URL 은 병합 전과 동일하다(/api/v1/payments).
+  port: ${CORE_BANKING_APP_PORT:8082}
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: core-banking
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  # 단일 데이터소스. 자행이체를 하나의 트랜잭션으로 처리하기 위한 전제다.
+  # 스키마는 deposit / payment 로 나눠 도메인 경계를 남긴다.
+  # (docs/decisions/core-banking-merge.md)
+  datasource:
+    # currentSchema 로 search_path 를 잡는다.
+    # JPA 는 default_schema=deposit 으로 스스로 수식하지만, MyBatis 매퍼는 테이블명을
+    # 수식 없이 쓰므로 search_path 에 payment 가 있어야 찾는다.
+    # 두 스키마 사이에 테이블명 충돌이 없음을 확인했다(deposit 43 / payment 8, 교집합 0).
+    url: jdbc:postgresql://${CORE_BANKING_DB_HOST:localhost}:${CORE_BANKING_DB_PORT:5432}/${CORE_BANKING_DB_NAME:core_banking}?currentSchema=deposit,payment
+    username: ${CORE_BANKING_DB_USER:core}
+    password: ${CORE_BANKING_DB_PASSWORD:core}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: deposit
+        format_sql: true
+
+  # 자동설정 Flyway 는 히스토리 테이블이 하나뿐이라 두 마이그레이션 세트를 다룰 수 없다.
+  # deposit(V1~V18)·payment(V1~V22) 가 모두 V1 부터 시작해 버전이 충돌하기 때문이다.
+  # 스키마별 Flyway 인스턴스는 CoreBankingFlywayConfig 가 직접 만든다.
+  flyway:
+    enabled: false
+
+  cloud:
+    openfeign:
+      httpclient:
+        hc5:
+          enabled: true
+
+# 결제계는 MyBatis 를 쓴다(기술스택 정의서 v2.2, KB 결제계 표준).
+# 수신계의 JPA 와 같은 DataSource 를 공유하므로 JpaTransactionManager 아래
+# 하나의 트랜잭션에 참여한다.
+mybatis:
+  mapper-locations: classpath:mappers/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        payment.instruction.duration: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+    tags:
+      application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  packages-to-scan: com.bank.deposit,com.bank.payment
+  default-produces-media-type: application/json
+
+client:
+  customer-service:
+    url: ${CUSTOMER_SERVICE_URL:http://customer-service:8081}
+
+payment:
+  bank-code: ${BANK_CODE:A}
+  timeout:
+    kftc-clearing-minutes: ${PAYMENT_TIMEOUT_KFTC_CLEARING_MINUTES:5}
+    bok-clearing-seconds: ${PAYMENT_TIMEOUT_BOK_CLEARING_SECONDS:30}
+    poll-interval-ms: ${PAYMENT_TIMEOUT_POLL_INTERVAL_MS:10000}
+  scheduled:
+    poll-interval-ms: ${PAYMENT_SCHEDULED_POLL_INTERVAL_MS:30000}
+  settlement:
+    kftc-cutoff-cron: ${PAYMENT_SETTLEMENT_KFTC_CUTOFF_CRON:0 0 11 * * *}
+  # 타행이체 Saga 는 병합 후에도 그대로다 — 상대 은행 DB 에는 트랜잭션을 걸 수 없다.
+  kafka:
+    kftc:
+      bootstrap-servers: ${KFTC_KAFKA_BOOTSTRAP:localhost:9092}
+      consumer-group: ${KFTC_CONSUMER_GROUP:core-banking-kftc}
+    bok:
+      bootstrap-servers: ${BOK_KAFKA_BOOTSTRAP:localhost:9093}
+      consumer-group: ${BOK_CONSUMER_GROUP:core-banking-bok}
+    internal:
+      bootstrap-servers: ${INTERNAL_KAFKA_BOOTSTRAP:localhost:9094}
+      consumer-group: ${INTERNAL_CONSUMER_GROUP:core-banking-internal}
+
+logging:
+  file:
+    name: ${LOG_DIR:C:/logs/internet-banking}/core-banking.log
+  level:
+    root: INFO
+    org.springframework.web: INFO
+
+app:
+  cors:
+    enabled: ${APP_CORS_ENABLED:false}

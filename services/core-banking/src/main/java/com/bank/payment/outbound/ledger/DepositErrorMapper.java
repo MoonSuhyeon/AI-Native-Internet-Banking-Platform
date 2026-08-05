@@ -1,4 +1,4 @@
-package com.bank.payment.outbound.feign;
+package com.bank.payment.outbound.ledger;
 
 /**
  * deposit-service ErrorCode.name() → payment failure_category 변환.

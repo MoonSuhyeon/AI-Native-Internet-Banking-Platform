@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * 이 클래스는 mock 프로파일에서만 활성화되며, 운영 코드({@link NoOpLedgerFailureSimulator})와
  * 완전히 분리된다.
  */
-@Profile("mock")
+@Profile("fault-injection")
 @Primary
 @Component
 public class MockLedgerFailureSimulator implements LedgerFailureSimulator {

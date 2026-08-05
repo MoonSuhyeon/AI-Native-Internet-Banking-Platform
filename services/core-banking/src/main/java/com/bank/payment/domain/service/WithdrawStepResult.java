@@ -1,6 +1,6 @@
 package com.bank.payment.domain.service;
 
-import com.bank.payment.outbound.feign.dto.BalanceTxData;
+import com.bank.payment.outbound.ledger.dto.BalanceTxData;
 
 /**
  * B-3 출금 단계 결과 래퍼.

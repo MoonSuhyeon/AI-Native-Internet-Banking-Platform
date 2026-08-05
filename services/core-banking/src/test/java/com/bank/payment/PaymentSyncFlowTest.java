@@ -142,8 +142,11 @@ class PaymentSyncFlowTest extends AbstractPaymentIntegrationTest {
     // ── 즉시이체 F8/F5 보상 — 첫 자동 검증 ───────────────────────────────────
 
     @Test
-    @DisplayName("sync_F8_reversed — 즉시이체 F8 입금실패 → AUTHORIZED→REVERSING→FAILED, from_status=AUTHORIZED, version=3, ledger 0")
-    void sync_F8_reversed() throws Exception {
+    @DisplayName("sync_F8_rolledBack — 입금 실패 시 출금까지 롤백, 잔액 원복, version=2, 보상 이벤트 없음")
+    void sync_F8_rolledBack() throws Exception {
+        // Mock 시절에는 확인할 잔액 자체가 없어 "보상이 돌았다"는 것만 봤다.
+        // 이제 실제 원장이라 "돈이 실제로 제자리에 있다"를 확인할 수 있다.
+        long senderBefore = balanceOf(SENDER_S1);
         // receiver="12345678909999" → deposit DEP-9001 → DepositInboundFailureException → 보상
         MvcResult result = mockMvc.perform(postPayment(
                 "PAY-F8-001-1", "USER-F8-001", "AUTH-F8-001",
@@ -161,8 +164,9 @@ class PaymentSyncFlowTest extends AbstractPaymentIntegrationTest {
                 "SELECT status, failure_category, version FROM payment_instruction WHERE payment_instruction_id = ?", piId);
         assertThat(row.get("status")).isEqualTo("FAILED");
         assertThat(row.get("failure_category")).isEqualTo("SYSTEM_ERROR");
-        // version: DRAFT(0)→AUTHORIZED(1)→REVERSING(2)→FAILED(3)
-        assertThat(((Number) row.get("version")).intValue()).isEqualTo(3);
+        // version: DRAFT(0)→AUTHORIZED(1)→FAILED(2)
+        // 자행이체가 단일 트랜잭션이 되면서 REVERSING 단계가 사라졌다.
+        assertThat(((Number) row.get("version")).intValue()).isEqualTo(2);
 
         // ledger 0건 (txCompleteReversal — 역분개 없음, P-026)
         assertThat(jdbc.queryForObject(
@@ -172,8 +176,9 @@ class PaymentSyncFlowTest extends AbstractPaymentIntegrationTest {
         List<String> events = jdbc.queryForList(
                 "SELECT event_type FROM status_history " +
                 "WHERE payment_instruction_id = ? ORDER BY sequence_in_payment ASC", String.class, piId);
-        assertThat(events).contains("SYSTEM_FAILURE_DETECTED", "COMPENSATION_STARTED",
-                "COMPENSATION_COMPLETED", "PAYMENT_FAILED");
+        // 보상 이벤트(COMPENSATION_*)는 더 이상 발생하지 않는다 — 되돌릴 것이 없다.
+        assertThat(events).contains("SYSTEM_FAILURE_DETECTED", "PAYMENT_FAILED");
+        assertThat(events).doesNotContain("COMPENSATION_STARTED", "COMPENSATION_COMPLETED");
 
         // SYSTEM_FAILURE_DETECTED from_status="AUTHORIZED"
         String sfdPrev = jdbc.queryForObject(
@@ -182,17 +187,25 @@ class PaymentSyncFlowTest extends AbstractPaymentIntegrationTest {
                 String.class, piId);
         assertThat(sfdPrev).isEqualTo("AUTHORIZED");
 
-        // PAYMENT_FAILED from_status="REVERSING"
+        // PAYMENT_FAILED from_status="AUTHORIZED"
         String paidPrev = jdbc.queryForObject(
                 "SELECT previous_status FROM status_history " +
                 "WHERE payment_instruction_id = ? AND event_type = 'PAYMENT_FAILED'",
                 String.class, piId);
-        assertThat(paidPrev).isEqualTo("REVERSING");
+        assertThat(paidPrev).isEqualTo("AUTHORIZED");
+
+        // 핵심: 출금이 롤백돼 송신 잔액이 그대로다. 보상 호출 없이 트랜잭션이 되돌렸다.
+        assertThat(balanceOf(SENDER_S1))
+                .as("입금 실패 시 출금도 롤백되어 잔액이 원복된다")
+                .isEqualTo(senderBefore);
     }
 
     @Test
-    @DisplayName("sync_F5_reversed — 즉시이체 F5 분개실패 → txStep4 롤백 → AUTHORIZED→REVERSING→FAILED, from_status=AUTHORIZED, version=3")
-    void sync_F5_reversed() throws Exception {
+    @DisplayName("sync_F5_rolledBack — 분개 실패 시 출금·입금까지 롤백, 잔액 원복, version=2")
+    void sync_F5_rolledBack() throws Exception {
+        // Mock 시절에는 확인할 잔액 자체가 없어 "보상이 돌았다"는 것만 봤다.
+        // 이제 실제 원장이라 "돈이 실제로 제자리에 있다"를 확인할 수 있다.
+        long senderBefore = balanceOf(SENDER_S1);
         // receiver="88880000" → txStep4 내 분개 INSERT 실패 → LedgerInsertFailureException → 보상
         MvcResult result = mockMvc.perform(postPayment(
                 "PAY-F5-001-1", "USER-F5-001", "AUTH-F5-001",
@@ -210,8 +223,8 @@ class PaymentSyncFlowTest extends AbstractPaymentIntegrationTest {
                 "SELECT status, failure_category, version FROM payment_instruction WHERE payment_instruction_id = ?", piId);
         assertThat(row.get("status")).isEqualTo("FAILED");
         assertThat(row.get("failure_category")).isEqualTo("SYSTEM_ERROR");
-        // version: DRAFT(0)→AUTHORIZED(1)→[txStep4 롤백→AUTHORIZED]→REVERSING(2)→FAILED(3)
-        assertThat(((Number) row.get("version")).intValue()).isEqualTo(3);
+        // version: DRAFT(0)→AUTHORIZED(1)→FAILED(2)
+        assertThat(((Number) row.get("version")).intValue()).isEqualTo(2);
 
         // ledger 0건 (txStep4 롤백으로 분개 롤백, txCompleteReversal 역분개 없음)
         assertThat(jdbc.queryForObject(
@@ -224,11 +237,16 @@ class PaymentSyncFlowTest extends AbstractPaymentIntegrationTest {
                 String.class, piId);
         assertThat(sfdPrev).isEqualTo("AUTHORIZED");
 
-        // PAYMENT_FAILED from_status="REVERSING"
+        // PAYMENT_FAILED from_status="AUTHORIZED"
         String paidPrev = jdbc.queryForObject(
                 "SELECT previous_status FROM status_history " +
                 "WHERE payment_instruction_id = ? AND event_type = 'PAYMENT_FAILED'",
                 String.class, piId);
-        assertThat(paidPrev).isEqualTo("REVERSING");
+        assertThat(paidPrev).isEqualTo("AUTHORIZED");
+
+        // 핵심: 분개가 실패하면 출금·입금까지 함께 롤백된다.
+        assertThat(balanceOf(SENDER_S1))
+                .as("분개 실패 시 자금 이동 전체가 롤백되어 잔액이 원복된다")
+                .isEqualTo(senderBefore);
     }
 }

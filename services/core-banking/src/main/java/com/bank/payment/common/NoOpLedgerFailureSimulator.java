@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  * mock 프로파일 외 모든 환경(local, dev, staging, prod)에서 활성화된다.
  * 분개 INSERT 장애 시뮬레이션이 필요 없으므로 checkAndThrow는 즉시 반환한다.
  */
-@Profile("!mock")
+@Profile("!fault-injection")
 @Component
 public class NoOpLedgerFailureSimulator implements LedgerFailureSimulator {
 

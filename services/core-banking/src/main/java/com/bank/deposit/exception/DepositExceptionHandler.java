@@ -14,8 +14,16 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.util.List;
 
 @Slf4j
-@RestControllerAdvice
-public class GlobalExceptionHandler {
+/**
+ * deposit 도메인 전용 예외 처리.
+ *
+ * <p>병합 전에는 서비스마다 GlobalExceptionHandler 하나씩이라 이름이 같아도 무방했다.
+ * 한 프로세스에 둘이 들어오면서 빈 이름이 충돌했고, 그보다 중요한 문제로
+ * 수신계의 Exception 포괄 핸들러가 결제계의 미처리 예외까지 가로채 응답 형식을
+ * 바꿔버린다. 그래서 각자 자기 패키지의 컨트롤러에만 적용되도록 범위를 가둔다.
+ */
+@RestControllerAdvice(basePackages = "com.bank.deposit")
+public class DepositExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e) {

@@ -4,7 +4,6 @@ import com.bank.payment.domain.PaymentInstruction;
 import com.bank.payment.domain.mapper.PaymentInstructionMapper;
 import com.bank.payment.domain.service.PaymentOrchestrator;
 import com.bank.payment.domain.service.PaymentTransactionService;
-import com.bank.payment.outbound.feign.mock.DepositAccountClientMock;
 import com.bank.payment.scheduler.ScheduledPaymentWorker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +39,6 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     @Autowired private PaymentInstructionMapper paymentInstructionMapper;
     @Autowired private PaymentOrchestrator orchestrator;
     @Autowired private ScheduledPaymentWorker scheduledPaymentWorker;
-    @Autowired private DepositAccountClientMock accountClientMock;
 
     private static final String BANK_CODE_A      = "004";
     private static final String SENDER_S1        = "12345678901234";
@@ -52,7 +50,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
 
     @AfterEach
     void resetMockAccountState() {
-        accountClientMock.resetAllClosed();
+        // 계좌 상태는 seedAccounts() 가 매번 초기화한다.
     }
 
     private MockHttpServletRequestBuilder postScheduledPayment(
@@ -79,7 +77,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
         body.put("receiverPassbookSenderDisplay", "이몽룡");
         body.put("scheduledExecutionAt",          scheduledExecutionAt);
 
-        return post("/api/v1/payments/scheduled")
+        return post("/v1/payments/scheduled")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Idempotency-Key", idempotencyKey)
                 .header("X-User-Id",          userId)
@@ -453,7 +451,9 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
         assertThat(claimed).isTrue();
 
         // 4. claim 후, 실행 전 sender 계좌 CLOSED 설정
-        accountClientMock.closeAccount(SENDER_S1);
+        // Mock 토글 대신 실제 계좌 상태를 바꾼다.
+        jdbc.update("UPDATE deposit.deposit_accounts SET account_status = 'CLOSED' "
+                + "WHERE account_number = ?", SENDER_S1);
 
         // 5. 실행 → step2a_executeRevalidation CLOSED 감지 → PaymentValidationException → PROCESSING→FAILED
         orchestrator.executeScheduledIntraBank(pi);

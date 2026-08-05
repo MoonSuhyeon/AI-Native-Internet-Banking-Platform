@@ -51,7 +51,7 @@ class ScheduledPaymentCancelTest extends AbstractPaymentIntegrationTest {
         body.put("receiverPassbookSenderDisplay", "이몽룡");
         body.put("scheduledExecutionAt",          scheduledAt);
 
-        return post("/api/v1/payments/scheduled")
+        return post("/v1/payments/scheduled")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Idempotency-Key", idKey)
                 .header("X-User-Id",         userId)
@@ -70,7 +70,7 @@ class ScheduledPaymentCancelTest extends AbstractPaymentIntegrationTest {
     }
 
     private MockHttpServletRequestBuilder postCancel(String piId, String userId) throws Exception {
-        return post("/api/v1/payments/scheduled/" + piId + "/cancel")
+        return post("/v1/payments/scheduled/" + piId + "/cancel")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-User-Id", userId);
     }
@@ -81,7 +81,7 @@ class ScheduledPaymentCancelTest extends AbstractPaymentIntegrationTest {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("reason", reason);
 
-        return post("/api/v1/payments/scheduled/" + piId + "/cancel")
+        return post("/v1/payments/scheduled/" + piId + "/cancel")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-User-Id", userId)
                 .content(om.writeValueAsString(body));

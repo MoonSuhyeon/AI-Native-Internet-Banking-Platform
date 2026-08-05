@@ -1,4 +1,15 @@
 spring:
+  # 병합 전 수신계 application.yml 이 하던 것과 같다.
+  # @WebMvcTest 슬라이스는 SecurityConfig(@Configuration)를 불러오지 않으므로,
+  # Security 자동설정이 살아 있으면 기본 보안이 걸려 모든 요청이 401/403 이 된다.
+  # 컨트롤러 슬라이스의 관심사는 인증이 아니라 매핑·검증이므로 여기서는 보안을 걷는다.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
+
   datasource:
     url: jdbc:h2:mem:deposit_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     username: sa
@@ -8,9 +19,33 @@ spring:
   flyway:
     enabled: false
 
+  # 수신계 단위 테스트는 H2 에 Hibernate 가 스키마를 만든다(ddl-auto). PostgreSQL 마이그레이션은
+  # 돌 필요도, 돌 수도 없으므로 커스텀 Flyway 인스턴스도 함께 끈다.
+  # 마이그레이션 자체의 검증은 실제 PostgreSQL 을 쓰는 결제 통합 테스트가 담당한다.
+
   jpa:
     hibernate:
       ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+        # 운영은 deposit 스키마를 쓰지만 H2 에는 그 스키마가 없다. 기본 스키마로 돌린다.
+        default_schema: ""
+
+  # 결제계 Kafka 리스너가 함께 뜨더라도 토픽 부재로 컨텍스트가 죽지 않게 한다.
+  kafka:
+    listener:
+      missing-topics-fatal: false
+
+payment:
+  # 수신계 테스트에는 결제 테이블이 없다(H2 + ddl-auto 로 수신 엔티티만 생성).
+  # 결제 배치가 함께 돌면 없는 테이블을 조회하다 컨텍스트가 죽는다.
+  scheduler:
+    enabled: false
+  kafka:
+    # 수신계 슬라이스 테스트에는 Kafka 가 없다. 토픽 부재로 컨텍스트가 죽지 않게 내린다.
+    missing-topics-fatal: false
+
+core-banking:
+  flyway:
+    enabled: false
