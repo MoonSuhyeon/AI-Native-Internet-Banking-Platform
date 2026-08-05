@@ -21,6 +21,7 @@ from langgraph.graph import END, StateGraph
 
 from . import hypotheses
 from . import tools as tools_mod
+from .audit import record_action_execution, record_investigation
 from .llm import LLMClient, get_llm_client
 from .models import ActionType, AgentState, Case
 from .planner import plan_next_tool
@@ -157,11 +158,31 @@ def run_investigation(
 ) -> AgentState:
     """권고까지 돌린 최종 상태 반환 (동작은 HITL 보류 — 에이전트는 권고까지만)."""
     _, _, state = investigate(case, llm=llm, budget=budget)
+    record_investigation(state, case_name=case.name)
     return state
 
 
-def approve_and_execute(graph, config, actor_roles: list[str], approved: bool = True) -> AgentState:
-    """사람 승인 후 재개. 승인 + RBAC 통과 시에만 execute_action 이 동작(목) 실행."""
+def approve_and_execute(
+    graph,
+    config,
+    actor_roles: list[str],
+    approved: bool = True,
+    actor_id: str | None = None,
+) -> AgentState:
+    """사람 승인 후 재개. 승인 + RBAC 통과 시에만 execute_action 이 동작(목) 실행.
+
+    ``actor_id`` 는 승인한 사람이다. 역할만으로는 "누가" 를 답할 수 없다 —
+    FRAUD_OFFICER 는 여럿이다. 없으면 감사에 NULL 로 남고, 그 NULL 이
+    "신원을 안 받고 있다"는 사실을 드러낸다.
+    """
     graph.update_state(config, {"hitl_approved": approved, "actor_roles": actor_roles})
     graph.invoke(None, config)  # interrupt 지점부터 재개 → execute_action
-    return _as_state(graph.get_state(config).values)
+    state = _as_state(graph.get_state(config).values)
+    record_action_execution(
+        alert_id=state.alert.id,
+        approved=approved,
+        actor_id=actor_id,
+        actor_roles=actor_roles,
+        executed_actions=state.executed_actions,
+    )
+    return state

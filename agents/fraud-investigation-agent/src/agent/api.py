@@ -20,11 +20,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from . import hypotheses
+from .audit import record_action_execution, record_investigation
 from .graph import (
     ACCOUNT_TOOLS,
     CLOSE_THRESHOLD,
@@ -110,6 +111,10 @@ class ApproveRequest(BaseModel):
     thread_id: str
     actor_roles: list[str] = []
     approved: bool = True
+    # 승인자 신원(actor_id)은 **본문에 받지 않는다.**
+    # 클라이언트가 보내는 신원은 위조할 수 있고, 지급정지 승인 기록에서 위조 가능한
+    # 신원은 NULL 보다 나쁘다 — 비어 있는 게 아니라 채워진 것처럼 보이기 때문이다.
+    # 레포 관례대로 게이트웨이가 JWT 에서 주입하는 X-Employee-Id 헤더로만 받는다.
 
 
 class ApproveResponse(BaseModel):
@@ -224,9 +229,12 @@ def investigate(req: InvestigateRequest) -> InvestigateResponse:
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"케이스 없음: {req.case}")
 
-    steps, rec, _ = _run_trace(case)
+    steps, rec, state = _run_trace(case)
     thread_id = f"inv-{case.alert.id}"
     _PENDING[thread_id] = rec  # HITL — approve 가 참조
+
+    # 권고를 감사에 남긴다. 실행은 아직이다 — 사람 승인 뒤 별도로 남는다.
+    record_investigation(state, case_name=case.name)
 
     return InvestigateResponse(
         case=case.name,
@@ -240,29 +248,117 @@ def investigate(req: InvestigateRequest) -> InvestigateResponse:
     )
 
 
+# --------------------------------------------------------------------------- #
+# 신뢰 경계 — 헤더를 믿어도 되는가
+# --------------------------------------------------------------------------- #
+#: 게이트웨이와 나눠 갖는 시크릿. **설정되지 않으면 신원 헤더를 전혀 믿지 않는다**
+#: (fail-closed). 로컬 데모는 이 상태가 정상이고, 그때 감사의 actor_id 는 NULL 이다.
+_GATEWAY_SECRET_ENV = "FRAUD_GATEWAY_SHARED_SECRET"
+
+
+def _gateway_verified(presented: str | None) -> bool:
+    """이 요청이 게이트웨이를 거쳐 왔는지."""
+    import hmac
+    import os
+
+    expected = os.getenv(_GATEWAY_SECRET_ENV, "").strip()
+    if not expected or not presented:
+        return False
+    # 타이밍 공격 회피 — 시크릿 비교에 == 를 쓰지 않는다.
+    return hmac.compare_digest(expected, presented)
+
+
+def _split_roles(raw: str | None) -> list[str]:
+    """게이트웨이가 주입한 X-User-Role 을 목록으로. 다른 서비스와 같은 규약(콤마 구분)."""
+    if not raw:
+        return []
+    return [r.strip() for r in raw.split(",") if r.strip()]
+
+
 @app.post("/api/approve", response_model=ApproveResponse)
-def approve(req: ApproveRequest) -> ApproveResponse:
-    """분석가 승인(HITL) + RBAC 확인 후에만 동작 실행(목). graph.execute_action 과 동일 게이팅."""
+def approve(
+    req: ApproveRequest,
+    x_employee_id: str | None = Header(default=None, alias="X-Employee-Id"),
+    x_user_role: str | None = Header(default=None, alias="X-User-Role"),
+    x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+) -> ApproveResponse:
+    """분석가 승인(HITL) + RBAC 확인 후에만 동작 실행(목). graph.execute_action 과 동일 게이팅.
+
+    **헤더를 무조건 믿지 않는다.** 이 사이드카는 지금 8090 포트로 브라우저에 직접
+    열려 있어서, 헤더만 신뢰하면 게이트웨이를 우회해 ``X-Employee-Id`` 를 손으로
+    붙이면 그만이다. 그러면 위조 가능성은 그대로인데 감사 기록은 더 믿음직해 보인다 —
+    체크박스로 위조하던 것이 헤더로 위조하는 것으로 형태만 바뀔 뿐이다.
+
+    그래서 게이트웨이에서 왔다는 것이 확인될 때만 신원 헤더를 채택한다
+    (:func:`_gateway_verified`). 확인되지 않으면 ``actor_id`` 는 NULL 로 남고
+    자칭 역할은 감사의 ``claimed_roles`` 로 따로 기록된다.
+
+    .. warning::
+       공유 시크릿은 **네트워크 격리의 대체재가 아니라 최소 방어선**이다.
+       완결된 형태는 프론트가 게이트웨이 경로로 나가고, 게이트웨이가 JWT 에서
+       신원을 주입하며, 8090 이 브라우저에서 아예 닿지 않는 것이다.
+       docs/decisions/agent-harness-consolidation.md 참조.
+    """
+    verified = _gateway_verified(x_gateway_auth)
+
+    # 검증된 경우에만 신원·역할이 컬럼으로 간다.
+    actor_id = x_employee_id if verified else None
+    verified_roles = _split_roles(x_user_role) if verified else []
+
+    # RBAC 판정에는 **검증된 역할만** 쓴다. 본문 값으로 되돌아가지 않는다.
+    #
+    # 예전에는 미검증 시 req.actor_roles 로 fallback 했다. 네트워크를 막아도
+    # 이 경로가 남아 있으면 "죽었지만 살아있는" 우회로가 된다 — 설정 실수 하나로
+    # 다시 뚫린다. 감사 기록만 정직해지고 인가는 여전히 자칭 역할로 통과하던 상태였다.
+    #
+    # 결과: 게이트웨이를 거치지 않은 요청은 게이팅 동작(지급정지·STR)을 실행하지 못한다.
+    # 자칭 역할은 감사의 claimed_roles 로만 남는다.
+    effective_roles = verified_roles
+
     rec = _PENDING.get(req.thread_id)
     if rec is None:
         raise HTTPException(status_code=404, detail="조사 세션 없음 — 먼저 조사를 실행하세요.")
 
+    alert_id = req.thread_id.removeprefix("inv-")
+
     if not req.approved:
+        refused = ["거부됨: HITL 미승인 — 권고까지만"]
+        # 거부도 남긴다. 승인만 기록하면 "아무 일도 없었다"와
+        # "사람이 막았다"가 구별되지 않는다.
+        record_action_execution(
+            alert_id=alert_id,
+            approved=False,
+            actor_id=actor_id,
+            actor_roles=verified_roles,
+            claimed_roles=req.actor_roles,
+            executed_actions=refused,
+            thread_id=req.thread_id,
+        )
         return ApproveResponse(
             thread_id=req.thread_id,
             approved=False,
-            executed_actions=["거부됨: HITL 미승인 — 권고까지만"],
+            executed_actions=refused,
         )
 
     done: list[str] = []
     for a in rec.actions:
-        if a.type in _GATED_ACTIONS and _REQUIRED_ROLE not in req.actor_roles:
+        if a.type in _GATED_ACTIONS and _REQUIRED_ROLE not in effective_roles:
             done.append(f"거부됨(RBAC): {a.type.value} — 필요 역할 {_REQUIRED_ROLE}")
             continue
         if a.type == ActionType.NONE:
             continue
         # 실서비스: FDS BLOCK / STR 보고 API 호출 자리. PoC 는 목.
         done.append(f"실행(목): {a.type.value}")
+
+    record_action_execution(
+        alert_id=alert_id,
+        approved=True,
+        actor_id=actor_id,
+        actor_roles=verified_roles,
+        claimed_roles=req.actor_roles,
+        executed_actions=done,
+        thread_id=req.thread_id,
+    )
 
     return ApproveResponse(
         thread_id=req.thread_id, approved=True, executed_actions=done

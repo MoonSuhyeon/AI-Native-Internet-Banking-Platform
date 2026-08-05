@@ -1,23 +1,26 @@
 /**
  * Fraud Investigation Agent — 어드민 콘솔 ↔ Python/LangGraph 사이드카 클라이언트.
  *
- * 조사 에이전트(fraud-investigation-agent/)는 별도 Python 서비스로,
- *   python scripts/serve.py   (기본 http://localhost:8090)
- * 로 띄운다. 이 모듈은 그 HTTP API(src/agent/api.py)를 감싼다.
+ * **게이트웨이(8080) 경유로만 호출한다.** 사이드카를 직접 부르지 않는다.
+ * 인증: api.ts 인터셉터가 localStorage('accessToken')의 JWT를 Bearer로 첨부 →
+ * 게이트웨이가 클라이언트발 X-Employee-Id·X-User-Role 을 제거한 뒤 JWT 클레임으로
+ * 주입 → 사이드카가 그 신원으로 RBAC 판정·감사 기록.
  *
- * 다른 어드민 API(advisory-api 등)와 같은 패턴:
- *   - baseURL 은 NEXT_PUBLIC_FRAUD_AGENT_URL 로 주입(기본 localhost:8090).
- *   - 에이전트는 별도 PoC 서비스라 별도 인증을 두지 않는다(CORS 개방, 목 LLM).
+ * 왜 직접 호출을 버렸는가:
+ *   조사 승인(/approve)은 지급정지·STR 을 발동시키는 지점이라 "누가 승인했는가"가
+ *   감사의 핵심이다. 브라우저가 사이드카를 직접 부르면 신원을 클라이언트가 자칭하게
+ *   되고(예전 화면의 역할 체크박스), 그 승인 기록은 증거가 되지 못한다.
+ *   사이드카는 이제 compose 의 internal 네트워크에 있어 호스트에서 닿지도 않는다.
  *
  * HITL: investigate → (분석가 검토) → approve. 동작(지급정지·STR)은 approve 가
  * RBAC(FRAUD_OFFICER) 통과 시에만 실행(목). 에이전트는 권고까지만.
  */
 import axios from 'axios'
 
-const fraudApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_FRAUD_AGENT_URL || 'http://localhost:8090',
-  headers: { 'Content-Type': 'application/json' },
-})
+import { api } from './api'
+
+/** 게이트웨이의 fraud 라우트 접두어 — application.yml 의 fraud-agent 라우트와 짝. */
+const FRAUD_BASE = '/api/v1/internal/fraud'
 
 // ── 타입 (src/agent/api.py 응답 스키마 미러) ──────────────────────────────
 
@@ -110,13 +113,13 @@ export type ApproveResponse = {
 
 /** 조사 입력 후보(트리아지 큐 대용) — data/cases/*.json 목록. */
 export async function listFraudCases(): Promise<CaseSummary[]> {
-  const { data } = await fraudApi.get<CaseSummary[]>('/api/cases')
+  const { data } = await api.get<CaseSummary[]>(`${FRAUD_BASE}/cases`)
   return data
 }
 
 /** 한 사건을 조사 루프에 태워 단계별 트레이스 + 권고를 받는다. 동작은 HITL 대기. */
 export async function runInvestigation(caseName: string): Promise<InvestigateResponse> {
-  const { data } = await fraudApi.post<InvestigateResponse>('/api/investigate', { case: caseName })
+  const { data } = await api.post<InvestigateResponse>(`${FRAUD_BASE}/investigate`, { case: caseName })
   return data
 }
 
@@ -126,7 +129,7 @@ export async function approveInvestigation(
   actorRoles: string[],
   approved: boolean,
 ): Promise<ApproveResponse> {
-  const { data } = await fraudApi.post<ApproveResponse>('/api/approve', {
+  const { data } = await api.post<ApproveResponse>(`${FRAUD_BASE}/approve`, {
     thread_id: threadId,
     actor_roles: actorRoles,
     approved,

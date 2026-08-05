@@ -68,3 +68,6 @@ CLAUDE.local.md
 
 # 개인 이력서 (공유 대상 아님)
 이력서_쉬운버전.md
+
+# 로컬 개발 전용 compose 오버라이드 (docker-compose.override.sample.yml 참조)
+docker-compose.override.yml

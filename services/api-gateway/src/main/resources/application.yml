@@ -91,6 +91,28 @@ spring:
           predicates:
             - Path=/api/v1/payments/**
 
+        # 이상거래 조사 에이전트 (JWT 필요)
+        #
+        # 이 라우트가 있어야 하는 이유는 단순 프록시가 아니다. 조사 승인(/approve)은
+        # 지급정지·STR 을 발동시키는 지점이라 "누가 승인했는가"가 감사의 핵심인데,
+        # 사이드카를 브라우저가 직접 부르면 그 신원을 검증할 방법이 없다.
+        # JwtAuthenticationFilter 가 클라이언트발 X-Employee-Id·X-User-Role 을
+        # 제거한 뒤 JWT 클레임으로 주입하므로, 이 경로로 들어온 요청만 신원이 확실하다.
+        #
+        # ⚠ 이 라우트만으로는 부족하다. 사이드카가 8090 으로 직접 열려 있으면
+        #   게이트웨이를 우회하면 그만이다. 네트워크 격리와 반드시 한 세트다.
+        - id: fraud-agent
+          uri: http://${FRAUD_AGENT_HOST:localhost}:${FRAUD_AGENT_PORT:8090}
+          predicates:
+            - Path=/api/v1/internal/fraud/**
+          filters:
+            # 사이드카는 /api/cases·/api/investigate·/api/approve 로 받는다.
+            # StripPrefix 로는 /api 접두어를 되살릴 수 없어 경로를 재작성한다.
+            #   /api/v1/internal/fraud/investigate → /api/investigate
+            - RewritePath=/api/v1/internal/fraud/(?<segment>.*), /api/$\{segment}
+            # 게이트웨이를 거쳤다는 증거. 사이드카는 이 값이 맞을 때만 신원 헤더를 믿는다.
+            - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:}
+
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-please-change-in-production-min-32-chars-long}
   access-token-validity: 600000    # 10분 (밀리초)

@@ -150,13 +150,23 @@ export default function FraudInvestigationPage() {
                   <h2 className="text-[13px] font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-100">
                     분석가 승인 (HITL) — 권고 동작 발동
                   </h2>
+                  {/*
+                    이 체크박스는 더 이상 권한을 주지 않는다.
+                    지급정지·STR 발동 여부는 로그인한 JWT 의 역할로만 결정된다 —
+                    게이트웨이가 클라이언트발 역할 헤더를 제거하고 토큰 클레임으로 주입한다.
+                    여기서 보내는 값은 감사에 "자칭 역할(claimed_roles)"로만 남는다.
+                  */}
                   <div className="flex items-center gap-4 mb-3">
                     <label className="flex items-center gap-2 text-[12px] text-gray-600">
                       <input type="checkbox" checked={asFraudOfficer}
                         onChange={e => setAsFraudOfficer(e.target.checked)} />
-                      FRAUD_OFFICER 권한으로 승인 (지급정지·STR 발동에 필요)
+                      FRAUD_OFFICER 권한 주장 (참고용 — 실제 발동 권한은 로그인 계정의 역할로 결정)
                     </label>
                   </div>
+                  <p className="text-[11px] text-gray-400 mb-3">
+                    지급정지·STR 은 FRAUD_OFFICER 역할로 로그인한 경우에만 실행됩니다.
+                    권한이 없으면 승인해도 해당 동작은 거부로 기록됩니다.
+                  </p>
                   <div className="flex gap-2">
                     <button onClick={() => approve(true)} disabled={approving}
                       className="px-5 py-1.5 text-[13px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">
