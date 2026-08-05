@@ -1,8 +1,0 @@
-// deposit-service: 의존성/플러그인은 루트 build.gradle 의 subprojects 블록에서 일괄 관리
-
-dependencies {
-    // local 프로필(application-local.yml)에서 H2 인메모리 DB로 bootRun 하기 위해 runtimeOnly 추가
-    runtimeOnly 'com.h2database:h2'
-
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.3'
-}
