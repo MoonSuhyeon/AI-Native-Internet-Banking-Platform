@@ -128,7 +128,11 @@ def _find_products_by_name(db: Any, query: str) -> list[dict]:
 
 
 def _fetch_products_by_ids(db: Any, product_ids: list[int]) -> list[dict]:
-    from sqlalchemy import text
+    # ANY(:ids) 대신 IN + expanding 바인드를 쓴다.
+    # ANY 는 PostgreSQL 전용이라 테스트가 도는 SQLite 에서 "no such function: ANY" 로
+    # 죽었고, 그 결과 상품 비교 경로가 통째로 검증되지 않고 있었다.
+    # 생성되는 SQL 은 두 엔진 모두에서 같은 결과를 낸다.
+    from sqlalchemy import bindparam, text
     rows = db.execute(text(
         """
         SELECT p.banking_product_id   AS product_id,
@@ -149,9 +153,10 @@ def _fetch_products_by_ids(db: Any, product_ids: list[int]) -> list[dict]:
           FROM deposit_banking_products p
           LEFT JOIN banking_deposit_products d
                  ON d.banking_product_id = p.banking_product_id
-         WHERE p.banking_product_id = ANY(:ids)
+         WHERE p.banking_product_id IN :ids
         """,
-    ), {"ids": product_ids}).mappings().all()
+    ).bindparams(bindparam("ids", expanding=True)),
+        {"ids": product_ids}).mappings().all()
     return [dict(r) for r in rows]
 
 

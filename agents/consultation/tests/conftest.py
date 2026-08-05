@@ -42,12 +42,36 @@ def db() -> Session:
                 max_period_month INTEGER,
                 is_early_termination_allowed BOOLEAN,
                 is_tax_benefit_available BOOLEAN,
-                deposit_product_status TEXT
+                deposit_product_status TEXT,
+                -- 아래 셋은 앱이 조회하는데 스텁에 없어 45건이 죽던 컬럼이다.
+                -- 뒤에 붙인다 — 중간에 넣으면 위치 기반 INSERT 가 전부 어긋난다.
+                preferential_rate_condition TEXT,
+                is_auto_renewal_available BOOLEAN,
+                is_passbook_issued BOOLEAN
             )
         """))
         conn.execute(text("""
-            INSERT INTO deposit_banking_products VALUES
+            INSERT INTO deposit_banking_products (banking_product_id, deposit_product_name, deposit_product_type, description, base_interest_rate, min_join_amount, max_join_amount, min_period_month, max_period_month, is_early_termination_allowed, is_tax_benefit_available, deposit_product_status) VALUES
             (1, '정기예금 플러스', 'DEPOSIT', '안정적인 정기예금', 3.5, 100000, 100000000, 1, 60, 1, 1, 'SELLING')
+        """))
+        conn.execute(text("""
+            CREATE TABLE banking_deposit_products (
+                banking_product_id INTEGER PRIMARY KEY,
+                is_compound_interest BOOLEAN
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE banking_deposit_product_target_groups (
+                banking_product_id INTEGER,
+                target_group_id INTEGER
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE deposit_target_groups (
+                target_group_id INTEGER PRIMARY KEY,
+                target_group_name TEXT,
+                description TEXT
+            )
         """))
         conn.execute(text("""
             CREATE TABLE banking_deposit_product_interest_rates (
@@ -143,6 +167,17 @@ def db() -> Session:
             INSERT INTO deposit_transactions VALUES
             (1, 'TX-001', 1, 'TRANSFER', 'COMPLETED', 10000, '2026-05-21', '2026-05-21')
         """))
+        # employees 는 Base.metadata.create_all 이 먼저 만든다(app.models.Employee).
+        # 그 위에 다시 CREATE 하면 "table employees already exists" 로 픽스처가 죽는다 —
+        # 모델이 나중에 추가됐는데 이 stub 이 남아 있었고, consultation 테스트를 돌리는
+        # CI 가 없어서 깨진 채로 방치됐다.
+        #
+        # 모델 테이블을 그대로 쓰지 않고 stub 으로 바꿔 끼우는 이유:
+        # 기능 코드는 `WHERE employee_id = :sid` 로 **문자열** staff_id('EMP001')를 조회하는데
+        # 모델의 employee_id 는 INTEGER PRIMARY KEY(SQLite 에서 rowid 별칭)라 문자열을 못 받는다.
+        # 여기서 컬럼 타입을 맞춰주지 않으면 datatype mismatch 로 db 픽스처 전체가 죽는다.
+        # (운영 스키마와 조회 타입이 어긋나 있다는 뜻이라 별도로 볼 일이다.)
+        conn.execute(text("DROP TABLE IF EXISTS employees"))
         conn.execute(text("""
             CREATE TABLE employees (
                 employee_id TEXT PRIMARY KEY,
@@ -209,7 +244,20 @@ def _create_empty_deposit_tables(conn) -> None:
             max_period_month INTEGER,
             is_early_termination_allowed BOOLEAN,
             is_tax_benefit_available BOOLEAN,
-            deposit_product_status TEXT)""",
+            deposit_product_status TEXT,
+            preferential_rate_condition TEXT,
+            is_auto_renewal_available BOOLEAN,
+            is_passbook_issued BOOLEAN)""",
+        """CREATE TABLE banking_deposit_products (
+            banking_product_id INTEGER PRIMARY KEY,
+            is_compound_interest BOOLEAN)""",
+        """CREATE TABLE banking_deposit_product_target_groups (
+            banking_product_id INTEGER,
+            target_group_id INTEGER)""",
+        """CREATE TABLE deposit_target_groups (
+            target_group_id INTEGER PRIMARY KEY,
+            target_group_name TEXT,
+            description TEXT)""",
         """CREATE TABLE banking_deposit_product_interest_rates (
             rate_id INTEGER PRIMARY KEY,
             banking_product_id INTEGER,
@@ -263,11 +311,13 @@ def _create_empty_deposit_tables(conn) -> None:
             amount NUMERIC,
             transaction_at TEXT,
             created_at TEXT)""",
-        """CREATE TABLE employees (
-            employee_id TEXT PRIMARY KEY,
-            status TEXT)""",
+        # employees 는 아래에서 DROP 후 stub 으로 다시 만든다 (위 db 픽스처와 같은 이유).
     ]:
         conn.execute(text(ddl))
+    conn.execute(text("DROP TABLE IF EXISTS employees"))
+    conn.execute(text("""CREATE TABLE employees (
+        employee_id TEXT PRIMARY KEY,
+        status TEXT)"""))
     conn.execute(text("INSERT INTO employees VALUES ('EMP001', 'ACTIVE')"))
 
 
@@ -320,7 +370,7 @@ def rich_db() -> Session:
 
         # ── 상품 3개 ──────────────────────────────────────────────────────────
         conn.execute(text("""
-            INSERT INTO deposit_banking_products VALUES
+            INSERT INTO deposit_banking_products (banking_product_id, deposit_product_name, deposit_product_type, description, base_interest_rate, min_join_amount, max_join_amount, min_period_month, max_period_month, is_early_termination_allowed, is_tax_benefit_available, deposit_product_status) VALUES
             (1,'정기예금 플러스','DEPOSIT','안정적인 정기예금',3.5,100000,100000000,1,60,1,1,'SELLING'),
             (2,'자유적금','SAVINGS','자유롭게 납입하는 적금',4.0,10000,50000000,12,36,0,1,'SELLING'),
             (3,'주택청약종합저축','SUBSCRIPTION','청약 자격 적립 상품',2.8,2000,1000000,1,600,0,0,'SELLING')
@@ -411,7 +461,7 @@ def cashflow_db() -> Session:
 
         # ── 상품 4종 ──────────────────────────────────────────────────────────
         conn.execute(text("""
-            INSERT INTO deposit_banking_products VALUES
+            INSERT INTO deposit_banking_products (banking_product_id, deposit_product_name, deposit_product_type, description, base_interest_rate, min_join_amount, max_join_amount, min_period_month, max_period_month, is_early_termination_allowed, is_tax_benefit_available, deposit_product_status) VALUES
             (1,'정기예금 플러스','DEPOSIT','안정적인 정기예금',3.5,100000,100000000,1,60,1,1,'SELLING'),
             (2,'자유적금','SAVINGS','자유롭게 납입하는 적금',4.0,10000,50000000,12,36,0,1,'SELLING'),
             (3,'주택청약종합저축','SUBSCRIPTION','청약 자격 적립',2.8,2000,1000000,1,600,0,0,'SELLING'),

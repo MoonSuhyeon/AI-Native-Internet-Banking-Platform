@@ -19,15 +19,25 @@ from app.services import ChatService, ChatbotService
 
 
 class RecordingEvents:
+    """KafkaEventPublisher 대역.
+
+    실제 퍼블리셔에 메서드가 늘었는데 이 대역이 따라가지 못하면
+    AttributeError 로 죽는다 — app/kafka.py 의 publish* 3종과 맞춰 둔다.
+    """
+
     def __init__(self):
         self.chatbot_events = []
         self.chat_events = []
+        self.chatbot_messages = []
 
     async def publish(self, event_type, payload):
         self.chatbot_events.append((event_type, payload))
 
     async def publish_chat(self, event_type, payload):
         self.chat_events.append((event_type, payload))
+
+    async def publish_chatbot_message(self, payload):
+        self.chatbot_messages.append(payload)
 
 
 def test_settings_reads_consultation_env_prefix(monkeypatch):
