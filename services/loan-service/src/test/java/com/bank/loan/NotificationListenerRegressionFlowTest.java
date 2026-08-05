@@ -108,9 +108,18 @@ class NotificationListenerRegressionFlowTest extends AbstractLoanIntegrationTest
         List<NotificationOutbox> rows = List.of(channels).stream()
                 .map(ch -> loadByKey(eventType, ref, ch).orElseThrow())
                 .toList();
+        // 이 테스트의 관심사는 "리스너가 채널별로 outbox 행을 만들었는가" 다.
+        // 발송 여부는 아니다 — 디스패처가 배경에서 돌고 있어 적재 직후 이미 SENT 로
+        // 바뀌어 있을 수 있다. status/attemptNo 를 고정값으로 단언하면 머신이 느리거나
+        // 절전에서 깨어난 순간 무작위로 깨진다(실제로 그렇게 깨졌다).
         for (NotificationOutbox row : rows) {
-            assertThat(row.getStatus()).isEqualTo(NotificationOutbox.STATUS_PENDING);
-            assertThat(row.getAttemptNo()).isZero();
+            assertThat(row.getStatus())
+                    .as("적재됐거나 이미 발송됐거나 — 실패 상태만 아니면 된다")
+                    .isIn(NotificationOutbox.STATUS_PENDING, NotificationOutbox.STATUS_SENT);
+            assertThat(row.getAttemptNo())
+                    .as("리스너가 새로 만든 행이므로 재시도 누적이 없다")
+                    .isNotNull()
+                    .isLessThanOrEqualTo(1);
             assertThat(row.getReferenceId()).isEqualTo(ref);
         }
         assertThat(rows).extracting(NotificationOutbox::getChannelCd)

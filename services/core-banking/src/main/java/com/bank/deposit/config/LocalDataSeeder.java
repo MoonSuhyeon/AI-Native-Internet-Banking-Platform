@@ -53,6 +53,7 @@ public class LocalDataSeeder implements ApplicationRunner {
             // 9001(홍길동) 계좌·계약·거래. refreshHongKildongDemoData() 가 이 데이터를 전제로
             // 잔액과 날짜만 갱신하므로 반드시 그보다 먼저 실행한다.
             seedEmployeeDemoAccounts();
+            seedPaymentDemoAccounts();
             refreshHongKildongDemoData();
             return;
         }
@@ -549,6 +550,8 @@ public class LocalDataSeeder implements ApplicationRunner {
         seedDemoCustomerAccounts();
         seedDemoCustomerTransactions();
         seedDemoLoginAccounts();
+        seedEmployeeDemoAccounts();
+        seedPaymentDemoAccounts();
         refreshHongKildongDemoData();
     }
 
@@ -773,16 +776,38 @@ public class LocalDataSeeder implements ApplicationRunner {
      * {@code ON CONFLICT DO NOTHING} 이라 여러 번 실행해도 안전하다.
      */
     private void seedEmployeeDemoAccounts() {
-        ClassPathResource script = new ClassPathResource("db-deposit/seed/employee01-accounts.sql");
+        runSeedScript("db-deposit/seed/employee01-accounts.sql", "9001 데모 계좌");
+    }
+
+    /**
+     * 이체 시연용 계좌.
+     *
+     * <p>병합 전에는 DepositBalanceClientMock 에 하드코딩돼 있었다. Mock 은 스텁이면서
+     * 시나리오 픽스처를 겸하고 있어서, 걷어내면 한도초과·거액이체 시연도 함께 사라진다.
+     * 실제 계좌와 실제 한도 설정으로 옮겨 시연이 실제 원장 위에서 성립하게 한다.
+     */
+    private void seedPaymentDemoAccounts() {
+        runSeedScript("db-deposit/seed/payment-demo-accounts.sql", "이체 시연 계좌");
+    }
+
+    /**
+     * 시드 SQL 스크립트 실행.
+     *
+     * <p>SQL 을 Java 문자열로 옮겨쓰지 않고 리소스로 두는 편이 읽고 고치기 쉽다.
+     * 스크립트는 모두 {@code ON CONFLICT DO NOTHING} 이라 여러 번 실행해도 안전하다.
+     */
+    private void runSeedScript(String location, String label) {
+        ClassPathResource script = new ClassPathResource(location);
         if (!script.exists()) {
-            log.warn("[seed] employee01-accounts.sql 없음 — 9001 데모 계좌를 건너뛴다");
+            log.warn("[seed] {} 없음 — {} 를 건너뛴다", location, label);
             return;
         }
         try (var connection = jdbcTemplate.getDataSource().getConnection()) {
             ScriptUtils.executeSqlScript(connection, script);
+            log.info("[seed] {} 적용 완료", label);
         } catch (Exception e) {
-            // 데모 데이터 실패가 기동을 막지는 않게 한다. 없으면 화면이 비어 보일 뿐이다.
-            log.error("[seed] 9001 데모 계좌 시드 실패", e);
+            // 시연 데이터 실패가 기동을 막지는 않게 한다. 없으면 화면이 비어 보일 뿐이다.
+            log.error("[seed] {} 시드 실패", label, e);
         }
     }
 }
