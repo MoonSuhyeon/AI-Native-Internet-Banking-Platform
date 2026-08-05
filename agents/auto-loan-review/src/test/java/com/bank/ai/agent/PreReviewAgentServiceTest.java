@@ -20,6 +20,7 @@ import com.bank.ai.review.service.AutoReviewService;
 import com.bank.ai.rule.domain.HardFailReason;
 import com.bank.ai.rule.domain.Track;
 import com.bank.ai.rule.domain.TrackDecision;
+import com.bank.harness.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,7 +71,7 @@ class PreReviewAgentServiceTest {
                 .thenReturn(List.of());
         // Track 3 정상 경로 기본 stub (Track1/2 에서는 미호출 — lenient)
         lenient().when(groundingValidator.validateNumericClaims(any(), any()))
-                .thenReturn(GroundingValidator.ValidationResult.ok());
+                .thenReturn(ValidationResult.ok());
         lenient().when(disagreementDetector.detect(any(), any())).thenReturn(false);
         // Track 2 기본 stub (Track1/3 에서는 미호출 — lenient)
         lenient().when(rejectionReasonAgentService.draft(any(), any(), any()))
@@ -305,7 +306,7 @@ class PreReviewAgentServiceTest {
         stubPurposeService(0.8, 0.7);
         stubLlmSummary("요약");
         when(groundingValidator.validateNumericClaims(any(), any()))
-                .thenReturn(GroundingValidator.ValidationResult.fail(List.of("pdScore 드리프트")));
+                .thenReturn(ValidationResult.fail(List.of("pdScore 드리프트")));
 
         var result = service.run(1L, fullRequest(), track3Decision());
 
