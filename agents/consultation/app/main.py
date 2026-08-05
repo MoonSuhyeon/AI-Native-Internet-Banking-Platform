@@ -19,6 +19,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.audit import ensure_harness_audit_schema
 from app.config import get_settings
 from app.database import Base, engine, get_db
 from app.kafka import KafkaEventConsumer, KafkaEventPublisher
@@ -203,6 +204,7 @@ async def lifespan(app: FastAPI):
 
     # ── 기동 ─────────────────────────────────────────────────────────────────
     Base.metadata.create_all(bind=engine)
+    ensure_harness_audit_schema(engine)
 
     consume_task: asyncio.Task | None = None
     if settings.kafka_enabled:

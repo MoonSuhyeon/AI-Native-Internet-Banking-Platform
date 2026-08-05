@@ -18,6 +18,7 @@ from langfuse.decorators import langfuse_context, observe
 import anthropic
 from sqlalchemy.orm import Session
 
+from app.audit import record_goal_turn
 from app.config import settings
 from app import agent_goal_planner as planner
 
@@ -655,6 +656,19 @@ def run_goal_agent(db: Session, customer_id: str, message: str) -> dict:
     """
     API Key가 있으면 Claude Tool Calling Agent, 없으면 Mock으로 자동 전환.
     """
-    if not settings.anthropic_api_key:
-        return run_goal_agent_mock(db, customer_id, message)
-    return _run_goal_agent_claude(db, customer_id, message)
+    llm_used = bool(settings.anthropic_api_key)
+    result = (
+        _run_goal_agent_claude(db, customer_id, message)
+        if llm_used
+        else run_goal_agent_mock(db, customer_id, message)
+    )
+
+    # 두 경로가 합류하는 유일한 지점이라 여기서 남긴다.
+    # 각 경로 안에서 남기면 한쪽을 고칠 때 다른 쪽을 빠뜨린다.
+    record_goal_turn(
+        customer_id=customer_id,
+        message=message,
+        result=result,
+        llm_used=llm_used,
+    )
+    return result

@@ -7,6 +7,7 @@ import httpx
 from sqlalchemy import bindparam, or_, select, text
 from sqlalchemy.orm import Session, aliased
 
+from app.audit import record_chatbot_turn
 from app.features import ProductFeatureExecutor, StaffFeatureExecutor, UserFinanceFeatureExecutor
 from app.features.base import build_history_context
 from app.kafka import KafkaEventPublisher
@@ -431,6 +432,17 @@ class ChatbotService:
                     "consultationId": chatbot.consultation_id,
                 },
             )
+
+        # 고객에게 나간 답변을 감사에 남긴다 — 커밋 뒤, 응답 조립 직전.
+        # 여기가 "무엇을 답했는가"가 확정되는 유일한 지점이다.
+        record_chatbot_turn(
+            chatbot_consultation_id=chatbot.chatbot_consultation_id,
+            user_message=user_msg,
+            answer=response_message,
+            process_method=process_method,
+            agent_transfer_required=agent_transfer_required,
+            feature_code=response_feature_code,
+        )
 
         return ChatbotMessageResponse(
             consultation_id=chatbot.consultation_id,

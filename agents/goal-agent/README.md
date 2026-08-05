@@ -129,17 +129,32 @@ pip install -r requirements.txt
 cp .env.example .env  # 아래 환경 변수 섹션 참고
 
 # DB 마이그레이션 (최초 1회)
+# 하네스 감사 로그 테이블(harness_audit_log)도 여기서 함께 만들어진다.
 python init_db.py
 
 # 서버 실행
-uvicorn app.main:app --host 0.0.0.0 --port 8086 --reload
+# PYTHONPATH 가 필요한 이유: 하네스 공유 계약(harness_core)이 이 디렉터리 밖에 있다.
+# 사본을 만들지 않기로 한 결정의 대가다 — docs/decisions/agent-harness-consolidation.md 2-d
+PYTHONPATH=../harness-core/python \
+  uvicorn app.main:app --host 0.0.0.0 --port 8086 --reload
 ```
 
 ### Docker
 
+**빌드 컨텍스트가 이 디렉터리가 아니라 상위 `agents/` 다.**
+harness-core/python 의 공유 감사 계약을 이미지에 담아야 하기 때문이다.
+
 ```bash
-docker compose up goal-agent
+cd agents
+docker build -f goal-agent/Dockerfile -t goal-agent .
+docker run --rm -p 8000:8000 --env-file goal-agent/.env goal-agent
 ```
+
+예전 명령(`docker build agents/goal-agent`)은 더 이상 동작하지 않는다 —
+`harness-core/python` 이 컨텍스트 밖이라 COPY 가 실패한다.
+
+goal-agent 는 compose 에 등록돼 있지 않다. `docker compose up goal-agent` 는
+동작하지 않으므로 위 명령을 쓴다.
 
 ---
 

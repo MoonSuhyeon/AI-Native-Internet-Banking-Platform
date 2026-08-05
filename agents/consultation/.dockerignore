@@ -1,3 +1,9 @@
+# ⚠ 이 파일은 더 이상 읽히지 않는다.
+# 빌드 컨텍스트가 agents/ 로 올라가면서 Docker 가 읽는 것은 agents/.dockerignore 하나뿐이다
+# (Docker 는 컨텍스트 루트의 .dockerignore 만 읽는다).
+# 제외 규칙을 추가하려면 agents/.dockerignore 에 적어야 한다.
+# 파일을 남겨둔 것은 이력 때문이고, 여기 뭘 적어도 효과가 없다.
+
 .venv/
 __pycache__/
 *.pyc

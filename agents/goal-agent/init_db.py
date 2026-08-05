@@ -7,9 +7,17 @@
 DATABASE_URL 환경변수가 없으면 config.py 기본값을 사용합니다.
 """
 import sys
+from pathlib import Path
+
 from sqlalchemy import text
 from app.database import Base, engine
 from app import models  # noqa: F401  모델 등록
+from harness_core.schema import apply_schema_sql
+
+#: 하네스 감사 로그. SQLAlchemy 모델로 만들지 않고 SQL 을 그대로 실행한다 —
+#: INSERT-ONLY 를 강제하는 트리거가 계약의 일부인데 모델로는 표현되지 않기 때문이다.
+#: 원본은 harness-core 이고 이 파일은 사본이다 (test_audit_contract.py 가 대조한다).
+HARNESS_AUDIT_SQL = Path(__file__).resolve().parent / "sql" / "harness-audit.sql"
 
 
 def main(drop: bool = False) -> None:
@@ -21,6 +29,13 @@ def main(drop: bool = False) -> None:
             conn.execute(text("GRANT ALL ON SCHEMA public TO PUBLIC"))
             print("스키마 재생성 완료.")
         Base.metadata.create_all(engine)
+
+    # 감사 스키마는 harness_core 가 적용한다. 트리거 본문의 % 를 드라이버가
+    # 파라미터로 오해하는 함정이 있어 raw 커서로 넣어야 한다 — 직접 실행하면 깨진다.
+    if apply_schema_sql(engine, HARNESS_AUDIT_SQL):
+        print("하네스 감사 로그 테이블 준비 완료.")
+    else:
+        print("경고: 감사 로그 테이블을 만들지 못했다 — 에이전트 권고가 남지 않는다.")
     print("완료")
 
 

@@ -411,10 +411,39 @@ services:
       retries: 10
       start_period: 60s
 
+  # 이상거래 조사 에이전트 (사이드카)
+  #
+  # **ports 를 두지 않는다.** 호스트에 8090 이 열리면 브라우저가 게이트웨이를 우회해
+  # X-Employee-Id 를 손으로 붙일 수 있고, 그러면 "게이트웨이가 주입한 신원이라 믿는다"는
+  # 전제가 무너진다. 승인 기록의 신뢰가 통째로 사라지는 지점이라 편의보다 우선한다.
+  # 로컬에서 직접 찔러봐야 하면 docker-compose.override.yml 로 그 개발자만 연다
+  # (docker-compose.override.sample.yml 참조).
+  fraud-agent:
+    build:
+      context: agents
+      dockerfile: fraud-investigation-agent/Dockerfile
+    container_name: ib-fraud-agent
+    environment:
+      # 감사 기록 저장소. 미설정이면 감사가 NoOp 이라 조사 기록이 남지 않는다.
+      FRAUD_AUDIT_DSN: ${FRAUD_AUDIT_DSN:-}
+      # 게이트웨이만 아는 값. 이것이 일치할 때만 신원 헤더를 믿는다.
+      FRAUD_GATEWAY_SHARED_SECRET: ${FRAUD_GATEWAY_SHARED_SECRET:-}
+    networks:
+      - fraud-internal
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8090/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
   consultation-service:
     build:
-      context: agents/consultation
-      dockerfile: Dockerfile
+      # 컨텍스트가 agents/ 인 이유: harness-core/python 의 공유 감사 계약을
+      # 이미지에 담아야 한다 (docs/decisions/agent-harness-consolidation.md 2-d).
+      # 전송량은 agents/.dockerignore 가 막는다.
+      context: agents
+      dockerfile: consultation/Dockerfile
     container_name: ib-consultation-service
     ports:
       - "${CONSULTATION_APP_PORT:-8087}:8087"
@@ -659,6 +688,16 @@ services:
       PAYMENT_SERVICE_PORT: 8082
       AI_SERVICE_HOST: auto-loan-review
       AI_SERVICE_PORT: ${AUTO_LOAN_REVIEW_APP_PORT:-8089}
+      FRAUD_AGENT_HOST: fraud-agent
+      FRAUD_AGENT_PORT: 8090
+      # 게이트웨이를 거쳤음을 사이드카에 증명하는 값. 비어 있으면 사이드카는
+      # 신원 헤더를 전혀 믿지 않는다(fail-closed) — 감사에 actor_id 가 NULL 로 남는다.
+      FRAUD_GATEWAY_SHARED_SECRET: ${FRAUD_GATEWAY_SHARED_SECRET:-}
+    # 기본 네트워크에 더해 fraud 전용 내부망에도 붙는다.
+    # default 를 명시하지 않으면 이 서비스만 기본망에서 빠져 다른 서비스와 끊긴다.
+    networks:
+      - default
+      - fraud-internal
     volumes:
       - C:/logs/internet-banking:/logs
     depends_on:
@@ -963,3 +1002,18 @@ volumes:
   loki-data:
   langfuse-db-data:
   phoenix-data:
+
+# =============================================================
+# 네트워크
+#
+# 기본망(default)은 그대로 둔다 — 기존 서비스들의 토폴로지를 바꾸지 않기 위해서다.
+# fraud-internal 만 새로 두고 거기에 붙는 것은 fraud-agent 와 api-gateway 둘뿐이다.
+#
+# internal: true 이면 이 네트워크는 외부로 라우팅되지 않는다. fraud-agent 는
+# ports 도 없고 이 망에만 있으므로 **호스트·브라우저에서 도달할 수 없고**
+# 게이트웨이를 거친 요청만 받는다. 그래야 "게이트웨이가 주입한 신원"이라는 전제가 선다.
+# =============================================================
+networks:
+  default:
+  fraud-internal:
+    internal: true

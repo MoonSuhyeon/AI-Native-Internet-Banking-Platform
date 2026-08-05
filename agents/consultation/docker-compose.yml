@@ -21,6 +21,9 @@ services:
       - ./sql/ddl.sql:/docker-entrypoint-initdb.d/01_ddl.sql
       - ./sql/deposit-schema.sql:/docker-entrypoint-initdb.d/02_deposit_schema.sql
       - ./sql/demo-data.sql:/docker-entrypoint-initdb.d/03_demo_data.sql
+      # 하네스 감사 로그 — 챗봇이 고객에게 무엇을 답했는지 남길 테이블.
+      # harness-core 원본의 사본이며, 어긋나면 test_audit_contract.py 가 알린다.
+      - ./sql/harness-audit.sql:/docker-entrypoint-initdb.d/04_harness_audit.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U deposit -d deposit_db"]
       interval: 5s
@@ -67,8 +70,11 @@ services:
   # ── consultation-service ───────────────────────────────────────────────────
   consultation:
     build:
-      context: .
-      dockerfile: Dockerfile
+      # 컨텍스트가 상위(agents/)인 이유: harness-core/python 의 공유 감사 계약을
+      # 이미지에 담아야 한다 (docs/decisions/agent-harness-consolidation.md 2-d).
+      # 전송량은 agents/.dockerignore 가 막는다.
+      context: ..
+      dockerfile: consultation/Dockerfile
     container_name: consultation-service
     restart: unless-stopped
     depends_on:

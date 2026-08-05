@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     llm_model: str = "claude-opus-4-8"
     # Tool Calling 에이전트 최대 반복 횟수 (도구 수 × 2)
     max_agent_iterations: int = 14
+    # 하네스 감사 기록 — 에이전트가 고객에게 무엇을 권했는지 남긴다.
+    # 기본값을 켜 둔 것은 의도적이다. 감사는 켜는 것이 기본이고 끄는 것이 예외다.
+    # 끄더라도 NoOp 이 들어가므로 부르는 쪽은 깨지지 않는다.
+    harness_audit_enabled: bool = True
     langfuse_enabled: bool = False
     langfuse_secret_key: str = ""
     langfuse_public_key: str = ""

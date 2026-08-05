@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     langfuse_host: str = "http://localhost:3001"
     # customer-service 연동 (나이/생년월일 조회용)
     customer_service_url: str = "http://localhost:8081"
+    # 하네스 감사 기록 — 챗봇이 고객에게 무엇을 답했는지 남긴다.
+    # 기본값을 켜 둔 것은 의도적이다. 감사는 켜는 것이 기본이고 끄는 것이 예외다.
+    # 끄더라도 NoOp 이 들어가므로 의존하는 쪽은 깨지지 않는다.
+    harness_audit_enabled: bool = True
 
     model_config = SettingsConfigDict(
         env_prefix="CONSULTATION_",

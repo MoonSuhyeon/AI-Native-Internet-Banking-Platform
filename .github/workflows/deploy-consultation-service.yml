@@ -6,6 +6,10 @@ on:
     branches: [main]
     paths:
       - 'agents/consultation/**'
+      # 하네스 공유 계약. 이미지에 함께 들어가므로 여기가 바뀌면 다시 빌드해야 한다.
+      # 빠뜨리면 배포된 이미지가 옛 계약을 든 채로 남고, DB 스키마만 앞서 나간다 —
+      # 이 작업이 없애려던 바로 그 어긋남이다.
+      - 'agents/harness-core/python/**'
       - '.github/workflows/deploy-consultation-service.yml'
       - '.github/workflows/reusable-docker-publish.yml'
       - '.github/workflows/reusable-deploy-ssh.yml'
@@ -19,7 +23,11 @@ jobs:
     uses: ./.github/workflows/reusable-docker-publish.yml
     with:
       service-name: consultation-service
-      build-context: agents/consultation
+      # 컨텍스트가 agents/ 인 이유: harness-core/python 의 공유 계약이 이미지에 들어가야 하는데
+      # Docker 는 빌드 컨텍스트 밖을 COPY 할 수 없다. 레포 루트까지 올릴 필요는 없다 —
+      # 공유 코드와 에이전트가 둘 다 agents/ 아래에 있으므로 여기가 가장 좁은 경계다.
+      # 전송량은 agents/.dockerignore 가 막는다 (실측 514KB).
+      build-context: agents
       dockerfile-path: agents/consultation/Dockerfile
 
   deploy:
