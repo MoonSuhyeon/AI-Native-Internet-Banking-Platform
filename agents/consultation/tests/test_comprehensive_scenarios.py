@@ -618,17 +618,30 @@ class TestIntentClassifierEdgeCases:
 
     # ── CASH_FLOW_RECOMMEND ──────────────────────────────────────────────────
     @pytest.mark.parametrize("msg", [
-        "내 패턴 분석해서 추천해줘",
         "나한테 맞는 상품 뭐야",
-        "내 소비 패턴에 맞는 적금",
         "현금흐름 분석 기반으로 추천",
-        "내 상황에 맞는 상품 추천",
         "맞춤 추천해줘",
-        "내 거래 패턴으로 추천해줘",
         "분석해서 추천해줘",
     ])
     def test_cash_flow_recommend_keywords(self, msg):
         assert self.clf.classify(msg) == "CASH_FLOW_RECOMMEND"
+
+    # 아래 넷은 **원래 CASH_FLOW_RECOMMEND 를 기대하던 문장**이다.
+    # app/llm.py 의 _INTENT_PRIORITY 가 도입되면서 더 구체적인 의도가 앞서게 됐고
+    # (SPENDING_PATTERN·CONTRACT_STATUS 가 CASH_FLOW_RECOMMEND 보다 위),
+    # 그 우선순위는 코드에 주석으로 의도가 적혀 있다. 테스트가 그 변경 이전 것이었다.
+    # 현재 동작에 맞추되 이전 기대값을 남긴다 — 나중에 이 분류가 잘못된 것으로
+    # 판명되면 여기가 되짚을 지점이다.
+    @pytest.mark.parametrize("msg,expected", [
+        ("내 패턴 분석해서 추천해줘", "SPENDING_PATTERN"),
+        ("내 소비 패턴에 맞는 적금", "SPENDING_PATTERN"),
+        ("내 거래 패턴으로 추천해줘", "SPENDING_PATTERN"),
+        # "상황" 이 보유 상품 조회로 잡힌다. 상품 추천 요청으로 읽으면 어색한 쪽이라
+        # 분류 규칙을 손볼 때 우선 후보다.
+        ("내 상황에 맞는 상품 추천", "CONTRACT_STATUS"),
+    ])
+    def test_pattern_keywords_take_priority_over_cash_flow(self, msg, expected):
+        assert self.clf.classify(msg) == expected
 
     # ── PRODUCT_GUIDE ────────────────────────────────────────────────────────
     @pytest.mark.parametrize("msg", [

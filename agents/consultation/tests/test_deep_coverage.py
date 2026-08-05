@@ -280,33 +280,13 @@ class TestExecuteTransfer:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# B. _is_llm_error
+# B. _is_llm_error — 제거됨
+#
+# 이 메서드도, 감지 대상이던 "죄송합니다, 일시적인 오류가 발생했습니다" 문구도
+# 앱에서 사라졌고 대체 구현이 없다(현재는 metrics 의 chatbot_llm_error_total 카운터만 있다).
+# 대상이 없는 테스트는 회귀를 잡지 못하므로 지운다.
+# LLM 오류 응답이 고객에게 그대로 나가는지는 별도로 확인할 일이다.
 # ─────────────────────────────────────────────────────────────────────────────
-
-class TestIsLlmError:
-    """_is_llm_error — 에러 응답 패턴 감지."""
-
-    def test_error_prefix_returns_true(self, service):
-        assert service._is_llm_error(
-            "죄송합니다, 일시적인 오류가 발생했습니다. 상담사 연결을 원하시면 '상담사 연결'을 선택해 주세요."
-        ) is True
-
-    def test_normal_response_returns_false(self, service):
-        assert service._is_llm_error("정기예금 상품을 추천해 드립니다.") is False
-
-    def test_empty_string_returns_false(self, service):
-        assert service._is_llm_error("") is False
-
-    def test_partial_match_returns_false(self, service):
-        # 같은 단어지만 접두어로 시작하지 않음
-        assert service._is_llm_error("(오류) 죄송합니다, 일시적인 오류가 발생했습니다.") is False
-
-    def test_exact_prefix_match(self, service):
-        assert service._is_llm_error("죄송합니다, 일시적인 오류가 발생했습니다.") is True
-
-    def test_whitespace_prefix_returns_false(self, service):
-        assert service._is_llm_error(" 죄송합니다, 일시적인 오류가 발생했습니다.") is False
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # C. _build_history_context
@@ -372,26 +352,11 @@ class TestBuildHistoryContext:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# D. _build_rag_context
+# D. _build_rag_context — 제거됨
+#
+# _build_rag_context·_rag 둘 다 ChatbotService 에 없다. RAG 는 ProductRagEngine 과
+# _try_rag_answer 로 구조가 바뀌었다. 옛 내부 구조를 대상으로 하던 테스트라 지운다.
 # ─────────────────────────────────────────────────────────────────────────────
-
-class TestBuildRagContext:
-    """_build_rag_context — RAG 미준비 시 빈 문자열."""
-
-    def test_no_rag_returns_empty(self, service):
-        # 기본 service에는 RAG 없음
-        result = service._build_rag_context("예금 상품 추천")
-        assert result == ""
-
-    def test_empty_message_returns_empty(self, service):
-        result = service._build_rag_context("")
-        assert result == ""
-
-    def test_none_rag_engine_returns_empty(self, service):
-        assert service._rag is None
-        result = service._build_rag_context("어떤 메시지든")
-        assert result == ""
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # E. _resolve_ambiguous_query
