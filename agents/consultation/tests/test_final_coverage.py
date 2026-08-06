@@ -13,7 +13,7 @@
   I. MY_PRODUCTS vs CONTRACT_STATUS  - 동일 _contract_rows 사용, 데이터 동일성
   J. PRODUCT_GUIDE 정렬              - base_interest_rate DESC 순서
   K. CUST002 이자내역                 - rich_db CUST002 이자 내역 분리 조회
-  L. LLM 오류 → 상담사 이관         - LLM 오류 시 STAFF_ERROR_FALLBACK 처리
+  L. 미분류 → 상담사 이관           - 분류 실패 시 STAFF_REQUEST 처리
   M. PRODUCT_SEARCH 복합 조건        - amount+period+type+purpose 동시 사용
   N. ChatbotStartRequest 기본값      - 기본값 필드 동작 확인
   O. ChatConsultation waiting_seconds - 대기 시간 양수 검증
@@ -773,7 +773,7 @@ class TestLlmErrorFallback:
     나간다고 기대했다. ChatbotService 가 LLM 어댑터를 받기만 하고 쓰지 않게 되면서
     (*unused_adapters) 그 경로가 사라졌다 — ErrorLlmAdapter 를 넘겨도 호출되지
     않는다. 지금은 미분류가 곧장 STAFF_REQUEST 로 가고 안내 문구가 나간다.
-    (STAFF_ERROR_FALLBACK 의도 레코드는 시드에만 남아 있다.)
+    (붙지 않는 STAFF_ERROR_FALLBACK 의도는 시드에서도 뺐다.)
     """
 
     @pytest.fixture()

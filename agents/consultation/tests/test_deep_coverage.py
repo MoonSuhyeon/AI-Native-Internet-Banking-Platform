@@ -862,8 +862,7 @@ class TestGetIntent:
         scenario_id, _ = service.seed_default_scenario()
         for name in ["RATE_GUIDE", "JOIN_CONDITION", "PRODUCT_COMPARE",
                      "TERMS_RAG", "PRODUCT_GUIDE", "FAQ",
-                     "CASH_FLOW_RECOMMEND", "LLM_FALLBACK",
-                     "STAFF_REQUEST", "STAFF_ERROR_FALLBACK"]:
+                     "CASH_FLOW_RECOMMEND", "STAFF_REQUEST"]:
             intent = service._get_intent(scenario_id, name)
             assert intent is not None, f"{name} intent 없음"
 

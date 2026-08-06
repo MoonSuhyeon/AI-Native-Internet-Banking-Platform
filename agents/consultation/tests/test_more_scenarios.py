@@ -357,8 +357,7 @@ class TestChatbotIntentProcessMethod:
 
     SCENARIO_INTENTS = ["RATE_GUIDE", "JOIN_CONDITION", "PRODUCT_COMPARE",
                         "TERMS_RAG", "PRODUCT_GUIDE", "FAQ"]
-    LLM_INTENTS = ["CASH_FLOW_RECOMMEND", "LLM_FALLBACK",
-                   "STAFF_REQUEST", "STAFF_ERROR_FALLBACK"]
+    LLM_INTENTS = ["CASH_FLOW_RECOMMEND", "STAFF_REQUEST"]
 
     def test_scenario_intents_code_1(self, service, db):
         from sqlalchemy import select

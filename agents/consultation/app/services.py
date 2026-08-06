@@ -3073,10 +3073,12 @@ class ChatbotService:
             {"intent_name": "REINVESTMENT_RECOMMEND","intent_desc": "만기 재투자 상품 추천",       "process_method_code_id": CODE_PROCESS_SCENARIO, "priority": 7},
             {"intent_name": "SPENDING_PATTERN",      "intent_desc": "지출 패턴 이상 감지 및 경고", "process_method_code_id": CODE_PROCESS_SCENARIO, "priority": 7},
             {"intent_name": "CASH_FLOW_RECOMMEND","intent_desc": "현금흐름 기반 상품 추천",    "process_method_code_id": CODE_PROCESS_LLM,      "priority": 7},
-            {"intent_name": "LLM_FALLBACK",      "intent_desc": "LLM 자유 응답",              "process_method_code_id": CODE_PROCESS_LLM,      "priority": 8},
             {"intent_name": "STAFF_REQUEST",     "intent_desc": "상담사 이관",                "process_method_code_id": CODE_PROCESS_LLM,      "priority": 9},
-            {"intent_name": "STAFF_ERROR_FALLBACK", "intent_desc": "오류로 인한 상담사 이관", "process_method_code_id": CODE_PROCESS_LLM,      "priority": 10},
         ]
+        # LLM_FALLBACK·STAFF_ERROR_FALLBACK 은 더 이상 시딩하지 않는다.
+        # 분류기가 그 이름을 내지 않고 어디서도 붙이지 않아, 상담 이력에 한 건도
+        # 남지 않는 유령 행이었다(미분류는 STAFF_REQUEST 로 간다). 이미 만들어진
+        # 환경의 행은 건드리지 않는다 — 과거 이력이 참조할 수 있다.
         for spec in intent_specs:
             exists = self.db.scalars(
                 select(ChatbotIntent).where(

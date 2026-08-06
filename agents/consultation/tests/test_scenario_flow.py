@@ -158,7 +158,9 @@ class TestChatbotIntentPersistence:
 
         intent_names = {intent.intent_name for intent in db.scalars(select(ChatbotIntent)).all()}
 
-        assert {"RATE_GUIDE", "LLM_FALLBACK", "STAFF_REQUEST", "STAFF_ERROR_FALLBACK"}.issubset(intent_names)
+        assert {"RATE_GUIDE", "STAFF_REQUEST"}.issubset(intent_names)
+        # 붙지 않는 의도는 시딩하지 않는다.
+        assert {"LLM_FALLBACK", "STAFF_ERROR_FALLBACK"}.isdisjoint(intent_names)
 
     def test_classified_intent_id_is_saved(self, service, db):
         service.seed_default_scenario()
@@ -175,8 +177,8 @@ class TestChatbotIntentPersistence:
 
         원래 LLM_FALLBACK 을 기대했다. ChatbotService 가 LLM 어댑터를 받기만 하고
         쓰지 않게 되면서(*unused_adapters) LLM 자유 응답 경로가 사라졌고,
-        미분류는 곧장 STAFF_REQUEST 로 간다. LLM_FALLBACK 의도 레코드는 시드에만
-        남아 있고 실제로 붙지 않는다.
+        미분류는 곧장 STAFF_REQUEST 로 간다. 붙지 않는 LLM_FALLBACK 의도는
+        시드에서도 뺐다.
         """
         llm_service.seed_default_scenario()
         session = start(llm_service)
