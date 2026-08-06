@@ -170,7 +170,14 @@ class TestChatbotIntentPersistence:
         intent = db.get(ChatbotIntent, chatbot.intent_id)
         assert intent.intent_name == "JOIN_CONDITION"
 
-    def test_llm_fallback_intent_id_is_saved(self, llm_service, db):
+    def test_unclassified_message_saves_staff_request_intent(self, llm_service, db):
+        """분류 안 되는 문장은 상담사 이관 의도로 저장된다.
+
+        원래 LLM_FALLBACK 을 기대했다. ChatbotService 가 LLM 어댑터를 받기만 하고
+        쓰지 않게 되면서(*unused_adapters) LLM 자유 응답 경로가 사라졌고,
+        미분류는 곧장 STAFF_REQUEST 로 간다. LLM_FALLBACK 의도 레코드는 시드에만
+        남아 있고 실제로 붙지 않는다.
+        """
         llm_service.seed_default_scenario()
         session = start(llm_service)
 
@@ -178,7 +185,7 @@ class TestChatbotIntentPersistence:
 
         chatbot = db.get(ChatbotConsultation, session.chatbot_consultation_id)
         intent = db.get(ChatbotIntent, chatbot.intent_id)
-        assert intent.intent_name == "LLM_FALLBACK"
+        assert intent.intent_name == "STAFF_REQUEST"
 
 
 class TestKafkaEvents:

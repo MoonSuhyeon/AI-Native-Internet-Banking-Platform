@@ -2462,6 +2462,9 @@ class ChatbotService:
                  "base_interest_rate": p.get("base_interest_rate"),
                  "min_period_month": p.get("min_period_month"), "max_period_month": p.get("max_period_month"),
                  "min_join_amount": p.get("min_join_amount"), "max_join_amount": p.get("max_join_amount"),
+                 # 위 SELECT 가 description 을 가져오면서 응답에는 빠뜨리고 있었다.
+                 # 청약은 채점 없이 안내만 하므로 설명이 사실상 유일한 판단 근거다.
+                 "description": p.get("description") or "",
                  "reason": "청약 상품 안내"}
                 for i, p in enumerate(rows[:3])
             ]

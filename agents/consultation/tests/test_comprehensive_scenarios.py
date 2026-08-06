@@ -440,19 +440,26 @@ class TestCashFlowCalculations:
         )
         assert float(result.data[0]["monthly_tx_count"]) == 0.0
 
-    def test_product_count_reflects_all_selling(self, cashflow_service):
-        # cashflow_db에 SELLING 상품 4개
+    def test_product_count_counts_scored_candidates(self, cashflow_service):
+        """product_count 는 판매 중 상품 수가 아니라 채점을 통과한 후보 수다.
+
+        cashflow_db 의 SELLING 상품은 4개지만 청약(SUBSCRIPTION)은 추천 후보에서
+        아예 빠지므로 3개가 채점된다.
+        """
         result = cashflow_service.execute_feature(
             "CASH_FLOW_RECOMMEND", ChatbotFeatureExecuteRequest(customer_no=CUST_SALARY)
         )
-        assert result.data[0]["product_count"] == 4
+        assert result.data[0]["product_count"] == 3
 
-    def test_data_length_always_one(self, cashflow_service):
+    def test_data_is_summary_then_products(self, cashflow_service):
+        # data 는 요약 1행 + 추천 상품 카드(최대 3)다. #111 이 화면 카드를 붙였다.
         for cust in [CUST_SALARY, CUST_SURPLUS, CUST_TIGHT, CUST_NODATA]:
             result = cashflow_service.execute_feature(
                 "CASH_FLOW_RECOMMEND", ChatbotFeatureExecuteRequest(customer_no=cust)
             )
-            assert len(result.data) == 1, f"{cust}: data 길이 {len(result.data)} != 1"
+            assert result.data[0]["row_type"] == "cash_flow_summary", cust
+            assert all(r["row_type"] == "recommended_product" for r in result.data[1:]), cust
+            assert len(result.data) <= 4, f"{cust}: data 길이 {len(result.data)}"
 
     def test_missing_customer_returns_empty_not_ok(self, cashflow_service):
         result = cashflow_service.execute_feature(

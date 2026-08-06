@@ -586,12 +586,14 @@ class TestRichLlmService:
         assert result.message  # 메시지 반환됨
 
     def test_cash_flow_recommend_data_summary(self, rich_llm_service):
+        # data 첫 행이 현금흐름 요약이고, 뒤에 추천 상품 카드가 붙는다.
         result = rich_llm_service.execute_feature(
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no=CUST),
         )
-        assert len(result.data) == 1
-        assert result.data[0]["total_balance"] == pytest.approx(6_200_000)
+        summary = result.data[0]
+        assert summary["row_type"] == "cash_flow_summary"
+        assert summary["total_balance"] == pytest.approx(6_200_000)
 
     def test_product_guide_with_llm_service(self, rich_llm_service):
         result = rich_llm_service.execute_feature(
@@ -909,7 +911,8 @@ class TestProductGuideRagNone:
     """RAG 미준비 → DB 직접 쿼리 경로 (경로 3)."""
 
     def test_no_rag_returns_db_products(self, service):
-        assert service._rag is None
+        # 속성 이름이 _rag → _rag_engine 으로 바뀌었다.
+        assert service._rag_engine is None
         result = service.execute_feature("PRODUCT_GUIDE", ChatbotFeatureExecuteRequest())
         assert result.status == "OK"
         assert len(result.data) >= 1

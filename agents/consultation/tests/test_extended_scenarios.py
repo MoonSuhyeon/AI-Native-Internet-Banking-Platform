@@ -715,12 +715,13 @@ class TestCashFlowRichDb:
         assert float(result.data[0]["total_balance"]) == pytest.approx(3_000_000)
 
     def test_cust001_product_count_reflects_db(self, rich_service):
-        # rich_db에 SELLING 상품 3개
+        # rich_db 의 SELLING 상품은 3개지만 청약은 추천 후보에서 빠진다.
+        # product_count 는 채점을 통과한 후보 수다.
         result = rich_service.execute_feature(
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no=CUST),
         )
-        assert result.data[0]["product_count"] == 3
+        assert result.data[0]["product_count"] == 2
 
     def test_unknown_customer_empty_in_rich_db(self, rich_service):
         result = rich_service.execute_feature(

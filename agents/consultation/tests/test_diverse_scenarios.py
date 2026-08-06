@@ -358,13 +358,23 @@ class TestScenarioNodeButtonDB:
         }
         assert button_values == flow_values
 
-    def test_ten_intents_seeded(self, service, db):
+    def test_core_intents_seeded(self, service, db):
+        """의도는 계속 늘어난다 — 개수 대신 핵심 의도가 빠지지 않았는지 본다.
+
+        원래 10개 고정이었는데 만기·지출패턴 에이전트가 들어오며 14개가 됐다.
+        숫자를 박아두면 의도를 추가할 때마다 무관한 테스트가 깨진다.
+        """
         from sqlalchemy import select
         scenario_id, _ = service.seed_default_scenario()
-        intents = db.scalars(
-            select(ChatbotIntent).where(ChatbotIntent.scenario_id == scenario_id)
-        ).all()
-        assert len(intents) == 10
+        names = {
+            i.intent_name for i in db.scalars(
+                select(ChatbotIntent).where(ChatbotIntent.scenario_id == scenario_id)
+            ).all()
+        }
+        assert {
+            "RATE_GUIDE", "JOIN_CONDITION", "PRODUCT_COMPARE", "TERMS_RAG",
+            "PRODUCT_GUIDE", "FAQ", "CASH_FLOW_RECOMMEND", "STAFF_REQUEST",
+        } <= names
 
     def test_intent_priority_ascending(self, service, db):
         from sqlalchemy import select
@@ -876,8 +886,15 @@ class TestMilitaryProductExclusion:
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no=CUST),
         )
-        # CASH_FLOW_RECOMMEND의 message에 군무원 상품 미포함
-        assert "군무원" not in result.message
+        # 추천 결과에 군무원 전용 상품이 없어야 한다.
+        # message 전체를 볼 수는 없다 — 채점 기준 설명이 "'군인', '장병', '군무원'
+        # 키워드가 포함된 상품 제외"라고 필터 자체를 문장으로 안내하기 때문이다.
+        recommended = [
+            row.get("product_name", "") for row in result.data
+            if row.get("row_type") == "recommended_product"
+        ]
+        assert all("군무원" not in name for name in recommended), recommended
+        assert "군무원" not in result.message.split("[추천 결과]")[-1]
 
 
 # ─────────────────────────────────────────────────────────────────────────────

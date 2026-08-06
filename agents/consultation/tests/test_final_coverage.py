@@ -767,7 +767,14 @@ class ErrorLlmAdapter(LlmAdapter):
 
 
 class TestLlmErrorFallback:
-    """LLM 오류 발생 시 상담사 이관 흐름."""
+    """분류 실패 시 상담사 이관 흐름.
+
+    원래는 LLM 어댑터가 오류를 던지면 STAFF_ERROR_FALLBACK 으로 빠지고 사과 문구가
+    나간다고 기대했다. ChatbotService 가 LLM 어댑터를 받기만 하고 쓰지 않게 되면서
+    (*unused_adapters) 그 경로가 사라졌다 — ErrorLlmAdapter 를 넘겨도 호출되지
+    않는다. 지금은 미분류가 곧장 STAFF_REQUEST 로 가고 안내 문구가 나간다.
+    (STAFF_ERROR_FALLBACK 의도 레코드는 시드에만 남아 있다.)
+    """
 
     @pytest.fixture()
     def error_service(self, db):
@@ -779,17 +786,17 @@ class TestLlmErrorFallback:
         response = _send(error_service, session.chatbot_consultation_id, message="분류되지 않는 질문")
         assert response.agent_transfer_required is True
 
-    def test_llm_error_process_method(self, error_service):
+    def test_unclassified_process_method_is_staff_request(self, error_service):
         error_service.seed_default_scenario()
         session = _start(error_service)
         response = _send(error_service, session.chatbot_consultation_id, message="분류 안 되는 임의 문장")
-        assert response.process_method == "STAFF_ERROR_FALLBACK"
+        assert response.process_method == "STAFF_REQUEST"
 
-    def test_llm_error_message_is_apology(self, error_service):
+    def test_unclassified_message_guides_to_agent(self, error_service):
         error_service.seed_default_scenario()
         session = _start(error_service)
         response = _send(error_service, session.chatbot_consultation_id, message="아무말")
-        assert "죄송" in response.message or "오류" in response.message
+        assert "상담사" in response.message
 
     def test_llm_error_creates_chat_consultation(self, error_service, db):
         from app.models import ChatConsultation
@@ -1179,9 +1186,16 @@ class TestProductGuideExclusion:
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no="CUST_SALARY"),
         )
-        # message에 군인 상품 언급 없어야 함
-        assert "장병" not in result.message
-        assert "군무원" not in result.message
+        # 추천 결과에 군인 대상 상품이 없어야 한다. message 전체가 아니라 추천 결과를
+        # 본다 — 채점 기준 설명이 '군인·장병·군무원 키워드 상품 제외'라고 필터 자체를
+        # 문장으로 안내하기 때문이다.
+        recommended = [
+            row.get("product_name", "") for row in result.data
+            if row.get("row_type") == "recommended_product"
+        ]
+        for word in ("장병", "군무원", "군인"):
+            assert all(word not in name for name in recommended), recommended
+            assert word not in result.message.split("[추천 결과]")[-1]
 
 
 # ─────────────────────────────────────────────────────────────────────────────

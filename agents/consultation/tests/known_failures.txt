@@ -1,32 +1,20 @@
-# consultation 알려진 실패 목록 — 줄이는 것이 목표인 파일이다
+# consultation 알려진 실패 목록 — 지금은 비어 있다
 #
 # 이 목록의 테스트는 strict xfail 로 표시된다(tests/conftest.py 참조). 뜻은 둘이다.
-#   - 실패해도 CI 를 빨갛게 만들지 않는다 (이미 두 달 넘게 깨져 있던 것들이라)
+#   - 실패해도 CI 를 빨갛게 만들지 않는다
 #   - **통과하기 시작하면 CI 가 빨개진다** (strict). 고쳤으면 이 목록에서 지워야 한다.
 #     그래서 이 목록은 조용히 영구 부채가 되지 못한다.
 #
-# 왜 이런 목록이 필요했나:
+# 왜 이런 목록이 있었나:
 #   consultation 테스트를 돌리는 CI 가 없어서 24개 파일이 두 달 넘게 썩었다.
 #   에러 1,357건을 걷어내니 1,508건이 통과하고 91건이 남았다. 이 91건을 다 고칠
-#   때까지 CI 를 미루면 그동안 1,508건도 지켜지지 않는다. 그래서 지금 CI 를 걸고
-#   목록을 줄여간다.
+#   때까지 CI 를 미루면 그동안 1,508건도 지켜지지 않는다. 그래서 CI 를 먼저 걸고
+#   목록을 줄여왔다. 91 → 79 → 54 → 32 → 12 → 0.
 #
-# 고칠 때: 원인을 확인해 테스트를 고치거나 코드를 고친 뒤, 이 파일에서 해당 줄을 지운다.
-# 새로 추가할 때: 정말 지금 고칠 수 없는 것인지 먼저 따진다. 이 파일은 늘어나면 안 된다.
+# 비었다고 파일을 지우지는 않았다. 다시 필요해질 때 장치를 새로 만드는 것보다
+# 규칙과 함께 남겨두는 편이 낫다.
 #
-# 남은 12건 (2026-08-06):
-#   A. 추천 결과 개수·필터 — 6건
-#      product_count 가 무엇을 세는지, data 길이, 군인 대상 상품 제외 기대.
-#   E. 개별 — 6건 (청약 설명, 시나리오 시드, LLM 오류 fallback, RAG 미연결, 인텐트 저장)
-tests/test_additional_scenarios.py::TestProductSearchSubscriptionReason::test_subscription_description_present
-tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_data_length_always_one
-tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_product_count_reflects_all_selling
-tests/test_diverse_scenarios.py::TestMilitaryProductExclusion::test_cash_flow_recommend_excludes_military
-tests/test_diverse_scenarios.py::TestScenarioNodeButtonDB::test_ten_intents_seeded
-tests/test_extended_scenarios.py::TestCashFlowRichDb::test_cust001_product_count_reflects_db
-tests/test_final_coverage.py::TestLlmErrorFallback::test_llm_error_message_is_apology
-tests/test_final_coverage.py::TestLlmErrorFallback::test_llm_error_process_method
-tests/test_final_coverage.py::TestProductGuideExclusion::test_cash_flow_recommend_no_military_products
-tests/test_more_scenarios.py::TestProductGuideRagNone::test_no_rag_returns_db_products
-tests/test_more_scenarios.py::TestRichLlmService::test_cash_flow_recommend_data_summary
-tests/test_scenario_flow.py::TestChatbotIntentPersistence::test_llm_fallback_intent_id_is_saved
+# 다시 채울 때의 규칙:
+#   - 먼저 고쳐본다. 여기 적는 건 마지막 수단이다.
+#   - 적는다면 왜 지금 못 고치는지를 주석으로 함께 남긴다.
+#   - 이 파일은 늘어나면 안 된다.
