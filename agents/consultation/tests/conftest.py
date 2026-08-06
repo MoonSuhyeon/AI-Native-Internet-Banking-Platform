@@ -55,6 +55,35 @@ from app.llm import LlmAdapter, LlmHandoffAdapter
 from app.services import ChatbotService
 
 
+@pytest.fixture(autouse=True)
+def _block_outbound_http(monkeypatch):
+    """테스트에서 나가는 HTTP 를 즉시 끊는다.
+
+    서비스 코드는 goal-agent(GOAL_AGENT_URL, 기본 http://host.docker.internal:8000,
+    timeout 30초)와 customer-service 를 실제로 호출한다. 아무도 막지 않으면
+    테스트가 그 호출을 그대로 내보낸다.
+
+      - GitHub 러너: host.docker.internal 이름 해석이 실패해 즉시 떨어진다.
+      - Docker Desktop 이 깔린 로컬: 이름은 해석되는데 연결이 막혀 호출마다
+        30초씩 멈춘다. 같은 스위트가 CI 에서는 몇 분, 로컬에서는 몇십 분이 된다.
+
+    ConnectError 를 즉시 던져 CI 에서 벌어지는 일(연결 실패 → 코드의 fallback 경로)
+    을 그대로 재현하되, 기다리지는 않는다. 외부 호출 결과를 검증해야 하는 테스트가
+    생기면 그 테스트에서 이 fixture 를 덮어쓰지 말고 응답을 명시적으로 mock 할 것.
+
+    막는 자리는 실제 소켓을 여는 transport 다. FastAPI TestClient 는 httpx.Client
+    를 상속하지만 ASGITransport 로 앱을 직접 호출하므로 여기에 걸리지 않는다.
+    (httpx.Client.send 를 막으면 API 테스트가 통째로 죽는다.)
+    """
+    import httpx
+
+    def _refuse(*args, **kwargs):
+        raise httpx.ConnectError("테스트에서는 외부 HTTP 호출이 차단된다")
+
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", _refuse)
+    monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", _refuse)
+
+
 @pytest.fixture()
 def db() -> Session:
     engine = create_engine(
