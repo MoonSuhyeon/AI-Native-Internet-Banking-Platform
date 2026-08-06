@@ -565,16 +565,20 @@ class TestConfigSettings:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestProductCompareLlm:
-    """PRODUCT_COMPARE — LLM mock 있을 때 개념 비교 LLM 우선."""
+    """PRODUCT_COMPARE — 개념 비교는 어댑터와 무관하게 고정 설명이다.
 
-    def test_concept_compare_with_llm_returns_llm_message(self, llm_service):
-        result = llm_service.execute_feature(
-            "PRODUCT_COMPARE",
-            ChatbotFeatureExecuteRequest(query="예금이랑 적금 차이가 뭐야"),
-        )
-        assert result.status == "OK"
-        # MockLlmAdapter 응답 포함
-        assert "[LLM 응답]" in result.message
+    원래는 LLM 어댑터가 붙으면 개념 비교 답변을 LLM 이 만든다고 기대했다.
+    ChatbotService 는 더 이상 그 어댑터를 쓰지 않고(*unused_adapters) 개념 비교는
+    _COMPARE_TEXT 고정 문구만 돌려준다. 어댑터 유무로 답이 갈리지 않는 것을 지킨다.
+    """
+
+    def test_concept_compare_same_with_or_without_llm(self, llm_service, service):
+        req = ChatbotFeatureExecuteRequest(query="예금이랑 적금 차이가 뭐야")
+        with_llm = llm_service.execute_feature("PRODUCT_COMPARE", req)
+        without_llm = service.execute_feature("PRODUCT_COMPARE", req)
+        assert with_llm.status == "OK"
+        assert with_llm.message == without_llm.message
+        assert "[LLM 응답]" not in with_llm.message
 
     def test_concept_compare_without_llm_uses_fixed_text(self, service):
         result = service.execute_feature(

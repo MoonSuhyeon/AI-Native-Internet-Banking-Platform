@@ -681,10 +681,11 @@ class TestIntentClassifierEdgeCases:
         intent = self.clf.classify("상품 목록 약관 알려줘")
         assert intent == "TERMS_RAG"
 
-    def test_compare_with_personal_recommend_becomes_cash_flow(self):
-        # "나한테" + "차이"가 있으면 CASH_FLOW_RECOMMEND
+    def test_compare_with_personal_recommend_keeps_compare(self):
+        # 명시적 비교어("차이")가 있으면 개인화 표현이 섞여도 PRODUCT_COMPARE 를
+        # 유지한다. 개인 추천은 handle_message 가 그 위에 덧붙인다.
         intent = self.clf.classify("예금이랑 적금 나한테 차이가 뭐야")
-        assert intent == "CASH_FLOW_RECOMMEND"
+        assert intent == "PRODUCT_COMPARE"
 
     def test_compare_follow_up_becomes_cash_flow(self):
         # "둘 중" 후속 질문 → CASH_FLOW_RECOMMEND

@@ -402,15 +402,25 @@ class TestMultipleWaitingQueue:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestProductCompareDetailed:
-    """특정 상품 ID 비교 — 데이터 무결성."""
+    """특정 상품 ID 비교 — 데이터 무결성.
 
-    def test_compare_two_products_returns_two_rows(self, rich_service):
+    비교 경로가 둘로 갈린다. 상품이 둘 이상이면 ProductCompareAgent 가 A/B 대조
+    카드 한 행(row_type='compare_product', product_a·product_b·compare_items·
+    analysis)을 만들고, 하나뿐이면 에이전트가 NEED_INFO 를 돌려줘 services.py 의
+    평면 행 경로로 떨어진다. 아래 테스트는 원래 둘 다 평면 N행을 기대했는데,
+    에이전트 도입 뒤로는 상품 2개 이상일 때의 기대가 맞지 않는다.
+    """
+
+    def test_compare_two_products_returns_one_compare_row(self, rich_service):
         result = rich_service.execute_feature(
             "PRODUCT_COMPARE",
             ChatbotFeatureExecuteRequest(compare_product_ids=[1, 2]),
         )
         assert result.status == "OK"
-        assert len(result.data) == 2
+        assert len(result.data) == 1
+        row = result.data[0]
+        assert row["row_type"] == "compare_product"
+        assert {row["product_a"]["product_id"], row["product_b"]["product_id"]} == {1, 2}
 
     def test_compare_single_product_returns_one_row(self, rich_service):
         result = rich_service.execute_feature(
@@ -425,13 +435,18 @@ class TestProductCompareDetailed:
             "PRODUCT_COMPARE",
             ChatbotFeatureExecuteRequest(compare_product_ids=[1, 2]),
         )
-        for item in result.data:
-            assert "product_id" in item
-            assert "product_name" in item
-            assert "product_type" in item
-            assert "base_interest_rate" in item
-            assert "min_join_amount" in item
-            assert "max_join_amount" in item
+        row = result.data[0]
+        for side in ("product_a", "product_b"):
+            product = row[side]
+            assert "product_id" in product
+            assert "product_name" in product
+            assert "product_type" in product
+            assert "base_interest_rate" in product
+            assert "min_join_amount" in product
+            assert "max_join_amount" in product
+        labels = {item["label"] for item in row["compare_items"]}
+        assert {"유형", "기본금리", "가입기간", "가입금액"} <= labels
+        assert row["analysis"]
 
     def test_compare_product1_name_correct(self, rich_service):
         result = rich_service.execute_feature(
@@ -454,16 +469,16 @@ class TestProductCompareDetailed:
         )
         assert result.data[0]["product_type"] == "SAVINGS"
 
-    def test_compare_all_three_products(self, rich_service):
+    def test_compare_three_ids_uses_first_two(self, rich_service):
+        """셋 이상을 줘도 앞의 둘만 비교한다 (A/B 대조 카드라 셋을 담을 자리가 없다)."""
         result = rich_service.execute_feature(
             "PRODUCT_COMPARE",
             ChatbotFeatureExecuteRequest(compare_product_ids=[1, 2, 3]),
         )
-        assert len(result.data) == 3
-        names = {item["product_name"] for item in result.data}
-        assert "정기예금 플러스" in names
-        assert "자유적금" in names
-        assert "주택청약종합저축" in names
+        assert len(result.data) == 1
+        row = result.data[0]
+        names = {row["product_a"]["product_name"], row["product_b"]["product_name"]}
+        assert names == {"정기예금 플러스", "자유적금"}
 
     def test_compare_no_query_returns_products(self, rich_service):
         result = rich_service.execute_feature(

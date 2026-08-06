@@ -855,14 +855,14 @@ class TestProductCompareProductId:
 
     def test_product_id_and_compare_ids_both_set(self, rich_service):
         # compare_product_ids 우선 (product_id는 fallback)
+        # 둘 이상이면 A/B 대조 카드 한 행이 오고, 앞의 두 ID 가 양쪽에 놓인다.
         result = rich_service.execute_feature(
             "PRODUCT_COMPARE",
             ChatbotFeatureExecuteRequest(product_id=1, compare_product_ids=[2, 3]),
         )
         assert result.status == "OK"
-        product_ids = [int(i["product_id"]) for i in result.data]
-        assert 2 in product_ids
-        assert 3 in product_ids
+        row = result.data[0]
+        assert {int(row["product_a"]["product_id"]), int(row["product_b"]["product_id"])} == {2, 3}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -1010,7 +1010,8 @@ class ChatbotService:
         if result.status != "NEED_INFO":
             return result
 
-        # ── 개념 비교 질문: "예금 적금 차이" 등 → LLM 또는 고정 텍스트 설명 ──
+        # ── 개념 비교 질문: "예금 적금 차이" 등 → 고정 텍스트 설명 ──────────
+        # (LLM 분기는 없다. 서비스는 LLM 어댑터를 받기만 하고 쓰지 않는다.)
         _CONCEPT_PAIRS = [
             ({"예금"}, {"적금"}),
             ({"예금"}, {"청약"}),

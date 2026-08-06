@@ -577,18 +577,30 @@ class TestRichDbAccountBalance:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestComparePlusPersonalCashFlow:
-    """비교 키워드 + 개인화 의도 → CASH_FLOW_RECOMMEND."""
+    """비교 키워드 + 개인화 의도 → 비교를 유지하고 추천을 얹는다.
+
+    예전에는 개인화 표현이 섞이면 통째로 CASH_FLOW_RECOMMEND 로 넘겼다. 지금은
+    '비교'·'차이' 같은 명시적 비교어가 있으면 PRODUCT_COMPARE 를 유지하고,
+    handle_message 가 그 위에 개인 추천을 덧붙인다(services.py 의
+    _has_personal_recommend_intent 분기). 물어본 비교를 버리지 않기 위해서다.
+    """
 
     @pytest.fixture(autouse=True)
     def clf(self):
         self.clf = IntentClassifier()
 
     @pytest.mark.parametrize("msg", [
-        "나한테 차이가 뭐야",   # 차이가(COMPARE) + 나한테(personal) → CASH_FLOW
-        "나는 비교해줘",        # 비교해줘(COMPARE) + 나는(personal) → CASH_FLOW
-        "저한테 비교해줘",      # 비교해줘(COMPARE) + 저한테(personal) → CASH_FLOW
+        "나한테 차이가 뭐야",   # 차이가(명시적 비교) + 나한테(personal)
+        "나는 비교해줘",        # 비교해줘(명시적 비교) + 나는(personal)
+        "저한테 비교해줘",      # 비교해줘(명시적 비교) + 저한테(personal)
     ])
-    def test_compare_with_personal_intent(self, msg):
+    def test_explicit_compare_word_keeps_compare(self, msg):
+        intent = self.clf.classify(msg)
+        assert intent == "PRODUCT_COMPARE", f"'{msg}' → {intent}"
+
+    @pytest.mark.parametrize("msg", ["나한테 어떤 게 좋아", "저한테 뭐가 좋아"])
+    def test_personal_without_compare_word_goes_cash_flow(self, msg):
+        """명시적 비교어가 없으면 개인 추천으로 넘어간다."""
         intent = self.clf.classify(msg)
         assert intent == "CASH_FLOW_RECOMMEND", f"'{msg}' → {intent}"
 
@@ -744,12 +756,18 @@ class TestProductCompareDataFields:
         "base_interest_rate", "min_join_amount", "max_join_amount",
     ]
 
+    # 상품이 둘 이상이면 ProductCompareAgent 가 A/B 대조 카드 한 행을 만든다.
+    # 상품 정보는 그 행의 product_a·product_b 안에 들어간다(평면 N행이 아니다).
+    def _sides(self, result):
+        row = result.data[0]
+        return [row["product_a"], row["product_b"]]
+
     def test_all_required_fields_present(self, rich_service):
         result = rich_service.execute_feature(
             "PRODUCT_COMPARE",
             ChatbotFeatureExecuteRequest(compare_product_ids=[1, 2]),
         )
-        for item in result.data:
+        for item in self._sides(result):
             for field in self.REQUIRED:
                 assert field in item, f"{field} 없음"
 
@@ -758,7 +776,7 @@ class TestProductCompareDataFields:
             "PRODUCT_COMPARE",
             ChatbotFeatureExecuteRequest(compare_product_ids=[1, 2, 3]),
         )
-        for item in result.data:
+        for item in self._sides(result):
             assert int(item["product_id"]) > 0
 
     def test_base_interest_rate_positive(self, rich_service):
@@ -766,7 +784,7 @@ class TestProductCompareDataFields:
             "PRODUCT_COMPARE",
             ChatbotFeatureExecuteRequest(compare_product_ids=[1, 2]),
         )
-        for item in result.data:
+        for item in self._sides(result):
             assert float(item["base_interest_rate"]) > 0
 
     def test_period_fields_present(self, rich_service):

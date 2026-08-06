@@ -1061,14 +1061,16 @@ class TestExecuteRequestCombinations:
         assert len(result.data) == 1
 
     def test_compare_ids_override_query_type(self, rich_service):
-        # compare_product_ids 제공 시 type filter 무시하고 ID 조회
+        # compare_product_ids 가 개념 비교 질의('예금 적금 차이')보다 우선한다.
+        # ID 가 둘이면 A/B 대조 카드 한 행이 오고, 개념 설명 텍스트로 새지 않는다.
         result = rich_service.execute_feature(
             "PRODUCT_COMPARE",
             ChatbotFeatureExecuteRequest(compare_product_ids=[1, 3], query="예금 적금 차이"),
         )
-        # ID [1,3]이 제공됐으므로 ID 기반 조회
         assert result.status == "OK"
-        assert len(result.data) == 2
+        assert len(result.data) == 1
+        row = result.data[0]
+        assert {int(row["product_a"]["product_id"]), int(row["product_b"]["product_id"])} == {1, 3}
 
     def test_chatbot_consultation_id_in_cash_flow(self, cashflow_service):
         # chatbot_consultation_id 없이 CASH_FLOW_RECOMMEND 호출

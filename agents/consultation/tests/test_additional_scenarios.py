@@ -223,12 +223,18 @@ class TestCashFlowMonthlyTxCount:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestHandleMessageCashFlowIntent:
-    """"내 패턴 분석" → FEATURE_CASH_FLOW_RECOMMEND handle_message 실행."""
+    """개인 추천 질의 → FEATURE_CASH_FLOW_RECOMMEND handle_message 실행.
+
+    원래 '내 패턴 분석해서 추천해줘' 처럼 '패턴' 이 든 문장을 썼는데, 그 표현은
+    이제 SPENDING_PATTERN 에이전트가 가져간다(키워드 소유는
+    TestIntentClassifierAllKeywords 에서 따로 지킨다). 여기서 확인하려는 건
+    현금흐름 추천의 handle_message 경로라, 그 경로로 가는 문장으로 바꿨다.
+    """
 
     def test_cash_flow_intent_classified(self, service):
         service.seed_default_scenario()
         session = _start(service)
-        response = _send(service, session.chatbot_consultation_id, message="내 패턴 분석해서 추천해줘")
+        response = _send(service, session.chatbot_consultation_id, message="현금흐름 분석해서 추천해줘")
         assert response.process_method == "FEATURE_CASH_FLOW_RECOMMEND"
 
     def test_cash_flow_intent_response_has_message(self, service):
@@ -247,7 +253,7 @@ class TestHandleMessageCashFlowIntent:
     def test_cash_flow_message_is_recommendation_text(self, cashflow_service):
         cashflow_service.seed_default_scenario()
         session = _start(cashflow_service, "CUST_SALARY")
-        response = _send(cashflow_service, session.chatbot_consultation_id, message="내 거래 패턴으로 추천해줘")
+        response = _send(cashflow_service, session.chatbot_consultation_id, message="나한테 맞는 상품 추천해줘")
         assert response.process_method == "FEATURE_CASH_FLOW_RECOMMEND"
         assert response.message
 
@@ -948,13 +954,22 @@ class TestIntentClassifierAllKeywords:
         assert self.clf.classify(kw) == "TERMS_RAG"
 
     @pytest.mark.parametrize("kw", [
-        "내 패턴", "현금흐름 분석", "내 소비 패턴", "내 거래 패턴",
-        "나한테 맞는", "나에게 맞는", "분석해서 추천", "패턴 분석",
+        "현금흐름 분석",
+        "나한테 맞는", "나에게 맞는", "분석해서 추천",
         "장점순", "유리한 순", "추천 순", "랭킹", "순위대로",
         "내 상황에 맞는", "맞춤 추천",
     ])
     def test_cash_flow_recommend_keywords(self, kw):
         assert self.clf.classify(kw) == "CASH_FLOW_RECOMMEND", f"'{kw}' → {self.clf.classify(kw)}"
+
+    @pytest.mark.parametrize("kw", ["내 패턴", "내 소비 패턴", "내 거래 패턴", "패턴 분석"])
+    def test_pattern_keywords_go_to_spending_pattern(self, kw):
+        """'패턴' 질문의 임자는 지출 패턴 분석 에이전트다.
+
+        원래 이 넷은 CASH_FLOW_RECOMMEND 기대였다. 나중에 SPENDING_PATTERN 이
+        생기면서 '패턴' 을 단독 키워드로 가져갔고 우선순위도 위에 놓였다.
+        """
+        assert self.clf.classify(kw) == "SPENDING_PATTERN", f"'{kw}' → {self.clf.classify(kw)}"
 
     @pytest.mark.parametrize("kw", [
         "상품 목록", "상품 보여줘", "예금 상품 알려",

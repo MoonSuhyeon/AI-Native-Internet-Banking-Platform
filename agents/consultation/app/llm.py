@@ -139,8 +139,11 @@ _INTENT_KEYWORDS: dict[str, list[str]] = {
         "약관", "중도해지", "수수료",
     ],
     "CASH_FLOW_RECOMMEND": [
-        "내 패턴", "현금흐름 분석", "내 소비 패턴", "내 거래 패턴",
-        "나한테 맞는", "나에게 맞는", "분석해서 추천", "패턴 분석",
+        # '패턴' 이 들어간 표현은 SPENDING_PATTERN 이 가져간다(우선순위가 위이고
+        # 키워드에 '패턴' 단독이 있다). 여기 남겨두면 절대 매칭되지 않는 죽은 항목이라
+        # 어느 의도가 임자인지만 헷갈리게 한다.
+        "현금흐름 분석",
+        "나한테 맞는", "나에게 맞는", "분석해서 추천",
         "내 상황에 맞는", "내 상황에 적합", "맞춤 추천",
         "장점순", "유리한 순", "좋은 순", "추천 순", "랭킹", "순위대로",
         "순위별", "순위별로", "순서별", "1위부터", "상품 순위", "추천 순위",
@@ -199,7 +202,14 @@ class IntentClassifier:
         _LOCKED = ["묶여", "잠겨", "잠김", "어디 있", "어디있", "어디 묶", "사용 못"]
         if any(lk in msg for lk in _LOCKED):
             return "CONTRACT_STATUS"
-        if any(ow in msg for ow in _OWNERSHIP) and any(at in msg for at in _ASSET):
+        # 가입 조건 질문은 이 휴리스틱보다 앞선다. "이 상품에 가입 조건이 어떻게 돼요?"
+        # 는 '가입'+'상품' 이 함께 있다는 이유로 보유 계약 조회로 새고 있었다.
+        has_join_condition = any(kw in msg for kw in _INTENT_KEYWORDS["JOIN_CONDITION"])
+        if (
+            not has_join_condition
+            and any(ow in msg for ow in _OWNERSHIP)
+            and any(at in msg for at in _ASSET)
+        ):
             return "CONTRACT_STATUS"
 
         # 개인 소유 맥락 키워드 — PRODUCT_GUIDE 제외 판정에 사용
