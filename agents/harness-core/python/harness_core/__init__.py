@@ -11,5 +11,18 @@ Java 모듈과 같은 이름을 쓰는 것은 우연이 아니다. 두 런타임
 """
 
 from .audit import KIND_DECISION, AgentAuditEntry, AgentAuditLog, NoOpAgentAuditLog
+from .audit_failures import (
+    add_audit_failure_listener,
+    clear_audit_failure_listeners,
+    notify_audit_failure,
+)
 
-__all__ = ["AgentAuditEntry", "AgentAuditLog", "NoOpAgentAuditLog", "KIND_DECISION"]
+__all__ = [
+    "AgentAuditEntry",
+    "AgentAuditLog",
+    "NoOpAgentAuditLog",
+    "KIND_DECISION",
+    "add_audit_failure_listener",
+    "clear_audit_failure_listeners",
+    "notify_audit_failure",
+]

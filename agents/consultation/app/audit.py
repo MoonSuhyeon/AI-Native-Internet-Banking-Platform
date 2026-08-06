@@ -15,7 +15,12 @@ from pathlib import Path
 
 from app.config import get_settings
 from app.database import SessionLocal
-from harness_core import AgentAuditEntry, NoOpAgentAuditLog
+from app.metrics import harness_audit_failure_total
+from harness_core import (
+    AgentAuditEntry,
+    NoOpAgentAuditLog,
+    add_audit_failure_listener,
+)
 from harness_core.audit_sqlalchemy import SqlAlchemyAgentAuditLog
 from harness_core.schema import apply_schema_sql
 
@@ -52,6 +57,22 @@ AGENT_NAME = "consultation"
 SUBJECT_TYPE = "CONSULT_SESSION"
 
 _audit_log = None
+
+
+def _count_audit_failure(entry, exc) -> None:
+    """감사 기록이 실패하면 센다.
+
+    fail-soft 라 실패해도 상담은 계속된다. 그래서 로그 한 줄만 남았고, 감사가 조용히
+    멈춰도 알 방법이 없었다. Prometheus 로 올려 알람이 잡을 수 있게 한다
+    (infra/prometheus/alerts.yml 의 harness-audit 그룹).
+    """
+    harness_audit_failure_total.labels(
+        agent=entry.agent_name or AGENT_NAME,
+        decision_kind=entry.decision_kind,
+    ).inc()
+
+
+add_audit_failure_listener(_count_audit_failure)
 
 
 def get_audit_log():

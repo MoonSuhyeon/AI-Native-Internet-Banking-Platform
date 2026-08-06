@@ -66,6 +66,19 @@ chatbot_fallback_total = Counter(
     "LLM 없이 상담사 이관 안내로 대체된 응답 수 (LlmHandoffAdapter)",
 )
 
+# ── 하네스 감사 ───────────────────────────────────────────────────────────────
+# 감사 기록은 fail-soft 다 — 실패해도 고객 응답을 막지 않는다. 그래서 지금까지 남는
+# 것은 로그 한 줄뿐이었고, 감사가 조용히 멈춰도 알아챌 방법이 없었다.
+#
+# decision_kind 로 나누는 것은 의도적이다. 실행 확정(ACTION_EXECUTION)이 안 남는 것과
+# 판단 시도(DECISION)가 안 남는 것은 심각도가 다르다 — 전자는 "무엇을 했는지"의 기록이
+# 사라진 것이다.
+harness_audit_failure_total = Counter(
+    "harness_audit_failure_total",
+    "하네스 감사 기록 실패 수",
+    ["agent", "decision_kind"],
+)
+
 # ── Kafka ─────────────────────────────────────────────────────────────────────
 chatbot_kafka_publish_total = Counter(
     "chatbot_kafka_publish_total",

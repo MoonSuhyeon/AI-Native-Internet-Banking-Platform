@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 
 from .audit import AgentAuditEntry
+from .audit_failures import notify_audit_failure
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ class SqlAlchemyAgentAuditLog:
         try:
             session.execute(text(_INSERT_SQL), params)
             session.commit()
-        except Exception:
+        except Exception as exc:
             session.rollback()
             # 감사 실패가 고객 응답을 막으면 안 된다. 그러나 조용히 넘어가서도 안 된다 —
             # 기록이 빠진 사실 자체가 사후 조사에서 드러나야 한다.
@@ -99,6 +100,8 @@ class SqlAlchemyAgentAuditLog:
                 "감사 기록 실패 agent=%s subject=%s/%s trace=%s",
                 params["agent_name"], entry.subject_type, entry.subject_id, entry.trace_id,
             )
+            # 로그 한 줄은 아무도 보지 않는다. 셀 수 있게 알린다.
+            notify_audit_failure(entry, exc)
         finally:
             session.close()
 

@@ -499,3 +499,31 @@ groups:
         annotations:
           summary: "Advisory RAG 임베딩 지연 급증"
           description: "임베딩({{ $labels.model }}) p95 응답시간 {{ $value | humanizeDuration }} — OpenAI API 상태 확인"
+
+  # 감사 기록은 fail-soft 다 — 실패해도 상담·조사를 막지 않는다. 그래서 실패가
+  # 로그 한 줄로만 남았고, 감사가 조용히 멈춰도 알아챌 방법이 없었다.
+  # (docs/decisions/agent-harness-consolidation.md 다음 순서 2)
+  - name: harness-audit
+    interval: 30s
+    rules:
+      - alert: HarnessAuditWriteFailing
+        expr: sum(rate(harness_audit_failure_total[5m])) by (agent) > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: harness-audit
+        annotations:
+          summary: "감사 기록 실패: {{ $labels.agent }}"
+          description: "{{ $labels.agent }} 의 감사 기록이 2분 넘게 실패하고 있습니다. 에이전트는 계속 동작하지만 판단 근거가 남지 않습니다 — DB 연결과 harness_audit_log 테이블을 확인하세요."
+
+      # 실행 확정이 안 남는 것은 판단 시도가 안 남는 것과 심각도가 다르다.
+      # "무엇을 했는가"의 기록이 사라진 것이라 되돌아볼 근거가 없다.
+      - alert: HarnessAuditActionExecutionLost
+        expr: sum(rate(harness_audit_failure_total{decision_kind="ACTION_EXECUTION"}[5m])) by (agent) > 0
+        for: 0m
+        labels:
+          severity: critical
+          component: harness-audit
+        annotations:
+          summary: "실행 확정 감사 유실: {{ $labels.agent }}"
+          description: "{{ $labels.agent }} 가 실행한 조치의 기록이 남지 않았습니다. 무엇을 실행했는지 확인할 수 없는 상태입니다 — 즉시 확인이 필요합니다."

@@ -525,12 +525,18 @@ Docker 네트워크 정책이 닿지 않는 곳에 있었다.
 
 ## 다음 순서
 
-1. **consultation 감사 자동 테스트** — 배선이 도는 것은 실제 PostgreSQL 로 확인했지만
-   그건 손으로 돌린 일회성이고 자동화된 테스트에는 없다. 회귀 보호가 0이다.
-   이 문서가 내내 말해온 "검증 없는 발판"을 정작 여기에 적용하지 못했다.
-2. **감사 실패를 메트릭·알람으로** — 지금은 로그만 남는다. 로그 한 줄은 아무도 안 본다.
-   Prometheus 가 이미 있으므로(consultation `app/metrics.py`) 비용이 작다.
-   특히 실행 확정(`ACTION_EXECUTION`)은 판단 시도와 신뢰수준이 달라야 한다.
+1. ~~**consultation 감사 자동 테스트**~~ — **완료.** `tests/test_audit_wiring.py` 가
+   실제 PostgreSQL 로 저장을 확인하고, `test-consultation.yml` 이 그것을 돌린다.
+   호출 자체는 SQLite 테스트(`TestAuditCallSite`)가 따로 지킨다.
+   goal-agent 쪽 배선도 뒤이어 붙였다(`test-agents-python.yml`).
+2. ~~**감사 실패를 메트릭·알람으로**~~ — **완료.** 저장 구현이 실패하면
+   `harness_core.notify_audit_failure` 로 알리고, 각 에이전트가 무엇으로 셀지 정한다
+   (계약 패키지에 `prometheus_client` 를 넣지 않기 위해서다 — fraud 에이전트에는
+   그 의존성이 없다). consultation 이 `harness_audit_failure_total{agent,decision_kind}`
+   로 올리고, `infra/prometheus/alerts.yml` 의 `harness-audit` 그룹이 잡는다.
+   실행 확정(`ACTION_EXECUTION`) 유실은 `for: 0m` · critical 로 따로 본다 —
+   "무엇을 했는가"의 기록이 사라진 것이라 판단 시도 유실과 심각도가 다르다.
+   goal-agent 는 아직 메트릭 엔드포인트가 없어 리스너를 붙이지 않았다(등록 지점은 있다).
 3. **감사 백필 경로** — 지금은 fail-soft 로 유실되면 영구 유실이다. 복구 수단이 없다.
 4. **`actor_roles` GIN 인덱스** — `@> '["FRAUD_OFFICER"]'` 질의가 풀스캔이다.
    `jsonb_path_ops` 로. 다른 작업과 의존성이 없어 아무 때나 가능.
