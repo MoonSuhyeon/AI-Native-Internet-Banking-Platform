@@ -43,7 +43,8 @@ class TestPreferentialRateNotice:
     """추천 상품 카드의 우대금리 조건을 안내 문구에 함께 노출한다."""
 
     def test_appends_notice_for_preferential_rate_products(self, cashflow_service):
-        message = cashflow_service._append_preferential_rate_notice(
+        from app.features.base import append_preferential_rate_notice
+        message = append_preferential_rate_notice(
             "추천 상품입니다.",
             [
                 {
@@ -62,12 +63,35 @@ class TestPreferentialRateNotice:
         assert "기본예금" not in message
 
     def test_keeps_message_when_no_preferential_rate_products(self, cashflow_service):
-        message = cashflow_service._append_preferential_rate_notice(
+        from app.features.base import append_preferential_rate_notice
+        message = append_preferential_rate_notice(
             "추천 상품입니다.",
             [{"product_name": "기본예금", "pref_condition": ""}],
         )
 
         assert message == "추천 상품입니다."
+
+    # 위 두 테스트는 헬퍼를 직접 부른다. 그래서 #111 이 CASH_FLOW_RECOMMEND 를
+    # 새 채점 모델로 옮기며 이 헬퍼를 아무도 부르지 않게 됐을 때도 계속 통과했고,
+    # 우대금리 표시가 응답에서 사라진 것을 아무도 못 봤다. 아래 둘은 실제 진입점
+    # (execute_feature)으로 확인한다.
+
+    def test_recommended_cards_carry_pref_fields(self, cashflow_service):
+        result = cashflow_service.execute_feature(
+            FEATURE, ChatbotFeatureExecuteRequest(customer_no=CUST_SALARY)
+        )
+        cards = [r for r in result.data if r["row_type"] == "recommended_product"]
+        assert cards, "추천 상품 카드가 없다"
+        for card in cards:
+            assert "pref_condition" in card
+            assert "pref_rate" in card
+        assert any(str(c["pref_condition"]).strip() for c in cards)
+
+    def test_notice_reaches_message_through_execute_feature(self, cashflow_service):
+        result = cashflow_service.execute_feature(
+            FEATURE, ChatbotFeatureExecuteRequest(customer_no=CUST_SALARY)
+        )
+        assert "[우대금리 가능 상품 안내]" in result.message
 
 
 # ── S1. 인증 필요 ─────────────────────────────────────────────────────────────

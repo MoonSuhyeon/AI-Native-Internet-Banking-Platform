@@ -72,6 +72,101 @@ def build_history_context(db: Session, chatbot_consultation_id: int, max_turns: 
     return "\n".join(lines)
 
 
+# 우대금리 조건 fallback — DB(banking_deposit_product_interest_rates)에 조건 설명이
+# 없을 때 상품명으로 유추한다. ChatbotService(PRODUCT_SEARCH)와 UserFinance
+# executor(CASH_FLOW_RECOMMEND)가 같은 표를 써야 해서 여기 둔다.
+PREF_COND_FALLBACK: list[tuple[str, str]] = [
+    ("맑은하늘",   "맑은하늘 앱 설치 후 인증코드 등록"),
+    ("직장인우대", "급여이체 실적 등록"),
+    ("자유적금",   "자동이체 설정"),
+    ("내맘대로",   "자동이체 설정"),
+    ("달러",       "달러 환전 실적 보유"),
+    ("청년도약",   "소득 요건 충족 확인"),
+    ("수퍼정기",   "비대면 가입"),
+    ("정기예금",   "비대면(인터넷·스타뱅킹) 가입"),
+    ("꿈적금",     "만기 유지"),
+    ("함께적금",   "2인 이상 공동 가입"),
+]
+
+
+def fetch_pref_conditions(rows_fn, product_ids: list[int]) -> dict[int, dict]:
+    """상품별 우대금리 조건 설명 및 합산 금리 조회.
+
+    rows_fn 은 SQL 을 실행해 dict 목록을 돌려주는 함수(_rows)다. ChatbotService 와
+    FeatureExecutorBase 가 각자 _rows 를 갖고 있어 함수로 받는다.
+    """
+    if not product_ids:
+        return {}
+    id_list = ",".join(str(i) for i in product_ids)
+    rows = rows_fn(
+        f"""
+        SELECT banking_product_id,
+               STRING_AGG(condition_description, ' / ' ORDER BY rate_id) AS pref_conditions,
+               SUM(rate) AS total_pref_rate
+          FROM banking_deposit_product_interest_rates
+         WHERE banking_product_id IN ({id_list})
+           AND rate_type = 'PREFERENTIAL'
+           AND condition_description IS NOT NULL
+         GROUP BY banking_product_id
+        """
+    )
+    return {
+        r["banking_product_id"]: {
+            "condition": r["pref_conditions"],
+            "rate": float(r["total_pref_rate"] or 0.0),
+        }
+        for r in rows
+    }
+
+
+def enrich_pref_conditions(rows_fn, products: list[dict[str, Any]]) -> None:
+    """상품 dict 목록에 pref_condition·pref_rate 를 채운다(제자리 수정).
+
+    DB 조건이 우선이고, 없으면 상품명 기반 fallback 을 쓴다.
+    """
+    pids = [int(p.get("product_id") or p.get("banking_product_id") or 0) for p in products]
+    pref_cond_map = fetch_pref_conditions(rows_fn, pids)
+    for p in products:
+        pid = int(p.get("product_id") or p.get("banking_product_id") or 0)
+        info = pref_cond_map.get(pid, {})
+        cond = info.get("condition", "") if isinstance(info, dict) else ""
+        rate = info.get("rate", 0.0) if isinstance(info, dict) else 0.0
+        if not cond:
+            name = str(p.get("deposit_product_name") or p.get("product_name", ""))
+            for keyword, fallback in PREF_COND_FALLBACK:
+                if keyword in name:
+                    cond = fallback
+                    break
+        if cond:
+            p["pref_condition"] = cond
+        if rate:
+            p["pref_rate"] = rate
+
+
+def append_preferential_rate_notice(message: str, product_cards: list[dict[str, Any]]) -> str:
+    """추천 문구 뒤에 우대금리 안내 절을 붙인다. 해당 상품이 없으면 그대로 둔다."""
+    preferred = [
+        card for card in product_cards
+        if str(card.get("pref_condition") or "").strip()
+    ]
+    if not preferred:
+        return message
+
+    lines = [
+        "",
+        "[우대금리 가능 상품 안내]",
+        "아래 상품은 조건을 충족하면 기본금리에 우대금리를 추가로 받을 수 있습니다.",
+    ]
+    for card in preferred:
+        name = card.get("product_name") or "상품명 없음"
+        condition = card.get("pref_condition")
+        pref_rate = card.get("pref_rate") or 0.0
+        rate_str = f" (+{pref_rate}%)" if pref_rate else ""
+        lines.append(f"- {name}{rate_str}: {condition}")
+    lines.append("우대금리는 실제 가입 시점의 조건 충족 여부에 따라 달라질 수 있습니다.")
+    return f"{message.rstrip()}\n" + "\n".join(lines)
+
+
 class FeatureExecutorBase:
     """Feature executor 공통 기반 클래스.
 

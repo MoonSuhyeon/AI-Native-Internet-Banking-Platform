@@ -1088,7 +1088,11 @@ class ChatbotService:
                 expanding_params=("product_ids",),
             )
         else:
-            rows = self._fallback_compare_recommendations(query)
+            # "둘 중 어느 게 나아?" 같은 후속 질문은 문장만으로는 무엇을 비교하는지
+            # 알 수 없다. 이전 대화에서 상품 맥락을 채워 넘긴다.
+            rows = self._fallback_compare_recommendations(
+                self._resolve_ambiguous_query(query, request.chatbot_consultation_id)
+            )
         return ChatbotFeatureExecuteResponse(
             feature_code="PRODUCT_COMPARE",
             status="OK" if rows else "EMPTY",
@@ -1532,12 +1536,6 @@ class ChatbotService:
             logger.exception("이체 처리 오류: %s", exc)
             return ChatbotTransferResponse(status="ERROR", message="이체 처리 중 오류가 발생했습니다.")
 
-    def _is_compare_query(self, query: str) -> bool:
-        return any(
-            word in query
-            for word in ("비교", "차이", "뭐가 더", "어느 쪽", "어느쪽", "맞아", "적합")
-        )
-
     def _format_product_compare_rows(self, rows: list[dict[str, Any]]) -> str:
         if not rows:
             return "비교할 상품 정보를 찾을 수 없습니다."
@@ -1638,244 +1636,6 @@ class ChatbotService:
             "아래는 비교해볼 만한 상품입니다.\n"
         )
         return f"{intro}\n{self._format_product_compare_rows(rows)}"
-
-    def _execute_cash_flow_recommend(
-        self, request: ChatbotFeatureExecuteRequest
-    ) -> ChatbotFeatureExecuteResponse:
-        """현금흐름 분석 → 규칙 기반 개인화 상품 추천.
-
-        흐름:
-          1. customer_no 인증 확인
-          2. 현금흐름 분석 (잔액·월 잉여자금·거래 빈도)
-          3. 판매 중인 수신 상품 조회
-          4. 현금흐름·금리·가입금액 점수 기반 추천
-        """
-        if not request.customer_no:
-            return self._auth_required(
-                "CASH_FLOW_RECOMMEND",
-                "현금흐름 분석 추천에는 고객번호와 본인 인증이 필요합니다.",
-            )
-
-        # ── 0. 고객 나이 조회 (customer-service 연동) ────────────────────────
-        customer_age = self._get_customer_age(request.customer_no) if request.customer_no else None
-
-        # ── 0b. '둘 중' 같은 지시어가 있으면 이전 대화에서 맥락 보완 ─────────
-        resolved_query = self._resolve_ambiguous_query(
-            request.query or "",
-            request.chatbot_consultation_id,
-        )
-
-        # ── 1. 현금흐름 분석 ──────────────────────────────────────────────────
-        cf = self._analyze_customer_cash_flow(request.customer_no)
-        if cf is None:
-            if self._is_compare_query(resolved_query):
-                rows = self._fallback_compare_recommendations(resolved_query)
-                return ChatbotFeatureExecuteResponse(
-                    feature_code="CASH_FLOW_RECOMMEND",
-                    status="OK",
-                    message=self._compare_recommendation_message(resolved_query, rows),
-                    data=rows,
-                    requires_auth=True,
-                )
-            return ChatbotFeatureExecuteResponse(
-                feature_code="CASH_FLOW_RECOMMEND",
-                status="EMPTY",
-                message="계좌 정보를 찾을 수 없습니다.",
-                data=[],
-                requires_auth=True,
-            )
-
-        # ── 2. 판매 중인 수신 상품 목록 (LLM 컨텍스트용) ──────────────────────
-        products = self._rows(
-            f"""
-            SELECT p.banking_product_id AS product_id,
-                   p.deposit_product_name,
-                   p.deposit_product_type,
-                   p.base_interest_rate,
-                   p.min_join_amount,
-                   p.max_join_amount,
-                   p.min_period_month,
-                   p.max_period_month,
-                   p.is_early_termination_allowed,
-                   p.is_tax_benefit_available
-              FROM deposit_banking_products p
-             WHERE p.deposit_product_status = 'SELLING'
-               AND p.deposit_product_type != 'SUBSCRIPTION'
-               AND p.deposit_product_name NOT LIKE '%장병%'
-               AND p.deposit_product_name NOT LIKE '%군인%'
-               AND p.deposit_product_name NOT LIKE '%군무원%'
-               AND p.deposit_product_name NOT LIKE '%군무원%'
-             ORDER BY p.base_interest_rate DESC NULLS LAST
-             LIMIT 50
-            """
-        )
-        # 나이 기반 필터 (customer-service 연동 성공 시 정확한 청년 필터 적용)
-        # 연동 실패 시 키워드 필터로 fallback
-        if customer_age is not None:
-            products = self._filter_by_age(products, customer_age)
-        else:
-            products = [
-                p for p in products
-                if not any(kw in str(p.get("deposit_product_name", ""))
-                           for kw in ("청년", "Youth", "Young"))
-            ]
-
-        # 우대금리 조건 보강 — DB 우선, 없으면 상품명 기반 fallback
-        _PREF_COND_FALLBACK: list[tuple[str, str]] = [
-            ("맑은하늘",   "맑은하늘 앱 설치 후 인증코드 등록"),
-            ("직장인우대", "급여이체 실적 등록"),
-            ("자유적금",   "자동이체 설정"),
-            ("내맘대로",   "자동이체 설정"),
-            ("달러",       "달러 환전 실적 보유"),
-            ("청년도약",   "소득 요건 충족 확인"),
-            ("수퍼정기",   "비대면 가입"),
-            ("정기예금",   "비대면(인터넷·스타뱅킹) 가입"),
-            ("꿈적금",     "만기 유지"),
-            ("함께적금",   "2인 이상 공동 가입"),
-        ]
-        pids = [int(p.get("product_id") or p.get("banking_product_id") or 0) for p in products]
-        pref_cond_map = self._get_pref_conditions(pids)
-        for p in products:
-            pid = int(p.get("product_id") or p.get("banking_product_id") or 0)
-            info = pref_cond_map.get(pid, {})
-            cond = info.get("condition", "") if isinstance(info, dict) else ""
-            rate = info.get("rate", 0.0) if isinstance(info, dict) else 0.0
-            if not cond:
-                name = str(p.get("deposit_product_name") or p.get("product_name", ""))
-                for keyword, fallback in _PREF_COND_FALLBACK:
-                    if keyword in name:
-                        cond = fallback
-                        break
-            if cond:
-                p["pref_condition"] = cond
-            if rate:
-                p["pref_rate"] = rate
-
-        # ── 3. 규칙 기반 추천 ────────────────────────────────────────────────
-        # 은행 상품 추천은 외부 생성형 AI 판단에 맡기지 않는다.
-        # 고객 현금흐름, 가입금액, 상품 유형, 금리, 우대조건을 점수화한 결과만 사용한다.
-        ranked = self._rank_products(cf, products)
-        recommendation = self._format_rank_based_recommend(cf, ranked)
-
-        # ── 4. data 구성: 현금흐름 요약 + 추천 상품 카드 ─────────────────────
-        # 화면 카드도 동일한 규칙 기반 순위를 사용한다.
-        ranked_for_data = self._rank_products(cf, products)
-
-        product_cards = [
-            {
-                "row_type":          "recommended_product",
-                "rank":              i + 1,
-                "product_id":        p.get("product_id") or p.get("banking_product_id"),
-                "product_name":      p.get("deposit_product_name") or p.get("product_name", ""),
-                "product_type":      p.get("deposit_product_type") or p.get("product_type", ""),
-                "base_interest_rate": p.get("base_interest_rate"),
-                "min_period_month":  p.get("min_period_month"),
-                "max_period_month":  p.get("max_period_month"),
-                "min_join_amount":   p.get("min_join_amount"),
-                "max_join_amount":   p.get("max_join_amount"),
-                "reason":            p.get("_reason", ""),
-                "pref_condition":    p.get("pref_condition", ""),
-                "pref_rate":         p.get("pref_rate", 0.0),
-            }
-            for i, p in enumerate(ranked_for_data[:3])
-        ]
-
-        data = [
-            {
-                "row_type":         "cash_flow_summary",
-                "total_balance":    cf["total_balance"],
-                "monthly_surplus":  cf["monthly_surplus"],
-                "monthly_tx_count": cf["monthly_tx_count"],
-                "has_data":         cf["has_data"],
-                "product_count":    len(products),
-                "cf_debug":         cf.get("_debug", ""),
-            },
-            *product_cards,
-        ]
-
-        if (
-            not str(recommendation or "").strip()
-            or "제공할 수 없습니다" in recommendation
-            or "죄송" in recommendation
-        ):
-            recommendation = self._format_rank_based_recommend(cf, ranked_for_data)
-
-        recommendation = self._append_preferential_rate_notice(recommendation, product_cards)
-
-        return ChatbotFeatureExecuteResponse(
-            feature_code="CASH_FLOW_RECOMMEND",
-            status="OK",
-            message=recommendation,
-            data=data,
-            requires_auth=True,
-        )
-
-    def _append_preferential_rate_notice(
-        self,
-        message: str,
-        product_cards: list[dict[str, Any]],
-    ) -> str:
-        preferred = [
-            card for card in product_cards
-            if str(card.get("pref_condition") or "").strip()
-        ]
-        if not preferred:
-            return message
-
-        lines = [
-            "",
-            "[우대금리 가능 상품 안내]",
-            "아래 상품은 조건을 충족하면 기본금리에 우대금리를 추가로 받을 수 있습니다.",
-        ]
-        for card in preferred:
-            name = card.get("product_name") or "상품명 없음"
-            condition = card.get("pref_condition")
-            pref_rate = card.get("pref_rate") or 0.0
-            rate_str = f" (+{pref_rate}%)" if pref_rate else ""
-            lines.append(f"- {name}{rate_str}: {condition}")
-        lines.append("우대금리는 실제 가입 시점의 조건 충족 여부에 따라 달라질 수 있습니다.")
-        return f"{message.rstrip()}\n" + "\n".join(lines)
-
-    def _format_rank_based_recommend(self, cf: dict[str, Any], ranked: list[dict[str, Any]]) -> str:
-        """_rank_products 결과를 고객 응답 텍스트로 변환."""
-        total_balance   = float(cf.get("total_balance", 0))
-        monthly_surplus = float(cf.get("monthly_surplus", 0))
-        is_spender      = monthly_surplus <= 0
-        is_accumulate   = not is_spender and total_balance < monthly_surplus * 12
-        is_wealthy      = not is_spender and total_balance >= monthly_surplus * 12
-
-        if is_spender:
-            persona_desc = f"월 잉여자금이 없는 상황(총잔액 {total_balance:,.0f}원)이므로"
-        elif is_wealthy:
-            persona_desc = f"총잔액 {total_balance:,.0f}원의 목돈 보유형이므로"
-        else:
-            persona_desc = f"월 잉여자금 {monthly_surplus:,.0f}원의 저축 성장형이므로"
-
-        lines = [
-            f"[현금흐름 분석 기반 맞춤 추천]\n",
-            f"고객님은 {persona_desc} 아래 상품을 추천드립니다.\n",
-        ]
-
-        type_label = {"DEPOSIT": "예금", "SAVINGS": "적금", "SUBSCRIPTION": "청약"}
-        for i, p in enumerate(ranked[:3], start=1):
-            name  = p.get("deposit_product_name") or p.get("product_name", "")
-            ptype = p.get("deposit_product_type") or p.get("product_type", "")
-            rate  = p.get("base_interest_rate", "")
-            reason = p.get("_reason", "")
-            pref_cond = p.get("pref_condition", "")
-            lines.append(
-                f"{i}위. [{type_label.get(ptype, ptype)}] {name} (금리 {rate}%)"
-            )
-            if reason:
-                lines.append(f"   → {reason}")
-            if pref_cond:
-                lines.append(f"   ※ 우대금리 받으려면: {pref_cond}")
-
-        if not ranked:
-            lines.append("현재 조건에 맞는 추천 상품이 없습니다. 상담사 연결을 이용해 주세요.")
-
-        lines.append("\n더 자세한 상담은 '상담사 연결'을 이용해 주세요.")
-        return "\n".join(lines)
 
     def _rank_products(self, cf: dict[str, Any], products: list[dict[str, Any]], input_period: int = 0) -> list[dict[str, Any]]:
         """100점 채점 모델: 재정적합도(40) + 수익성ROI(30) + 유동성(20) + 부가혜택(10)."""
@@ -2380,29 +2140,13 @@ class ChatbotService:
         }
 
     def _get_pref_conditions(self, product_ids: list[int]) -> dict[int, dict]:
-        """상품별 우대금리 조건 설명 및 합산 금리 조회."""
-        if not product_ids:
-            return {}
-        id_list = ",".join(str(i) for i in product_ids)
-        rows = self._rows(
-            f"""
-            SELECT banking_product_id,
-                   STRING_AGG(condition_description, ' / ' ORDER BY rate_id) AS pref_conditions,
-                   SUM(rate) AS total_pref_rate
-              FROM banking_deposit_product_interest_rates
-             WHERE banking_product_id IN ({id_list})
-               AND rate_type = 'PREFERENTIAL'
-               AND condition_description IS NOT NULL
-             GROUP BY banking_product_id
-            """
-        )
-        return {
-            r["banking_product_id"]: {
-                "condition": r["pref_conditions"],
-                "rate": float(r["total_pref_rate"] or 0.0),
-            }
-            for r in rows
-        }
+        """상품별 우대금리 조건 설명 및 합산 금리 조회.
+
+        구현은 app.features.base 에 있다 — CASH_FLOW_RECOMMEND(UserFinance
+        executor)와 PRODUCT_SEARCH(여기)가 같은 표·같은 fallback 을 써야 한다.
+        """
+        from app.features.base import fetch_pref_conditions
+        return fetch_pref_conditions(self._rows, product_ids)
 
     # ── 파싱 헬퍼 ─────────────────────────────────────────────────────────────
     @staticmethod

@@ -8,7 +8,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.features.base import FeatureExecutorBase
+from app.features.base import (
+    FeatureExecutorBase,
+    append_preferential_rate_notice,
+    enrich_pref_conditions,
+)
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse
 
 logger = logging.getLogger(__name__)
@@ -191,6 +195,10 @@ class UserFinanceFeatureExecutor(FeatureExecutorBase):
 
         products = list(product_map.values())
 
+        # 우대금리 조건 보강 — #83 이 넣은 표시가 #111 채점 모델로 옮겨오며 빠져 있었다.
+        # 챗봇 위젯이 상품 카드의 pref_condition·pref_rate 를 그려준다.
+        enrich_pref_conditions(self._rows, products)
+
         # ── 4. 채점 및 필터링 ────────────────────────────────────────────────
         preferred_type = (request.product_type or "").upper() or None  # "DEPOSIT" / "SAVINGS" / None
         scored_products = self._score_products(cf, products, user_age, preferred_type)
@@ -224,10 +232,14 @@ class UserFinanceFeatureExecutor(FeatureExecutorBase):
                 "suit_score":         p.get("suit_score", 0),
                 "return_score":       p.get("return_score", 0),
                 "liquidity_score":    p.get("liquidity_score", 0),
-                "benefit_score":      p.get("benefit_score", 0)
+                "benefit_score":      p.get("benefit_score", 0),
+                "pref_condition":     p.get("pref_condition", ""),
+                "pref_rate":          p.get("pref_rate", 0.0),
             }
             for i, p in enumerate(top3)
         ])
+
+        recommendation = append_preferential_rate_notice(recommendation, product_data[1:])
 
         return ChatbotFeatureExecuteResponse(
             feature_code="CASH_FLOW_RECOMMEND",
