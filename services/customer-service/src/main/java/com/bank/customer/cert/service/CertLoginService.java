@@ -28,12 +28,8 @@ import java.time.OffsetDateTime;
 @RequiredArgsConstructor
 public class CertLoginService {
 
-    private final CertificateRepository     certificateRepository;
-    private final CredentialRepository      credentialRepository;
+    private final CertPinVerifier           certPinVerifier;
     private final CustomerRepository        customerRepository;
-    private final CertificateUseRepository  certificateUseRepository;
-    private final PasswordEncoder           passwordEncoder;
-    private final FdsService                fdsService;
     private final AuthEventService          authEventService;
 
     /**
@@ -49,46 +45,10 @@ public class CertLoginService {
 
         Certificate cert = null;
         try {
-            cert = certificateRepository
-                    .findByCertificateSerialNumberAndDeletedAtIsNull(request.certSerialNumber())
-                    .orElseThrow(() -> new BusinessException(CustomerErrorCode.CUST_030));
-
-            if (cert.isLocked()) {
-                throw new BusinessException(CustomerErrorCode.CUST_034);
-            }
-            if (!cert.isActive()) {
-                if (Certificate.STATUS_REVOKED.equals(cert.getCertificateStatusCode())) {
-                    throw new BusinessException(CustomerErrorCode.CUST_032);
-                }
-                throw new BusinessException(CustomerErrorCode.CUST_031);
-            }
-            if (cert.isExpired()) {
-                throw new BusinessException(CustomerErrorCode.CUST_031);
-            }
-
-            boolean pinValid;
-            if (cert.getCertPinHash() != null) {
-                pinValid = passwordEncoder.matches(request.pin(), cert.getCertPinHash());
-            } else {
-                var credential = credentialRepository
-                        .findByCustomerIdAndDeletedAtIsNull(cert.getCustomerId())
-                        .orElseThrow(() -> new BusinessException(CustomerErrorCode.CUST_010));
-                pinValid = passwordEncoder.matches(request.pin(), credential.getPasswordHash());
-            }
-
-            if (!pinValid) {
-                cert.recordLoginFailure();
-                String resultCode = cert.isLocked()
-                        ? CertificateUse.RESULT_FAIL_LOCKED
-                        : CertificateUse.RESULT_FAIL_PIN;
-                CertificateUse use = saveCertUse(cert, ip, resultCode,
-                        cert.isLocked() ? CustomerErrorCode.CUST_034.getCode()
-                                        : CustomerErrorCode.CUST_033.getCode());
-                // 인증서 실패 누적 FDS 평가 — BLOCK 룰(CERT_FAIL_BLOCK_5) 발동 시 CUST_060 으로 차단
-                fdsService.evaluate(cert.getCustomerId(), FdsDetection.EVENT_CERT_LOGIN, use.getCertificateUseId());
-                throw new BusinessException(
-                        cert.isLocked() ? CustomerErrorCode.CUST_034 : CustomerErrorCode.CUST_033);
-            }
+            // 인증서 상태·PIN 검증은 CertPinVerifier 가 한다. 거래 승인도 같은 검증을 쓴다 —
+            // 복사해 두면 잠금 정책이나 FDS 연동이 한쪽에만 반영되는 일이 생긴다.
+            cert = certPinVerifier.verify(request.certSerialNumber(), request.pin(), ip,
+                    CertificateUse.PURPOSE_LOGIN);
 
             Customer customer = customerRepository
                     .findByCustomerIdAndDeletedAtIsNull(cert.getCustomerId())
@@ -99,7 +59,7 @@ public class CertLoginService {
             }
 
             cert.recordLoginSuccess();
-            saveCertUse(cert, ip, CertificateUse.RESULT_SUCCESS, null);
+            certPinVerifier.saveCertUse(cert, ip, CertificateUse.PURPOSE_LOGIN, CertificateUse.RESULT_SUCCESS, null);
 
             // 공통 후처리: 로그인 시도 이력 + 토큰 발급 + 세션 + LOGIN_ATTEMPT FDS(silent)
             return authEventService.onLoginSuccess(
@@ -110,7 +70,7 @@ public class CertLoginService {
             if (cert != null && cert.getCertificateStatusCode() != null) {
                 String resultCode = resolveFailResultCode(e);
                 if (resultCode != null) {
-                    saveCertUse(cert, ip, resultCode, e.getErrorCode().getCode());
+                    certPinVerifier.saveCertUse(cert, ip, CertificateUse.PURPOSE_LOGIN, resultCode, e.getErrorCode().getCode());
                 }
             }
             // 공통 로그인 시도 이력. 인증서 고유 FDS(CERT_LOGIN)는 위에서 평가하므로 LOGIN_ATTEMPT 는 중복 평가하지 않는다.
@@ -119,25 +79,6 @@ public class CertLoginService {
                     AuthEventService.CHANNEL_WEB, e.getErrorCode().getCode(), false);
             throw e;
         }
-    }
-
-    private CertificateUse saveCertUse(Certificate cert, String ip, String resultCode, String failureReason) {
-        // MVP: signedDataHash = serial + ip + timestamp 해시, signatureValue = certPinHash 또는 "N/A"
-        String signedData = Sha256.hex(cert.getCertificateSerialNumber() + ip + OffsetDateTime.now());
-        String sigValue   = cert.getCertPinHash() != null ? cert.getCertPinHash() : "N/A";
-
-        return certificateUseRepository.save(CertificateUse.builder()
-                .certificateId(cert.getCertificateId())
-                .customerId(cert.getCustomerId())
-                .purposeCode(CertificateUse.PURPOSE_LOGIN)
-                .signedDataHash(signedData)
-                .signatureValue(sigValue)
-                .verificationResultCode(resultCode)
-                .failureReasonCode(failureReason)
-                .requestIp(ip)
-                .requestChannelCode(CertificateUse.CHANNEL_WEB)
-                .usedAt(OffsetDateTime.now())
-                .build());
     }
 
     /** BusinessException 코드에서 certificate_use 결과 코드 매핑. 이미 saveCertUse를 호출한 경우 null 반환. */

@@ -34,6 +34,8 @@ public class CertificateUse {
     public static final String RESULT_FAIL_REVOKED = "FAIL_REVOKED";
 
     public static final String PURPOSE_LOGIN = "LOGIN";
+    /** 자금이동 승인(step-up). 로그인과 구별돼야 사후 조사에서 무엇을 위한 인증이었는지 알 수 있다. */
+    public static final String PURPOSE_TRANSFER_APPROVAL = "TRANSFER_APPROVAL";
     public static final String CHANNEL_WEB   = "WEB";
 
     @Id

@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MockIdentityVerificationProviderTest {
 
-    private final IdentityVerificationPort port = new MockIdentityVerificationProvider("unit-test-secret");
+    private final IdentityVerificationPort port = new MockIdentityVerificationProvider("unit-test-secret", new org.springframework.mock.env.MockEnvironment());
 
     @Test
     @DisplayName("주민번호 7번째 자리 1 → 1900년대 남성 내국인")

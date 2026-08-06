@@ -42,7 +42,7 @@ class MobileAuthServiceTest {
     @Mock private IdentityVerificationPort       identityVerificationPort;
     @Mock private Environment                     environment;
 
-    private final CryptoService cryptoService = new CryptoService("unit-test-key");
+    private final CryptoService cryptoService = new CryptoService("unit-test-key", new org.springframework.mock.env.MockEnvironment());
 
     private MobileAuthService service() {
         return new MobileAuthService(mobileAuthRepository, identityVerificationRepository,

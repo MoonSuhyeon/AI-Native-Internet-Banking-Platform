@@ -7,7 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CryptoServiceTest {
 
-    private final CryptoService crypto = new CryptoService("unit-test-key");
+    private final CryptoService crypto = new CryptoService("unit-test-key", new org.springframework.mock.env.MockEnvironment());
 
     @Test
     @DisplayName("암호화→복호화 라운드트립 — 원문 복원, 암호문은 평문과 다름")

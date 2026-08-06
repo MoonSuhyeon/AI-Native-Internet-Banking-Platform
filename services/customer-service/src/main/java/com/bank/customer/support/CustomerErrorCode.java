@@ -99,6 +99,10 @@ public enum CustomerErrorCode implements ErrorCode {
     CUST_143(HttpStatus.GONE,        "보안카드 챌린지가 만료되었거나 존재하지 않습니다."),
     CUST_144(HttpStatus.BAD_REQUEST, "챌린지에 없는 위치 코드가 포함되어 있습니다."),
 
+    // 거래 승인 토큰 (145-149) — 이체 등 자금이동 step-up 인증
+    CUST_145(HttpStatus.UNAUTHORIZED,"거래 승인 정보가 올바르지 않거나 이미 사용되었습니다."),
+    CUST_146(HttpStatus.GONE,        "거래 승인 유효시간이 지났습니다. 다시 인증해 주세요."),
+
     // 이체한도 (150-159)
     CUST_150(HttpStatus.BAD_REQUEST,"이체한도는 온라인에서 감액만 가능합니다. 증액은 영업점 방문 또는 본인인증이 필요합니다."),
     CUST_151(HttpStatus.BAD_REQUEST,"이체한도는 0보다 큰 금액으로 입력해 주세요."),
