@@ -496,6 +496,25 @@ Response: { data: { birthDate: "19900101", ... } }
 | `CONSULTATION_CUSTOMER_SERVICE_URL` | `http://localhost:8081` | customer-service 주소 (나이 조회) |
 | `CONSULTATION_LANGFUSE_ENABLED` | `false` | Langfuse LLM 트레이싱 활성화 여부 |
 | `CONSULTATION_UPLOADS_DIR` | `./uploads` | 서류 업로드 파일 저장 경로 |
+| `CONSULTATION_HARNESS_AUDIT_ENABLED` | `true` | 하네스 감사 기록 여부 (끄면 NoOp) |
+| `CONSULTATION_HARNESS_AUDIT_SPOOL_PATH` | `/var/lib/consultation/audit-spool.jsonl` | 감사 저장 실패분을 모아 두는 파일. 빈 값이면 모아 두지 않는다 |
+
+### 감사 유실 복구
+
+감사 기록은 fail-soft 다 — 저장에 실패해도 상담을 막지 않는다. 대신 실패한 기록은
+스풀 파일에 쌓이고, 지표(`harness_audit_failure_total`)와 알람(`harness-audit` 그룹)이
+그 사실을 알린다. DB 가 돌아오면 다시 넣는다.
+
+```bash
+python -m app.audit_replay --dry-run   # 몇 건 남아 있는지, 어느 기간인지
+python -m app.audit_replay             # 다시 넣는다 (성공한 것만 스풀에서 지움)
+```
+
+되돌릴 때 `recorded_at` 은 원래 판단 시각 그대로 들어간다. 여러 번 돌려도 안전하다.
+남은 것이 있으면 종료 코드 1 로 끝난다 — 자동화가 성공으로 오해하지 않게.
+
+**컨테이너라면 스풀 경로에 볼륨을 붙여야 한다.** 볼륨 없이 재시작하면 스풀도 함께
+사라지고, 복구 장치가 있으나 마나가 된다.
 
 ---
 

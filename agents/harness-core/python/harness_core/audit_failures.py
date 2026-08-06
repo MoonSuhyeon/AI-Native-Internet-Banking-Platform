@@ -43,6 +43,15 @@ def add_audit_failure_listener(listener: AuditFailureListener) -> None:
         _listeners.append(listener)
 
 
+def remove_audit_failure_listener(listener: AuditFailureListener) -> None:
+    """등록을 지운다. 없으면 조용히 넘어간다.
+
+    되돌리기(``audit_spool.FileAuditSpool.replay``)처럼 잠깐만 붙였다 떼는 쓰임이 있다.
+    """
+    if listener in _listeners:
+        _listeners.remove(listener)
+
+
 def clear_audit_failure_listeners() -> None:
     """등록을 모두 지운다. 테스트 격리용."""
     _listeners.clear()

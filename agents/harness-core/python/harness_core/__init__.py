@@ -15,7 +15,9 @@ from .audit_failures import (
     add_audit_failure_listener,
     clear_audit_failure_listeners,
     notify_audit_failure,
+    remove_audit_failure_listener,
 )
+from .audit_spool import FileAuditSpool
 
 __all__ = [
     "AgentAuditEntry",
@@ -25,4 +27,6 @@ __all__ = [
     "add_audit_failure_listener",
     "clear_audit_failure_listeners",
     "notify_audit_failure",
+    "remove_audit_failure_listener",
+    "FileAuditSpool",
 ]

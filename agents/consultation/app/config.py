@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     # 기본값을 켜 둔 것은 의도적이다. 감사는 켜는 것이 기본이고 끄는 것이 예외다.
     # 끄더라도 NoOp 이 들어가므로 의존하는 쪽은 깨지지 않는다.
     harness_audit_enabled: bool = True
+    # 감사 저장이 실패했을 때 기록을 모아 두는 파일. DB 가 돌아온 뒤
+    # `python -m app.audit_replay` 로 다시 넣는다.
+    # 빈 값이면 모아 두지 않는다 — 그때 실패는 예전처럼 영구 유실이다.
+    # 컨테이너라면 볼륨이 붙은 경로여야 한다. 볼륨 없이 재시작하면 스풀도 사라진다.
+    harness_audit_spool_path: str = "/var/lib/consultation/audit-spool.jsonl"
 
     model_config = SettingsConfigDict(
         env_prefix="CONSULTATION_",

@@ -18,6 +18,7 @@ from app.database import SessionLocal
 from app.metrics import harness_audit_failure_total
 from harness_core import (
     AgentAuditEntry,
+    FileAuditSpool,
     NoOpAgentAuditLog,
     add_audit_failure_listener,
 )
@@ -74,6 +75,29 @@ def _count_audit_failure(entry, exc) -> None:
 
 add_audit_failure_listener(_count_audit_failure)
 
+_spool = None
+_spool_resolved = False
+
+
+def get_audit_spool():
+    """실패한 기록을 모아 두는 스풀. 경로가 비어 있으면 None.
+
+    지표와 알람은 유실을 *알려줄* 뿐 되돌려주지 못한다. 스풀이 있어야 DB 가 돌아온 뒤
+    ``python -m app.audit_replay`` 로 다시 넣을 수 있다.
+    """
+    global _spool, _spool_resolved
+    if not _spool_resolved:
+        _spool_resolved = True
+        path = (get_settings().harness_audit_spool_path or "").strip()
+        if path:
+            _spool = FileAuditSpool(path)
+            add_audit_failure_listener(_spool.on_failure)
+        else:
+            logger.warning(
+                "감사 스풀 경로가 비어 있다 — 저장이 실패하면 그 기록은 영구 유실이다"
+            )
+    return _spool
+
 
 def get_audit_log():
     """감사 저장소. 설정에 따라 실제 저장소 또는 NoOp.
@@ -86,6 +110,9 @@ def get_audit_log():
         settings = get_settings()
         if settings.harness_audit_enabled:
             _audit_log = SqlAlchemyAgentAuditLog(SessionLocal, agent_name=AGENT_NAME)
+            # 실패를 모아 둘 자리를 여기서 붙인다. 저장소를 쓰기 시작하는 시점이
+            # 스풀이 필요해지는 시점과 같다.
+            get_audit_spool()
         else:
             logger.warning("하네스 감사 기록이 꺼져 있다 — 상담 응답이 남지 않는다")
             _audit_log = NoOpAgentAuditLog()
