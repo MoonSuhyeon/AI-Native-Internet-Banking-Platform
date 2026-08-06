@@ -1,12 +1,16 @@
 package com.bank.deposit.controller;
 
 import com.bank.deposit.domain.entity.Transaction;
+import com.bank.deposit.domain.entity.Account;
+import com.bank.deposit.security.AuthenticatedCustomerValidator;
 import com.bank.deposit.domain.enums.DirectionType;
 import com.bank.deposit.domain.enums.TransactionChannel;
 import com.bank.deposit.domain.enums.TransactionType;
 import com.bank.deposit.domain.enums.TransferType;
 import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
+import com.bank.deposit.repository.AccountRepository;
+import com.bank.deposit.repository.TransactionRepository;
 import com.bank.deposit.service.TransactionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -22,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.*;
@@ -33,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // 컨트롤러 슬라이스의 관심사는 매핑·검증이지 인증이 아니므로 필터를 끈다.
 // (실제 인증은 게이트웨이가 JWT 로 처리하고, 백엔드 체인은 permitAll 이다.)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(AuthenticatedCustomerValidator.class)
 @WebMvcTest(TransactionController.class)
 @DisplayName("TransactionController")
 class TransactionControllerTest {
@@ -42,6 +49,13 @@ class TransactionControllerTest {
 
     @MockBean
     private TransactionService transactionService;
+
+    // 소유권 검증기가 계좌↔고객 매핑을 조회한다. 슬라이스에는 리포지토리가 없으므로 mock 으로 채운다.
+    @MockBean
+    private AccountRepository accountRepository;
+
+    @MockBean
+    private TransactionRepository transactionRepository;
 
     @Test
     @DisplayName("계좌 거래 목록을 조회한다")
@@ -128,7 +142,10 @@ class TransactionControllerTest {
                 eq(TransactionChannel.MOBILE), eq("이체"), any()))
                 .willReturn(transaction("TRF-001", TransactionType.TRANSFER, DirectionType.OUT));
 
+        givenAccountOwner(1L, "CUST-001");
+
         mockMvc.perform(post("/transactions/transfer")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -154,7 +171,10 @@ class TransactionControllerTest {
         given(transactionService.savingsPayment(eq(1L), eq(10L), any(), eq(3), eq(TransactionChannel.MOBILE)))
                 .willReturn(transaction("SAV-001", TransactionType.SAVINGS_PAYMENT, DirectionType.IN));
 
+        givenAccountOwner(1L, "CUST-001");
+
         mockMvc.perform(post("/transactions/savings-payment")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -258,6 +278,111 @@ class TransactionControllerTest {
                                 }
                                 """))
                 .andExpect(status().is4xxClientError());
+    }
+
+    // ── 소유권 검증 ──────────────────────────────────────────────────────────
+    //
+    // 이 세 가지가 빠져 있어서, 유효한 토큰만 있으면 남의 계좌에서 돈을 뺄 수 있었다.
+    // 이체는 서비스 간 호출이 없는 고객 전용 경로라 신원을 필수로 본다(fail-closed).
+
+    @Test
+    @DisplayName("이체 — 인증 헤더가 없으면 403을 반환한다")
+    void transferWithoutIdentity() throws Exception {
+        mockMvc.perform(post("/transactions/transfer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TRANSFER_BODY))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("이체 — 출금 계좌가 남의 것이면 403을 반환한다")
+    void transferFromOthersAccount() throws Exception {
+        givenAccountOwner(1L, "CUST-999");
+
+        mockMvc.perform(post("/transactions/transfer")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TRANSFER_BODY))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("출금 — 남의 계좌면 403을 반환한다")
+    void withdrawFromOthersAccount() throws Exception {
+        givenAccountOwner(1L, "CUST-999");
+
+        mockMvc.perform(post("/transactions/withdraw")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "accountId": 1,
+                                  "amount": 50000,
+                                  "channelType": "MOBILE"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("거래 조회 — 남의 계좌 거래면 403을 반환한다")
+    void listOthersAccountTransactions() throws Exception {
+        givenAccountOwner(1L, "CUST-999");
+
+        mockMvc.perform(get("/transactions")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
+                        .param("accountId", "1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("거래 취소 — 남의 거래면 403을 반환한다")
+    void cancelOthersTransaction() throws Exception {
+        given(transactionRepository.findById(1L)).willReturn(Optional.of(
+                transaction("TRF-001", TransactionType.TRANSFER, DirectionType.OUT)));
+        givenAccountOwner(1L, "CUST-999");
+
+        mockMvc.perform(patch("/transactions/1/cancel")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("서비스 간 호출(신원 헤더 없음)은 출금이 통과한다")
+    void internalWithdrawPasses() throws Exception {
+        given(transactionService.withdraw(eq(1L), any(), eq(TransactionChannel.MOBILE), any()))
+                .willReturn(transaction("WTH-001", TransactionType.WITHDRAW, DirectionType.OUT));
+
+        // payment 오케스트레이터가 이 경로를 신원 없이 부른다. 막으면 결제가 깨진다.
+        mockMvc.perform(post("/transactions/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "accountId": 1,
+                                  "amount": 50000,
+                                  "channelType": "MOBILE"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+    }
+
+    private static final String TRANSFER_BODY = """
+            {
+              "fromAccountId": 1,
+              "toAccountId": 2,
+              "toAccountNo": "ACC-002",
+              "amount": 100000,
+              "transferType": "INTERNAL",
+              "channelType": "MOBILE"
+            }
+            """;
+
+    /** 계좌 소유자 조회를 mock 한다. */
+    private void givenAccountOwner(Long accountId, String customerId) {
+        given(accountRepository.findById(accountId)).willReturn(Optional.of(
+                Account.builder().accountId(accountId).customerId(customerId).build()));
     }
 
     private Transaction transaction(String number, TransactionType type, DirectionType direction) {

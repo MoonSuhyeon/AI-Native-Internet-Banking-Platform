@@ -1,6 +1,8 @@
 package com.bank.deposit.controller;
 
 import com.bank.deposit.dto.response.CashFlowSummary;
+import com.bank.deposit.repository.AccountRepository;
+import com.bank.deposit.repository.TransactionRepository;
 import com.bank.deposit.dto.response.ProductRecommendResponse;
 import com.bank.deposit.dto.response.RecommendedProduct;
 import com.bank.deposit.security.AuthenticatedCustomerValidator;
@@ -41,6 +43,13 @@ class RecommendAgentControllerTest {
 
     @MockBean
     private CashflowBasedRecommendService cashflowBasedRecommendService;
+
+    // 소유권 검증기가 계좌↔고객 매핑을 조회한다. 슬라이스에는 리포지토리가 없으므로 mock 으로 채운다.
+    @MockBean
+    private AccountRepository accountRepository;
+
+    @MockBean
+    private TransactionRepository transactionRepository;
 
     @Nested
     @DisplayName("GET /products/recommend-agent")

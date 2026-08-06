@@ -42,31 +42,51 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}")
-    public Account get(@PathVariable Long accountId) {
+    public Account get(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, required = false) String authenticatedCustomerId,
+            @PathVariable Long accountId) {
+        customerValidator.validateAccountOwner(authenticatedCustomerId, accountId);
         return accountService.findById(accountId);
     }
 
+    /**
+     * 계좌번호로 조회. payment 오케스트레이터가 서비스 간 호출로 쓰므로(A-1 수신계좌 검증)
+     * 신원 없는 호출은 통과시키고, 고객 요청이면 본인 계좌인지 본다.
+     */
     @GetMapping("/by-number/{accountNo}")
-    public Account getByNumber(@PathVariable String accountNo) {
-        return accountService.findByAccountNumber(accountNo);
+    public Account getByNumber(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, required = false) String authenticatedCustomerId,
+            @PathVariable String accountNo) {
+        Account account = accountService.findByAccountNumber(accountNo);
+        customerValidator.validateAccountOwner(authenticatedCustomerId, account.getAccountId());
+        return account;
     }
 
     @PatchMapping("/{accountId}/status")
-    public Account changeStatus(@PathVariable Long accountId,
-                                @Valid @RequestBody AccountStatusUpdateRequest req) {
+    public Account changeStatus(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, required = false) String authenticatedCustomerId,
+            @PathVariable Long accountId,
+            @Valid @RequestBody AccountStatusUpdateRequest req) {
+        customerValidator.validateAccountOwner(authenticatedCustomerId, accountId);
         return accountService.changeStatus(accountId, req.accountStatus());
     }
 
     @PatchMapping("/{accountId}/limits")
-    public Account updateLimits(@PathVariable Long accountId,
-                                @Valid @RequestBody AccountLimitUpdateRequest req) {
+    public Account updateLimits(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, required = false) String authenticatedCustomerId,
+            @PathVariable Long accountId,
+            @Valid @RequestBody AccountLimitUpdateRequest req) {
+        customerValidator.validateAccountOwner(authenticatedCustomerId, accountId);
         return accountService.updateLimits(accountId, req.dailyWithdrawLimit(),
                 req.dailyWithdrawCountLimit(), req.atmWithdrawLimit());
     }
 
     @PatchMapping("/{accountId}/alias")
-    public Account updateAlias(@PathVariable Long accountId,
-                               @Valid @RequestBody AccountAliasUpdateRequest req) {
+    public Account updateAlias(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, required = false) String authenticatedCustomerId,
+            @PathVariable Long accountId,
+            @Valid @RequestBody AccountAliasUpdateRequest req) {
+        customerValidator.validateAccountOwner(authenticatedCustomerId, accountId);
         return accountService.updateAlias(accountId, req.accountAlias());
     }
 }

@@ -5,6 +5,8 @@ import com.bank.deposit.domain.enums.AccountStatus;
 import com.bank.deposit.domain.enums.ProductType;
 import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
+import com.bank.deposit.repository.AccountRepository;
+import com.bank.deposit.repository.TransactionRepository;
 import com.bank.deposit.security.AuthenticatedCustomerValidator;
 import com.bank.deposit.service.AccountService;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +42,13 @@ class AccountControllerTest {
 
     @MockBean
     private AccountService accountService;
+
+    // 소유권 검증기가 계좌↔고객 매핑을 조회한다. 슬라이스에는 리포지토리가 없으므로 mock 으로 채운다.
+    @MockBean
+    private AccountRepository accountRepository;
+
+    @MockBean
+    private TransactionRepository transactionRepository;
 
     @Test
     @DisplayName("고객 ID로 계좌 목록을 조회한다")
@@ -200,6 +209,54 @@ class AccountControllerTest {
 
         mockMvc.perform(get("/accounts/by-number/NONE-999"))
                 .andExpect(status().isNotFound());
+    }
+
+    // ── 소유권 검증 ──────────────────────────────────────────────────────────
+    //
+    // 계좌 단건 조회·상태·한도·별칭 변경에 검증이 없어서, 남의 계좌 한도를 올리거나
+    // 상태를 바꿀 수 있었다(IDOR). 목록·생성 두 곳에만 검증이 붙어 있었다.
+
+    @Test
+    @DisplayName("계좌 단건 조회 — 남의 계좌면 403을 반환한다")
+    void getOthersAccount() throws Exception {
+        givenAccountOwner(1L, "CUST-999");
+
+        mockMvc.perform(get("/accounts/1")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("출금 한도 변경 — 남의 계좌면 403을 반환한다")
+    void updateOthersLimits() throws Exception {
+        givenAccountOwner(1L, "CUST-999");
+
+        mockMvc.perform(patch("/accounts/1/limits")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"dailyWithdrawLimit": 100000000}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("계좌 상태 변경 — 남의 계좌면 403을 반환한다")
+    void changeOthersStatus() throws Exception {
+        givenAccountOwner(1L, "CUST-999");
+
+        mockMvc.perform(patch("/accounts/1/status")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"accountStatus": "ACTIVE"}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    private void givenAccountOwner(Long accountId, String customerId) {
+        given(accountRepository.findById(accountId)).willReturn(java.util.Optional.of(
+                Account.builder().accountId(accountId).customerId(customerId).build()));
     }
 
     // ── 픽스처 ──────────────────────────────────────────────────────────────

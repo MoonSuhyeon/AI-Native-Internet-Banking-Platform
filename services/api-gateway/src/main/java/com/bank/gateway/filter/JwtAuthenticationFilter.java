@@ -44,7 +44,12 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final List<String> CUSTOMER_ONLY_PATHS = List.of(
             "/api/v1/accounts",
             "/api/v1/payments",
-            "/api/v1/customers/me"   // 고객 자가설정·인뱅해지·이체한도 등 — 직원/관리자 세션 차단(#72)
+            "/api/v1/customers/me",  // 고객 자가설정·인뱅해지·이체한도 등 — 직원/관리자 세션 차단(#72)
+            // 아래 둘이 고객이 실제로 쓰는 경로다. 이름이 헷갈리지만 버전 없는 쪽이 고객용이고,
+            // /api/v1/accounts 는 payment↔deposit 서비스 간 API 다(AccountV1Controller).
+            // 처음 #72 를 넣을 때 v1 쪽만 올려서, 정작 자금이 나가는 문이 열려 있었다.
+            "/api/accounts",
+            "/api/transactions"
     );
 
     private final JwtProvider jwtProvider;

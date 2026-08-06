@@ -6,6 +6,8 @@ import com.bank.common.security.jwt.TokenType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -115,6 +117,53 @@ class JwtAuthenticationFilterTest {
     void publicPath_passesThrough_withoutModification() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.post("/api/v1/auth/login").build());
+
+        AtomicReference<Boolean> chainCalled = new AtomicReference<>(false);
+        filter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        }).block();
+
+        assertThat(chainCalled.get()).isTrue();
+    }
+
+    // 고객이 실제로 쓰는 경로는 버전 없는 쪽이다(/api/accounts·/api/transactions).
+    // #72 를 처음 넣을 때 /api/v1/accounts(=payment↔deposit 서비스 간 API)만 올려서,
+    // 정작 자금이 나가는 문에는 가드가 걸려 있지 않았다.
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/transactions/transfer", "/api/transactions/withdraw", "/api/accounts/1/limits"})
+    @DisplayName("직원/관리자 토큰은 고객용 계좌·거래 경로에서도 403 차단된다")
+    void employeeToken_isBlocked_onCustomerFacingPaths(String path) {
+        JwtClaims claims = new JwtClaims(8L, "teller@bank.com",
+                List.of("ROLE_TELLER"), TokenType.ACCESS, "BR-001", "T1", 108L);
+        when(jwtProvider.parseClaims(anyString())).thenReturn(claims);
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post(path)
+                        .header("Authorization", "Bearer token123")
+                        .build());
+
+        AtomicReference<Boolean> chainCalled = new AtomicReference<>(false);
+        filter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        }).block();
+
+        assertThat(chainCalled.get()).isFalse();
+        assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("고객 토큰은 고객용 계좌·거래 경로를 정상 통과한다")
+    void customerToken_passes_onCustomerFacingPaths() {
+        JwtClaims claims = new JwtClaims(9L, "user@bank.com",
+                List.of("ROLE_CUSTOMER"), TokenType.ACCESS, null, null, null);
+        when(jwtProvider.parseClaims(anyString())).thenReturn(claims);
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/transactions/transfer")
+                        .header("Authorization", "Bearer token123")
+                        .build());
 
         AtomicReference<Boolean> chainCalled = new AtomicReference<>(false);
         filter.filter(exchange, ex -> {
