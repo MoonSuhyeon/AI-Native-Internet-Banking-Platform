@@ -1179,9 +1179,15 @@ class ChatbotService:
         rows = self._contract_rows(customer_no)
         if not rows:
             return ChatbotFeatureExecuteResponse(
-                feature_code="MATURITY_SCHEDULE", status="OK",
+                feature_code="MATURITY_SCHEDULE", status="EMPTY",
                 message="조회된 만기 예정 계약이 없습니다.",
+                data=[], requires_auth=True,
             )
+
+        def _in_query_order(subset: list) -> list:
+            """메시지에 보인 계약을 조회 순서(contract_id ASC)로 되돌린다."""
+            picked = {id(r) for r in subset}
+            return [r for r in rows if id(r) in picked]
 
         # 만기일 파싱 후 ASC 정렬
         today = _date.today()
@@ -1191,10 +1197,7 @@ class ChatbotService:
                 return None
             if isinstance(raw, (_date, _dt)):
                 return raw if isinstance(raw, _date) else raw.date()
-            try:
-                return _dt.strptime(str(raw)[:10], "%Y-%m-%d").date()
-            except Exception:
-                return None
+            return self._parse_contract_date(raw)
 
         rows_dated = [(r, _to_date(r.get("maturity_at"))) for r in rows]
         rows_sorted = sorted(
@@ -1209,7 +1212,6 @@ class ChatbotService:
         if max_days is not None:
             filtered = [(r, d) for r, d in rows_sorted if (d - today).days <= max_days]
             if not filtered:
-                all_rows = [r for r, _ in rows_sorted]
                 return ChatbotFeatureExecuteResponse(
                     feature_code="MATURITY_SCHEDULE", status="OK",
                     message=(
@@ -1217,34 +1219,55 @@ class ChatbotService:
                         f"전체 만기 예정 상품을 보여드릴게요.\n\n"
                         + self._format_maturity_schedule([r for r, _ in rows_sorted])
                     ),
+                    data=rows, requires_auth=True,
                 )
             return ChatbotFeatureExecuteResponse(
                 feature_code="MATURITY_SCHEDULE", status="OK",
                 message=self._format_maturity_schedule([r for r, _ in filtered]),
+                data=_in_query_order([r for r, _ in filtered]), requires_auth=True,
             )
 
         return ChatbotFeatureExecuteResponse(
             feature_code="MATURITY_SCHEDULE", status="OK",
             message=self._format_maturity_schedule([r for r, _ in rows_sorted]),
+            data=rows, requires_auth=True,
         )
 
-    def _format_maturity_schedule(self, rows: list) -> str:
+    def _parse_contract_date(self, raw) -> "date | None":
+        """계약 날짜 문자열을 date 로 바꾼다.
+
+        deposit_contracts.maturity_at 은 V10 마이그레이션에서 CHAR(8) → DATE 로
+        바뀌었지만, 아직 8자리 문자열(YYYYMMDD)로 들어오는 경로가 남아 있다.
+        한쪽 형식만 받으면 나머지는 조용히 버려진다.
+        """
         from datetime import date, datetime
+        if raw is None:
+            return None
+        if isinstance(raw, datetime):
+            return raw.date()
+        if isinstance(raw, date):
+            return raw
+        text_value = str(raw).strip()
+        for fmt in ("%Y%m%d", "%Y-%m-%d", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return datetime.strptime(text_value, fmt).date()
+            except ValueError:
+                continue
+        try:
+            return datetime.fromisoformat(text_value).date()
+        except ValueError:
+            return None
+
+    def _format_maturity_schedule(self, rows: list) -> str:
+        from datetime import date
         today = date.today()
         lines = ["[만기 예정 조회]"]
         for row in rows[:5]:
             name = row.get("product_name") or "상품"
             amount = float(row.get("join_amount") or 0)
-            maturity_raw = row.get("maturity_at")
-            if maturity_raw is None:
+            mat_date = self._parse_contract_date(row.get("maturity_at"))
+            if mat_date is None:
                 continue
-            if isinstance(maturity_raw, (date, datetime)):
-                mat_date = maturity_raw if isinstance(maturity_raw, date) else maturity_raw.date()
-            else:
-                try:
-                    mat_date = datetime.strptime(str(maturity_raw)[:10], "%Y-%m-%d").date()
-                except Exception:
-                    continue
             days = (mat_date - today).days
             if days < 0:
                 timing = f"{mat_date} (이미 만기)"

@@ -14,10 +14,17 @@
 # 고칠 때: 원인을 확인해 테스트를 고치거나 코드를 고친 뒤, 이 파일에서 해당 줄을 지운다.
 # 새로 추가할 때: 정말 지금 고칠 수 없는 것인지 먼저 따진다. 이 파일은 늘어나면 안 된다.
 #
-# 남은 것들의 대체적인 성격 (2026-08-06 기준):
-#   - 픽스처 시드값과 기대값 불일치 (assert 0.0 == 10000000 류)
-#   - mock LLM 출력 형식 변경 ('[LLM 맞춤 추천]' 마커 등)
-#   - 개수 기대 변경 (assert 2 == 1 류)
+# 남은 54건의 성격 (2026-08-06 분류):
+#   A. 거래 status 컬럼 이름 불일치 — 약 28건
+#      운영 정본은 deposit_transactions.status 인데(V1), 앱 쿼리 절반이
+#      t.transaction_status 를 쓰고 픽스처도 그 이름으로 테이블을 만든다.
+#      (transaction_status 는 V5 common_transaction 유령 테이블에만 있었고
+#       V18 에서 DROP 됐다.) _rows 가 예외를 삼켜 "no such column" 이 빈 결과로
+#      둔갑하므로, 현금흐름 지표가 전부 0 으로 나온다. 테스트만의 문제가 아니다.
+#   B. IntentClassifier 분류 기대 — 9건
+#   C. PRODUCT_COMPARE 행 개수·필드 — 9건 (A 를 고치면 일부 따라 풀릴 수 있다)
+#   D. 응답 포맷터 마커 문구 — 2건 (가장 싸다)
+#   E. 개별 건 — 6건 (청약 설명, 시나리오 시드, LLM 오류 fallback 등)
 tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_salary_tx_count
 tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_surplus_tx_count
 tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_tight_tx_count
@@ -42,24 +49,9 @@ tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_salary_mon
 tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_surplus_monthly_surplus_positive
 tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_tight_has_data_true
 tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_tight_monthly_surplus_negative
-tests/test_comprehensive_scenarios.py::TestCashFlowRecommendLlmAllTypes::test_llm_data_length_is_one[CUST_NODATA]
-tests/test_comprehensive_scenarios.py::TestCashFlowRecommendLlmAllTypes::test_llm_data_length_is_one[CUST_SALARY]
-tests/test_comprehensive_scenarios.py::TestCashFlowRecommendLlmAllTypes::test_llm_data_length_is_one[CUST_SURPLUS]
-tests/test_comprehensive_scenarios.py::TestCashFlowRecommendLlmAllTypes::test_llm_data_length_is_one[CUST_TIGHT]
-tests/test_comprehensive_scenarios.py::TestCashFlowRecommendLlmAllTypes::test_llm_message_contains_llm_tag[CUST_NODATA]
-tests/test_comprehensive_scenarios.py::TestCashFlowRecommendLlmAllTypes::test_llm_message_contains_llm_tag[CUST_SALARY]
-tests/test_comprehensive_scenarios.py::TestCashFlowRecommendLlmAllTypes::test_llm_message_contains_llm_tag[CUST_SURPLUS]
-tests/test_comprehensive_scenarios.py::TestCashFlowRecommendLlmAllTypes::test_llm_message_contains_llm_tag[CUST_TIGHT]
 tests/test_comprehensive_scenarios.py::TestIntentClassifierEdgeCases::test_compare_with_personal_recommend_becomes_cash_flow
-tests/test_comprehensive_scenarios.py::TestRichDbMultiAccount::test_cust001_maturity_schedule_has_two_contracts
-tests/test_comprehensive_scenarios.py::TestRichDbMultiAccount::test_maturity_dates_both_present
-tests/test_comprehensive_scenarios.py::TestUnknownCustomerEmpty::test_unknown_customer_returns_empty[MATURITY_SCHEDULE]
 tests/test_deep_coverage.py::TestFeatureAnswerFormatterDetail::test_compare_has_table_header
 tests/test_deep_coverage.py::TestFeatureAnswerFormatterDetail::test_compare_separator_line
-tests/test_diverse_scenarios.py::TestCashFlowMessageDataSeparation::test_data_is_summary_not_products
-tests/test_diverse_scenarios.py::TestCashFlowMessageDataSeparation::test_llm_message_different_from_rule_based
-tests/test_diverse_scenarios.py::TestCashFlowMessageDataSeparation::test_message_is_recommendation_text
-tests/test_diverse_scenarios.py::TestCashFlowMessageDataSeparation::test_no_product_rows_in_data
 tests/test_diverse_scenarios.py::TestMilitaryProductExclusion::test_cash_flow_recommend_excludes_military
 tests/test_diverse_scenarios.py::TestProductCompareLlm::test_concept_compare_with_llm_returns_llm_message
 tests/test_diverse_scenarios.py::TestScenarioNodeButtonDB::test_ten_intents_seeded
@@ -69,13 +61,6 @@ tests/test_extended_scenarios.py::TestIntentClassifierHighDensity::test_join_con
 tests/test_extended_scenarios.py::TestProductCompareDetailed::test_compare_all_three_products
 tests/test_extended_scenarios.py::TestProductCompareDetailed::test_compare_data_has_required_fields
 tests/test_extended_scenarios.py::TestProductCompareDetailed::test_compare_two_products_returns_two_rows
-tests/test_features_api.py::TestExecuteUserFinance::test_maturity_schedule_with_customer_no
-tests/test_features_user_finance.py::TestMaturitySchedule::test_data_not_empty
-tests/test_features_user_finance.py::TestMaturitySchedule::test_maturity_date_present
-tests/test_features_user_finance.py::TestMaturitySchedule::test_product_name_present
-tests/test_features_user_finance.py::TestMaturitySchedule::test_requires_auth_flag
-tests/test_features_user_finance.py::TestMaturitySchedule::test_seeded_maturity_date
-tests/test_final_coverage.py::TestCust002FullAccess::test_cust002_maturity_schedule
 tests/test_final_coverage.py::TestExecuteRequestCombinations::test_compare_ids_override_query_type
 tests/test_final_coverage.py::TestLlmErrorFallback::test_llm_error_message_is_apology
 tests/test_final_coverage.py::TestLlmErrorFallback::test_llm_error_process_method
@@ -89,9 +74,6 @@ tests/test_more_coverage.py::TestComparePlusPersonalCashFlow::test_compare_with_
 tests/test_more_coverage.py::TestProductCompareDataFields::test_all_required_fields_present
 tests/test_more_coverage.py::TestProductCompareDataFields::test_base_interest_rate_positive
 tests/test_more_coverage.py::TestProductCompareDataFields::test_product_id_positive
-tests/test_more_scenarios.py::TestEdgeCaseIntegration::test_rich_db_all_user_finance_features_return_data
-tests/test_more_scenarios.py::TestMaturityScheduleAllStatus::test_both_maturity_dates_present
-tests/test_more_scenarios.py::TestMaturityScheduleAllStatus::test_includes_active_and_matured
 tests/test_more_scenarios.py::TestProductCompareProductId::test_product_id_and_compare_ids_both_set
 tests/test_more_scenarios.py::TestProductGuideRagNone::test_no_rag_returns_db_products
 tests/test_more_scenarios.py::TestRichDbTransactionTypes::test_cashflow_analysis_excludes_pending

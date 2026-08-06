@@ -1337,11 +1337,23 @@ class TestStaffDataConsistency:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# R. LLM mock 연결 시 전 고객 유형 정상 반환
+# R. LLM 어댑터를 붙여도 추천은 규칙 기반
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestCashFlowRecommendLlmAllTypes:
-    """CASH_FLOW_RECOMMEND + LLM mock — 모든 고객 유형 정상 동작."""
+    """CASH_FLOW_RECOMMEND + LLM mock — 모든 고객 유형 정상 동작.
+
+    원래 이 클래스는 LLM 이 만든 '[LLM 맞춤 추천]' 문구가 응답에 담기는지,
+    data 는 현금흐름 요약 1건뿐인지를 확인했다. 두 기대 모두 그 뒤 뒤집혔다.
+
+      - #83: "은행 상품 추천은 외부 생성형 AI 판단에 맡기지 않는다" — 서비스는
+        LLM 어댑터를 받기만 하고 쓰지 않는다(ChatbotService.__init__ 의
+        *unused_adapters). 그래서 마커는 응답에 들어올 수 없다.
+      - #111: 화면 카드도 같은 순위를 쓰도록 data 에 추천 상품 행이 붙었다.
+
+    이 테스트를 CI 에 붙인 시점에는 위 두 PR 이 이미 머지된 뒤였다. 옛 기대를
+    되살리는 대신, 정책이 뒤로 새지 않는지를 지키는 쪽으로 바꾼다.
+    """
 
     @pytest.mark.parametrize("cust", [CUST_SALARY, CUST_SURPLUS, CUST_TIGHT, CUST_NODATA])
     def test_llm_connected_returns_ok(self, cashflow_llm_service, cust):
@@ -1352,20 +1364,23 @@ class TestCashFlowRecommendLlmAllTypes:
         assert result.status == "OK"
 
     @pytest.mark.parametrize("cust", [CUST_SALARY, CUST_SURPLUS, CUST_TIGHT, CUST_NODATA])
-    def test_llm_message_contains_llm_tag(self, cashflow_llm_service, cust):
+    def test_llm_output_never_reaches_message(self, cashflow_llm_service, cust):
+        """LLM 어댑터가 붙어 있어도 그 출력이 고객 응답에 섞이지 않는다."""
         result = cashflow_llm_service.execute_feature(
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no=cust),
         )
-        assert "[LLM 맞춤 추천]" in result.message
+        assert "[LLM 맞춤 추천]" not in result.message
 
     @pytest.mark.parametrize("cust", [CUST_SALARY, CUST_SURPLUS, CUST_TIGHT, CUST_NODATA])
-    def test_llm_data_length_is_one(self, cashflow_llm_service, cust):
+    def test_data_is_summary_then_products(self, cashflow_llm_service, cust):
+        """data 첫 행은 현금흐름 요약, 나머지는 추천 상품 카드다."""
         result = cashflow_llm_service.execute_feature(
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no=cust),
         )
-        assert len(result.data) == 1
+        assert result.data[0]["row_type"] == "cash_flow_summary"
+        assert all(row["row_type"] == "recommended_product" for row in result.data[1:])
 
     def test_llm_missing_customer_still_empty(self, cashflow_llm_service):
         result = cashflow_llm_service.execute_feature(

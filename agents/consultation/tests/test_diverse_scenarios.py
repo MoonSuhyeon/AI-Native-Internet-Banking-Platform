@@ -968,7 +968,12 @@ class TestLlmContextCombination:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestCashFlowMessageDataSeparation:
-    """CASH_FLOW_RECOMMEND — message는 추천 텍스트, data는 summary 1개."""
+    """CASH_FLOW_RECOMMEND — message는 추천 텍스트, data는 요약 + 상품 카드.
+
+    data 가 요약 1건뿐이고 LLM 응답이 규칙 기반과 달라야 한다는 옛 기대는
+    #83(추천은 규칙 기반 고정)·#111(화면 카드용 상품 행 추가)에서 뒤집혔다.
+    자세한 경위는 test_comprehensive_scenarios.TestCashFlowRecommendLlmAllTypes 참고.
+    """
 
     def test_message_is_recommendation_text(self, cashflow_service):
         result = cashflow_service.execute_feature(
@@ -976,26 +981,26 @@ class TestCashFlowMessageDataSeparation:
             ChatbotFeatureExecuteRequest(customer_no="CUST_SALARY"),
         )
         assert result.message
-        assert "[현금흐름 분석 기반 상품 추천]" in result.message
+        assert "[추천 결과]" in result.message
 
-    def test_data_is_summary_not_products(self, cashflow_service):
+    def test_data_starts_with_cash_flow_summary(self, cashflow_service):
         result = cashflow_service.execute_feature(
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no="CUST_SALARY"),
         )
-        assert len(result.data) == 1
         assert result.data[0]["row_type"] == "cash_flow_summary"
         assert "total_balance" in result.data[0]
 
-    def test_no_product_rows_in_data(self, cashflow_service):
+    def test_product_rows_follow_summary(self, cashflow_service):
         result = cashflow_service.execute_feature(
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no="CUST_SALARY"),
         )
-        for item in result.data:
-            assert item.get("row_type") != "recommended_product"
+        for item in result.data[1:]:
+            assert item.get("row_type") == "recommended_product"
 
-    def test_llm_message_different_from_rule_based(self, cashflow_service, cashflow_llm_service):
+    def test_llm_adapter_does_not_change_message(self, cashflow_service, cashflow_llm_service):
+        """LLM 어댑터 유무로 추천 문구가 달라지면 규칙 기반 고정이 깨진 것이다."""
         r_rule = cashflow_service.execute_feature(
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no="CUST_SALARY"),
@@ -1004,8 +1009,7 @@ class TestCashFlowMessageDataSeparation:
             "CASH_FLOW_RECOMMEND",
             ChatbotFeatureExecuteRequest(customer_no="CUST_SALARY"),
         )
-        # LLM 응답이 룰 기반과 다른 내용
-        assert r_rule.message != r_llm.message
+        assert r_rule.message == r_llm.message
 
 
 # ─────────────────────────────────────────────────────────────────────────────
