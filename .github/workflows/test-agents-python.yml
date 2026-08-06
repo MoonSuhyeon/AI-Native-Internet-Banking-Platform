@@ -39,8 +39,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      # requirements-dev.txt 가 harness-core 를 editable 로 설치한다.
+      # **에이전트 디렉터리에서 실행해야 한다** — pip 은 requirements 안의 상대 경로를
+      # 파일 위치가 아니라 현재 작업 디렉터리 기준으로 푼다.
       - name: 의존성 설치
-        run: pip install -r agents/goal-agent/requirements.txt
+        working-directory: agents/goal-agent
+        run: pip install -r requirements-dev.txt
 
       # 감사 계약 정본(SQL)과 에이전트 사본 대조. consultation·goal-agent 양쪽 사본을
       # 여기서 함께 본다 — 계약이 깨지면 두 에이전트가 같이 틀어진다.

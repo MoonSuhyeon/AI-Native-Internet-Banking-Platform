@@ -13,9 +13,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-# 하네스 공유 계약(harness_core). 이미지 안에서는 /app/harness_core 로 들어가지만
-# 로컬 테스트는 레포의 원본을 직접 본다 — 사본을 만들지 않기 위해서다.
-sys.path.insert(0, str(ROOT.parent / "harness-core" / "python"))
+# harness_core 는 sys.path 를 만지지 않는다. venv 에 설치해서 쓴다
+# (requirements-dev.txt 의 -e ../harness-core/python).
 
 
 class RecordingAuditLog:

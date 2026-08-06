@@ -20,8 +20,32 @@ JVM 라이브러리를 CPython 에서 쓸 수 없으므로 구현은 두 벌이�
 dataclass·SQL 컬럼을 파일에서 직접 읽어 대조하므로, 한쪽만 고치면 테스트가 먼저 깨진다.
 
 ```bash
-cd agents/harness-core/python && python -m pytest tests/ -q
+cd agents/harness-core/python
+pip install -e .        # 이 패키지를 venv 에 넣는다 (아래 "어떻게 전달되는가")
+python -m pytest tests/ -q
 ```
+
+## 어떻게 전달되는가
+
+**venv 에 설치해서 쓴다. sys.path 를 만지지 않는다.**
+
+각 에이전트의 `requirements-dev.txt` 가 `-e ../harness-core/python` 으로 선언한다.
+
+```bash
+cd agents/consultation && pip install -r requirements-dev.txt
+```
+
+pip 은 requirements 안의 상대 경로를 **현재 작업 디렉터리** 기준으로 푼다.
+그래서 반드시 에이전트 디렉터리에서 실행해야 한다 (CI 도 `working-directory` 로 맞춘다).
+
+예전에는 세 에이전트가 세 가지 방법으로 이 패키지를 봤다 — conftest 의 `sys.path`,
+`pytest.ini` 의 `pythonpath`, README 안내. 방법이 갈리면 한 곳을 고칠 때 나머지가
+조용히 어긋난다. 전역 `pip install -e` 도 답이 아니었다 — CI·다른 사람 PC 에서
+재현되지 않는 네 번째 방법을 늘리는 것이고, 내 PC 에서만 초록인 상태를 만든다
+(docs/decisions/agent-harness-consolidation.md 다음 순서 6).
+
+이미지에는 설치하지 않고 `COPY harness-core/python/harness_core/ ./harness_core/` 로
+원본을 그대로 넣는다. 운영 이미지에 개발용 경로 의존을 남기지 않기 위해서다.
 
 ## 구조
 

@@ -55,8 +55,10 @@ jobs:
         with:
           python-version: '3.11'
 
+      # requirements-dev.txt 가 harness-core 를 editable 로 설치한다(공유 감사 계약).
+      # working-directory 가 agents/consultation 이라 상대 경로가 맞는다.
       - name: 의존성 설치
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       - name: 테스트 실행
         env:

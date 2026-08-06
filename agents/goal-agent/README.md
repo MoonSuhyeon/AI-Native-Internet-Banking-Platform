@@ -123,7 +123,8 @@ goal-agent (FastAPI, port 8086)
 cd services/goal-agent
 
 # 의존성 설치
-pip install -r requirements.txt
+pip install -r requirements.txt       # 실행용
+pip install -r requirements-dev.txt   # 테스트용 (harness-core 포함, 이 디렉터리에서 실행)
 
 # 환경 변수 설정 (.env)
 cp .env.example .env  # 아래 환경 변수 섹션 참고

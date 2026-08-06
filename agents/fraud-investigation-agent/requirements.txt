@@ -4,8 +4,10 @@ rich>=13.0
 httpx>=0.27
 fastapi>=0.110
 uvicorn>=0.29
-pytest>=8.0
-# 하네스 감사 기록 저장용. FRAUD_AUDIT_DSN 이 설정된 경우에만 실제로 import 된다
-# (harness_core.audit_psycopg 가 지연 import). 미설정 시 감사는 NoOp 이라
-# 이 패키지가 없어도 데모 경로는 그대로 돈다.
+# Harness audit storage. Imported only when FRAUD_AUDIT_DSN is set
+# (harness_core.audit_psycopg imports it lazily); without it the audit log is a
+# no-op and the demo path still runs.
+#
+# NOTE: keep this file ASCII-only. pip decodes requirements files with the
+# locale encoding, so Korean comments break `pip install` on cp949 Windows.
 psycopg[binary]>=3.2

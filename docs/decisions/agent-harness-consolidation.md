@@ -562,11 +562,20 @@ Docker 네트워크 정책이 닿지 않는 곳에 있었다.
    INSERT 가 통째로 거부되고, 판단은 성공했는데 기록만 사라진다.
    드리프트 네 종류(NOT NULL 제거·기본값 변경·인덱스 제거·인덱스 방식 변경)를
    실제로 넣어 테스트가 잡는 것을 확인했다.
-6. **전달 방식 단일화** — 세 에이전트가 세 가지 방식으로 같은 패키지를 본다
-   (conftest sys.path / pytest.ini pythonpath / README 안내).
-   전역 `pip install -e` 는 답이 아니다 — CI·타 개발자 PC 에서 재현되지 않는
-   **네 번째 방식**을 추가하는 것이고, 내 PC 에서만 초록인 상태를 만든다.
-   에이전트별 venv 를 전제로 requirements 에 선언하는 방향.
+6. ~~**전달 방식 단일화**~~ — **완료.** 에이전트마다 `requirements-dev.txt` 가
+   `-e ../harness-core/python` 으로 선언한다. conftest 의 `sys.path`, `pytest.ini` 의
+   `pythonpath`, harness-core 자기 테스트의 우회를 모두 걷어냈다.
+   **주의 하나.** pip 은 requirements 안의 상대 경로를 파일 위치가 아니라 **현재 작업
+   디렉터리** 기준으로 푼다. 그래서 반드시 에이전트 디렉터리에서 실행해야 하고 CI 도
+   `working-directory` 로 맞춘다. 레포 루트에서 `-r agents/x/requirements-dev.txt` 는
+   조용히 어긋난다.
+   **덤으로 드러난 것.** pip 은 requirements 파일을 로케일 인코딩으로 읽는다. 한글
+   주석이 든 `fraud-investigation-agent/requirements.txt` 는 cp949 윈도우에서
+   `pip install` 이 UnicodeDecodeError 로 죽고 있었다 — 이 레포 주인의 PC 가 그렇다.
+   requirements 파일은 ASCII 로만 쓰고 설명은 README 에 둔다.
+   운영 이미지는 그대로 `COPY harness-core/python/harness_core/` 다. 개발용 경로
+   의존을 이미지에 남기지 않기 위해서다. 테스트 의존성(pytest)도 requirements.txt 에서
+   requirements-dev.txt 로 옮겨 이미지에서 뺐다.
 
 ### 배포 전 선행조건
 

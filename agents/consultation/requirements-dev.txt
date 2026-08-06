@@ -1,0 +1,13 @@
+# Dev/test dependencies. Run from THIS directory:
+#     cd agents/consultation && pip install -r requirements-dev.txt
+# pip resolves relative paths in requirements files against the current working
+# directory, not this file's location.
+#
+# Why harness-core is installed instead of being put on sys.path:
+# see docs/decisions/agent-harness-consolidation.md ("next steps" 6) and README.
+#
+# NOTE: keep this file ASCII-only. pip decodes requirements files with the
+# locale encoding, so Korean comments break `pip install` on cp949 Windows.
+-r requirements.txt
+-e ../harness-core/python
+pytest==8.3.4

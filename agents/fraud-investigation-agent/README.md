@@ -109,7 +109,8 @@ flowchart TB
 ## PoC 실행 (Python + LangGraph)
 
 ```bash
-pip install -r requirements.txt           # langgraph · pydantic · rich · pytest
+pip install -r requirements-dev.txt       # langgraph · pydantic · rich · pytest · harness-core
+                                          # (이 디렉터리에서 실행 — 상대 경로가 cwd 기준이다)
 
 # 한 사건 조사 — 루프마다 분포 막대 → 도구+이유 → 결과 → 갱신 분포 → 게이트
 python scripts/run_investigation.py --case case_h1

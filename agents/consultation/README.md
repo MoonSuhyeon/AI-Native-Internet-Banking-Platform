@@ -579,7 +579,8 @@ python -m venv .venv
 # macOS / Linux
 source .venv/bin/activate
 
-pip install -r requirements.txt
+pip install -r requirements.txt       # 실행용
+pip install -r requirements-dev.txt   # 테스트용 (harness-core 포함, 이 디렉터리에서 실행)
 ```
 
 ### 실행
