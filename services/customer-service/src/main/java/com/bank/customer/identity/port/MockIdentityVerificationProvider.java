@@ -22,7 +22,9 @@ public class MockIdentityVerificationProvider implements IdentityVerificationPor
     private final String ciSecret;
 
     public MockIdentityVerificationProvider(
-            @Value("${customer.identity.ci-secret:dev-ci-secret-change-in-production}") String ciSecret) {
+            @Value("${customer.identity.ci-secret:dev-ci-secret-change-in-production}") String ciSecret,
+            org.springframework.core.env.Environment environment) {
+        com.bank.common.security.DevSecretGuard.verify("customer.identity.ci-secret", ciSecret, environment);
         this.ciSecret = ciSecret;
     }
 

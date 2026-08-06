@@ -32,7 +32,10 @@ public class CryptoService {
     private final SecretKeySpec key;
     private final SecureRandom  random = new SecureRandom();
 
-    public CryptoService(@Value("${customer.crypto.rrn-key:dev-rrn-crypto-key-change-in-production}") String passphrase) {
+    public CryptoService(@Value("${customer.crypto.rrn-key:dev-rrn-crypto-key-change-in-production}") String passphrase,
+                         org.springframework.core.env.Environment environment) {
+        // 운영에서 기본 키면 기동 중단 — 키가 공개값이면 주민번호를 암호화한 의미가 사라진다.
+        com.bank.common.security.DevSecretGuard.verify("customer.crypto.rrn-key", passphrase, environment);
         this.key = new SecretKeySpec(sha256(passphrase), "AES");
     }
 
