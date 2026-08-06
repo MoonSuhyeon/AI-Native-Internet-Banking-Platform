@@ -108,3 +108,42 @@ api.interceptors.response.use(
     return api(config);
   }
 );
+
+// ── 자금이동 승인(step-up) ───────────────────────────────────────────────────
+//
+// 이체는 로그인과 다른 등급의 행위다. 로그인 세션만으로 이체가 되면 세션 하나가 곧
+// 자금 유출이라, 이체 직전에 인증서 PIN 을 다시 확인하고 그 결과를 토큰으로 받는다.
+// 토큰은 이 거래(출금계좌·수취계좌·금액)에 묶여 있어 다른 이체에는 쓸 수 없다.
+// 설계: docs/plan/transfer-step-up-auth.md
+
+export type TransferApprovalInput = {
+  fromAccountId: number;
+  toAccountNo: string;
+  amount: number;
+  certSerialNumber: string;
+  pin: string;
+};
+
+/** 고객의 인증서 목록. 이체 승인에 쓸 인증서를 고르기 위해 부른다. */
+export async function fetchMyCertificates(customerId: string) {
+  const { data } = await api.get("/api/v1/cert/manage", {
+    headers: { "X-Customer-Id": customerId },
+  });
+  return (data?.data ?? []) as Array<{ serialNumber: string; status: string; certTypeName?: string }>;
+}
+
+/**
+ * 인증서 PIN 을 확인하고 이 이체에 한정된 승인 토큰을 받는다.
+ * PIN 이 틀리면 예외가 난다 — 호출하는 쪽에서 사용자에게 알려야 한다.
+ */
+export async function issueTransferApproval(
+  customerId: string,
+  input: TransferApprovalInput
+): Promise<string> {
+  const { data } = await api.post(
+    "/api/v1/customers/me/transaction-approvals",
+    input,
+    { headers: { "X-Customer-Id": customerId } }
+  );
+  return data?.data?.approvalToken as string;
+}

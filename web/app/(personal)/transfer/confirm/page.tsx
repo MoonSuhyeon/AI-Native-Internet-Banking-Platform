@@ -7,6 +7,7 @@ import { formatNumber } from '@/lib/mock-data'
 import TransferSidebar from '@/components/inquiry/TransferSidebar'
 import { executeDepositTransfer, getCurrentDepositCustomerId } from '@/lib/deposit-api'
 import { createInstantTransfer, newIdempotencyKey, newAuthToken, PAYMENT_BANK_CODE_MAP } from '@/lib/payment-api'
+import { fetchMyCertificates, issueTransferApproval } from '@/lib/api'
 
 type PendingTransfer = {
   fromAccountId?: number
@@ -29,6 +30,34 @@ const PIN_PAD = [
   ['↺', 0, '✕'],
 ]
 
+/**
+ * 이체 승인 토큰을 받는다.
+ *
+ * 인증서를 고르는 화면이 아직 없어 활성 인증서 중 첫 번째를 쓴다. 인증서가 여러 장인
+ * 고객은 선택 UI 가 필요하고, 그건 인증수단 관리 화면과 함께 정리할 일이다.
+ *
+ * 인증서가 없으면 토큰 없이 진행한다 — 서버가 아직 required=false 라 이체는 되고,
+ * 발급 단계가 붙지 않은 경로로 로그에 남는다. required 로 전환하기 전에 인증서 발급
+ * 유도를 붙여야 한다.
+ */
+async function issueApproval(
+  customerId: string,
+  data: PendingTransfer,
+  pin: string
+): Promise<string | undefined> {
+  const certs = await fetchMyCertificates(customerId)
+  const active = certs.find(c => c.status === 'ACTIVE') ?? certs[0]
+  if (!active) return undefined
+
+  return issueTransferApproval(customerId, {
+    fromAccountId: data.fromAccountId!,
+    toAccountNo: data.toAccount,
+    amount: data.amount,
+    certSerialNumber: active.serialNumber,
+    pin,
+  })
+}
+
 export default function TransferConfirmPage() {
   const router = useRouter()
   const [data, setData] = useState<PendingTransfer | null>(null)
@@ -36,6 +65,7 @@ export default function TransferConfirmPage() {
   const [certStep, setCertStep] = useState<'info' | 'pin'>('info')
   const [pin, setPin] = useState<number[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [certError, setCertError] = useState<string | null>(null)
 
   useEffect(() => {
     const raw = sessionStorage.getItem('pendingTransfer')
@@ -51,9 +81,11 @@ export default function TransferConfirmPage() {
       setPin(next)
       if (next.length === 6) {
         if (isSubmitting) return
+        const pinValue = next.join('')
         setTimeout(async () => {
           if (!data) return
           setIsSubmitting(true)
+          setCertError(null)
           setShowCertModal(false)
           try {
             if (!data.fromAccountId) throw new Error('출금계좌 정보가 없습니다.')
@@ -87,7 +119,13 @@ export default function TransferConfirmPage() {
                 failureCategory: result.failureCategory,
               }))
             } else {
-              const result = await executeDepositTransfer(getCurrentDepositCustomerId(), {
+              // 입력한 PIN 으로 이 이체에 한정된 승인 토큰을 받는다.
+              // 지금까지 PIN 은 화면에서만 받고 아무 데도 쓰이지 않았다 — 6자리를 채우면
+              // 그대로 이체가 됐다. 이제 실제로 인증서 PIN 을 확인한다.
+              const customerId = getCurrentDepositCustomerId()
+              const approvalToken = await issueApproval(customerId, data, pinValue)
+
+              const result = await executeDepositTransfer(customerId, {
                 fromAccountId: data.fromAccountId,
                 toAccountId: data.toAccountId,
                 toAccountNo: data.toAccount,
@@ -97,6 +135,7 @@ export default function TransferConfirmPage() {
                 counterpartyBankName: data.toBank,
                 counterpartyName: data.receiverName,
                 transactionMemo: '인터넷 이체',
+                approvalToken,
               })
               sessionStorage.setItem('paymentResult', JSON.stringify({
                 status: 'COMPLETED',
@@ -104,15 +143,28 @@ export default function TransferConfirmPage() {
               }))
             }
           } catch (e: unknown) {
-            const err = e as { response?: { data?: { error?: string; message?: string } }; message?: string }
+            const err = e as {
+              response?: { status?: number; data?: { error?: string; message?: string; code?: string } }
+              message?: string
+            }
+            // 인증서 PIN 실패는 이체 실패와 다르다. 결과 페이지로 넘기지 않고
+            // 같은 화면에서 다시 입력받는다 — 사용자는 무엇이 틀렸는지 알아야 한다.
+            const code = err.response?.data?.code ?? ''
+            if (code.startsWith('CUST_03')) {
+              setCertError(err.response?.data?.message ?? '인증서 비밀번호가 올바르지 않습니다.')
+              setPin([])
+              setShowCertModal(true)
+              setIsSubmitting(false)
+              return
+            }
             sessionStorage.setItem('paymentResult', JSON.stringify({
               status: 'ERROR',
               message: err.response?.data?.message ?? err.response?.data?.error ?? err.message ?? '네트워크 오류가 발생했습니다.',
             }))
           } finally {
             setIsSubmitting(false)
-            router.push('/transfer/result')
           }
+          router.push('/transfer/result')
         }, 400)
       }
     }
@@ -276,8 +328,11 @@ export default function TransferConfirmPage() {
                 ) : (
                   <div className="flex flex-col items-center">
                     <p className="text-[13px] mb-1" style={{ color: KB_PRIMARY }}>AXful 금융인증서</p>
-                    <p className="text-[16px] font-bold text-kb-text mb-5">비밀번호를 입력해주세요</p>
-                    <div className="flex gap-2 mb-5">
+                    <p className="text-[16px] font-bold text-kb-text mb-2">비밀번호를 입력해주세요</p>
+                    {certError && (
+                      <p className="text-[13px] text-red-600 mb-2 text-center">{certError}</p>
+                    )}
+                    <div className="flex gap-2 mb-5 mt-3">
                       {Array.from({length:6}).map((_,i) => (
                         <div key={i}
                           className="w-9 h-9 rounded-lg border-2 flex items-center justify-center transition-colors"

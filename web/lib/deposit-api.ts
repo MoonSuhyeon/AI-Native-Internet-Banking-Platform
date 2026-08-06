@@ -395,6 +395,11 @@ export type ExecuteDepositTransferInput = {
   counterpartyBankName?: string
   counterpartyName?: string
   transactionMemo?: string
+  /**
+   * 자금이동 승인 토큰(step-up). 인증서 PIN 확인 후 받는다.
+   * 아직 선택값이다 — 서버가 required 로 바뀌기 전까지는 없어도 처리된다.
+   */
+  approvalToken?: string
 }
 
 export async function executeDepositTransfer(
@@ -414,6 +419,7 @@ export async function executeDepositTransfer(
       counterpartyName: input.counterpartyName,
       channelType: 'INTERNET',
       transactionMemo: input.transactionMemo ?? '인터넷 이체',
+      approvalToken: input.approvalToken,
     },
     { headers: headers(customerId) }
   )
