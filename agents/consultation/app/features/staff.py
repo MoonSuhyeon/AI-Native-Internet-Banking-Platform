@@ -49,7 +49,7 @@ class StaffFeatureExecutor(FeatureExecutorBase):
                    a.account_number,
                    a.customer_id AS customer_no,
                    t.transaction_type,
-                   t.transaction_status,
+                   t.status AS transaction_status,
                    t.amount,
                    t.transaction_at
               FROM deposit_transactions t
@@ -105,7 +105,7 @@ class StaffFeatureExecutor(FeatureExecutorBase):
                    a.customer_id AS customer_no,
                    t.transaction_type,
                    t.amount,
-                   t.transaction_status,
+                   t.status AS transaction_status,
                    t.transaction_at
               FROM deposit_transactions t
               JOIN deposit_accounts a ON a.account_id = t.account_id

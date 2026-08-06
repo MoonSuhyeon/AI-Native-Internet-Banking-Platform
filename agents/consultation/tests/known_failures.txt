@@ -14,20 +14,13 @@
 # 고칠 때: 원인을 확인해 테스트를 고치거나 코드를 고친 뒤, 이 파일에서 해당 줄을 지운다.
 # 새로 추가할 때: 정말 지금 고칠 수 없는 것인지 먼저 따진다. 이 파일은 늘어나면 안 된다.
 #
-# 남은 54건의 성격 (2026-08-06 분류):
-#   A. 거래 status 컬럼 이름 불일치 — 약 28건
-#      운영 정본은 deposit_transactions.status 인데(V1), 앱 쿼리 절반이
-#      t.transaction_status 를 쓰고 픽스처도 그 이름으로 테이블을 만든다.
-#      (transaction_status 는 V5 common_transaction 유령 테이블에만 있었고
-#       V18 에서 DROP 됐다.) _rows 가 예외를 삼켜 "no such column" 이 빈 결과로
-#      둔갑하므로, 현금흐름 지표가 전부 0 으로 나온다. 테스트만의 문제가 아니다.
-#   B. IntentClassifier 분류 기대 — 9건
-#   C. PRODUCT_COMPARE 행 개수·필드 — 9건 (A 를 고치면 일부 따라 풀릴 수 있다)
-#   D. 응답 포맷터 마커 문구 — 2건 (가장 싸다)
-#   E. 개별 건 — 6건 (청약 설명, 시나리오 시드, LLM 오류 fallback 등)
-tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_salary_tx_count
-tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_surplus_tx_count
-tests/test_additional_scenarios.py::TestCashFlowMonthlyTxCount::test_tight_tx_count
+# 남은 32건 (2026-08-06, 거래 status 컬럼 통일 이후):
+#   A. 추천 결과 개수·필터 — 6건
+#      status 컬럼을 정본(deposit_transactions.status)으로 통일해 현금흐름 지표
+#      자체는 복구됐다. 남은 건 product_count·data 길이·군인 상품 제외 기대다.
+#   B. IntentClassifier 분류 기대 — 11건
+#   C. PRODUCT_COMPARE 행 개수·필드 — 9건
+#   E. 개별 — 6건 (청약 설명, 시나리오 시드, LLM 오류 fallback, RAG 미연결, 인텐트 저장)
 tests/test_additional_scenarios.py::TestHandleMessageCashFlowIntent::test_cash_flow_intent_classified
 tests/test_additional_scenarios.py::TestHandleMessageCashFlowIntent::test_cash_flow_message_is_recommendation_text
 tests/test_additional_scenarios.py::TestIntentClassifierAllKeywords::test_cash_flow_recommend_keywords[\ub0b4 \uac70\ub798 \ud328\ud134]
@@ -35,27 +28,12 @@ tests/test_additional_scenarios.py::TestIntentClassifierAllKeywords::test_cash_f
 tests/test_additional_scenarios.py::TestIntentClassifierAllKeywords::test_cash_flow_recommend_keywords[\ub0b4 \ud328\ud134]
 tests/test_additional_scenarios.py::TestIntentClassifierAllKeywords::test_cash_flow_recommend_keywords[\ud328\ud134 \ubd84\uc11d]
 tests/test_additional_scenarios.py::TestProductSearchSubscriptionReason::test_subscription_description_present
-tests/test_cash_flow_recommend.py::TestAccumulateTypeDiversity::test_includes_at_least_one_savings_in_top3
-tests/test_cash_flow_recommend.py::TestAccumulateTypeDiversity::test_shows_adjusted_score_for_savings
-tests/test_cash_flow_recommend.py::TestDataStructure::test_monthly_tx_count_positive_for_active_customer
-tests/test_cash_flow_recommend.py::TestDataStructure::test_product_count_reflects_selling_products
-tests/test_cash_flow_recommend.py::TestSalaryCustomerRuleBased::test_has_data_true
-tests/test_cash_flow_recommend.py::TestSalaryCustomerRuleBased::test_monthly_surplus_positive
-tests/test_cash_flow_recommend.py::TestSurplusCustomerRuleBased::test_has_data_true
 tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_data_length_always_one
 tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_product_count_reflects_all_selling
-tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_salary_monthly_surplus_calculation
-tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_salary_monthly_tx_count_positive
-tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_surplus_monthly_surplus_positive
-tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_tight_has_data_true
-tests/test_comprehensive_scenarios.py::TestCashFlowCalculations::test_tight_monthly_surplus_negative
 tests/test_comprehensive_scenarios.py::TestIntentClassifierEdgeCases::test_compare_with_personal_recommend_becomes_cash_flow
-tests/test_deep_coverage.py::TestFeatureAnswerFormatterDetail::test_compare_has_table_header
-tests/test_deep_coverage.py::TestFeatureAnswerFormatterDetail::test_compare_separator_line
 tests/test_diverse_scenarios.py::TestMilitaryProductExclusion::test_cash_flow_recommend_excludes_military
 tests/test_diverse_scenarios.py::TestProductCompareLlm::test_concept_compare_with_llm_returns_llm_message
 tests/test_diverse_scenarios.py::TestScenarioNodeButtonDB::test_ten_intents_seeded
-tests/test_extended_scenarios.py::TestCashFlowRichDb::test_cust001_cash_flow_has_data
 tests/test_extended_scenarios.py::TestCashFlowRichDb::test_cust001_product_count_reflects_db
 tests/test_extended_scenarios.py::TestIntentClassifierHighDensity::test_join_condition_with_extra_words
 tests/test_extended_scenarios.py::TestProductCompareDetailed::test_compare_all_three_products
@@ -65,9 +43,6 @@ tests/test_final_coverage.py::TestExecuteRequestCombinations::test_compare_ids_o
 tests/test_final_coverage.py::TestLlmErrorFallback::test_llm_error_message_is_apology
 tests/test_final_coverage.py::TestLlmErrorFallback::test_llm_error_process_method
 tests/test_final_coverage.py::TestProductGuideExclusion::test_cash_flow_recommend_no_military_products
-tests/test_more_coverage.py::TestCashflowHasData::test_has_data_per_customer[CUST_SALARY-True]
-tests/test_more_coverage.py::TestCashflowHasData::test_has_data_per_customer[CUST_SURPLUS-True]
-tests/test_more_coverage.py::TestCashflowHasData::test_has_data_per_customer[CUST_TIGHT-True]
 tests/test_more_coverage.py::TestComparePlusPersonalCashFlow::test_compare_with_personal_intent[\ub098\ub294 \ube44\uad50\ud574\uc918]
 tests/test_more_coverage.py::TestComparePlusPersonalCashFlow::test_compare_with_personal_intent[\ub098\ud55c\ud14c \ucc28\uc774\uac00 \ubb50\uc57c]
 tests/test_more_coverage.py::TestComparePlusPersonalCashFlow::test_compare_with_personal_intent[\uc800\ud55c\ud14c \ube44\uad50\ud574\uc918]
@@ -76,6 +51,5 @@ tests/test_more_coverage.py::TestProductCompareDataFields::test_base_interest_ra
 tests/test_more_coverage.py::TestProductCompareDataFields::test_product_id_positive
 tests/test_more_scenarios.py::TestProductCompareProductId::test_product_id_and_compare_ids_both_set
 tests/test_more_scenarios.py::TestProductGuideRagNone::test_no_rag_returns_db_products
-tests/test_more_scenarios.py::TestRichDbTransactionTypes::test_cashflow_analysis_excludes_pending
 tests/test_more_scenarios.py::TestRichLlmService::test_cash_flow_recommend_data_summary
 tests/test_scenario_flow.py::TestChatbotIntentPersistence::test_llm_fallback_intent_id_is_saved

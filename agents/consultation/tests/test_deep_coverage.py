@@ -109,7 +109,6 @@ def transfer_db() -> Session:
                 counterparty_account_no  TEXT,
                 counterparty_account_id  INTEGER,
                 counterparty_customer_id TEXT,
-                transaction_status TEXT,
                 created_at        TEXT,
                 updated_at        TEXT
             )
@@ -1027,18 +1026,26 @@ class TestFeatureAnswerFormatterDetail:
         assert "가능" in result
 
     # _compare 세부
-    def test_compare_has_table_header(self):
+    #
+    # #150 이 고정폭 표(헤더 '상품명 유형 금리 기간' + '-'*55 구분선)를 걷어내고
+    # 모든 포맷터가 _product_row 를 공유하도록 바꿨다 — 금리·만기·유형 3필드를
+    # 값이 없어도 '미표기'로 채워 항상 함께 내보내는 렌더러다. 아래 두 테스트는
+    # 그 이전의 표 형식을 확인하던 것이라, 지금 계약에 맞춰 다시 썼다.
+    def test_compare_has_section_header(self):
         data = [{"product_name": "상품A", "product_type": "DEPOSIT",
                  "base_interest_rate": 3.5, "min_period_month": 12, "max_period_month": 24}]
         result = self.fmt.format("PRODUCT_COMPARE", data)
-        assert "상품명" in result
+        assert "[상품 비교]" in result
+        assert "상품A" in result
         assert "금리" in result
 
-    def test_compare_separator_line(self):
-        data = [{"product_name": "상품A", "product_type": "DEPOSIT",
-                 "base_interest_rate": 3.5, "min_period_month": 12, "max_period_month": 24}]
+    def test_compare_row_always_renders_three_fields(self):
+        """값이 비어도 금리·만기·유형 3필드는 빠지지 않는다 (_product_row 규칙)."""
+        data = [{"product_name": "상품A"}]
         result = self.fmt.format("PRODUCT_COMPARE", data)
-        assert "-" * 10 in result
+        assert "금리: 미표기" in result
+        assert "만기: 미표기" in result
+        assert "계좌/상품 유형: 미표기" in result
 
     def test_compare_max_five_rows(self):
         data = [{"product_name": f"상품{i}", "product_type": "DEPOSIT",

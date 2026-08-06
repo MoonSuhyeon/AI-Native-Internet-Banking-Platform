@@ -222,7 +222,7 @@ def db() -> Session:
                 transaction_number TEXT,
                 account_id INTEGER,
                 transaction_type TEXT,
-                transaction_status TEXT,
+                status TEXT,
                 amount NUMERIC,
                 transaction_at TEXT,
                 created_at TEXT)
@@ -371,7 +371,7 @@ def _create_empty_deposit_tables(conn) -> None:
             transaction_number TEXT,
             account_id INTEGER,
             transaction_type TEXT,
-            transaction_status TEXT,
+            status TEXT,
             amount NUMERIC,
             transaction_at TEXT,
             created_at TEXT)""",

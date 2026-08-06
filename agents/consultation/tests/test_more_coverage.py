@@ -162,7 +162,7 @@ class TestMyCashFlowLimit:
                 conn.execute(text(f"""
                     INSERT INTO deposit_transactions
                     (transaction_id, transaction_number, account_id, transaction_type,
-                     transaction_status, amount, created_at)
+                     status, amount, created_at)
                     VALUES ({100+i}, 'TX-MANY-{100+i}', 1, 'TRANSFER', 'COMPLETED', 5000, '2026-05-{(i%28)+1:02d}')
                 """))
         svc = ChatbotService(db, AsyncMock(), __import__("app.llm", fromlist=["LlmHandoffAdapter"]).LlmHandoffAdapter())
