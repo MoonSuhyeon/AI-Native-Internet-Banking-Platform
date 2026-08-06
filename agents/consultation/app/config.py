@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     langfuse_host: str = "http://localhost:3001"
     # customer-service 연동 (나이/생년월일 조회용)
     customer_service_url: str = "http://localhost:8081"
+    # core-banking 연동 — 자금 이동은 여기를 거친다.
+    # 챗봇이 직접 SQL 로 옮기면 락·멱등키·한도 검증이 없는 두 번째 원장 구현이 된다.
+    core_banking_url: str = "http://localhost:8082"
     # 하네스 감사 기록 — 챗봇이 고객에게 무엇을 답했는지 남긴다.
     # 기본값을 켜 둔 것은 의도적이다. 감사는 켜는 것이 기본이고 끄는 것이 예외다.
     # 끄더라도 NoOp 이 들어가므로 의존하는 쪽은 깨지지 않는다.

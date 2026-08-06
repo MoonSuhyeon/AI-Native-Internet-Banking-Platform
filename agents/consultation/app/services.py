@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from datetime import date, datetime, timezone
 from typing import Any
@@ -35,6 +36,10 @@ from app.schemas import (
     ChatbotTransferRequest,
     ChatbotTransferResponse,
 )
+
+# 모듈 로거. 이체 실패 경로가 logger 를 쓰는데 정의가 없어 NameError 로 터졌다 —
+# 오류 메시지를 돌려주려던 자리에서 예외가 다시 나던 셈이다.
+logger = logging.getLogger(__name__)
 
 CODE_RECEPTION_METHOD_CHATBOT = 1
 CODE_INQUIRY_PRODUCT = 1
@@ -1437,104 +1442,80 @@ class ChatbotService:
             if dst["account_id"] == req.from_account_id:
                 return ChatbotTransferResponse(status="ERROR", message="출금 계좌와 수취 계좌가 동일합니다.")
 
-            now = datetime.now(timezone.utc)
-            tx_no = f"TXN{now.strftime('%Y%m%d%H%M%S')}{req.from_account_id}"
-
-            # 출금 트랜잭션
-            src_balance_after = int(src["balance"]) - req.amount
-            result = self.db.execute(
-                text("""
-                    INSERT INTO deposit_transactions
-                        (transaction_number, account_id, transaction_type, direction_type,
-                         amount, balance_before, balance_after, available_balance_after,
-                         fee_amount, currency, status, channel_type,
-                         transaction_memo, transaction_summary, transaction_at,
-                         counterparty_account_no, counterparty_account_id,
-                         counterparty_customer_id, created_at, updated_at)
-                    VALUES
-                        (:tx_no, :account_id, 'TRANSFER', 'OUT',
-                         :amount, :bal_before, :bal_after, :bal_after,
-                         0, 'W', 'SUCCESS', 'CHATBOT',
-                         :memo, :summary, :now,
-                         :to_acc_no, :to_acc_id,
-                         :to_cust_id, :now, :now)
-                    RETURNING transaction_id
-                """),
-                {
-                    "tx_no": tx_no + "_OUT",
-                    "account_id": req.from_account_id,
-                    "amount": req.amount,
-                    "bal_before": int(src["balance"]),
-                    "bal_after": src_balance_after,
-                    "memo": req.memo,
-                    "summary": f"{req.to_account_number}으로 이체",
-                    "now": now,
-                    "to_acc_no": dst["account_number"],
-                    "to_acc_id": dst["account_id"],
-                    "to_cust_id": dst["customer_id"],
-                },
-            )
-            transaction_id = result.scalar()
-
-            # 수취 트랜잭션
-            dst_balance = self.db.execute(
-                text("SELECT balance FROM deposit_accounts WHERE account_id = :aid"),
-                {"aid": dst["account_id"]},
-            ).scalar() or 0
-            dst_balance_after = int(dst_balance) + req.amount
-            self.db.execute(
-                text("""
-                    INSERT INTO deposit_transactions
-                        (transaction_number, account_id, transaction_type, direction_type,
-                         amount, balance_before, balance_after, available_balance_after,
-                         fee_amount, currency, status, channel_type,
-                         transaction_memo, transaction_summary, transaction_at,
-                         counterparty_account_no, counterparty_account_id,
-                         counterparty_customer_id, created_at, updated_at)
-                    VALUES
-                        (:tx_no, :account_id, 'TRANSFER', 'IN',
-                         :amount, :bal_before, :bal_after, :bal_after,
-                         0, 'W', 'SUCCESS', 'CHATBOT',
-                         :memo, :summary, :now,
-                         :from_acc_no, :from_acc_id,
-                         :cno, :now, :now)
-                """),
-                {
-                    "tx_no": tx_no + "_IN",
-                    "account_id": dst["account_id"],
-                    "amount": req.amount,
-                    "bal_before": int(dst_balance),
-                    "bal_after": dst_balance_after,
-                    "memo": req.memo,
-                    "summary": f"{src['account_number']}에서 이체",
-                    "now": now,
-                    "from_acc_no": src["account_number"],
-                    "from_acc_id": req.from_account_id,
-                    "cno": req.customer_no,
-                },
-            )
-
-            # 잔액 업데이트
-            self.db.execute(
-                text("UPDATE deposit_accounts SET balance = :bal, updated_at = :now WHERE account_id = :aid"),
-                {"bal": src_balance_after, "now": now, "aid": req.from_account_id},
-            )
-            self.db.execute(
-                text("UPDATE deposit_accounts SET balance = :bal, updated_at = :now WHERE account_id = :aid"),
-                {"bal": dst_balance_after, "now": now, "aid": dst["account_id"]},
-            )
-            self.db.commit()
-
-            return ChatbotTransferResponse(
-                status="OK",
-                message=f"{req.amount:,}원이 {req.to_account_number}으로 이체되었습니다.",
-                transaction_id=transaction_id,
-                balance_after=src_balance_after,
-            )
+            # 실제 자금 이동은 core-banking 이 한다. 예전에는 여기서 직접 INSERT·UPDATE 로
+            # 옮겼는데, 그러면 원장 구현이 둘이 된다 — 그리고 이쪽에는 비관적 락도,
+            # 멱등키도, 일일 한도 검증도 없었다. 잔액을 읽고 검사한 뒤 갱신하므로 동시에
+            # 두 건이 들어오면 둘 다 통과해 잔액이 음수가 될 수 있었다.
+            return self._call_core_banking_transfer(req, dst)
         except Exception as exc:
             self.db.rollback()
             logger.exception("이체 처리 오류: %s", exc)
             return ChatbotTransferResponse(status="ERROR", message="이체 처리 중 오류가 발생했습니다.")
+
+    def _call_core_banking_transfer(self, req: ChatbotTransferRequest, dst) -> ChatbotTransferResponse:
+        """core-banking 이체 API 호출.
+
+        여기서 자체 SQL 을 쓰지 않는 이유는 자금 이동 경로를 하나로 두기 위해서다.
+        core-banking 쪽에는 비관적 락(계좌 ID 순 정렬로 데드락 회피), 멱등키, 일일 이체
+        한도 검증, 소유권 검증, 승인 토큰 확인이 들어 있다. 챗봇이 따로 옮기면 그 보호가
+        전부 비껴간다.
+
+        멱등키는 챗봇 상담·계좌·금액·분 단위 시각으로 만든다. 같은 요청이 중복 전달돼도
+        두 번 이체되지 않는다 — 자체 SQL 시절에는 이 보호가 없었다.
+        """
+        from app.config import get_settings
+
+        now = datetime.now(timezone.utc)
+        idempotency_key = (
+            f"CHAT-{req.customer_no}-{req.from_account_id}-{req.to_account_number}"
+            f"-{req.amount}-{now.strftime('%Y%m%d%H%M')}"
+        )
+        payload = {
+            "fromAccountId": req.from_account_id,
+            "toAccountId": dst["account_id"],
+            "toAccountNo": req.to_account_number,
+            "amount": req.amount,
+            "transferType": "INTERNAL",
+            "channelType": "CHATBOT",
+            "transactionMemo": req.memo,
+            "idempotencyKey": idempotency_key,
+        }
+        url = f"{get_settings().core_banking_url}/api/transactions/transfer"
+
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.post(
+                    url,
+                    json=payload,
+                    # 게이트웨이를 거치지 않는 서비스 간 호출이라 신원을 직접 싣는다.
+                    # core-banking 은 이 헤더로 출금 계좌 소유자를 대조한다.
+                    headers={"X-Customer-Id": str(req.customer_no)},
+                )
+        except Exception as exc:
+            logger.exception("core-banking 이체 호출 실패: %s", exc)
+            return ChatbotTransferResponse(
+                status="ERROR", message="이체 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+            )
+
+        if resp.status_code >= 400:
+            # core-banking 의 도메인 메시지를 그대로 보여준다 — 잔액 부족·한도 초과처럼
+            # 고객이 조치할 수 있는 사유가 여기서 온다.
+            message = "이체 처리 중 오류가 발생했습니다."
+            try:
+                body = resp.json()
+                message = body.get("message") or body.get("error") or message
+            except Exception:
+                pass
+            logger.warning("core-banking 이체 거부 status=%s body=%s", resp.status_code, resp.text[:200])
+            return ChatbotTransferResponse(status="ERROR", message=message)
+
+        body = resp.json()
+        return ChatbotTransferResponse(
+            status="OK",
+            message=f"{req.amount:,}원이 {req.to_account_number}으로 이체되었습니다.",
+            transaction_id=body.get("transactionId"),
+            balance_after=body.get("balanceAfter"),
+        )
 
     def _format_product_compare_rows(self, rows: list[dict[str, Any]]) -> str:
         if not rows:

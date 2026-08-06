@@ -212,68 +212,116 @@ class TestExecuteTransfer:
         assert result.status == "ERROR"
         assert "동일" in result.message
 
-    def test_successful_transfer_status_ok(self, transfer_service):
-        result = transfer_service.execute_transfer(self._req(amount=100_000))
-        assert result.status == "OK"
+    # ── 자금 이동은 core-banking 이 한다 ────────────────────────────────────
+    #
+    # 예전에는 챗봇이 직접 INSERT·UPDATE 로 옮겼고, 아래 테스트들은 그 결과(잔액 변화,
+    # 거래 2건 생성, 방향 코드)를 확인했다. 그 구현에는 비관적 락도 멱등키도 일일 한도
+    # 검증도 없어서, 원장 규칙이 core-banking 과 갈라진 채 두 벌로 존재했다.
+    #
+    # 이제 챗봇은 core-banking 이체 API 를 부른다. 잔액·거래 레코드가 맞게 남는지는
+    # core-banking 쪽 테스트가 본다. 여기서 볼 것은 **위임이 제대로 되는가**다 —
+    # 무엇을 보내고, 응답을 어떻게 옮기고, 실패를 어떻게 전하는가.
 
-    def test_successful_transfer_message(self, transfer_service):
+    @staticmethod
+    def _ok_response(transaction_id=77, balance_after=900_000):
+        class _Resp:
+            status_code = 201
+            text = ""
+
+            @staticmethod
+            def json():
+                return {"transactionId": transaction_id, "balanceAfter": balance_after}
+
+        return _Resp()
+
+    def _patch_core_banking(self, monkeypatch, response):
+        """core-banking 호출을 가로채 보낸 요청을 기록한다."""
+        sent = {}
+
+        class _Client:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *args):
+                return False
+
+            def post(self_inner, url, json=None, headers=None):
+                sent["url"] = url
+                sent["json"] = json
+                sent["headers"] = headers
+                if isinstance(response, Exception):
+                    raise response
+                return response
+
+        import app.services as services_mod
+        monkeypatch.setattr(services_mod.httpx, "Client", lambda *a, **k: _Client())
+        return sent
+
+    def test_delegates_to_core_banking(self, transfer_service, monkeypatch):
+        sent = self._patch_core_banking(monkeypatch, self._ok_response())
+
         result = transfer_service.execute_transfer(self._req(amount=100_000))
+
+        assert result.status == "OK"
+        assert sent["url"].endswith("/api/transactions/transfer")
+        assert sent["json"]["fromAccountId"] == 1
+        assert sent["json"]["amount"] == 100_000
+        assert sent["json"]["transferType"] == "INTERNAL"
+
+    def test_sends_identity_header(self, transfer_service, monkeypatch):
+        """소유권 검증은 core-banking 이 한다. 신원을 안 보내면 거기서 막힌다."""
+        sent = self._patch_core_banking(monkeypatch, self._ok_response())
+
+        transfer_service.execute_transfer(self._req(amount=100_000))
+
+        assert sent["headers"]["X-Customer-Id"] == CUST
+
+    def test_sends_idempotency_key(self, transfer_service, monkeypatch):
+        """같은 요청이 중복 전달돼도 두 번 이체되지 않게 — 자체 SQL 시절엔 없던 보호다."""
+        sent = self._patch_core_banking(monkeypatch, self._ok_response())
+
+        transfer_service.execute_transfer(self._req(amount=100_000))
+
+        key = sent["json"]["idempotencyKey"]
+        assert key and str(1) in key and "100000" in key
+
+    def test_maps_success_response(self, transfer_service, monkeypatch):
+        self._patch_core_banking(monkeypatch, self._ok_response(transaction_id=77, balance_after=900_000))
+
+        result = transfer_service.execute_transfer(self._req(amount=100_000))
+
+        assert result.transaction_id == 77
+        assert result.balance_after == 900_000
         assert "100,000원" in result.message
         assert "001-002-000001" in result.message
 
-    def test_successful_transfer_balance_after(self, transfer_service):
+    def test_surfaces_core_banking_rejection(self, transfer_service, monkeypatch):
+        """잔액 부족·한도 초과처럼 고객이 조치할 수 있는 사유는 그대로 보여준다."""
+        class _Rejected:
+            status_code = 400
+            text = '{"message": "1일 이체 한도를 초과했습니다."}'
+
+            @staticmethod
+            def json():
+                return {"message": "1일 이체 한도를 초과했습니다."}
+
+        self._patch_core_banking(monkeypatch, _Rejected())
+
         result = transfer_service.execute_transfer(self._req(amount=100_000))
-        assert result.balance_after == 1_000_000 - 100_000
 
-    def test_successful_transfer_transaction_id_positive(self, transfer_service):
+        assert result.status == "ERROR"
+        assert "한도" in result.message
+
+    def test_core_banking_unreachable_does_not_pretend_success(self, transfer_service, monkeypatch):
+        self._patch_core_banking(monkeypatch, RuntimeError("connection refused"))
+
         result = transfer_service.execute_transfer(self._req(amount=100_000))
-        assert result.transaction_id is not None
-        assert result.transaction_id > 0
 
-    def test_balance_deducted_from_source(self, transfer_service, transfer_db):
-        transfer_service.execute_transfer(self._req(amount=200_000))
-        row = transfer_db.execute(
-            text("SELECT balance FROM deposit_accounts WHERE account_id=1")
-        ).scalar()
-        assert row == 800_000
+        assert result.status == "ERROR"
 
-    def test_balance_added_to_destination(self, transfer_service, transfer_db):
-        transfer_service.execute_transfer(self._req(amount=200_000))
-        row = transfer_db.execute(
-            text("SELECT balance FROM deposit_accounts WHERE account_id=2")
-        ).scalar()
-        assert row == 700_000
-
-    def test_two_transaction_records_created(self, transfer_service, transfer_db):
-        transfer_service.execute_transfer(self._req(amount=100_000))
-        count = transfer_db.execute(
-            text("SELECT COUNT(*) FROM deposit_transactions")
-        ).scalar()
-        assert count == 2  # OUT + IN
-
-    def test_out_transaction_direction(self, transfer_service, transfer_db):
-        transfer_service.execute_transfer(self._req(amount=100_000))
-        row = transfer_db.execute(
-            text("SELECT direction_type FROM deposit_transactions WHERE account_id=1")
-        ).scalar()
-        assert row == "OUT"
-
-    def test_in_transaction_direction(self, transfer_service, transfer_db):
-        transfer_service.execute_transfer(self._req(amount=100_000))
-        row = transfer_db.execute(
-            text("SELECT direction_type FROM deposit_transactions WHERE account_id=2")
-        ).scalar()
-        assert row == "IN"
-
-    def test_memo_stored_in_transaction(self, transfer_service, transfer_db):
-        transfer_service.execute_transfer(self._req(amount=100_000, memo="생일 선물"))
-        row = transfer_db.execute(
-            text("SELECT transaction_memo FROM deposit_transactions WHERE account_id=1")
-        ).scalar()
-        assert row == "생일 선물"
-
-    def test_transfer_api_returns_chatbot_transfer_response(self, transfer_service):
+    def test_transfer_api_returns_chatbot_transfer_response(self, transfer_service, monkeypatch):
         from app.schemas import ChatbotTransferResponse
+        self._patch_core_banking(monkeypatch, self._ok_response())
         result = transfer_service.execute_transfer(self._req(amount=50_000))
         assert isinstance(result, ChatbotTransferResponse)
 
