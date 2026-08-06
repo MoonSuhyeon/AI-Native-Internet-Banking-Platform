@@ -152,6 +152,38 @@ class TestAgentTransfer:
         assert chatbot.agent_connected_yn == "Y"
 
 
+class TestAuditCallSite:
+    """감사 호출이 handle_message 경로에 붙어 있는가.
+
+    저장이 실제로 되는지(JSONB·INSERT-ONLY 트리거)는 SQLite 로 확인할 수 없어
+    test_audit_wiring.py 가 실제 PostgreSQL 로 본다. 여기서 보는 건 그 앞 단계다 —
+    호출 자체가 남아 있는지. 호출을 지워도 PostgreSQL 테스트가 없는 환경에서는
+    아무것도 깨지지 않기 때문에, 값싼 확인을 여기에도 둔다.
+    """
+
+    def test_turn_is_recorded(self, service, audit_spy):
+        service.seed_default_scenario()
+        session = start(service)
+
+        send(service, session.chatbot_consultation_id, message="가입 조건 알려줘")
+
+        assert audit_spy.entries, "감사 기록 호출이 없다"
+        entry = audit_spy.entries[-1]
+        assert entry.subject_id == str(session.chatbot_consultation_id)
+
+    def test_answer_text_is_kept(self, service, audit_spy):
+        """고객에게 나간 문장이 그대로 남아야 한다 — 이 기록의 존재 이유다."""
+        service.seed_default_scenario()
+        session = start(service)
+
+        response = send(service, session.chatbot_consultation_id, message="가입 조건 알려줘")
+
+        import json
+        recorded = json.loads(audit_spy.entries[-1].output_json)
+        assert recorded["answer"] == response.message
+        assert recorded["process_method"] == response.process_method
+
+
 class TestChatbotIntentPersistence:
     def test_default_intents_are_seeded_with_scenario(self, service, db):
         service.seed_default_scenario()

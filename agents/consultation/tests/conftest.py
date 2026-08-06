@@ -84,6 +84,45 @@ def _block_outbound_http(monkeypatch):
     monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", _refuse)
 
 
+class RecordingAuditLog:
+    """테스트용 인메모리 감사 저장소. harness_core 저장소와 같은 모양만 갖춘다."""
+
+    def __init__(self) -> None:
+        self.entries: list = []
+
+    def record(self, entry) -> None:
+        self.entries.append(entry)
+
+    def find_latest(self, subject_type: str, subject_id: str, decision_kind=None):
+        for entry in reversed(self.entries):
+            if entry.subject_type != subject_type or entry.subject_id != subject_id:
+                continue
+            if decision_kind is None or entry.decision_kind == decision_kind:
+                return entry
+        return None
+
+
+@pytest.fixture(autouse=True)
+def audit_spy(monkeypatch) -> RecordingAuditLog:
+    """감사 저장소를 인메모리 spy 로 바꾼다.
+
+    바꾸지 않으면 get_audit_log() 가 SessionLocal(=CONSULTATION_DATABASE_URL 이
+    가리키는 실제 DB)에 붙은 저장소를 만든다. 테스트 본체는 인메모리 SQLite 를
+    쓰므로 감사 INSERT 만 엉뚱한 DB 로 나가고, 거기엔 harness_audit_log 가 없어
+    턴마다 예외 트레이스가 찍힌다. 실패가 응답을 막지는 않지만(설계된 동작),
+    로그가 시끄러워 진짜 오류를 덮는다.
+
+    spy 로 바꾸면 그 소음이 사라지고, 감사 호출이 붙어 있는지를 SQLite 테스트에서도
+    확인할 수 있다. 저장이 실제로 되는지(JSONB·INSERT-ONLY 트리거)는 SQLite 로
+    확인할 수 없어 test_audit_wiring.py 가 실제 PostgreSQL 로 따로 본다.
+    """
+    import app.audit as audit_mod
+
+    spy = RecordingAuditLog()
+    monkeypatch.setattr(audit_mod, "_audit_log", spy)
+    return spy
+
+
 @pytest.fixture()
 def db() -> Session:
     engine = create_engine(
