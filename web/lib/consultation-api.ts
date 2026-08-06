@@ -160,6 +160,8 @@ export async function executeChatbotTransfer(payload: {
   to_bank_name?: string
   amount: number
   memo?: string
+  /** 인증서 PIN 확인으로 받은 승인 토큰. 없으면 서버 과도기 설정에 따른다. */
+  approval_token?: string
 }): Promise<TransferResult> {
   const { data } = await consultationApi.post<TransferResult>('/chatbot/transfer', {
     customer_no: payload.customer_no,
@@ -167,6 +169,7 @@ export async function executeChatbotTransfer(payload: {
     to_account_number: payload.to_account_number,
     amount: payload.amount,
     memo: payload.memo ?? '이체',
+    approval_token: payload.approval_token,
   })
   return data
 }

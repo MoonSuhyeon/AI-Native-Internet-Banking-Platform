@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { api } from '@/lib/api'
+import { api, fetchMyCertificates, issueTransferApproval } from '@/lib/api'
 import { ArrowLeftRight, Bot, Home, LogOut, MessageCircle, PackageSearch, Paperclip, Phone, Send, Sparkles, X } from 'lucide-react'
 import {
   ChatbotButton,
@@ -2031,16 +2031,49 @@ export default function ChatbotWidget() {
     if (!transferState) return
     const amount = parseInt(transferState.amount.replace(/,/g, ''), 10)
     const targetAccount = transferState.myAccounts.find((account) => account.account_number === transferState.toAccountNumber)
+    const customerId = customerNo.trim() || getCurrentDepositCustomerId()
     setTransferState((s) => s && { ...s, step: 'processing' })
     try {
+      // 입력받은 인증서 PIN 으로 이 이체에 한정된 승인 토큰을 받는다.
+      // 예전에는 certPin 을 6자리 채우면 화면만 넘어가고 값은 버려졌다 —
+      // 인증하는 것처럼 보이지만 실제로는 아무것도 확인하지 않는 상태였다.
+      let approvalToken: string | undefined
+      try {
+        const certs = await fetchMyCertificates(customerId)
+        const active = certs.find(c => c.status === 'ACTIVE')
+        if (!active) {
+          setTransferState((s) => s && {
+            ...s, step: 'error',
+            resultMessage: '이체에는 인증서가 필요합니다. 인증센터에서 발급 후 다시 시도해 주세요.',
+          })
+          return
+        }
+        approvalToken = await issueTransferApproval(customerId, {
+          fromAccountNo: transferState.fromAccountNumber,
+          toAccountNo: transferState.toAccountNumber,
+          amount,
+          certSerialNumber: active.serialNumber,
+          pin: transferState.certPin,
+        })
+      } catch (certErr: unknown) {
+        // 인증서 PIN 실패는 이체 실패와 다르다. 사유를 그대로 보여주고 다시 받는다.
+        const detail = (certErr as { response?: { data?: { message?: string } } })?.response?.data?.message
+        setTransferState((s) => s && {
+          ...s, verifySubStep: 'cert-pin', certPin: '', step: 'verify',
+          resultMessage: detail ?? '인증서 비밀번호가 올바르지 않습니다.',
+        })
+        return
+      }
+
       const result = await executeChatbotTransfer({
-        customer_no: customerNo.trim() || getCurrentDepositCustomerId(),
+        customer_no: customerId,
         from_account_id: transferState.fromAccountId,
         to_account_id: targetAccount?.account_id,
         to_account_number: transferState.toAccountNumber,
         to_bank_name: transferState.toBank || (targetAccount ? 'AXful' : undefined),
         amount,
         memo: transferState.memo || '이체',
+        approval_token: approvalToken,
       })
       if (result.status === 'OK') {
         setTransferState((s) => s && { ...s, step: 'done', resultMessage: result.message, balanceAfter: result.balance_after })

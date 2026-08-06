@@ -1479,6 +1479,8 @@ class ChatbotService:
             "channelType": "CHATBOT",
             "transactionMemo": req.memo,
             "idempotencyKey": idempotency_key,
+            # 승인 토큰은 계좌 번호로 묶여 있다. core-banking 이 인증보안계에 대조한다.
+            "approvalToken": req.approval_token,
         }
         url = f"{get_settings().core_banking_url}/api/transactions/transfer"
 

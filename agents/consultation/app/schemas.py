@@ -152,6 +152,9 @@ class ChatbotTransferRequest(BaseModel):
     to_account_number: str
     amount: int
     memo: str = "이체"
+    # 자금이동 승인 토큰(step-up). 인증서 PIN 확인 후 인증보안계가 발급한다.
+    # 없으면 core-banking 이 과도기 설정에 따라 통과시키거나 거부한다.
+    approval_token: str | None = None
 
 
 class ChatbotTransferResponse(BaseModel):
