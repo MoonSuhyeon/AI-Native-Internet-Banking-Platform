@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import Link from 'next/link'
 import { api, fetchMyCertificates, issueTransferApproval } from '@/lib/api'
 import { ArrowLeftRight, Bot, Home, LogOut, MessageCircle, PackageSearch, Paperclip, Phone, Send, Sparkles, X } from 'lucide-react'
 import {
@@ -78,6 +79,8 @@ type TransferState = {
   resultMessage: string
   balanceAfter: number | null
   verifySubStep: 'card' | 'cert-info' | 'cert-pin'
+  /** 인증서가 없어 막힌 경우 — 발급 동선을 함께 보여준다. */
+  needsCertificate?: boolean
   certPin: string
   cardFront: string
   cardBack: string
@@ -2043,8 +2046,8 @@ export default function ChatbotWidget() {
         const active = certs.find(c => c.status === 'ACTIVE')
         if (!active) {
           setTransferState((s) => s && {
-            ...s, step: 'error',
-            resultMessage: '이체에는 인증서가 필요합니다. 인증센터에서 발급 후 다시 시도해 주세요.',
+            ...s, step: 'error', needsCertificate: true,
+            resultMessage: '이체에는 인증서가 필요합니다.',
           })
           return
         }
@@ -2682,6 +2685,19 @@ export default function ChatbotWidget() {
                           {transferState.step === 'done' ? '이체 완료' : '이체 실패'}
                         </p>
                         <p className="text-sm text-kb-text">{transferState.resultMessage}</p>
+                        {/* 막기만 하면 어디로 가야 할지 모른다 — 발급 화면으로 바로 보낸다. */}
+                        {transferState.needsCertificate && (
+                          <div className="mt-3">
+                            <p className="text-xs text-kb-text-muted mb-2">
+                              금융인증서를 발급받으면 이체를 이용할 수 있습니다.
+                            </p>
+                            <Link href="/cert/fin-cert-issue"
+                              onClick={() => setOpen(false)}
+                              className="inline-block rounded bg-[#2D6A4F] px-4 py-2 text-xs font-bold text-white hover:bg-[#24563F]">
+                              금융인증서 발급하기
+                            </Link>
+                          </div>
+                        )}
                         {transferState.step === 'done' && transferState.balanceAfter !== null && (
                           <p className="mt-2 text-xs text-kb-text-muted">
                             잔여 잔액: {transferState.balanceAfter.toLocaleString('ko-KR')}원

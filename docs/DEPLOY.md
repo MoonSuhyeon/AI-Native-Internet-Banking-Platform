@@ -107,6 +107,76 @@ curl -fsS http://<host>:8080/actuator/health
 
 ---
 
+## 3-4. 배포 전 체크리스트 (첫 배포·재배포 공통)
+
+아래 넷은 **빠지면 서비스가 뜨지 않거나 기능이 조용히 멎는다.** 순서대로 확인한다.
+
+### ① 시크릿 세 개 — 없으면 customer-service 가 기동을 거부한다
+
+```bash
+grep -E "JWT_SECRET|RRN_CRYPTO_KEY|IDENTITY_CI_SECRET" .env.prod
+```
+
+| 변수 | 없으면 |
+|---|---|
+| `JWT_SECRET` | 레포에 적힌 개발용 기본값으로 뜬다 → 누구나 임의 고객·역할의 토큰을 위조할 수 있다 |
+| `RRN_CRYPTO_KEY` | 주민번호 AES 키가 공개값이 된다 → DB 유출 시 암호화가 무의미 |
+| `IDENTITY_CI_SECRET` | 본인확인 CI 파생값이 공개 시크릿 기반이 된다 |
+
+`DevSecretGuard` 가 운영 프로파일에서 이 값들이 비었거나 기본값이면 **기동을 중단**한다.
+"안전하지 않은데 조용히 뜨는 것"이 가장 나쁜 상태라서 그렇게 만들었다.
+
+```bash
+# 생성 예
+echo "RRN_CRYPTO_KEY=$(openssl rand -base64 48)" >> .env.prod
+```
+
+> ⚠️ 이미 운영 중인 DB 가 있다면 `RRN_CRYPTO_KEY` 를 바꾸는 순간 기존 주민번호 암호문을
+> 복호화할 수 없다. 값을 바꾸기 전에 `docker exec ib-customer-service env | grep RRN`
+> 으로 현재 주입값을 먼저 확인할 것.
+
+### ② 서비스 간 주소
+
+```bash
+grep CONSULTATION_CORE_BANKING_URL .env.prod   # http://core-banking:8082
+```
+
+챗봇 이체는 core-banking 을 거친다(락·멱등키·한도·소유권 검증을 그쪽이 갖고 있다).
+기본값이 `localhost` 라 컨테이너 안에서는 자기 자신을 부르고 이체가 실패한다.
+
+### ③ 이체 승인(step-up) 전제
+
+이체에는 인증서 승인 토큰이 필요하다(`TRANSFER_APPROVAL_REQUIRED` 기본값 `true`).
+
+- 데모 고객(user01~03)의 인증서는 마이그레이션 `V32` 가 심는다. Flyway 가 돌았는지 확인.
+- 인증서가 없는 고객은 이체 화면에서 발급 안내로 막힌다 — 의도된 동작이다.
+- 무언가 막히면 `TRANSFER_APPROVAL_REQUIRED=false` 로 되돌린 뒤,
+  `"승인 토큰 없이 처리됨"` 로그로 어느 경로가 토큰을 안 보내는지 확인한다.
+
+### ④ 감사 스풀 경로
+
+```bash
+grep CONSULTATION_HARNESS_AUDIT_SPOOL_PATH .env.prod
+```
+
+감사 저장이 실패하면 이 파일에 쌓였다가 `python -m app.audit_replay` 로 복구된다.
+**컨테이너에 볼륨이 붙어 있어야 한다** — 없으면 재시작과 함께 스풀도 사라져 복구 장치가
+있으나 마나가 된다.
+
+### 배포 직후 확인
+
+```bash
+docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod ps
+curl -fsS http://<host>:8080/actuator/health
+
+# 이체 한 번 돌려보고 게이트 로그 확인
+docker logs ib-core-banking --since 10m | grep "승인 토큰"
+```
+
+"승인 토큰 없이 처리됨" 이 보이면 토큰을 안 보내는 경로가 남아 있다는 뜻이다.
+
+---
+
 ## 4. 운영 메모
 
 ### 리소스 상한

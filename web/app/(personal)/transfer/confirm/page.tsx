@@ -3,6 +3,7 @@ import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_SURFACE } from '@/lib/theme
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { formatNumber } from '@/lib/mock-data'
 import TransferSidebar from '@/components/inquiry/TransferSidebar'
 import { executeDepositTransfer, getCurrentDepositCustomerId } from '@/lib/deposit-api'
@@ -364,13 +365,28 @@ export default function TransferConfirmPage() {
                       </div>
                     )}
 
-                    {/* 인증서가 없으면 6자리를 다 누른 뒤가 아니라 여기서 알린다. */}
+                    {/* 인증서가 없으면 6자리를 다 누른 뒤가 아니라 여기서 알린다.
+                        막기만 하면 사용자는 어디로 가야 할지 모른다 — 발급 화면으로 바로 보낸다.
+                        이체 정보는 sessionStorage 에 남아 있어 발급 후 돌아오면 이어서 할 수 있다. */}
                     {certs.length === 0 && (
                       <div className="mb-5 rounded-lg px-4 py-3 bg-red-50 border border-red-200">
                         <p className="text-[13px] text-red-700 font-bold mb-1">이체에는 인증서가 필요합니다</p>
-                        <p className="text-[12px] text-red-600">
-                          인증센터에서 인증서를 발급받은 뒤 다시 시도해 주세요.
+                        <p className="text-[12px] text-red-600 mb-3">
+                          금융인증서를 발급받으면 이체·조회를 안전하게 이용할 수 있습니다.
+                          발급 후 이 화면으로 돌아오면 입력하신 이체 정보가 그대로 남아 있습니다.
                         </p>
+                        <div className="flex gap-2">
+                          <Link href="/cert/fin-cert-issue"
+                            className="px-4 py-2 text-[12px] font-bold text-white rounded-lg hover:opacity-85 transition-opacity"
+                            style={{ backgroundColor: KB_PRIMARY }}>
+                            금융인증서 발급하기
+                          </Link>
+                          <Link href="/cert"
+                            className="px-4 py-2 text-[12px] font-bold rounded-lg border hover:bg-kb-beige transition-colors"
+                            style={{ borderColor: KB_PRIMARY, color: KB_PRIMARY }}>
+                            다른 인증서 보기
+                          </Link>
+                        </div>
                       </div>
                     )}
 
