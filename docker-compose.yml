@@ -450,6 +450,9 @@ services:
     environment:
       # 수신 데이터는 core_banking DB 의 deposit 스키마로 옮겨졌다.
       CONSULTATION_DATABASE_URL: postgresql+psycopg://${CORE_BANKING_DB_USER:-core}:${CORE_BANKING_DB_PASSWORD:-core}@core-banking-db-a:5432/${CORE_BANKING_DB_NAME:-core_banking}?options=-csearch_path%3Ddeposit
+      # 챗봇 이체는 core-banking 을 거친다(락·멱등키·한도·소유권 검증).
+      # 기본값은 localhost 라 컨테이너 안에서는 반드시 지정해야 한다.
+      CONSULTATION_CORE_BANKING_URL: http://core-banking-a:8082
       CONSULTATION_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONSULTATION_KAFKA_ENABLED: "false"
       CONSULTATION_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
