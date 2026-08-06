@@ -549,8 +549,12 @@ Docker 네트워크 정책이 닿지 않는 곳에 있었다.
    크기 상한은 두지 않았다. 넘치면 버리는 장치는 "조용한 유실"을 다시 만드는 것이고,
    그것이 이 항목이 없애려던 것이다. 스풀이 커지는 것 자체가 DB 가 오래 죽어 있다는
    신호이며 그 신호는 2번의 알람이 이미 잡는다.
-4. **`actor_roles` GIN 인덱스** — `@> '["FRAUD_OFFICER"]'` 질의가 풀스캔이다.
-   `jsonb_path_ops` 로. 다른 작업과 의존성이 없어 아무 때나 가능.
+4. ~~**`actor_roles` GIN 인덱스**~~ — **완료.** `ix_harness_audit_actor_roles`
+   (`USING GIN (actor_roles jsonb_path_ops)`). 원본과 사본 넷을 함께 고쳤다 —
+   consultation·goal-agent 는 재실행되는 스크립트라 제자리에, auto-loan-review 는
+   Flyway 라 새 파일(`V10__harness_audit_actor_roles_index.sql`)로 냈다.
+   실제 PostgreSQL 에 적용해 `@> '["FRAUD_OFFICER"]'` 가 Bitmap Index Scan 을
+   타는 것까지 확인했다.
 5. **대조 테스트 확장** — NULL 허용·기본값·인덱스 존재는 아직 비교하지 않는다
    (이름·타입·순서·길이는 비교함).
 6. **전달 방식 단일화** — 세 에이전트가 세 가지 방식으로 같은 패키지를 본다

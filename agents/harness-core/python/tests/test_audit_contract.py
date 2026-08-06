@@ -39,6 +39,7 @@ MIGRATION_COPIES = {
     "auto-loan-review": [
         REPO_ROOT / "agents/auto-loan-review/src/main/resources/db/migration/V8__harness_audit_log.sql",
         REPO_ROOT / "agents/auto-loan-review/src/main/resources/db/migration/V9__harness_audit_actor.sql",
+        REPO_ROOT / "agents/auto-loan-review/src/main/resources/db/migration/V10__harness_audit_actor_roles_index.sql",
     ],
     "consultation": [REPO_ROOT / "agents/consultation/sql/harness-audit.sql"],
     "goal-agent": [REPO_ROOT / "agents/goal-agent/sql/harness-audit.sql"],

@@ -92,6 +92,14 @@ CREATE INDEX IF NOT EXISTS ix_harness_audit_subject_kind
 CREATE INDEX IF NOT EXISTS ix_harness_audit_actor
     ON harness_audit_log (actor_id, recorded_at DESC);
 
+-- "FRAUD_OFFICER 가 승인한 것" — 역할로 좁히는 경로.
+-- actor_roles 는 JSONB 배열이라 @> '["FRAUD_OFFICER"]' 로 묻는다. B-tree 인덱스는
+-- 이 연산자를 받지 못해 지금까지 풀스캔이었다.
+-- jsonb_path_ops 를 쓰는 이유: 기본 연산자 클래스보다 인덱스가 작고 @> 가 빠르다.
+-- 키 존재(?) 질의는 받지 못하지만, 역할 배열에 그 질의를 쓸 일이 없다.
+CREATE INDEX IF NOT EXISTS ix_harness_audit_actor_roles
+    ON harness_audit_log USING GIN (actor_roles jsonb_path_ops);
+
 -- 추적에서 감사로 되짚어 가기 위한 인덱스
 CREATE INDEX IF NOT EXISTS ix_harness_audit_trace
     ON harness_audit_log (trace_id);
