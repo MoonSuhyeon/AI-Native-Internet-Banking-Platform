@@ -110,8 +110,11 @@ class TestLlmFallback:
 
         response = send(llm_service, session.chatbot_consultation_id, message="오늘 날씨는 어때?")
 
-        assert response.process_method == "BP003_GPT"
-        assert response.agent_transfer_required is False
+        # BP003_GPT(LLM 직접 응답) 경로는 제거됐다. 분류 불가 질문은 이제
+        # RAG → 없으면 상담사 연결로 간다.
+        # 원래 기대: process_method == "BP003_GPT" (LLM 이 답하니 이관 없음).
+        assert response.process_method == "STAFF_REQUEST"
+        assert response.agent_transfer_required is True
         assert response.message
 
     def test_unclassified_message_requests_agent_when_llm_adapter_missing(self, service):
@@ -222,8 +225,11 @@ class TestKafkaEvents:
         response = send(llm_service, session.chatbot_consultation_id, message="분류되지 않는 질문")
         names = [event[0] for event in published_events(llm_service)]
 
-        assert response.process_method == "BP003_GPT"
-        assert "ChatbotAgentTransferRequested" not in names
+        # BP003_GPT(LLM 직접 응답) 경로는 제거됐다. 분류 불가 질문은 이제
+        # RAG → 없으면 상담사 연결로 간다.
+        # 원래 기대: process_method == "BP003_GPT" (LLM 이 답하니 이관 없음).
+        assert response.process_method == "STAFF_REQUEST"
+        assert "ChatbotAgentTransferRequested" in names
 
 
 class TestResponseBody:

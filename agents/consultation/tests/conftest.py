@@ -198,9 +198,9 @@ def db() -> Session:
                 transaction_at TEXT,
                 created_at TEXT)
         """))
-        conn.execute(text("""
+        conn.execute(text(f"""
             INSERT INTO deposit_transactions VALUES
-            (1, 'TX-001', 1, 'TRANSFER', 'COMPLETED', 10000, '2026-05-21', '2026-05-21')
+            (1, 'TX-001', 1, 'TRANSFER', 'COMPLETED', 10000, {_days_ago(20)}, {_days_ago(20)})
         """))
         # employees 는 Base.metadata.create_all 이 먼저 만든다(app.models.Employee).
         # 그 위에 다시 CREATE 하면 "table employees already exists" 로 픽스처가 죽는다 —
@@ -457,9 +457,9 @@ def rich_db() -> Session:
         conn.execute(text(f"""
             INSERT INTO deposit_transactions VALUES
             (1,'TX-001',1,'TRANSFER','COMPLETED',10000,{_days_ago(34)},{_days_ago(34)}),
-            (2,'TX-002',1,'TRANSFER','PENDING',50000,'2026-05-10','2026-05-10'),
-            (3,'TX-003',2,'DEPOSIT','COMPLETED',100000,'2026-05-15','2026-05-15'),
-            (4,'TX-004',3,'TRANSFER','COMPLETED',20000,'2026-05-20','2026-05-20')
+            (2,'TX-002',1,'TRANSFER','PENDING',50000,{_days_ago(31)},{_days_ago(31)}),
+            (3,'TX-003',2,'DEPOSIT','COMPLETED',100000,{_days_ago(26)},{_days_ago(26)}),
+            (4,'TX-004',3,'TRANSFER','COMPLETED',20000,{_days_ago(21)},{_days_ago(21)})
         """))
 
     session = Session(engine)

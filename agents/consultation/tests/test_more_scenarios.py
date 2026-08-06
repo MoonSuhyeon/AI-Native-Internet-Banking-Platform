@@ -781,7 +781,10 @@ class TestLlmContextFilter:
         session = _start(llm_service)
         # RAG 없고 이력 없음 → 빈 context
         response = _send(llm_service, session.chatbot_consultation_id, message="분류불가질문XYZ")
-        assert response.process_method == "BP003_GPT"
+        # BP003_GPT(LLM 직접 응답) 경로는 제거됐다. 분류 불가 질문은 이제
+        # RAG → 없으면 상담사 연결로 간다.
+        # 원래 기대: process_method == "BP003_GPT" (LLM 이 답하니 이관 없음).
+        assert response.process_method == "STAFF_REQUEST"
         assert response.message
 
     def test_history_only_context(self, llm_service):
@@ -790,7 +793,10 @@ class TestLlmContextFilter:
         _send(llm_service, session.chatbot_consultation_id, message="금리 알려줘")
         # 이력 있음, RAG 없음 → history_ctx만 context
         response = _send(llm_service, session.chatbot_consultation_id, message="분류불가")
-        assert response.process_method == "BP003_GPT"
+        # BP003_GPT(LLM 직접 응답) 경로는 제거됐다. 분류 불가 질문은 이제
+        # RAG → 없으면 상담사 연결로 간다.
+        # 원래 기대: process_method == "BP003_GPT" (LLM 이 답하니 이관 없음).
+        assert response.process_method == "STAFF_REQUEST"
 
 
 # ─────────────────────────────────────────────────────────────────────────────

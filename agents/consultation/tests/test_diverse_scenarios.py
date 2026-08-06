@@ -946,7 +946,10 @@ class TestLlmContextCombination:
         session = _start(llm_service)
         # 대화 이력 없고 RAG 없음 → 빈 context로 LLM 호출
         response = _send(llm_service, session.chatbot_consultation_id, message="랜덤 질문")
-        assert response.process_method == "BP003_GPT"
+        # BP003_GPT(LLM 직접 응답) 경로는 제거됐다. 분류 불가 질문은 이제
+        # RAG → 없으면 상담사 연결로 간다.
+        # 원래 기대: process_method == "BP003_GPT" (LLM 이 답하니 이관 없음).
+        assert response.process_method == "STAFF_REQUEST"
 
     def test_history_included_in_context(self, llm_service):
         llm_service.seed_default_scenario()
@@ -954,7 +957,10 @@ class TestLlmContextCombination:
         _send(llm_service, session.chatbot_consultation_id, message="금리 알려줘")
         # 두 번째 분류 안 되는 메시지 → history context 포함 LLM 호출
         response = _send(llm_service, session.chatbot_consultation_id, message="임의 질문 XYZ")
-        assert response.process_method == "BP003_GPT"
+        # BP003_GPT(LLM 직접 응답) 경로는 제거됐다. 분류 불가 질문은 이제
+        # RAG → 없으면 상담사 연결로 간다.
+        # 원래 기대: process_method == "BP003_GPT" (LLM 이 답하니 이관 없음).
+        assert response.process_method == "STAFF_REQUEST"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
