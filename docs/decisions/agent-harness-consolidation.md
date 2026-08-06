@@ -555,8 +555,13 @@ Docker 네트워크 정책이 닿지 않는 곳에 있었다.
    Flyway 라 새 파일(`V10__harness_audit_actor_roles_index.sql`)로 냈다.
    실제 PostgreSQL 에 적용해 `@> '["FRAUD_OFFICER"]'` 가 Bitmap Index Scan 을
    타는 것까지 확인했다.
-5. **대조 테스트 확장** — NULL 허용·기본값·인덱스 존재는 아직 비교하지 않는다
-   (이름·타입·순서·길이는 비교함).
+5. ~~**대조 테스트 확장**~~ — **완료.** 이름·타입·순서·길이에 더해 NULL 허용·기본값·
+   인덱스(이름·방식·컬럼식)까지 대조한다. 원본이 가져야 할 인덱스 이름 집합과
+   `actor_roles` 의 `gin ... jsonb_path_ops` 를 따로 고정했고, NOT NULL JSONB 컬럼에
+   기본값이 있는지도 확인한다 — 기본값이 빠지면 그 컬럼을 채우지 않는 경로에서
+   INSERT 가 통째로 거부되고, 판단은 성공했는데 기록만 사라진다.
+   드리프트 네 종류(NOT NULL 제거·기본값 변경·인덱스 제거·인덱스 방식 변경)를
+   실제로 넣어 테스트가 잡는 것을 확인했다.
 6. **전달 방식 단일화** — 세 에이전트가 세 가지 방식으로 같은 패키지를 본다
    (conftest sys.path / pytest.ini pythonpath / README 안내).
    전역 `pip install -e` 는 답이 아니다 — CI·타 개발자 PC 에서 재현되지 않는

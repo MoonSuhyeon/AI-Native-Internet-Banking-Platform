@@ -19,6 +19,7 @@ from __future__ import annotations
 import dataclasses
 import re
 from pathlib import Path
+from typing import NamedTuple
 
 import pytest
 
@@ -49,8 +50,33 @@ MIGRATION_COPIES = {
 NOT_PART_OF_CONTRACT = {"id"}
 
 
-def _column_defs(sql_path: Path) -> list[tuple[str, str]]:
-    """CREATE TABLE 본문에서 (컬럼명, 타입) 을 순서대로 뽑는다.
+class Column(NamedTuple):
+    """대조 단위. 이름·타입만으로는 부족해서 NULL 허용과 기본값까지 담는다."""
+
+    name: str
+    type: str
+    not_null: bool
+    default: str | None
+
+
+def _parse_constraints(tail: str) -> tuple[bool, str | None]:
+    """컬럼 정의의 타입 뒤쪽에서 NOT NULL 여부와 DEFAULT 식을 뽑는다.
+
+    NULL 허용을 보는 이유: 사본에서 NOT NULL 이 빠지면 그 에이전트만 빈 값을 받아
+    넣고, 나중에 한곳에 모을 때 다른 에이전트의 기록과 형식이 달라진다.
+
+    기본값을 보는 이유: JSONB NOT NULL 컬럼의 DEFAULT 가 사라지면 그 컬럼을 채우지
+    않는 경로에서 INSERT 가 통째로 거부된다 — 판단은 성공했는데 기록만 사라진다.
+    """
+    cleaned = tail.strip().rstrip(",;").strip()
+    not_null = re.search(r"\bNOT\s+NULL\b", cleaned, re.IGNORECASE) is not None
+    default_match = re.search(r"\bDEFAULT\s+(.+)$", cleaned, re.IGNORECASE)
+    default = default_match.group(1).strip() if default_match else None
+    return not_null, default
+
+
+def _column_defs(sql_path: Path) -> list[Column]:
+    """CREATE TABLE 본문에서 컬럼 정의를 순서대로 뽑는다.
 
     타입까지 보는 이유: 이름만 맞춰 보면 ``VARCHAR(64)`` → ``VARCHAR(16)`` 같은
     변경을 놓친다. 그 드리프트는 감사 기록을 **조용히 잘라서** 저장하는 형태로
@@ -76,22 +102,48 @@ def _column_defs(sql_path: Path) -> list[tuple[str, str]]:
         if name in NOT_PART_OF_CONTRACT:
             continue
         col_type = tokens[1].rstrip(",").upper() if len(tokens) > 1 else ""
-        defs.append((name, col_type))
+        not_null, default = _parse_constraints(" ".join(tokens[2:]))
+        defs.append(Column(name, col_type, not_null, default))
     return defs
+
+
+_CREATE_INDEX = re.compile(
+    r"CREATE\s+INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)\s+"
+    r"ON\s+harness_audit_log\s+(?:USING\s+(\w+)\s+)?\((.*?)\)\s*;",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _indexes_of(sql_paths: list[Path]) -> dict[str, tuple[str, str]]:
+    """여러 파일에 흩어진 인덱스 선언을 이름 → (방식, 컬럼식) 으로 모은다.
+
+    인덱스를 보는 이유: 컬럼이 같아도 인덱스가 빠지면 그 에이전트에서만 같은 질의가
+    풀스캔이 된다. 형식은 같은데 성질이 다른 것이라 눈으로는 알아채기 어렵다.
+    """
+    found: dict[str, tuple[str, str]] = {}
+    for path in sql_paths:
+        text = path.read_text(encoding="utf-8")
+        for name, method, columns in _CREATE_INDEX.findall(text):
+            normalized = " ".join(columns.split())
+            found[name] = ((method or "btree").lower(), normalized)
+    return found
 
 
 def _columns_of(sql_path: Path) -> list[str]:
     """컬럼 이름만. 필드명 대조(Java·Python)에 쓴다."""
-    return [name for name, _ in _column_defs(sql_path)]
+    return [column.name for column in _column_defs(sql_path)]
 
 
+# 타입에서 세미콜론을 제외하는 것이 중요하다. \S+ 로 두면 `VARCHAR(64);` 처럼
+# 문장 끝까지 삼키고, 뒤이어 오는 ALTER 문의 제약이 이 컬럼 것으로 딸려 들어온다.
 _ALTER_ADD = re.compile(
-    r"ALTER\s+TABLE\s+harness_audit_log\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)\s+(\S+)",
+    r"ALTER\s+TABLE\s+harness_audit_log\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?"
+    r"(\w+)\s+([^\s;]+)([^;]*);",
     re.IGNORECASE,
 )
 
 
-def _effective_columns(sql_paths: list[Path]) -> list[tuple[str, str]]:
+def _effective_columns(sql_paths: list[Path]) -> list[Column]:
     """여러 파일을 순서대로 적용했을 때 남는 컬럼 목록.
 
     CREATE TABLE 로 시작해 ALTER TABLE ADD COLUMN 을 덧붙인다. 이미 있는 컬럼을
@@ -101,25 +153,26 @@ def _effective_columns(sql_paths: list[Path]) -> list[tuple[str, str]]:
     새 파일로 나간다. 그 결과 유효 스키마가 여러 파일에 흩어지고, 첫 파일만 보면
     확장을 놓친 채 "사본이 원본과 다르다"는 잘못된 실패가 난다.
     """
-    defs: list[tuple[str, str]] = []
+    defs: list[Column] = []
     seen: set[str] = set()
 
     for path in sql_paths:
         text = path.read_text(encoding="utf-8")
 
         if "CREATE TABLE" in text.upper():
-            for name, col_type in _column_defs(path):
-                if name not in seen:
-                    seen.add(name)
-                    defs.append((name, col_type))
+            for column in _column_defs(path):
+                if column.name not in seen:
+                    seen.add(column.name)
+                    defs.append(column)
 
-        for name, col_type in _ALTER_ADD.findall(text):
+        for name, col_type, tail in _ALTER_ADD.findall(text):
             if name in NOT_PART_OF_CONTRACT or name in seen:
                 continue
             seen.add(name)
+            not_null, default = _parse_constraints(tail)
             # 문장 끝 세미콜론이 타입에 딸려 온다. 붙은 채로 두면 CREATE TABLE 쪽과
             # 같은 타입인데도 다르다고 나온다.
-            defs.append((name, col_type.rstrip(",;").upper()))
+            defs.append(Column(name, col_type.rstrip(",;").upper(), not_null, default))
 
     return defs
 
@@ -184,11 +237,51 @@ def test_복사된_마이그레이션이_원본과_같은_컬럼을_선언한다
     for p in paths:
         assert p.exists(), f"{agent} 의 사본이 사라졌다: {p}"
 
-    # 이름·타입·순서를 함께 본다. 셋 중 하나만 어긋나도 나중에 한곳에 모을 수 없다.
+    # 이름·타입·순서·NULL 허용·기본값을 함께 본다.
+    # 하나만 어긋나도 나중에 한곳에 모을 수 없다.
     assert _effective_columns(paths) == _column_defs(CANONICAL_SQL), (
         f"{agent} 의 감사 스키마가 원본과 어긋났다. "
         f"원본을 고치고 사본을 안 고쳤을 가능성이 크다."
     )
+
+
+@pytest.mark.parametrize("agent,paths", MIGRATION_COPIES.items())
+def test_복사본이_같은_인덱스를_선언한다(agent: str, paths: list[Path]):
+    """컬럼이 같아도 인덱스가 빠지면 그 에이전트에서만 같은 질의가 풀스캔이 된다.
+
+    형식은 같은데 성질이 다른 것이라 눈으로는 알아채기 어렵다. 실제로
+    ``actor_roles`` GIN 인덱스는 컬럼만 사본에 옮겨지고 인덱스가 없는 채로
+    한동안 남아 있었다(다음 순서 4).
+    """
+    assert _indexes_of(paths) == _indexes_of([CANONICAL_SQL]), (
+        f"{agent} 의 감사 인덱스가 원본과 어긋났다."
+    )
+
+
+def test_원본이_기대하는_인덱스를_모두_갖는다():
+    """이름이 바뀌거나 사라지면 사본 대조가 통째로 무의미해지므로 원본을 따로 고정한다."""
+    indexes = _indexes_of([CANONICAL_SQL])
+
+    assert set(indexes) == {
+        "ix_harness_audit_subject",
+        "ix_harness_audit_subject_kind",
+        "ix_harness_audit_actor",
+        "ix_harness_audit_actor_roles",
+        "ix_harness_audit_trace",
+    }
+    # 역할 조회는 @> 질의라 B-tree 로는 받을 수 없다.
+    assert indexes["ix_harness_audit_actor_roles"] == ("gin", "actor_roles jsonb_path_ops")
+
+
+def test_NOT_NULL_JSONB_컬럼은_기본값을_갖는다():
+    """기본값이 빠지면 그 컬럼을 채우지 않는 경로에서 INSERT 가 통째로 거부된다.
+
+    판단은 성공했는데 기록만 사라지는 형태라 가장 나쁘다. dataclass 쪽 보정
+    (``_blank_to``)과 짝을 이루는 DB 쪽 방어다.
+    """
+    for column in _column_defs(CANONICAL_SQL):
+        if column.type == "JSONB" and column.not_null:
+            assert column.default, f"{column.name} 에 DEFAULT 가 없다"
 
 
 @pytest.mark.parametrize("agent,paths", MIGRATION_COPIES.items())
