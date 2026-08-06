@@ -10,6 +10,7 @@ import com.bank.deposit.domain.enums.TransferType;
 import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
 import com.bank.deposit.repository.AccountRepository;
+import com.bank.deposit.security.TransferApprovalGate;
 import com.bank.deposit.repository.TransactionRepository;
 import com.bank.deposit.service.TransactionService;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +57,11 @@ class TransactionControllerTest {
 
     @MockBean
     private TransactionRepository transactionRepository;
+
+    // 승인 게이트는 인증보안계로 나가는 Feign 호출을 들고 있다. 슬라이스에서는 mock 으로 둔다 —
+    // 게이트 자체의 동작은 TransferApprovalGateTest 가 본다.
+    @MockBean
+    private TransferApprovalGate transferApprovalGate;
 
     @Test
     @DisplayName("계좌 거래 목록을 조회한다")

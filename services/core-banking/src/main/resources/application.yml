@@ -91,6 +91,15 @@ client:
   customer-service:
     url: ${CUSTOMER_SERVICE_URL:http://customer-service:8081}
 
+# 자금이동 step-up 인증 (docs/plan/transfer-step-up-auth.md)
+deposit:
+  transfer:
+    approval:
+      # true 로 바꾸면 승인 토큰 없는 이체를 거부한다.
+      # 프런트·챗봇이 발급 단계를 붙이기 전에 켜면 이체가 전부 죽는다.
+      # TransferApprovalGate 가 남기는 "승인 토큰 없이 처리됨" 로그가 0 이 된 뒤 켤 것.
+      required: ${TRANSFER_APPROVAL_REQUIRED:false}
+
 payment:
   bank-code: ${BANK_CODE:A}
   timeout:

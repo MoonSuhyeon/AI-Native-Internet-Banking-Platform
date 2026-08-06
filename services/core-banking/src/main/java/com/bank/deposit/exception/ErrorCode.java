@@ -21,6 +21,8 @@ public enum ErrorCode {
     DAILY_TRANSFER_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "하루 이체 횟수 한도를 초과했습니다."),
     DUPLICATE(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    TRANSFER_APPROVAL_REQUIRED(HttpStatus.UNAUTHORIZED, "이체 승인 인증이 필요합니다."),
+    TRANSFER_APPROVAL_INVALID(HttpStatus.UNAUTHORIZED, "이체 승인 정보가 올바르지 않거나 만료되었습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;
