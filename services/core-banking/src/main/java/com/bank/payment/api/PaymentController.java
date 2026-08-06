@@ -120,6 +120,11 @@ public class PaymentController {
             return ResponseEntity.badRequest().build();
         }
 
+        // 예약이체는 등록 시점에 승인을 확인한다. 실행은 스케줄러가 사람 없이 하므로
+        // 그때는 물을 수 없다 — 등록이 유일한 인증 지점이다.
+        transferApprovalGate.verify(
+                authTokenId, request.senderAccountId(), request.receiverAccountNo(), request.transferAmount());
+
         PaymentCommand command = new PaymentCommand(
                 request.senderAccountId(),
                 request.receiverBankCode(),

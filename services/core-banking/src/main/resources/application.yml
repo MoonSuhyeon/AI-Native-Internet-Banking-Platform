@@ -95,10 +95,17 @@ client:
 deposit:
   transfer:
     approval:
-      # true 로 바꾸면 승인 토큰 없는 이체를 거부한다.
-      # 프런트·챗봇이 발급 단계를 붙이기 전에 켜면 이체가 전부 죽는다.
-      # TransferApprovalGate 가 남기는 "승인 토큰 없이 처리됨" 로그가 0 이 된 뒤 켤 것.
-      required: ${TRANSFER_APPROVAL_REQUIRED:false}
+      # 승인 토큰 없는 이체를 거부한다. 기본값을 켜 두는 것이 안전한 쪽이다.
+      #
+      # 켜기 전에 확인한 것: 이 게이트를 지나는 경로는 셋이고 전부 토큰을 보낸다 —
+      # 웹 내부이체, 웹 타행이체(결제계), 챗봇 이체. 자동이체 스케줄러는 컨트롤러를
+      # 거치지 않아 해당 없고, 예약이체는 등록 시점에 확인한다.
+      # 데모 고객(user01~03)의 인증서는 V32 가 심는다 — 없으면 승인 토큰을 받을 수 없다.
+      #
+      # 무언가 막히면 TRANSFER_APPROVAL_REQUIRED=false 로 되돌릴 수 있다. 그때
+      # TransferApprovalGate 가 "승인 토큰 없이 처리됨" 로그를 남기므로 어느 경로가
+      # 빠졌는지 바로 보인다.
+      required: ${TRANSFER_APPROVAL_REQUIRED:true}
 
 payment:
   bank-code: ${BANK_CODE:A}
