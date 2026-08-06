@@ -6,6 +6,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -101,6 +102,13 @@ public abstract class AbstractPaymentIntegrationTest {
         // 토픽 미생성 시 fatal 방지 — 테스트 컨테이너는 토픽을 수동 생성하지 않음
         r.add("spring.kafka.listener.missing-topics-fatal", () -> "false");
     }
+
+    /**
+     * 승인 토큰 검증은 인증보안계로 나가는 호출이다. 결제 흐름 통합 테스트의 관심사는
+     * 원장·보상·이벤트라 여기서는 통과시킨다. 게이트 자체의 동작(거부·통신 실패·필수 전환)은
+     * TransferApprovalGateTest 가 본다.
+     */
+    @MockBean protected com.bank.deposit.security.TransferApprovalGate transferApprovalGate;
 
     @Autowired protected MockMvc mockMvc;
     @Autowired protected ObjectMapper om;

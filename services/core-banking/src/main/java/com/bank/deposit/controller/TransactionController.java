@@ -4,6 +4,7 @@ import com.bank.deposit.domain.entity.Transaction;
 import com.bank.deposit.dto.request.*;
 import com.bank.deposit.security.AuthenticatedCustomerValidator;
 import com.bank.deposit.security.TransferApprovalGate;
+import com.bank.deposit.service.AccountService;
 import com.bank.deposit.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class TransactionController {
     private final TransactionService transactionService;
     private final AuthenticatedCustomerValidator customerValidator;
     private final TransferApprovalGate transferApprovalGate;
+    private final AccountService accountService;
 
     @GetMapping
     public Page<Transaction> list(
@@ -83,7 +85,11 @@ public class TransactionController {
         customerValidator.requireAccountOwner(authenticatedCustomerId, req.fromAccountId());
         // 소유권 다음에 승인 확인. 순서가 중요하다 — 남의 계좌 이체 시도는 승인 토큰을
         // 물어보기 전에 끊어야 계좌 존재 여부가 새지 않는다.
-        transferApprovalGate.verify(req.approvalToken(), req.fromAccountId(), req.toAccountNo(), req.amount());
+        //
+        // 승인 토큰은 계좌 번호로 묶인다(결제계와 공유하는 기준). 여기서는 accountId 로
+        // 받으므로 번호를 찾아 넘긴다.
+        String fromAccountNo = accountService.findById(req.fromAccountId()).getAccountNumber();
+        transferApprovalGate.verify(req.approvalToken(), fromAccountNo, req.toAccountNo(), req.amount());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(transactionService.transfer(req.fromAccountId(), req.toAccountId(), req.toAccountNo(),
                         req.amount(), req.transferType(), req.counterpartyBankCode(), req.counterpartyBankName(),

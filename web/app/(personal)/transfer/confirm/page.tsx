@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { formatNumber } from '@/lib/mock-data'
 import TransferSidebar from '@/components/inquiry/TransferSidebar'
 import { executeDepositTransfer, getCurrentDepositCustomerId } from '@/lib/deposit-api'
-import { createInstantTransfer, newIdempotencyKey, newAuthToken, PAYMENT_BANK_CODE_MAP } from '@/lib/payment-api'
+import { createInstantTransfer, newIdempotencyKey, PAYMENT_BANK_CODE_MAP } from '@/lib/payment-api'
 import { fetchMyCertificates, issueTransferApproval } from '@/lib/api'
 
 type PendingTransfer = {
@@ -30,30 +30,29 @@ const PIN_PAD = [
   ['↺', 0, '✕'],
 ]
 
+/** 인증서가 없어 승인을 받을 수 없을 때. 이체를 진행하지 않는다. */
+class NoCertificateError extends Error {}
+
 /**
  * 이체 승인 토큰을 받는다.
  *
- * 인증서를 고르는 화면이 아직 없어 활성 인증서 중 첫 번째를 쓴다. 인증서가 여러 장인
- * 고객은 선택 UI 가 필요하고, 그건 인증수단 관리 화면과 함께 정리할 일이다.
- *
- * 인증서가 없으면 토큰 없이 진행한다 — 서버가 아직 required=false 라 이체는 되고,
- * 발급 단계가 붙지 않은 경로로 로그에 남는다. required 로 전환하기 전에 인증서 발급
- * 유도를 붙여야 한다.
+ * 인증서가 없으면 예외를 던져 이체를 막는다. 예전에는 토큰 없이 그냥 진행했는데,
+ * 그러면 인증 화면을 통과한 사용자와 통과하지 않은 사용자가 같은 결과를 받는다 —
+ * 화면상 인증한 것처럼 보이는 상태가 다시 생긴다.
  */
 async function issueApproval(
   customerId: string,
   data: PendingTransfer,
+  serialNumber: string,
   pin: string
-): Promise<string | undefined> {
-  const certs = await fetchMyCertificates(customerId)
-  const active = certs.find(c => c.status === 'ACTIVE') ?? certs[0]
-  if (!active) return undefined
+): Promise<string> {
+  if (!serialNumber) throw new NoCertificateError()
 
   return issueTransferApproval(customerId, {
-    fromAccountId: data.fromAccountId!,
+    fromAccountNo: data.fromNumber,
     toAccountNo: data.toAccount,
     amount: data.amount,
-    certSerialNumber: active.serialNumber,
+    certSerialNumber: serialNumber,
     pin,
   })
 }
@@ -66,12 +65,29 @@ export default function TransferConfirmPage() {
   const [pin, setPin] = useState<number[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [certError, setCertError] = useState<string | null>(null)
+  const [certs, setCerts] = useState<Array<{ serialNumber: string; status: string; certTypeName?: string }>>([])
+  const [selectedCert, setSelectedCert] = useState<string>('')
 
   useEffect(() => {
     const raw = sessionStorage.getItem('pendingTransfer')
     if (!raw) { router.push('/transfer/account'); return }
     setData(JSON.parse(raw))
   }, [router])
+
+  // 인증서 목록은 승인 단계에서 필요하다. 여러 장이면 고를 수 있어야 하고,
+  // 한 장도 없으면 이체 전에 알려줘야 한다 — 6자리를 다 누른 뒤 실패시키면 나쁘다.
+  useEffect(() => {
+    let alive = true
+    fetchMyCertificates(getCurrentDepositCustomerId())
+      .then(list => {
+        if (!alive) return
+        const usable = list.filter(c => c.status === 'ACTIVE')
+        setCerts(usable)
+        setSelectedCert(usable[0]?.serialNumber ?? '')
+      })
+      .catch(() => { if (alive) { setCerts([]); setSelectedCert('') } })
+    return () => { alive = false }
+  }, [])
 
   function handlePinKey(key: number | string) {
     if (key === '↺') { setPin([]); return }
@@ -92,7 +108,11 @@ export default function TransferConfirmPage() {
             if (data.transferType === 'EXTERNAL') {
               const bankCode = PAYMENT_BANK_CODE_MAP[data.toBankCode]
               if (!bankCode) throw new Error(`지원하지 않는 은행 코드: ${data.toBankCode}`)
-              const authToken = newAuthToken()
+              // 예전에는 newAuthToken() 이 만든 값을 인증 토큰이라고 보냈다 — 브라우저가
+              // 지어낸 문자열이라 서버가 검증할 수도 없었다. 이제 인증서 PIN 으로 받은
+              // 승인 토큰을 보내고, 결제계가 인증보안계에 대조한다.
+              const approvalToken = await issueApproval(
+                getCurrentDepositCustomerId(), data, selectedCert, pinValue)
               const idempotencyKey = newIdempotencyKey()
               const result = await createInstantTransfer(
                 {
@@ -106,7 +126,7 @@ export default function TransferConfirmPage() {
                 },
                 {
                   userId: getCurrentDepositCustomerId(),
-                  authTokenId: authToken,
+                  authTokenId: approvalToken,
                   idempotencyKey,
                   channel: 'MOBILE',
                   requestId: idempotencyKey,
@@ -123,7 +143,7 @@ export default function TransferConfirmPage() {
               // 지금까지 PIN 은 화면에서만 받고 아무 데도 쓰이지 않았다 — 6자리를 채우면
               // 그대로 이체가 됐다. 이제 실제로 인증서 PIN 을 확인한다.
               const customerId = getCurrentDepositCustomerId()
-              const approvalToken = await issueApproval(customerId, data, pinValue)
+              const approvalToken = await issueApproval(customerId, data, selectedCert, pinValue)
 
               const result = await executeDepositTransfer(customerId, {
                 fromAccountId: data.fromAccountId,
@@ -149,6 +169,15 @@ export default function TransferConfirmPage() {
             }
             // 인증서 PIN 실패는 이체 실패와 다르다. 결과 페이지로 넘기지 않고
             // 같은 화면에서 다시 입력받는다 — 사용자는 무엇이 틀렸는지 알아야 한다.
+            if (e instanceof NoCertificateError) {
+              sessionStorage.setItem('paymentResult', JSON.stringify({
+                status: 'ERROR',
+                message: '이체에는 인증서가 필요합니다. 인증센터에서 발급 후 다시 시도해 주세요.',
+              }))
+              setIsSubmitting(false)
+              router.push('/transfer/result')
+              return
+            }
             const code = err.response?.data?.code ?? ''
             if (code.startsWith('CUST_03')) {
               setCertError(err.response?.data?.message ?? '인증서 비밀번호가 올바르지 않습니다.')
@@ -317,9 +346,38 @@ export default function TransferConfirmPage() {
                         <span className="text-kb-text">{data.receiverName}</span>
                       </div>
                     </div>
+                    {/* 인증서 선택 — 여러 장이면 고를 수 있어야 한다. 예전에는 첫 장이 말없이 쓰였다. */}
+                    {certs.length > 1 && (
+                      <div className="mb-5">
+                        <p className="text-[13px] font-bold text-kb-text mb-2">인증서 선택</p>
+                        <select
+                          value={selectedCert}
+                          onChange={e => setSelectedCert(e.target.value)}
+                          className="w-full border rounded-lg px-3 py-2 text-[13px]"
+                          style={{ borderColor: '#D1D5DB' }}>
+                          {certs.map(c => (
+                            <option key={c.serialNumber} value={c.serialNumber}>
+                              {(c.certTypeName ?? '인증서') + ' — ' + c.serialNumber}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* 인증서가 없으면 6자리를 다 누른 뒤가 아니라 여기서 알린다. */}
+                    {certs.length === 0 && (
+                      <div className="mb-5 rounded-lg px-4 py-3 bg-red-50 border border-red-200">
+                        <p className="text-[13px] text-red-700 font-bold mb-1">이체에는 인증서가 필요합니다</p>
+                        <p className="text-[12px] text-red-600">
+                          인증센터에서 인증서를 발급받은 뒤 다시 시도해 주세요.
+                        </p>
+                      </div>
+                    )}
+
                     <div className="flex justify-center">
-                      <button onClick={() => { setCertStep('pin'); setPin([]) }}
-                        className="px-16 py-2.5 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity"
+                      <button onClick={() => { setCertStep('pin'); setPin([]); setCertError(null) }}
+                        disabled={certs.length === 0}
+                        className="px-16 py-2.5 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                         style={{ backgroundColor: KB_PRIMARY }}>
                         확인
                       </button>

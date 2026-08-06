@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  */
 public record TransactionApprovalVerifyRequest(
         String approvalToken,
-        Long fromAccountId,
+        String fromAccountNo,
         String toAccountNo,
         BigDecimal amount
 ) {}

@@ -37,27 +37,30 @@ public class TransferApprovalGate {
     private boolean required;
 
     /**
+     * <p>계좌를 <b>번호</b>로 대조하는 이유: 타행이체(결제계)는 accountId 를 모르고 번호로만
+     * 거래를 지목한다. 두 경로가 같은 승인 체계를 쓰려면 공통으로 아는 값이어야 한다.
+     *
      * @param approvalToken 없으면 null·빈 문자열
      * @throws BusinessException 필수인데 없거나(TRANSFER_APPROVAL_REQUIRED),
      *                           검증에 실패한 경우(TRANSFER_APPROVAL_INVALID)
      */
-    public void verify(String approvalToken, Long fromAccountId, String toAccountNo, BigDecimal amount) {
+    public void verify(String approvalToken, String fromAccountNo, String toAccountNo, BigDecimal amount) {
         if (approvalToken == null || approvalToken.isBlank()) {
             if (required) {
                 throw new BusinessException(ErrorCode.TRANSFER_APPROVAL_REQUIRED);
             }
             // 필수 전환 판단 근거가 되는 로그다. 이 줄이 사라져야 required=true 로 바꿀 수 있다.
-            log.info("이체 승인 토큰 없이 처리됨 (과도기) fromAccountId={}", fromAccountId);
+            log.info("이체 승인 토큰 없이 처리됨 (과도기) fromAccountNo={}", fromAccountNo);
             return;
         }
 
         try {
             customerServiceClient.verifyTransactionApproval(
-                    new TransactionApprovalVerifyRequest(approvalToken, fromAccountId, toAccountNo, amount));
+                    new TransactionApprovalVerifyRequest(approvalToken, fromAccountNo, toAccountNo, amount));
         } catch (Exception e) {
             // 인증보안계가 거부했거나 통신에 실패했다. 어느 쪽이든 승인은 확인되지 않았다 —
             // 확인되지 않은 승인으로 돈을 보내지 않는다(fail-closed).
-            log.warn("이체 승인 검증 실패 fromAccountId={} reason={}", fromAccountId, e.toString());
+            log.warn("이체 승인 검증 실패 fromAccountNo={} reason={}", fromAccountNo, e.toString());
             throw new BusinessException(ErrorCode.TRANSFER_APPROVAL_INVALID);
         }
     }

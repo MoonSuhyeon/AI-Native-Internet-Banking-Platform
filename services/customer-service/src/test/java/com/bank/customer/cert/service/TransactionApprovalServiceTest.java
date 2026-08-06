@@ -51,7 +51,7 @@ class TransactionApprovalServiceTest {
 
     private static final Long CUSTOMER_ID = 1L;
     private static final String SERIAL = "CERT-SERIAL-001";
-    private static final Long FROM_ACCOUNT = 10L;
+    private static final String FROM_ACCOUNT = "001-001-000001";
     private static final String TO_ACCOUNT = "111-222-333";
     private static final BigDecimal AMOUNT = new BigDecimal("100000");
 
@@ -78,7 +78,7 @@ class TransactionApprovalServiceTest {
                 "127.0.0.1");
     }
 
-    private TransactionApprovalVerifyRequest verifyRequest(String token, Long from, String to, BigDecimal amount) {
+    private TransactionApprovalVerifyRequest verifyRequest(String token, String from, String to, BigDecimal amount) {
         return new TransactionApprovalVerifyRequest(token, from, to, amount);
     }
 
@@ -127,7 +127,7 @@ class TransactionApprovalServiceTest {
         String token = issue().approvalToken();
 
         assertThatThrownBy(() -> service.verify(
-                verifyRequest(token, 99L, TO_ACCOUNT, AMOUNT)))
+                verifyRequest(token, "999-999-999999", TO_ACCOUNT, AMOUNT)))
                 .isInstanceOf(BusinessException.class);
     }
 

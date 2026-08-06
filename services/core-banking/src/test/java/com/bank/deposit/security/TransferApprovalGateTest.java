@@ -36,7 +36,7 @@ class TransferApprovalGateTest {
 
     private TransferApprovalGate gate;
 
-    private static final Long FROM = 10L;
+    private static final String FROM = "001-001-000001";
     private static final String TO = "111-222-333";
     private static final BigDecimal AMOUNT = new BigDecimal("100000");
 

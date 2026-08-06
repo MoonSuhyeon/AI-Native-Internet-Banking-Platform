@@ -14,7 +14,7 @@ import java.math.BigDecimal;
  */
 public record TransactionApprovalVerifyRequest(
         @NotBlank String     approvalToken,
-        @NotNull  Long       fromAccountId,
+        @NotBlank String     fromAccountNo,
         @NotBlank String     toAccountNo,
         @NotNull @Positive BigDecimal amount
 ) {}

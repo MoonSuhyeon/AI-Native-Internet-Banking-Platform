@@ -11,6 +11,7 @@ import com.bank.payment.domain.service.PaymentCommand;
 import com.bank.payment.domain.service.PaymentOrchestrator;
 import com.bank.payment.domain.service.PaymentResult;
 import org.springframework.http.ResponseEntity;
+import com.bank.deposit.security.TransferApprovalGate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,11 +40,15 @@ public class PaymentController {
 
     private final PaymentOrchestrator paymentOrchestrator;
     private final PaymentInstructionMapper paymentInstructionMapper;
+    /** 수신·결제가 같은 승인 체계를 쓴다. 계좌 번호로 묶이므로 양쪽에서 그대로 쓸 수 있다. */
+    private final TransferApprovalGate transferApprovalGate;
 
     public PaymentController(PaymentOrchestrator paymentOrchestrator,
-                             PaymentInstructionMapper paymentInstructionMapper) {
+                             PaymentInstructionMapper paymentInstructionMapper,
+                             TransferApprovalGate transferApprovalGate) {
         this.paymentOrchestrator = paymentOrchestrator;
         this.paymentInstructionMapper = paymentInstructionMapper;
+        this.transferApprovalGate = transferApprovalGate;
     }
 
     @PostMapping
@@ -52,6 +57,15 @@ public class PaymentController {
             @RequestHeader("X-User-Id") String userId,
             @RequestHeader("X-Auth-Token-Id") String authTokenId,
             @RequestBody PaymentRequest request) {
+
+        // 자금이동 승인(step-up) 확인.
+        //
+        // X-Auth-Token-Id 는 원래 브라우저가 만들어 보내는 값이었고 아무도 검증하지 않았다
+        // (newAuthToken() = 'T' + 타임스탬프 + 난수). 인증 토큰이라는 이름만 있고 인증이
+        // 아니었다. 이제 인증보안계가 발급한 승인 토큰을 받아 여기서 대조한다 —
+        // 내부이체(TransactionController)와 같은 체계다.
+        transferApprovalGate.verify(
+                authTokenId, request.senderAccountId(), request.receiverAccountNo(), request.transferAmount());
 
         // api 입력 → 도메인 입력 번역 (Command 조립)
         PaymentCommand command = new PaymentCommand(

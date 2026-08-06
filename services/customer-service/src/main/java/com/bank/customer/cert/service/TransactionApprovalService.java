@@ -71,7 +71,7 @@ public class TransactionApprovalService {
         OffsetDateTime now = OffsetDateTime.now();
         authTokenRepository.save(AuthToken.builder()
                 .customerId(customerId)
-                .authTokenHash(bind(token, request.fromAccountId(), request.toAccountNo(), request.amount()))
+                .authTokenHash(bind(token, request.fromAccountNo(), request.toAccountNo(), request.amount()))
                 .authMethodTypeCode(AuthToken.METHOD_CERT)
                 .authTokenPurposeCode(AuthToken.PURPOSE_TRANSFER)
                 .authTokenIssuedAt(now)
@@ -88,7 +88,7 @@ public class TransactionApprovalService {
      */
     @Transactional
     public void verify(TransactionApprovalVerifyRequest request) {
-        String hash = bind(request.approvalToken(), request.fromAccountId(),
+        String hash = bind(request.approvalToken(), request.fromAccountNo(),
                 request.toAccountNo(), request.amount());
 
         // 조회 실패는 토큰이 틀렸거나 거래 내용이 발급 때와 다르다는 뜻이다. 둘을 구별해
@@ -122,10 +122,10 @@ public class TransactionApprovalService {
      * <p>토큰만 해시하면 "이 사람이 인증했다"까지만 뜻하게 되고, 1,000원 이체로 받은 토큰으로
      * 1,000만원을 보낼 수 있다. 거래 내용을 섞어야 "이 사람이 <b>이 이체를</b> 승인했다"가 된다.
      */
-    private String bind(String token, Long fromAccountId, String toAccountNo, BigDecimal amount) {
+    private String bind(String token, String fromAccountNo, String toAccountNo, BigDecimal amount) {
         return Sha256.hex(String.join("|",
                 token,
-                String.valueOf(fromAccountId),
+                fromAccountNo,
                 toAccountNo,
                 amount.stripTrailingZeros().toPlainString()));
     }

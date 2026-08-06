@@ -117,7 +117,8 @@ api.interceptors.response.use(
 // 설계: docs/plan/transfer-step-up-auth.md
 
 export type TransferApprovalInput = {
-  fromAccountId: number;
+  /** 계좌 번호로 묶는다 — 내부이체·타행이체가 같은 승인 체계를 쓰기 위해서다. */
+  fromAccountNo: string;
   toAccountNo: string;
   amount: number;
   certSerialNumber: string;
