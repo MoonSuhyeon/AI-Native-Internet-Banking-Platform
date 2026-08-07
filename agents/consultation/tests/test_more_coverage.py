@@ -322,7 +322,7 @@ class TestExecuteCustomerContracts:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestChatbotIntentActiveFilter:
-    """active_yn='N' intent는 _get_intent에서 조회 안 됨."""
+    """active_yn=False intent는 _get_intent에서 조회 안 됨."""
 
     def test_inactive_intent_not_returned(self, service, db):
         from sqlalchemy import select
@@ -335,7 +335,7 @@ class TestChatbotIntentActiveFilter:
             )
         ).first()
         assert intent is not None
-        intent.active_yn = "N"
+        intent.active_yn = False
         db.commit()
 
         result = service._get_intent(scenario_id, "RATE_GUIDE")
@@ -345,7 +345,7 @@ class TestChatbotIntentActiveFilter:
         scenario_id, _ = service.seed_default_scenario()
         result = service._get_intent(scenario_id, "JOIN_CONDITION")
         assert result is not None
-        assert result.active_yn == "Y"
+        assert result.active_yn == True
 
     def test_active_yn_y_for_all_seeded_intents(self, service, db):
         from sqlalchemy import select
@@ -354,7 +354,7 @@ class TestChatbotIntentActiveFilter:
             select(ChatbotIntent).where(ChatbotIntent.scenario_id == scenario_id)
         ).all()
         for intent in intents:
-            assert intent.active_yn == "Y"
+            assert intent.active_yn == True
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -470,8 +470,8 @@ class TestChatEndChatbotState:
         asyncio.run(chat_service.end_chat(chat_id))
 
         chatbot = db.get(ChatbotConsultation, session.chatbot_consultation_id)
-        # 이관됐으므로 agent_connected_yn='Y'
-        assert chatbot.agent_connected_yn == "Y"
+        # 이관됐으므로 agent_connected_yn=True
+        assert chatbot.agent_connected_yn == True
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -576,7 +576,7 @@ class TestChatbotConsultationInitialState:
         service.seed_default_scenario()
         session = _start(service)
         chatbot = db.get(ChatbotConsultation, session.chatbot_consultation_id)
-        assert chatbot.agent_connected_yn != "Y"
+        assert chatbot.agent_connected_yn != True
 
     def test_initial_turn_count_zero(self, service, db):
         service.seed_default_scenario()

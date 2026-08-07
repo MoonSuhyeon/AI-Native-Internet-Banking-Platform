@@ -1064,7 +1064,7 @@ class TestMultiTurnConversation:
         response = _send(service, session.chatbot_consultation_id, button_value="AGENT")
         assert response.agent_transfer_required is True
         chatbot = db.get(ChatbotConsultation, session.chatbot_consultation_id)
-        assert chatbot.agent_connected_yn == "Y"
+        assert chatbot.agent_connected_yn == True
 
     def test_feature_response_has_message(self, service):
         service.seed_default_scenario()

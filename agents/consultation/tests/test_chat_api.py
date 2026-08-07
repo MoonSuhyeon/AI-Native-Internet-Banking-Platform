@@ -216,7 +216,7 @@ class TestEndChat:
             assert resp.status_code == 200
             body = resp.json()
             assert body["status"] == "ENDED"
-            assert body["active_yn"] == "N"
+            assert body["active_yn"] == False
             assert body["satisfaction_score"] == 5
         finally:
             app.dependency_overrides.clear()

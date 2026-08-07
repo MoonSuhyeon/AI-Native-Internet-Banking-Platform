@@ -133,7 +133,7 @@ class ChatConsultationResponse(BaseModel):
     agent_connected_at: datetime | None = None
     chat_started_at: datetime | None = None
     chat_ended_at: datetime | None = None
-    active_yn: str
+    active_yn: bool
     satisfaction_score: int | None = None
 
 
@@ -143,7 +143,7 @@ class ChatMessageHistoryResponse(BaseModel):
     sender_type: str  # USER | BOT | AGENT
     message: str
     sent_at: datetime | None = None
-    read_yn: str = "N"
+    read_yn: bool = False
 
 
 class ChatbotTransferRequest(BaseModel):

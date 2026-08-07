@@ -158,7 +158,7 @@ class TestEndChat:
         asyncio.run(chat_service.connect_agent(chat_id, employee_id=1))
         ended = asyncio.run(chat_service.end_chat(chat_id, satisfaction_score=5))
 
-        assert ended.active_yn == "N"
+        assert ended.active_yn == False
         assert ended.chat_ended_at is not None
         assert ended.satisfaction_score == 5
         assert ended.chat_seconds is not None
@@ -168,7 +168,7 @@ class TestEndChat:
         asyncio.run(chat_service.connect_agent(chat_id, employee_id=1))
         ended = asyncio.run(chat_service.end_chat(chat_id))
 
-        assert ended.active_yn == "N"
+        assert ended.active_yn == False
         assert ended.satisfaction_score is None
 
     def test_end_already_ended_raises(self, service, chat_service: ChatService):
@@ -210,5 +210,5 @@ class TestFullFlow:
 
         # 6. 상담 종료
         ended = asyncio.run(chat_service.end_chat(chat_id, satisfaction_score=4))
-        assert ended.active_yn == "N"
+        assert ended.active_yn == False
         assert ended.satisfaction_score == 4

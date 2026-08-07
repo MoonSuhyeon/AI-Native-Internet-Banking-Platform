@@ -10,7 +10,7 @@
   F. ChatbotNodeFlow 검증             - branch_value·active_yn·sort_order
   G. _deactivate_legacy_start_options - 불허 버튼 비활성화
   H. _resolve_next_node               - 매핑 있음/없음·active_yn 필터
-  I. _button_responses                - active_yn='Y'만·sort_order 정렬
+  I. _button_responses                - active_yn=True만·sort_order 정렬
   J. config/settings 검증             - 기본값·env prefix·lru_cache
   K. PRODUCT_COMPARE LLM 경로         - LLM mock 있을 때 개념 비교 호출
   L. MY_CASH_FLOW vs MY_TRANSFERS     - 거래 유형 필터 차이 명확 검증
@@ -203,7 +203,7 @@ class TestConsultationModel:
         service.seed_default_scenario()
         session = _start(service)
         consult = db.get(Consultation, session.consultation_id)
-        assert consult.active_yn == "Y"
+        assert consult.active_yn == True
 
     def test_consultation_status_code_set(self, service, db):
         service.seed_default_scenario()
@@ -280,14 +280,14 @@ class TestScenarioNodeButtonDB:
     def test_scenario_name(self, service, db):
         service.seed_default_scenario()
         scenario = db.scalars(
-            __import__("sqlalchemy").select(ChatbotScenario).where(ChatbotScenario.active_yn == "Y")
+            __import__("sqlalchemy").select(ChatbotScenario).where(ChatbotScenario.active_yn == True)
         ).first()
         assert "기본 수신 상담" in scenario.scenario_name
 
     def test_scenario_active_yn_y(self, service, db):
         service.seed_default_scenario()
         from sqlalchemy import select
-        scenarios = db.scalars(select(ChatbotScenario).where(ChatbotScenario.active_yn == "Y")).all()
+        scenarios = db.scalars(select(ChatbotScenario).where(ChatbotScenario.active_yn == True)).all()
         assert len(scenarios) >= 1
 
     def test_nodes_all_active(self, service, db):
@@ -297,7 +297,7 @@ class TestScenarioNodeButtonDB:
             select(ChatbotNode).where(ChatbotNode.scenario_id == scenario_id)
         ).all()
         for node in nodes:
-            assert node.active_yn == "Y"
+            assert node.active_yn == True
 
     def test_nodes_have_response_message(self, service, db):
         from sqlalchemy import select
@@ -314,7 +314,7 @@ class TestScenarioNodeButtonDB:
         buttons = db.scalars(
             select(ChatbotNodeButton).where(
                 ChatbotNodeButton.node_id == first_node_id,
-                ChatbotNodeButton.active_yn == "Y",
+                ChatbotNodeButton.active_yn == True,
             )
         ).all()
         assert len(buttons) == 4
@@ -324,7 +324,7 @@ class TestScenarioNodeButtonDB:
         _, first_node_id = service.seed_default_scenario()
         buttons = db.scalars(
             select(ChatbotNodeButton)
-            .where(ChatbotNodeButton.node_id == first_node_id, ChatbotNodeButton.active_yn == "Y")
+            .where(ChatbotNodeButton.node_id == first_node_id, ChatbotNodeButton.active_yn == True)
             .order_by(ChatbotNodeButton.sort_order)
         ).all()
         orders = [b.sort_order for b in buttons]
@@ -336,7 +336,7 @@ class TestScenarioNodeButtonDB:
         flows = db.scalars(
             select(ChatbotNodeFlow).where(
                 ChatbotNodeFlow.current_node_id == first_node_id,
-                ChatbotNodeFlow.active_yn == "Y",
+                ChatbotNodeFlow.active_yn == True,
             )
         ).all()
         assert len(flows) == 4
@@ -347,13 +347,13 @@ class TestScenarioNodeButtonDB:
         button_values = {
             b.button_value
             for b in db.scalars(
-                select(ChatbotNodeButton).where(ChatbotNodeButton.node_id == first_node_id, ChatbotNodeButton.active_yn == "Y")
+                select(ChatbotNodeButton).where(ChatbotNodeButton.node_id == first_node_id, ChatbotNodeButton.active_yn == True)
             ).all()
         }
         flow_values = {
             f.branch_value
             for f in db.scalars(
-                select(ChatbotNodeFlow).where(ChatbotNodeFlow.current_node_id == first_node_id, ChatbotNodeFlow.active_yn == "Y")
+                select(ChatbotNodeFlow).where(ChatbotNodeFlow.current_node_id == first_node_id, ChatbotNodeFlow.active_yn == True)
             ).all()
         }
         assert button_values == flow_values
@@ -403,7 +403,7 @@ class TestScenarioNodeButtonDB:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestNodeFlowFilter:
-    """_resolve_next_node — active_yn='Y' 필터·branch_value 정확 매칭."""
+    """_resolve_next_node — active_yn=True 필터·branch_value 정확 매칭."""
 
     def test_valid_button_resolves_next_node(self, service):
         service.seed_default_scenario()
@@ -443,7 +443,7 @@ class TestDeactivateLegacyOptions:
             button_text="레거시 버튼",
             button_value="LEGACY_OPTION",
             sort_order=99,
-            active_yn="Y",
+            active_yn=True,
         )
         db.add(extra)
         db.commit()
@@ -457,7 +457,7 @@ class TestDeactivateLegacyOptions:
                 ChatbotNodeButton.button_value == "LEGACY_OPTION",
             )
         ).first()
-        assert legacy.active_yn == "N"
+        assert legacy.active_yn == False
 
     def test_valid_buttons_remain_active(self, service, db):
         from sqlalchemy import select
@@ -467,7 +467,7 @@ class TestDeactivateLegacyOptions:
         active = db.scalars(
             select(ChatbotNodeButton).where(
                 ChatbotNodeButton.node_id == first_node_id,
-                ChatbotNodeButton.active_yn == "Y",
+                ChatbotNodeButton.active_yn == True,
             )
         ).all()
         values = {b.button_value for b in active}
@@ -475,7 +475,7 @@ class TestDeactivateLegacyOptions:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# H. _button_responses — active_yn='Y'·sort_order
+# H. _button_responses — active_yn=True·sort_order
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestButtonResponses:
@@ -491,7 +491,7 @@ class TestButtonResponses:
             button_text="비활성 버튼",
             button_value="INACTIVE_BTN",
             sort_order=99,
-            active_yn="N",
+            active_yn=False,
         )
         db.add(inactive)
         db.commit()
@@ -1131,8 +1131,8 @@ class TestChatServiceMultiConnection:
 
         c1 = chat_service.get_consultation(chat_id_1)
         c2 = chat_service.get_consultation(chat_id_2)
-        assert c1.active_yn == "N"
-        assert c2.active_yn == "Y"
+        assert c1.active_yn == False
+        assert c2.active_yn == True
 
     def test_messages_not_mixed_between_chats(self, service, chat_service):
         self._transfer(service, chat_service, "CUST_P")

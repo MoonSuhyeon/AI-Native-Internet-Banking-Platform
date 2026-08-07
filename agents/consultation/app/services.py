@@ -88,7 +88,7 @@ class ChatbotService:
             reception_channel_code_id=CODE_RECEPTION_CHANNEL_CHAT,
             content_summary="챗봇 상담 시작",
             status_code_id=CODE_CONSULTATION_STATUS_OPEN,
-            active_yn="Y",
+            active_yn=True,
         )
         self.db.add(consultation)
         self.db.flush()
@@ -175,7 +175,7 @@ class ChatbotService:
                 process_code = CODE_PROCESS_LLM
                 response_message = "상담사 연결을 요청했습니다. 잠시만 기다려 주세요."
                 agent_transfer_required = True
-                chatbot.agent_connected_yn = "Y"
+                chatbot.agent_connected_yn = True
                 self._open_chat_consultation(chatbot)
         else:
             # 버튼 매핑 없음 → intent 분류 후 feature 실행 시도
@@ -411,7 +411,7 @@ class ChatbotService:
                         response_message = "상담사 연결을 요청했습니다. 잠시만 기다려 주세요."
                         agent_transfer_required = True
                         node_id = current_node_id or 0
-                        chatbot.agent_connected_yn = "Y"
+                        chatbot.agent_connected_yn = True
                         if agent_intent:
                             chatbot.intent_id = agent_intent.intent_id
                         self._open_chat_consultation(chatbot)
@@ -2395,7 +2395,7 @@ class ChatbotService:
                 scenario_type_code_id=CODE_SCENARIO_TYPE_DEFAULT,
                 consultation_category_code_id=CODE_CATEGORY_PRODUCT_ADVICE,
                 reception_channel_code_id=CODE_RECEPTION_CHANNEL_CHAT,
-                active_yn="Y",
+                active_yn=True,
             )
             self.db.add(scenario)
             self.db.flush()
@@ -2466,7 +2466,7 @@ class ChatbotService:
             node_name=node_name,
             response_message=response_message,
             sort_order=sort_order,
-            active_yn="Y",
+            active_yn=True,
         )
         self.db.add(node)
         self.db.flush()
@@ -2486,7 +2486,7 @@ class ChatbotService:
                     button_text=button_text,
                     button_value=button_value,
                     sort_order=sort_order,
-                    active_yn="Y",
+                    active_yn=True,
                 )
             )
 
@@ -2506,26 +2506,26 @@ class ChatbotService:
                     chatbot_flow_type_cd="BUTTON",
                     branch_criteria_cd="BUTTON_VALUE",
                     branch_value=branch_value,
-                    active_yn="Y",
+                    active_yn=True,
                 )
             )
 
     def _deactivate_legacy_start_options(self, node_id: int, allowed_values: set[str]) -> None:
         for button in self.db.scalars(select(ChatbotNodeButton).where(ChatbotNodeButton.node_id == node_id)).all():
             if button.button_value not in allowed_values:
-                button.active_yn = "N"
+                button.active_yn = False
 
     def _get_active_scenario(self) -> ChatbotScenario | None:
         return self.db.scalars(
             select(ChatbotScenario)
-            .where(ChatbotScenario.active_yn == "Y", ChatbotScenario.scenario_id.is_not(None))
+            .where(ChatbotScenario.active_yn == True, ChatbotScenario.scenario_id.is_not(None))
             .order_by((ChatbotScenario.scenario_name == "기본 수신 상담").desc(), ChatbotScenario.scenario_id)
         ).first()
 
     def _get_first_node(self, scenario_id: int) -> ChatbotNode | None:
         return self.db.scalars(
             select(ChatbotNode)
-            .where(ChatbotNode.scenario_id == scenario_id, ChatbotNode.active_yn == "Y")
+            .where(ChatbotNode.scenario_id == scenario_id, ChatbotNode.active_yn == True)
             .order_by(ChatbotNode.sort_order, ChatbotNode.node_id)
         ).first()
 
@@ -2544,7 +2544,7 @@ class ChatbotService:
             .where(
                 ChatbotNodeFlow.current_node_id == current_node_id,
                 ChatbotNodeFlow.branch_value == button_value,
-                ChatbotNodeFlow.active_yn == "Y",
+                ChatbotNodeFlow.active_yn == True,
                 NextNode.scenario_id == scenario_id,
             )
             .order_by(ChatbotNodeFlow.sort_order)
@@ -2554,7 +2554,7 @@ class ChatbotService:
     def _button_responses(self, node_id: int) -> list[ButtonResponse]:
         buttons = self.db.scalars(
             select(ChatbotNodeButton)
-            .where(ChatbotNodeButton.node_id == node_id, ChatbotNodeButton.active_yn == "Y")
+            .where(ChatbotNodeButton.node_id == node_id, ChatbotNodeButton.active_yn == True)
             .order_by(ChatbotNodeButton.sort_order, ChatbotNodeButton.id)
         ).all()
         return [ButtonResponse(id=button.id, text=button.button_text, value=button.button_value) for button in buttons]
@@ -2606,7 +2606,7 @@ class ChatbotService:
                     consultation_id=chatbot.consultation_id,
                     chatbot_consultation_id=chatbot.chatbot_consultation_id,
                     total_turn_count=0,
-                    active_yn="Y",
+                    active_yn=True,
                     agent_requested_at=datetime.now(timezone.utc),  # 대기열 조회용
                 )
             )
@@ -2904,7 +2904,7 @@ class ChatbotService:
         return self.db.scalars(
             select(ChatbotIntent).where(
                 ChatbotIntent.intent_name == intent_name,
-                ChatbotIntent.active_yn == "Y",
+                ChatbotIntent.active_yn == True,
                 ChatbotIntent.scenario_id == scenario_id,
             )
         ).first()
@@ -2966,8 +2966,8 @@ class ChatbotService:
                     process_method_code_id=spec["process_method_code_id"],
                     confidence_threshold=70,
                     priority=spec["priority"],
-                    test_yn="N",
-                    active_yn="Y",
+                    test_yn=False,
+                    active_yn=True,
                 ))
 
 
@@ -2987,7 +2987,7 @@ _SENDER_LABEL = {
 
 
 def _chat_status(chat: ChatConsultation) -> str:
-    if chat.active_yn == "N":
+    if chat.active_yn == False:
         return "ENDED"
     if chat.agent_connected_at:
         return "CONNECTED"
@@ -3029,7 +3029,7 @@ class ChatService:
             )
             .join(Consultation, Consultation.consultation_id == ChatConsultation.consultation_id)
             .where(
-                ChatConsultation.active_yn == "Y",
+                ChatConsultation.active_yn == True,
                 ChatConsultation.agent_connected_at.is_(None),
                 ChatConsultation.agent_requested_at.is_not(None),
             )
@@ -3122,7 +3122,7 @@ class ChatService:
             .join(Consultation, Consultation.consultation_id == ChatConsultation.consultation_id)
             .where(
                 Consultation.customer_no == customer_no,
-                ChatConsultation.active_yn == "Y",
+                ChatConsultation.active_yn == True,
                 ChatConsultation.agent_connected_at.is_(None),
                 ChatConsultation.chat_ended_at.is_(None),
             )
@@ -3142,7 +3142,7 @@ class ChatService:
             employee_id=None,
             agent_requested_at=now,
             agent_connected_at=None,
-            active_yn="Y",
+            active_yn=True,
         )
         self.db.add(chat)
         self.db.commit()
@@ -3200,7 +3200,7 @@ class ChatService:
         Kafka: ChatMessageSent 이벤트 발행
         """
         chat = self.get_consultation(chat_consultation_id)
-        if chat.active_yn == "N":
+        if chat.active_yn == False:
             raise ValueError("이미 종료된 상담입니다.")
 
         last_seq = self.db.execute(
@@ -3244,7 +3244,7 @@ class ChatService:
         Kafka: ChatEnded 이벤트 발행
         """
         chat = self.get_consultation(chat_consultation_id)
-        if chat.active_yn == "N":
+        if chat.active_yn == False:
             # 이미 종료된 상담이라도 만족도 점수만 업데이트 허용
             if satisfaction_score is not None:
                 chat.satisfaction_score = satisfaction_score
@@ -3254,7 +3254,7 @@ class ChatService:
 
         now = datetime.now(timezone.utc)
         chat.chat_ended_at = now
-        chat.active_yn = "N"
+        chat.active_yn = False
         if satisfaction_score is not None:
             chat.satisfaction_score = satisfaction_score
         if chat.chat_started_at:

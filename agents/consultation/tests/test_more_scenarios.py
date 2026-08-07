@@ -560,7 +560,7 @@ class TestFirstNodeSortOrder:
     def test_first_node_active_yn_y(self, service, db):
         _, first_node_id = service.seed_default_scenario()
         node = db.get(ChatbotNode, first_node_id)
-        assert node.active_yn == "Y"
+        assert node.active_yn == True
 
     def test_first_node_response_message_greeting(self, service):
         service.seed_default_scenario()

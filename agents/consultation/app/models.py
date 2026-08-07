@@ -33,7 +33,7 @@ class Consultation(AuditMixin, Base):
     previous_consultation_id: Mapped[int | None] = mapped_column(
         BigInteger, ForeignKey("consultation.consultation_id")
     )
-    active_yn: Mapped[str] = mapped_column(String(1), default="Y", nullable=False)
+    active_yn: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class ChatbotScenario(AuditMixin, Base):
@@ -45,8 +45,8 @@ class ChatbotScenario(AuditMixin, Base):
     scenario_type_code_id: Mapped[int | None] = mapped_column(BigInteger)
     consultation_category_code_id: Mapped[int | None] = mapped_column(BigInteger)
     reception_channel_code_id: Mapped[int | None] = mapped_column(BigInteger)
-    test_yn: Mapped[str] = mapped_column(String(1), default="N", nullable=False)
-    active_yn: Mapped[str] = mapped_column(String(1), default="Y", nullable=False)
+    test_yn: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    active_yn: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     nodes: Mapped[list["ChatbotNode"]] = relationship(back_populates="scenario")
 
 
@@ -61,8 +61,8 @@ class ChatbotIntent(AuditMixin, Base):
     process_method_code_id: Mapped[int | None] = mapped_column(BigInteger)
     confidence_threshold: Mapped[int | None] = mapped_column(Integer)
     priority: Mapped[int | None] = mapped_column(Integer)
-    test_yn: Mapped[str] = mapped_column(String(1), default="N", nullable=False)
-    active_yn: Mapped[str] = mapped_column(String(1), default="Y", nullable=False)
+    test_yn: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    active_yn: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class ChatbotNode(AuditMixin, Base):
@@ -79,7 +79,7 @@ class ChatbotNode(AuditMixin, Base):
     timeout_seconds: Mapped[int | None] = mapped_column(Integer)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     exposure_count: Mapped[int | None] = mapped_column(Integer)
-    active_yn: Mapped[str] = mapped_column(String(1), default="Y", nullable=False)
+    active_yn: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     scenario: Mapped[ChatbotScenario] = relationship(back_populates="nodes")
     buttons: Mapped[list["ChatbotNodeButton"]] = relationship(back_populates="node")
 
@@ -92,7 +92,7 @@ class ChatbotNodeButton(AuditMixin, Base):
     button_text: Mapped[str] = mapped_column(String(50), nullable=False)
     button_value: Mapped[str] = mapped_column(String(20), nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False)
-    active_yn: Mapped[str] = mapped_column(String(1), default="Y", nullable=False)
+    active_yn: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     node: Mapped[ChatbotNode] = relationship(back_populates="buttons")
 
 
@@ -109,7 +109,7 @@ class ChatbotNodeFlow(AuditMixin, Base):
     chatbot_flow_type_cd: Mapped[str] = mapped_column(String(20), nullable=False)
     branch_criteria_cd: Mapped[str | None] = mapped_column(String(20))
     branch_value: Mapped[str | None] = mapped_column(String(50))
-    active_yn: Mapped[str] = mapped_column(String(1), default="Y", nullable=False)
+    active_yn: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class ChatbotConsultation(AuditMixin, Base):
@@ -126,10 +126,10 @@ class ChatbotConsultation(AuditMixin, Base):
     session_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=func.now())
     session_ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     total_turn_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    resolved_yn: Mapped[str] = mapped_column(String(1), default="N", nullable=False)
-    agent_connected_yn: Mapped[str] = mapped_column(String(1), default="N", nullable=False)
+    resolved_yn: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    agent_connected_yn: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     end_type_code_id: Mapped[int | None] = mapped_column(BigInteger)
-    error_occurred_yn: Mapped[str] = mapped_column(String(1), default="N", nullable=False)
+    error_occurred_yn: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     consultation: Mapped[Consultation] = relationship()
 
 
@@ -163,7 +163,7 @@ class ChatConsultation(AuditMixin, Base):
     agent_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     agent_connected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     waiting_seconds: Mapped[int | None] = mapped_column(Integer)
-    waiting_abandoned_yn: Mapped[str] = mapped_column(String(1), default="N", nullable=False)
+    waiting_abandoned_yn: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     waiting_abandoned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     chat_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     chat_ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -174,7 +174,7 @@ class ChatConsultation(AuditMixin, Base):
     end_type_code_id: Mapped[int | None] = mapped_column(BigInteger)
     agent_talk_seconds: Mapped[int | None] = mapped_column(Integer)
     satisfaction_score: Mapped[int | None] = mapped_column(Integer)
-    active_yn: Mapped[str] = mapped_column(String(1), default="Y", nullable=False)
+    active_yn: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class ChatMessageHistory(AuditMixin, Base):
@@ -198,7 +198,7 @@ class ChatMessageHistory(AuditMixin, Base):
     response_time_ms: Mapped[int | None] = mapped_column(Integer)
     sentiment_result_code_id: Mapped[int | None] = mapped_column(BigInteger)
     error_type_code_id: Mapped[int | None] = mapped_column(BigInteger)
-    read_yn: Mapped[str] = mapped_column(String(1), default="N", nullable=False)
+    read_yn: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 

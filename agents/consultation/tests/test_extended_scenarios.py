@@ -271,14 +271,14 @@ class TestChatbotConsultationState:
         service.seed_default_scenario()
         session = _start(service)
         chatbot = db.get(ChatbotConsultation, session.chatbot_consultation_id)
-        assert chatbot.agent_connected_yn != "Y"
+        assert chatbot.agent_connected_yn != True
 
     def test_agent_connected_yn_set_after_transfer(self, service, db):
         service.seed_default_scenario()
         session = _start(service)
         _send(service, session.chatbot_consultation_id, button_value="AGENT")
         chatbot = db.get(ChatbotConsultation, session.chatbot_consultation_id)
-        assert chatbot.agent_connected_yn == "Y"
+        assert chatbot.agent_connected_yn == True
 
     def test_consultation_id_linked(self, service, db):
         service.seed_default_scenario()
@@ -347,8 +347,8 @@ class TestSessionIsolation:
 
         c1 = db.get(ChatbotConsultation, s1.chatbot_consultation_id)
         c2 = db.get(ChatbotConsultation, s2.chatbot_consultation_id)
-        assert c1.agent_connected_yn == "Y"
-        assert c2.agent_connected_yn != "Y"
+        assert c1.agent_connected_yn == True
+        assert c2.agent_connected_yn != True
 
 
 # ─────────────────────────────────────────────────────────────────────────────

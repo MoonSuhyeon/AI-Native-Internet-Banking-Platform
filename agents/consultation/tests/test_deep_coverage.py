@@ -1096,7 +1096,7 @@ class TestToChatResponse:
         resp = _to_chat_response(chat)
         assert resp.status == "ENDED"
         assert resp.satisfaction_score == 4
-        assert resp.active_yn == "N"
+        assert resp.active_yn == False
 
     def test_response_has_all_fields(self, service, chat_service):
         from app.main import _to_chat_response
@@ -1105,7 +1105,7 @@ class TestToChatResponse:
         resp = _to_chat_response(chat)
         assert resp.chat_consultation_id == chat_id
         assert resp.consultation_id > 0
-        assert resp.active_yn in ("Y", "N")
+        assert resp.active_yn in (True, False)
 
     def test_response_agent_requested_at_present(self, service, chat_service):
         from app.main import _to_chat_response

@@ -140,7 +140,7 @@ class TestAgentTransfer:
             )
         ).first()
         assert chat is not None
-        assert chat.active_yn == "Y"
+        assert chat.active_yn == True
 
     def test_agent_transfer_marks_chatbot_as_connected(self, service, db):
         service.seed_default_scenario()
@@ -149,7 +149,7 @@ class TestAgentTransfer:
         send(service, session.chatbot_consultation_id, button_value="AGENT")
 
         chatbot = db.get(ChatbotConsultation, session.chatbot_consultation_id)
-        assert chatbot.agent_connected_yn == "Y"
+        assert chatbot.agent_connected_yn == True
 
 
 class TestAuditCallSite:

@@ -256,7 +256,7 @@ class TestChatApiHttp:
             body = resp.json()
             assert body["status"] == "ENDED"
             assert body["satisfaction_score"] == 5
-            assert body["active_yn"] == "N"
+            assert body["active_yn"] == False
         finally:
             app.dependency_overrides.clear()
 
@@ -809,7 +809,7 @@ class TestLlmErrorFallback:
             )
         ).first()
         assert chat is not None
-        assert chat.active_yn == "Y"
+        assert chat.active_yn == True
 
 
 # ─────────────────────────────────────────────────────────────────────────────
