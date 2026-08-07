@@ -3,7 +3,7 @@
 # Build context: project root (../../)
 #
 # 주의: loan-service 는 advisory-service 소스를 같은 JVM 으로 컴파일한다.
-#       (loan-service/build.gradle 의 sourceSets srcDirs 참조)
+#       (loan-service/build.gradle 의 sourceSets srcDirs 참조 — ../../agents/advisory-service)
 # =============================================================================
 FROM gradle:8.9-jdk17-alpine AS builder
 WORKDIR /workspace
@@ -21,7 +21,8 @@ RUN gradle :services:loan-service:dependencies --no-daemon -q 2>/dev/null || tru
 # 소스 복사 (advisory-service 포함) + bootJar 빌드
 COPY common/src common/src
 COPY services/loan-service/src services/loan-service/src
-COPY services/advisory-service/src services/advisory-service/src
+# advisory-service 는 agents/ 로 이동했다(adb2aa50). build.gradle 의 srcDirs 도 그 경로를 본다.
+COPY agents/advisory-service/src agents/advisory-service/src
 
 RUN gradle :services:loan-service:bootJar --no-daemon -q
 
