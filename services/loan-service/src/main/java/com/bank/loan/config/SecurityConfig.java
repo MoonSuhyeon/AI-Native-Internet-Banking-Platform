@@ -168,6 +168,19 @@ public class SecurityConfig {
                         LoanRole.ADMIN.spring()
                 )
 
+                // 알림 outbox 조회·재전송 — 운영자 전용.
+                //
+                // 이 엔드포인트는 채널별 발송 큐 전체를 돌려준다. customerId 필터가 없어
+                // 고객 단위로 좁혀지지 않고, payload 에는 PII 가 들어갈 수 있다.
+                // 규칙이 없어 anyRequest().authenticated() 로 떨어지고 있었다 —
+                // 인증만 되면 고객도 남의 발송 이력을 볼 수 있었다.
+                //
+                // 고객용 알림함이 필요하다면 고객 소유가 드러나는 별도 도메인으로 만들어야 한다.
+                // 발송 큐에 읽음 플래그를 얹는 것으로는 소유 문제가 해결되지 않는다.
+                .requestMatchers("/api/notifications/**").hasAnyRole(
+                        LoanRole.OPS.spring(), LoanRole.ADMIN.spring()
+                )
+
                 // 감사로그 조회 — COMPLIANCE 전용
                 .requestMatchers("/api/audit/**").hasRole(LoanRole.COMPLIANCE.spring())
 

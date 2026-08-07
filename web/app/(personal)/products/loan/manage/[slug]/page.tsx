@@ -509,49 +509,22 @@ function ExtendForm({ contracts, selectedId, setSelectedId }: {
 // ─── 통지서비스 ───────────────────────────────────────────────
 
 function NotifyForm() {
-  const [notifs, setNotifs] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const cid = getCustomerId()
-    if (!cid) { setLoading(false); return }
-    loanMiscApi.getNotifications(cid)
-      .then(({ data: res }) => setNotifs(res.data?.items ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
-
-  if (loading) return <p className="text-[13px] text-kb-text-muted py-8 text-center">불러오는 중...</p>
-
+  // 고객용 통지함은 아직 없다.
+  //
+  // 이 화면은 GET /api/notifications 를 불렀는데 그건 운영자용 발송 outbox 다 —
+  // 채널별 발송 큐라 고객 소유를 나타내는 컬럼이 없고 customerId 필터도 없다.
+  // 고객 JWT 로 부르면 전 고객의 발송 이력이 나오고, payload 에는 PII 가 들어갈 수 있어
+  // loan-service SecurityConfig 에서 운영자 전용으로 막았다.
+  //
+  // 화면이 그리던 title·content·readYn·createdAt 은 그 응답에 없는 이름이라 어차피
+  // 전부 undefined 였고, 읽음 토글은 존재하지 않는 엔드포인트를 불러 아무 일도 하지 않았다.
+  //
+  // 되살리려면 고객 소유가 드러나는 통지함 도메인을 먼저 만들어야 한다.
+  // 발송 큐에 읽음 플래그를 얹는 것으로는 소유 문제가 해결되지 않는다.
   return (
-    <div>
-      {notifs.length === 0 ? (
-        <p className="text-[13px] text-kb-text-muted py-8 text-center">수신된 통지가 없습니다.</p>
-      ) : (
-        <table className="w-full text-[13px] border-t-2 border-kb-primary">
-          {/* 백엔드 통지 API 는 발송함(outbox)이다 — 제목·본문·읽음 상태를 주지 않는다.
-              예전 화면은 그런 필드가 있는 것처럼 그렸고 전부 undefined 였다.
-              읽음 토글도 없는 엔드포인트를 불러 아무 일도 하지 않았으므로 걷었다.
-              읽음 기능이 필요하면 백엔드에 먼저 만들어야 한다. */}
-          <thead><tr className="bg-kb-primary-bg">
-            <th className="px-4 py-3 text-left font-semibold border-b border-kb-primary-border">유형</th>
-            <th className="px-4 py-3 text-center font-semibold border-b border-kb-primary-border">채널</th>
-            <th className="px-4 py-3 text-center font-semibold border-b border-kb-primary-border">발송일</th>
-            <th className="px-4 py-3 text-center font-semibold border-b border-kb-primary-border">상태</th>
-          </tr></thead>
-          <tbody className="divide-y divide-kb-border">
-            {notifs.map(n => (
-              <tr key={n.outboxId} className="hover:bg-kb-primary-bg">
-                <td className="px-4 py-3">{n.eventTypeCd}</td>
-                <td className="px-4 py-3 text-center text-kb-text-muted">{n.channelCd}</td>
-                <td className="px-4 py-3 text-center text-kb-text-muted">{n.sentAt?.slice(0, 10) ?? '-'}</td>
-                <td className="px-4 py-3 text-center">{n.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+    <p className="text-[13px] text-kb-text-muted py-8 text-center">
+      통지 내역 조회는 준비 중입니다.
+    </p>
   )
 }
 
