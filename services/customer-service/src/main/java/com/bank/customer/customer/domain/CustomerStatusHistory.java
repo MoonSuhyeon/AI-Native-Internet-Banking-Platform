@@ -66,8 +66,8 @@ public class CustomerStatusHistory extends CreatedOnlyBaseEntity {
     private OffsetDateTime customerStatusEffectiveEndAt;
 
     /** 시스템 자동 처리(휴면·만료 등) 여부. T / F */
-    @Column(name = "system_auto_triggered_yn", nullable = false, columnDefinition = "CHAR(1)")
-    private String systemAutoTriggeredYn;
+    @Column(name = "system_auto_triggered_yn", nullable = false)
+    private Boolean systemAutoTriggeredYn;
 
     /** 변경을 수행한 직원 employee_id. 시스템 자동 전환·가입 시 null. */
     @Column(name = "changed_by_employee_id")
@@ -84,7 +84,7 @@ public class CustomerStatusHistory extends CreatedOnlyBaseEntity {
                 .customerStatusCode(Customer.STATUS_ACTIVE)
                 .customerStatusChangeReasonCode(REASON_JOIN)
                 .customerStatusEffectiveStartAt(now)
-                .systemAutoTriggeredYn("F")
+                .systemAutoTriggeredYn(false)
                 .build();
     }
 
@@ -107,7 +107,7 @@ public class CustomerStatusHistory extends CreatedOnlyBaseEntity {
                 .customerStatusChangeReasonCode(changeReasonCode)
                 .customerStatusChangeReasonDetail(changeReasonDetail)
                 .customerStatusEffectiveStartAt(effectiveStartAt)
-                .systemAutoTriggeredYn(systemTriggered ? "T" : "F")
+                .systemAutoTriggeredYn(systemTriggered)
                 .changedByEmployeeId(changedByEmployeeId)
                 .build();
     }

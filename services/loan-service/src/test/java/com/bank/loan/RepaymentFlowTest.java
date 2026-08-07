@@ -257,7 +257,7 @@ class RepaymentFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":600,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code);
         MvcResult result = mockMvc.perform(post("/api/loan-products")
@@ -328,7 +328,7 @@ class RepaymentFlowTest extends AbstractLoanIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "bankCd":"088", "accountNo":"1102345678901",
-                                  "holderName":"홍길동", "autoDebitYn":"Y", "debitDay":15 }
+                                  "holderName":"홍길동", "autoDebitYn":true, "debitDay":15 }
                                 """))
                 .andExpect(status().isCreated());
         mockMvc.perform(post("/api/loan-contracts/{cntrId}/repayment-account/verify", cntrId)

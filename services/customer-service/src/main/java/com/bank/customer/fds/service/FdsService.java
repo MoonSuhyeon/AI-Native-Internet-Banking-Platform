@@ -57,7 +57,7 @@ public class FdsService {
     @Transactional(noRollbackFor = BusinessException.class)
     public void evaluate(Long customerId, String eventType, Long referenceId) {
         List<FdsRule> rules = fdsRuleRepository
-                .findByFdsRuleTargetEventCodeAndFdsRuleActiveYnAndDeletedAtIsNull(eventType, "T");
+                .findByFdsRuleTargetEventCodeAndFdsRuleActiveYnAndDeletedAtIsNull(eventType, true);
 
         for (FdsRule rule : rules) {
             if (matches(rule, customerId)) {
@@ -126,7 +126,7 @@ public class FdsService {
                 .fdsRuleConditionJson(req.fdsRuleConditionJson())
                 .fdsRuleRiskWeight(req.fdsRuleRiskWeight())
                 .fdsRuleActionTypeCode(req.fdsRuleActionTypeCode())
-                .fdsRuleActiveYn("F")
+                .fdsRuleActiveYn(false)
                 .fdsRuleEffectiveDate(req.fdsRuleEffectiveDate())
                 .fdsRuleExpiryDate(req.fdsRuleExpiryDate())
                 .build());
@@ -205,7 +205,7 @@ public class FdsService {
                         req.handlerEmployeeId() != null
                                 ? FdsIncident.PROCESS_STATUS_PROCESSING
                                 : FdsIncident.PROCESS_STATUS_OPEN)
-                .fdsIncidentFssReportedYn("F")
+                .fdsIncidentFssReportedYn(false)
                 .build());
 
         return FdsIncidentResponse.from(incident);

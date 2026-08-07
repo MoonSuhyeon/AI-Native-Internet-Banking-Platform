@@ -35,8 +35,6 @@ public class RepaymentAccount extends BaseEntity {
     public static final String STATUS_REGISTERED = "REGISTERED";
     public static final String STATUS_VERIFIED   = "VERIFIED";
 
-    public static final String YN_Y = "Y";
-    public static final String YN_N = "N";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,8 +65,8 @@ public class RepaymentAccount extends BaseEntity {
     @Column(name = "racct_status_cd", nullable = false, length = 50)
     private String racctStatusCd;
 
-    @Column(name = "auto_debit_yn", nullable = false, length = 1)
-    private String autoDebitYn;
+    @Column(name = "auto_debit_yn", nullable = false)
+    private Boolean autoDebitYn;
 
     @Column(name = "debit_day")
     private Integer debitDay;

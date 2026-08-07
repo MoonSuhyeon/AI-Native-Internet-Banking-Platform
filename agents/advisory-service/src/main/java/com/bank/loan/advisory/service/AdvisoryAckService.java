@@ -53,7 +53,7 @@ public class AdvisoryAckService {
                 .advrId(report.getAdvrId())
                 .ackReviewerId(ackerId)
                 .ackResponseCd(cmd.ackResponseCd())
-                .decisionChangeYn(cmd.decisionChangeYn() != null ? cmd.decisionChangeYn() : "N")
+                .decisionChangeYn(cmd.decisionChangeYn() != null && cmd.decisionChangeYn())
                 .ackReasonCd(cmd.ackReasonCd())
                 .ackRemark(cmd.ackRemark())
                 .beforeDecisionCd(cmd.beforeDecisionCd())
@@ -71,7 +71,7 @@ public class AdvisoryAckService {
     @Builder
     public record AdvisoryAckCommand(
             String ackResponseCd,
-            String decisionChangeYn,
+            Boolean decisionChangeYn,
             String ackReasonCd,
             String ackRemark,
             String beforeDecisionCd,

@@ -48,12 +48,13 @@ public class AdvisoryRuleAdminService {
                 .orElseThrow(() -> new BusinessException(LoanErrorCode.LOAN_190,
                         "rule not found ruleId=" + ruleId));
 
-        String beforeActive = rule.getActiveYn();
+        // 상태이력은 변경 전후를 문자열로 기록한다. 불린이라도 이력에는 표기가 필요하다.
+        String beforeActive = String.valueOf(rule.getActiveYn());
         String beforeSnapshot = snapshot(rule);
 
-        if (req.activeYn() != null && !req.activeYn().isBlank()) {
-            if (ReviewAdvisoryRule.ACTIVE_Y.equals(req.activeYn())) rule.activate();
-            else if (ReviewAdvisoryRule.ACTIVE_N.equals(req.activeYn())) rule.deactivate();
+        if (req.activeYn() != null) {
+            if (req.activeYn()) rule.activate();
+            else rule.deactivate();
         }
         rule.updateMeta(
                 req.ruleParams(),
@@ -71,7 +72,7 @@ public class AdvisoryRuleAdminService {
 
         statusHistory.publish(StatusChangeEvent.of(
                 DOMAIN_CD, TARGET_TABLE, ruleId,
-                beforeActive, rule.getActiveYn(),
+                beforeActive, String.valueOf(rule.getActiveYn()),
                 reason, remark,
                 currentActor.currentActorId()));
 

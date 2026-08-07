@@ -27,7 +27,7 @@ public class LoanProductService {
 
     private static final String DOMAIN_CD = "LOAN";
     private static final String TARGET_TABLE_CD = "LOAN_PRODUCT";
-    private static final String DEFAULT_NO = "N";
+    private static final boolean DEFAULT_NO = false;
 
     private final LoanProductRepository repository;
     private final StatusHistoryPublisher statusHistoryPublisher;
@@ -54,7 +54,7 @@ public class LoanProductService {
     public LoanProductResponse create(CreateLoanProductRequest req) {
         validateRanges(req);
 
-        String guarantorYn = nvl(req.guarantorRequiredYn());
+        Boolean guarantorYn = nvl(req.guarantorRequiredYn());
         int minGtr = req.minGuarantorCount() == null ? 0 : req.minGuarantorCount();
         validateGuarantorPolicy(guarantorYn, minGtr);
         validateApplicationValidityDays(req.applicationValidityDays());
@@ -170,11 +170,11 @@ public class LoanProductService {
     }
 
     /**
-     * guarantorRequiredYn='Y' 이면 minGuarantorCount 가 1 이상이어야 한다.
+     * guarantorRequiredYn = true 이면 minGuarantorCount 가 1 이상이어야 한다.
      * 위반 시 LOAN_003 — 상품 범위/정책 오류와 동일 분류.
      */
-    private void validateGuarantorPolicy(String guarantorRequiredYn, int minGuarantorCount) {
-        if ("Y".equalsIgnoreCase(guarantorRequiredYn) && minGuarantorCount < 1) {
+    private void validateGuarantorPolicy(Boolean guarantorRequiredYn, int minGuarantorCount) {
+        if (Boolean.TRUE.equals(guarantorRequiredYn) && minGuarantorCount < 1) {
             throw new BusinessException(LoanErrorCode.LOAN_003,
                     "guarantorRequiredYn=Y 이면 minGuarantorCount >= 1 이어야 합니다");
         }
@@ -191,7 +191,7 @@ public class LoanProductService {
         }
     }
 
-    private String nvl(String yn) {
+    private Boolean nvl(Boolean yn) {
         return yn == null ? DEFAULT_NO : yn;
     }
 }

@@ -27,8 +27,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class BusinessCalendar extends BaseEntity {
 
-    public static final String YN_Y = "Y";
-    public static final String YN_N = "N";
 
     public static final String COUNTRY_KR = "KR";
 
@@ -40,8 +38,8 @@ public class BusinessCalendar extends BaseEntity {
     @Column(name = "cal_date", nullable = false, length = 8, unique = true)
     private String calDate;
 
-    @Column(name = "business_day_yn", nullable = false, length = 1)
-    private String businessDayYn;
+    @Column(name = "business_day_yn", nullable = false)
+    private Boolean businessDayYn;
 
     @Column(name = "holiday_type_cd", length = 50)
     private String holidayTypeCd;
@@ -53,10 +51,10 @@ public class BusinessCalendar extends BaseEntity {
     private String baseCountryCd;
 
     public boolean isBusinessDay() {
-        return YN_Y.equals(businessDayYn);
+        return Boolean.TRUE.equals(businessDayYn);
     }
 
-    public void update(String businessDayYn, String holidayTypeCd, String holidayName, String baseCountryCd) {
+    public void update(Boolean businessDayYn, String holidayTypeCd, String holidayName, String baseCountryCd) {
         this.businessDayYn = businessDayYn;
         this.holidayTypeCd = holidayTypeCd;
         this.holidayName = holidayName;

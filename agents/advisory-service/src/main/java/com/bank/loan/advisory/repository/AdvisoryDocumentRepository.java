@@ -12,11 +12,11 @@ public interface AdvisoryDocumentRepository extends JpaRepository<AdvisoryDocume
 
     Optional<AdvisoryDocument> findByDocCdAndDocVersionAndDeletedAtIsNull(String docCd, String docVersion);
 
-    List<AdvisoryDocument> findByActiveYnAndDeletedAtIsNull(String activeYn);
+    List<AdvisoryDocument> findByActiveYnAndDeletedAtIsNull(Boolean activeYn);
 
     List<AdvisoryDocument> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
 
     long countByDeletedAtIsNull();
 
-    long countByActiveYnAndDeletedAtIsNull(String activeYn);
+    long countByActiveYnAndDeletedAtIsNull(Boolean activeYn);
 }

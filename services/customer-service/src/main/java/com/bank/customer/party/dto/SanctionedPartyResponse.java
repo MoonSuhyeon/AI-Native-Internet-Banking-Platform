@@ -16,10 +16,10 @@ public record SanctionedPartyResponse(
         String         partyName,
         String         birthDate,
         String         nationalityCode,
-        String         ofacSanctionedYn,
-        String         unSanctionedYn,
-        String         euSanctionedYn,
-        String         krSanctionedYn,
+        Boolean         ofacSanctionedYn,
+        Boolean         unSanctionedYn,
+        Boolean         euSanctionedYn,
+        Boolean         krSanctionedYn,
         String         amlRiskLevelCode,
         OffsetDateTime sanctionLastScreenedAt
 ) {

@@ -50,23 +50,23 @@ class EddPendingRepositoryTest {
     }
 
     /** edd_required_yn 플래그를 가진 컴플라이언스 1건을 party와 함께 생성한다. */
-    private void compliance(String name, String eddRequiredYn) {
+    private void compliance(String name, Boolean eddRequiredYn) {
         Party p = party(name);
         ComplianceInfo ci = ComplianceInfo.builder()
                 .partyId(p.getPartyId())
                 .amlRiskLevelCode(ComplianceInfo.AML_HIGH)
-                .isOfacSanctionedYn("F")
-                .isUnSanctionedYn("F")
-                .isEuSanctionedYn("F")
-                .isKrSanctionedYn("F")
+                .isOfacSanctionedYn(false)
+                .isUnSanctionedYn(false)
+                .isEuSanctionedYn(false)
+                .isKrSanctionedYn(false)
                 .kycStatusCode(ComplianceInfo.KYC_COMPLETED)
                 .cddLevelCode(ComplianceInfo.CDD_ENHANCED)
                 .eddRequiredYn(eddRequiredYn)
                 .eddNextReviewDate("20260801")
                 .fatcaStatusCode(ComplianceInfo.FATCA_EXEMPT)
-                .fatcaReportableYn("F")
+                .fatcaReportableYn(false)
                 .crsStatusCode(ComplianceInfo.CRS_EXEMPT)
-                .crsReportableYn("F")
+                .crsReportableYn(false)
                 .build();
         em.persist(ci);
     }
@@ -76,8 +76,8 @@ class EddPendingRepositoryTest {
     @Test
     @DisplayName("edd_required_yn='T'인 party만 이름과 함께 반환한다")
     void returnsOnlyEddRequired_withName() {
-        compliance("EDD대상", "T");
-        compliance("일반고객", "F");
+        compliance("EDD대상", true);
+        compliance("일반고객", false);
         em.flush();
 
         Page<EddPendingResponse> result = complianceInfoRepository.searchEddPending(FIRST_20);
@@ -93,8 +93,8 @@ class EddPendingRepositoryTest {
     @Test
     @DisplayName("EDD 대상이 없으면 빈 페이지를 반환한다")
     void emptyWhenNoneRequired() {
-        compliance("일반1", "F");
-        compliance("일반2", "F");
+        compliance("일반1", false);
+        compliance("일반2", false);
         em.flush();
 
         Page<EddPendingResponse> result = complianceInfoRepository.searchEddPending(FIRST_20);
@@ -106,7 +106,7 @@ class EddPendingRepositoryTest {
     @Test
     @DisplayName("페이지 크기를 넘으면 분할되고 총 개수는 유지된다")
     void pagination() {
-        for (int i = 0; i < 3; i++) compliance("EDD" + i, "T");
+        for (int i = 0; i < 3; i++) compliance("EDD" + i, true);
         em.flush();
 
         Page<EddPendingResponse> page0 = complianceInfoRepository.searchEddPending(PageRequest.of(0, 2));

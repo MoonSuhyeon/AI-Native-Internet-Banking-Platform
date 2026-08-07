@@ -84,8 +84,8 @@ public class CommonContract {
     @Column(name = "contract_cancel_reason", length = 200)
     private String contractCancelReason;
 
-    @Column(name = "auto_transfer_yn", length = 1)
-    private String autoTransferYn;
+    @Column(name = "auto_transfer_yn")
+    private Boolean autoTransferYn;
 
     @Column(name = "auto_transfer_day")
     private Integer autoTransferDay;
@@ -108,8 +108,8 @@ public class CommonContract {
     @Column(name = "manager_name", length = 100)
     private String managerName;
 
-    @Column(name = "proxy_yn", length = 1)
-    private String proxyYn;
+    @Column(name = "proxy_yn")
+    private Boolean proxyYn;
 
     @Column(name = "contract_status", length = 20)
     private String contractStatus;

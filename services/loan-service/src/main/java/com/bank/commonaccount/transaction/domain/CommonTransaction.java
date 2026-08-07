@@ -84,8 +84,8 @@ public class CommonTransaction {
     @Column(name = "counterparty_account_id")
     private Long counterpartyAccountId;
 
-    @Column(name = "counterparty_name_verified_yn", length = 1)
-    private String counterpartyNameVerifiedYn;
+    @Column(name = "counterparty_name_verified_yn")
+    private Boolean counterpartyNameVerifiedYn;
 
     @Column(name = "original_transaction_id")
     private Long originalTransactionId;
@@ -117,17 +117,17 @@ public class CommonTransaction {
     @Column(name = "transfer_completed_at")
     private OffsetDateTime transferCompletedAt;
 
-    @Column(name = "transfer_failed_yn", length = 1)
-    private String transferFailedYn;
+    @Column(name = "transfer_failed_yn")
+    private Boolean transferFailedYn;
 
     @Column(name = "payment_method_code", length = 30)
     private String paymentMethodCode;
 
-    @Column(name = "card_payment_yn", length = 1)
-    private String cardPaymentYn;
+    @Column(name = "card_payment_yn")
+    private Boolean cardPaymentYn;
 
-    @Column(name = "payment_failed_yn", length = 1)
-    private String paymentFailedYn;
+    @Column(name = "payment_failed_yn")
+    private Boolean paymentFailedYn;
 
     @Column(name = "merchant_no", length = 50)
     private String merchantNo;

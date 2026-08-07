@@ -25,7 +25,7 @@ public class GuarantorPolicyValidator {
     /**
      * 상품 보증 정책을 신청 건이 충족하는지 확인한다.
      *
-     * @return guarantorRequiredYn='N' 이면 항상 true.
+     * @return guarantorRequiredYn = false 이면 항상 true.
      *         'Y' 이면 SIGNED 약정 수 >= minGuarantorCount 일 때 true.
      */
     public boolean satisfies(LoanApplication appl, LoanProduct product) {

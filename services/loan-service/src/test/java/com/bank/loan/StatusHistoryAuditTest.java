@@ -165,7 +165,7 @@ class StatusHistoryAuditTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":450,
                   "minAmount":1000000, "maxAmount":10000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(uniq());
         MvcResult result = mockMvc.perform(post("/api/loan-products")

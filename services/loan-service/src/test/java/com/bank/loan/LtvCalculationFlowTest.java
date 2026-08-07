@@ -187,7 +187,7 @@ class LtvCalculationFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":%d,
                   "minAmount":1000000, "maxAmount":1000000000,
                   "minPeriodMo":12, "maxPeriodMo":360,
-                  "collateralRequiredYn":"Y", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":true, "guarantorRequiredYn":false
                 }
                 """.formatted(code, BASE_BPS);
         MvcResult result = mockMvc.perform(post("/api/loan-products")
@@ -233,7 +233,7 @@ class LtvCalculationFlowTest extends AbstractLoanIntegrationTest {
                   "seniorLienYn":"%s",
                   "seniorLienAmount":%d
                 }
-                """.formatted(seniorLien > 0 ? "Y" : "N", seniorLien);
+                """.formatted(seniorLien > 0, seniorLien);
         MvcResult result = mockMvc.perform(post("/api/loan-applications/{applId}/collaterals", applId)
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())

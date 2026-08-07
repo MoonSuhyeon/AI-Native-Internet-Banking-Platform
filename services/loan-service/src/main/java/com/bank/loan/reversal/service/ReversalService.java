@@ -101,7 +101,7 @@ public class ReversalService {
             throw new BusinessException(LoanErrorCode.LOAN_096,
                     "status=" + target.getRtxStatusCd());
         }
-        if (RepaymentTransaction.YN_Y.equals(target.getReversalYn())) {
+        if (Boolean.TRUE.equals(target.getReversalYn())) {
             throw new BusinessException(LoanErrorCode.LOAN_096,
                     "target is itself a reversal row");
         }
@@ -258,7 +258,7 @@ public class ReversalService {
                     .valueDate(null)
                     .balanceAfter(null)
                     .idempotencyKey(idempotencyKey)
-                    .reversalYn(RepaymentTransaction.YN_Y)
+                    .reversalYn(true)
                     .reversalTargetRtxId(target.getRtxId())
                     .build());
         } catch (DataIntegrityViolationException e) {

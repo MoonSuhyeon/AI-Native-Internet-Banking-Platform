@@ -12,7 +12,7 @@ public record RepaymentAccountResponse(
         String accountNoMasked,
         String holderNameMasked,
         String racctStatusCd,
-        String autoDebitYn,
+        Boolean autoDebitYn,
         Integer debitDay,
         OffsetDateTime verifiedAt
 ) {

@@ -28,8 +28,6 @@ import org.hibernate.type.SqlTypes;
 @Builder
 public class ReviewAdvisoryRule extends BaseEntity {
 
-    public static final String ACTIVE_Y = "Y";
-    public static final String ACTIVE_N = "N";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,8 +56,8 @@ public class ReviewAdvisoryRule extends BaseEntity {
     @Column(name = "rule_version", nullable = false, length = 50)
     private String ruleVersion;
 
-    @Column(name = "active_yn", nullable = false, length = 1)
-    private String activeYn;
+    @Column(name = "active_yn", nullable = false)
+    private Boolean activeYn;
 
     @Column(name = "effective_start_date", length = 8)
     private String effectiveStartDate;
@@ -71,11 +69,11 @@ public class ReviewAdvisoryRule extends BaseEntity {
     private String ruleDesc;
 
     public boolean isActive() {
-        return ACTIVE_Y.equals(activeYn);
+        return Boolean.TRUE.equals(activeYn);
     }
 
-    public void activate()   { this.activeYn = ACTIVE_Y; }
-    public void deactivate() { this.activeYn = ACTIVE_N; }
+    public void activate()   { this.activeYn = true; }
+    public void deactivate() { this.activeYn = false; }
 
     public void updateParams(String ruleParams, String ruleVersion) {
         this.ruleParams = ruleParams;

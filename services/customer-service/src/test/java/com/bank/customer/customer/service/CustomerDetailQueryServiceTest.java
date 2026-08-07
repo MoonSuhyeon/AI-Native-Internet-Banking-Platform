@@ -57,10 +57,10 @@ class CustomerDetailQueryServiceTest {
                 .creditRatingCode("AA")
                 .creditEvaluationDate("20260101")
                 .customerStatusCode(Customer.STATUS_ACTIVE)
-                .mainCustomerYn("T")
-                .smsReceiveYn("T")
-                .emailReceiveYn("T")
-                .postalReceiveYn("F")
+                .mainCustomerYn(true)
+                .smsReceiveYn(true)
+                .emailReceiveYn(true)
+                .postalReceiveYn(false)
                 .email("vip@test.com")
                 .phone("01012345678")
                 .zipCode("06236")
@@ -74,7 +74,7 @@ class CustomerDetailQueryServiceTest {
         return c;
     }
 
-    private void person(Long partyId, String birthDate, String gender, String pep) {
+    private void person(Long partyId, String birthDate, String gender, Boolean pep) {
         PartyPerson p = PartyPerson.builder()
                 .partyId(partyId)
                 .birthDate(birthDate)
@@ -92,7 +92,7 @@ class CustomerDetailQueryServiceTest {
     void mergesThreeTables() {
         Party party = party("김철수", Party.TYPE_PERSONAL);
         Customer customer = customerOf(party.getPartyId());
-        person(party.getPartyId(), "19850315", "M", "F");
+        person(party.getPartyId(), "19850315", "M", false);
         em.flush();
 
         CustomerDetailResponse d = queryService.getCustomerDetail(customer.getCustomerId());
@@ -118,7 +118,7 @@ class CustomerDetailQueryServiceTest {
     void pepFlagMapped() {
         Party party = party("정고위", Party.TYPE_PERSONAL);
         Customer customer = customerOf(party.getPartyId());
-        person(party.getPartyId(), "19650208", "M", "T");
+        person(party.getPartyId(), "19650208", "M", true);
         em.flush();
 
         CustomerDetailResponse d = queryService.getCustomerDetail(customer.getCustomerId());

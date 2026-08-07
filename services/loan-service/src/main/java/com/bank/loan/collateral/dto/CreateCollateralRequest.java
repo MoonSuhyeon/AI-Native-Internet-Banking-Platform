@@ -18,7 +18,7 @@ public record CreateCollateralRequest(
         @Size(max = 10) String currencyCd,
         @Size(max = 50) String ownershipTypeCd,
 
-        @Pattern(regexp = "[YN]") String seniorLienYn,
+        Boolean seniorLienYn,
         @Min(0) Long seniorLienAmount
 ) {
 }

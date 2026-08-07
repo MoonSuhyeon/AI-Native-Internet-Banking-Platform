@@ -109,8 +109,8 @@ class LoginRefreshE2ETest {
                 .partyId(party.getPartyId())
                 .customerStatusCode(Customer.STATUS_ACTIVE)
                 .customerGradeCode(Customer.GRADE_NORMAL)
-                .mainCustomerYn("T")
-                .smsReceiveYn("F").emailReceiveYn("F").postalReceiveYn("F")
+                .mainCustomerYn(true)
+                .smsReceiveYn(false).emailReceiveYn(false).postalReceiveYn(false)
                 .email("e2e@bank.com").phone("01000000000")
                 .joinedAt(OffsetDateTime.now())
                 .build());

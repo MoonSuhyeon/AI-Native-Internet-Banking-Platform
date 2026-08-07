@@ -28,7 +28,7 @@ public class CollateralService {
     private static final String DOMAIN_CD = "LOAN";
     private static final String TARGET_TABLE_CD = "COLLATERAL";
     private static final String DEFAULT_CURRENCY = "KRW";
-    private static final String DEFAULT_NO = "N";
+    private static final boolean DEFAULT_NO = false;
 
     private final CollateralRepository repository;
     private final LoanApplicationRepository applicationRepository;

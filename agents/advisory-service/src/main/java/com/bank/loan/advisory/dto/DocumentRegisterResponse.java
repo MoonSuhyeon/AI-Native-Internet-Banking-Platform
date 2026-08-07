@@ -7,7 +7,7 @@ public record DocumentRegisterResponse(
         String docCd,
         String docTitle,
         String docVersion,
-        String activeYn,
+        Boolean activeYn,
         int    chunkCount
 ) {
     public static DocumentRegisterResponse of(AdvisoryDocument doc, int chunkCount) {

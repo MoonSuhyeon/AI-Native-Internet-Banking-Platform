@@ -28,8 +28,6 @@ import java.time.OffsetDateTime;
 @Builder
 public class CreditConsent extends BaseEntity {
 
-    public static final String YES = "Y";
-    public static final String NO  = "N";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,8 +49,8 @@ public class CreditConsent extends BaseEntity {
     @Column(name = "consent_target_cd", nullable = false, length = 50)
     private String consentTargetCd;
 
-    @Column(name = "consent_yn", nullable = false, length = 1)
-    private String consentYn;
+    @Column(name = "consent_yn", nullable = false)
+    private Boolean consentYn;
 
     @Column(name = "consented_at", nullable = false)
     private OffsetDateTime consentedAt;
@@ -78,18 +76,18 @@ public class CreditConsent extends BaseEntity {
     @Column(name = "retention_until", length = 8)
     private String retentionUntil;
 
-    @Column(name = "withdrawn_yn", nullable = false, length = 1)
-    private String withdrawnYn;
+    @Column(name = "withdrawn_yn", nullable = false)
+    private Boolean withdrawnYn;
 
     @Column(name = "withdrawn_at")
     private OffsetDateTime withdrawnAt;
 
     public boolean isWithdrawn() {
-        return YES.equals(withdrawnYn);
+        return Boolean.TRUE.equals(withdrawnYn);
     }
 
     public void withdraw(OffsetDateTime at) {
-        this.withdrawnYn = YES;
+        this.withdrawnYn = true;
         this.withdrawnAt = at;
     }
 }

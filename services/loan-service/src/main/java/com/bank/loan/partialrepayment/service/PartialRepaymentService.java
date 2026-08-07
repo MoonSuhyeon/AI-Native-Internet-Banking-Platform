@@ -152,7 +152,7 @@ public class PartialRepaymentService {
                 .valueDate(req.valueDate())
                 .balanceAfter(schedule.getScheduledTotal() - newCumulative)
                 .idempotencyKey(idempotencyKey)
-                .reversalYn(RepaymentTransaction.YN_N)
+                .reversalYn(false)
                 .build());
 
         // 6) 회차 상태 전이 (변경 시에만 publish)

@@ -33,7 +33,7 @@ class CreditScorePreviewFlowTest extends AbstractLoanIntegrationTest {
                   "requestedAmount":30000000, "requestedPeriodMo":36,
                   "loanPurposeCd":"LIVING",
                   "employmentTypeCd":"EMPLOYEE", "estimatedIncomeAmt":60000000,
-                  "consentYn":"Y"
+                  "consentYn":true
                 }
                 """;
         mockMvc.perform(post("/api/credit-score/preview")
@@ -54,7 +54,7 @@ class CreditScorePreviewFlowTest extends AbstractLoanIntegrationTest {
                 {
                   "customerId":7002, "loanTypeCd":"CREDIT",
                   "requestedAmount":30000000, "requestedPeriodMo":36,
-                  "consentYn":"Y"
+                  "consentYn":true
                 }
                 """;
         mockMvc.perform(post("/api/credit-score/preview")
@@ -74,7 +74,7 @@ class CreditScorePreviewFlowTest extends AbstractLoanIntegrationTest {
                   "customerId":7003, "loanTypeCd":"CREDIT",
                   "requestedAmount":60000000, "requestedPeriodMo":36,
                   "employmentTypeCd":"EMPLOYEE", "estimatedIncomeAmt":10000000,
-                  "consentYn":"Y"
+                  "consentYn":true
                 }
                 """;
         mockMvc.perform(post("/api/credit-score/preview")
@@ -91,7 +91,7 @@ class CreditScorePreviewFlowTest extends AbstractLoanIntegrationTest {
                   "customerId":7004, "loanTypeCd":"CREDIT",
                   "requestedAmount":30000000, "requestedPeriodMo":36,
                   "employmentTypeCd":"EMPLOYEE", "estimatedIncomeAmt":60000000,
-                  "consentYn":"N"
+                  "consentYn":false
                 }
                 """;
         mockMvc.perform(post("/api/credit-score/preview")
@@ -118,7 +118,7 @@ class CreditScorePreviewFlowTest extends AbstractLoanIntegrationTest {
                 {
                   "customerId":7006, "loanTypeCd":"CREDIT",
                   "requestedPeriodMo":36,
-                  "consentYn":"Y"
+                  "consentYn":true
                 }
                 """;
         mockMvc.perform(post("/api/credit-score/preview")

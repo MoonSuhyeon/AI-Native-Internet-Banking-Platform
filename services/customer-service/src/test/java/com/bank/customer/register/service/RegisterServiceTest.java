@@ -153,7 +153,7 @@ class RegisterServiceTest {
                 .identityVerificationPurposeCode("SIGNUP")
                 .identityVerificationCiValue("CI1")
                 .identityVerifiedAt(OffsetDateTime.now())
-                .consumedYn("T")
+                .consumedYn(true)
                 .build();
         when(credentialRepository.existsByLoginIdAndDeletedAtIsNull(anyString())).thenReturn(false);
         when(identityVerificationRepository.findById(7L)).thenReturn(Optional.of(iv));

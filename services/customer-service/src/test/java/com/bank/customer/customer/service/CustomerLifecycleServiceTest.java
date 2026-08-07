@@ -51,10 +51,10 @@ class CustomerLifecycleServiceTest {
         Customer c = Customer.builder()
                 .partyId(1L)
                 .customerStatusCode(Customer.STATUS_ACTIVE)
-                .mainCustomerYn("T")
-                .smsReceiveYn("T")
-                .emailReceiveYn("T")
-                .postalReceiveYn("F")
+                .mainCustomerYn(true)
+                .smsReceiveYn(true)
+                .emailReceiveYn(true)
+                .postalReceiveYn(false)
                 .joinedAt(OffsetDateTime.now())
                 .build();
         em.persist(c);

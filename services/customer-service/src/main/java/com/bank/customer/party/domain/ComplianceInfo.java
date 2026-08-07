@@ -65,20 +65,20 @@ public class ComplianceInfo extends BaseEntity {
 
     // ── 제재 ─────────────────────────────────────────────────────────────────
     @Column(name = "is_ofac_sanctioned_yn", nullable = false, length = 1)
-    private String isOfacSanctionedYn;
+    private Boolean isOfacSanctionedYn;
 
     @Column(name = "is_un_sanctioned_yn", nullable = false, length = 1)
-    private String isUnSanctionedYn;
+    private Boolean isUnSanctionedYn;
 
     @Column(name = "is_eu_sanctioned_yn", nullable = false, length = 1)
-    private String isEuSanctionedYn;
+    private Boolean isEuSanctionedYn;
 
     @Column(name = "is_kr_sanctioned_yn", nullable = false, length = 1)
-    private String isKrSanctionedYn;
+    private Boolean isKrSanctionedYn;
 
     /** DB GENERATED STORED — 읽기 전용 */
     @Column(name = "is_sanctioned_yn", insertable = false, updatable = false, length = 1)
-    private String isSanctionedYn;
+    private Boolean isSanctionedYn;
 
     @Column(name = "sanction_last_screened_at")
     private OffsetDateTime sanctionLastScreenedAt;
@@ -116,7 +116,7 @@ public class ComplianceInfo extends BaseEntity {
     private String cddNextReviewDate;
 
     @Column(name = "edd_required_yn", nullable = false, length = 1)
-    private String eddRequiredYn;
+    private Boolean eddRequiredYn;
 
     @Column(name = "edd_last_reviewed_at")
     private OffsetDateTime eddLastReviewedAt;
@@ -135,7 +135,7 @@ public class ComplianceInfo extends BaseEntity {
     private String fatcaNextReviewDate;
 
     @Column(name = "fatca_reportable_yn", nullable = false, length = 1)
-    private String fatcaReportableYn;
+    private Boolean fatcaReportableYn;
 
     // ── CRS ───────────────────────────────────────────────────────────────────
     @Column(name = "crs_status_code", nullable = false, length = 20)
@@ -148,12 +148,12 @@ public class ComplianceInfo extends BaseEntity {
     private String crsNextReviewDate;
 
     @Column(name = "crs_reportable_yn", nullable = false, length = 1)
-    private String crsReportableYn;
+    private Boolean crsReportableYn;
 
     // ── 비즈니스 메서드 ────────────────────────────────────────────────────────
 
-    public boolean isSanctioned() { return "T".equals(isSanctionedYn); }
-    public boolean isEddRequired() { return "T".equals(eddRequiredYn); }
+    public boolean isSanctioned() { return Boolean.TRUE.equals(isSanctionedYn); }
+    public boolean isEddRequired() { return Boolean.TRUE.equals(eddRequiredYn); }
 
     public void updateAmlRisk(String riskLevel, Long assessedByEmployeeId) {
         this.amlRiskLevelCode            = riskLevel;
@@ -175,7 +175,7 @@ public class ComplianceInfo extends BaseEntity {
     }
 
     public void requireEdd() {
-        this.eddRequiredYn    = "T";
+        this.eddRequiredYn    = true;
         this.cddLevelCode     = CDD_ENHANCED;
     }
 }

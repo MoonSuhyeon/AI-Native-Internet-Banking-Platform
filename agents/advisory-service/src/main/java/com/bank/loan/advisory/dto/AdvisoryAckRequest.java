@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Pattern;
  */
 public record AdvisoryAckRequest(
         @NotBlank String ackResponseCd,
-        @Pattern(regexp = "[YN]?") String decisionChangeYn,
+        Boolean decisionChangeYn,
         String ackReasonCd,
         String ackRemark,
         String beforeDecisionCd,

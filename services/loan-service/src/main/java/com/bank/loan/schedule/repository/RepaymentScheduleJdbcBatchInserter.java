@@ -61,7 +61,7 @@ public class RepaymentScheduleJdbcBatchInserter {
                 ps.setInt(8, r.getAppliedRateBps());
                 ps.setString(9, r.getRschStatusCd());
                 ps.setString(10, r.getRschVersionCd());
-                ps.setString(11, r.getHolidayAdjustedYn());
+                ps.setBoolean(11, Boolean.TRUE.equals(r.getHolidayAdjustedYn()));
                 ps.setObject(12, now);
                 ps.setLong(13, actorId);
                 ps.setObject(14, now);

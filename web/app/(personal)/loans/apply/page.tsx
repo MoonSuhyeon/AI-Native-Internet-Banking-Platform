@@ -116,7 +116,7 @@ export default function LoanApplyPage() {
         loanPurposeCd: PURPOSE_CD[purpose] ?? undefined,
         employmentTypeCd: EMPLOYMENT_CD[employmentType] ?? undefined,
         estimatedIncomeAmt: annualIncome ? parseInt(annualIncome) * 10000 : 0,
-        consentYn: 'Y',
+        consentYn: true,
       })
       setPreviewResult(res.data)
     } catch (err: any) {

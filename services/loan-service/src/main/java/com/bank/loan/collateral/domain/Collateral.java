@@ -65,8 +65,8 @@ public class Collateral extends BaseEntity {
     @Column(name = "ownership_type_cd", length = 50)
     private String ownershipTypeCd;
 
-    @Column(name = "senior_lien_yn", nullable = false, length = 1)
-    private String seniorLienYn;
+    @Column(name = "senior_lien_yn", nullable = false)
+    private Boolean seniorLienYn;
 
     @Column(name = "senior_lien_amount")
     private Long seniorLienAmount;
@@ -88,7 +88,7 @@ public class Collateral extends BaseEntity {
             String colName, String colAddress, String colRegistryNo,
             Long declaredValue,
             String currencyCd, String ownershipTypeCd,
-            String seniorLienYn, Long seniorLienAmount
+            Boolean seniorLienYn, Long seniorLienAmount
     ) {
         if (colTypeCd != null) this.colTypeCd = colTypeCd;
         if (colName != null) this.colName = colName;

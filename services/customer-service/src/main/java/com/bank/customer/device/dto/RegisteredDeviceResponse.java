@@ -24,7 +24,7 @@ public record RegisteredDeviceResponse(
                 d.getDeviceOsName(),
                 d.getDeviceOsVersion(),
                 d.isTrusted(),
-                "T".equals(d.getDesignatedPcYn()),
+                Boolean.TRUE.equals(d.getDesignatedPcYn()),
                 d.getDeviceStatusCode(),
                 d.getDeviceLastUsedAt(),
                 d.getCreatedAt());

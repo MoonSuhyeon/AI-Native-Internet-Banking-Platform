@@ -36,7 +36,7 @@ public class AuthMethod extends BaseEntity {
     private String authMethodStatusCode;
 
     @Column(name = "primary_auth_method_yn", nullable = false, length = 1)
-    private String primaryAuthMethodYn;
+    private Boolean primaryAuthMethodYn;
 
     @Column(name = "auth_method_registered_date", nullable = false, length = 8)
     private String authMethodRegisteredDate;
@@ -48,11 +48,11 @@ public class AuthMethod extends BaseEntity {
     private java.time.OffsetDateTime authMethodLastUsedAt;
 
     public boolean isActive()  { return STATUS_ACTIVE.equals(authMethodStatusCode); }
-    public boolean isPrimary() { return "T".equals(primaryAuthMethodYn); }
+    public boolean isPrimary() { return Boolean.TRUE.equals(primaryAuthMethodYn); }
 
     public void updateAlias(String alias)  { this.authMethodAliasName = alias; }
     public void deactivate()               { this.authMethodStatusCode = STATUS_INACTIVE; }
     public void activate()                 { this.authMethodStatusCode = STATUS_ACTIVE; }
-    public void setPrimary(boolean primary){ this.primaryAuthMethodYn = primary ? "T" : "F"; }
+    public void setPrimary(boolean primary){ this.primaryAuthMethodYn = primary; }
     public void recordUsed()               { this.authMethodLastUsedAt = java.time.OffsetDateTime.now(); }
 }

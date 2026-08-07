@@ -65,7 +65,7 @@ public class CustomerGradeHistory extends CreatedOnlyBaseEntity {
     private OffsetDateTime customerGradeEvaluatedAt;
 
     @Column(name = "system_auto_triggered_yn", nullable = false, length = 1)
-    private String systemAutoTriggeredYn;
+    private Boolean systemAutoTriggeredYn;
 
     /** 변경을 수행한 직원 employee_id. 시스템 자동 평가·가입 시 null. */
     @Column(name = "changed_by_employee_id")
@@ -79,7 +79,7 @@ public class CustomerGradeHistory extends CreatedOnlyBaseEntity {
                 .customerGradeChangeReasonCode(REASON_JOIN)
                 .customerGradeEffectiveStartDate(startDate)
                 .customerGradeEvaluatedAt(evaluatedAt)
-                .systemAutoTriggeredYn("F")
+                .systemAutoTriggeredYn(false)
                 .build();
     }
 
@@ -97,7 +97,7 @@ public class CustomerGradeHistory extends CreatedOnlyBaseEntity {
                 .customerGradeChangeReasonDetail(reasonDetail)
                 .customerGradeEffectiveStartDate(startDate)
                 .customerGradeEvaluatedAt(evaluatedAt)
-                .systemAutoTriggeredYn(systemTriggered ? "T" : "F")
+                .systemAutoTriggeredYn(systemTriggered)
                 .changedByEmployeeId(changedByEmployeeId)
                 .build();
     }

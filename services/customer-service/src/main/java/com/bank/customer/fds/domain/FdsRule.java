@@ -63,7 +63,7 @@ public class FdsRule extends BaseEntity {
 
     /** 'T' = 활성, 'F' = 비활성 */
     @Column(name = "fds_rule_active_yn", nullable = false, length = 1)
-    private String fdsRuleActiveYn;
+    private Boolean fdsRuleActiveYn;
 
     @Column(name = "fds_rule_effective_date", nullable = false, length = 8)
     private String fdsRuleEffectiveDate;
@@ -72,11 +72,11 @@ public class FdsRule extends BaseEntity {
     private String fdsRuleExpiryDate;
 
     public boolean isActive() {
-        return "T".equals(fdsRuleActiveYn);
+        return Boolean.TRUE.equals(fdsRuleActiveYn);
     }
 
-    public void activate()   { this.fdsRuleActiveYn = "T"; }
-    public void deactivate() { this.fdsRuleActiveYn = "F"; }
+    public void activate()   { this.fdsRuleActiveYn = true; }
+    public void deactivate() { this.fdsRuleActiveYn = false; }
     public void updateCondition(String conditionJson) { this.fdsRuleConditionJson = conditionJson; }
     public void updateActionType(String actionType)   { this.fdsRuleActionTypeCode = actionType; }
 }

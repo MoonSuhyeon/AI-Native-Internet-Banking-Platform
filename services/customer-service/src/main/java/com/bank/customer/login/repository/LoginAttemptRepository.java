@@ -14,7 +14,7 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
             SELECT COUNT(la)
             FROM LoginAttempt la
             WHERE la.customerId = :customerId
-              AND la.loginAttemptSuccessYn = 'F'
+              AND la.loginAttemptSuccessYn = false
               AND la.loginAttemptedAt >= :since
             """)
     long countFailuresSince(@Param("customerId") Long customerId,

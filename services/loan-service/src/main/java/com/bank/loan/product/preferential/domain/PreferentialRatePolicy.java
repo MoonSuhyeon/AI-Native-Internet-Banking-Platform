@@ -46,8 +46,8 @@ public class PreferentialRatePolicy extends BaseEntity {
     @Column(name = "max_stack_bps")
     private Integer maxStackBps;
 
-    @Column(name = "active_yn", nullable = false, length = 1)
-    private String activeYn;
+    @Column(name = "active_yn", nullable = false)
+    private Boolean activeYn;
 
     @Column(name = "effective_start_date", length = 8)
     private String effectiveStartDate;

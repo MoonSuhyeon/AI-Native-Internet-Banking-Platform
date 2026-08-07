@@ -48,7 +48,7 @@ class AuditOpinionQueryIntegrationTest extends AbstractLoanIntegrationTest {
                     .ruleCategoryCd("REVIEWER_DEVIATION")
                     .severityCd(ReviewAdvisoryReport.SEVERITY_WARN)
                     .ruleVersion("v1.0")
-                    .activeYn("Y")
+                    .activeYn(true)
                     .ruleDesc("테스트용")
                     .build()).getRuleId();
         }

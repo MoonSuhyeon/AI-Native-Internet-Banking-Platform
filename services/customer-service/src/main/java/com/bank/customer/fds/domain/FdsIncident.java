@@ -54,7 +54,7 @@ public class FdsIncident {
 
     /** 'T' = 금감원 신고 완료, 'F' = 미신고 */
     @Column(name = "fds_incident_fss_reported_yn", nullable = false, length = 1)
-    private String fdsIncidentFssReportedYn;
+    private Boolean fdsIncidentFssReportedYn;
 
     @Column(name = "fds_incident_reported_at")
     private OffsetDateTime fdsIncidentReportedAt;
@@ -73,7 +73,7 @@ public class FdsIncident {
     }
 
     public void reportToFss() {
-        this.fdsIncidentFssReportedYn  = "T";
+        this.fdsIncidentFssReportedYn  = true;
         this.fdsIncidentReportedAt     = OffsetDateTime.now();
     }
 

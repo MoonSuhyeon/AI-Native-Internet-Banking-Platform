@@ -48,7 +48,7 @@ class CalendarSeederBatchTest extends AbstractLoanIntegrationTest {
     @Test @Order(11)
     void 신정_20400101_N_PUBLIC() {
         var cal = repository.findByCalDateAndDeletedAtIsNull("20400101").orElseThrow();
-        assertThat(cal.getBusinessDayYn()).isEqualTo("N");
+        assertThat(cal.getBusinessDayYn()).isFalse();
         assertThat(cal.getHolidayTypeCd()).isEqualTo("PUBLIC");
         assertThat(cal.getHolidayName()).isEqualTo("신정");
     }
@@ -56,7 +56,7 @@ class CalendarSeederBatchTest extends AbstractLoanIntegrationTest {
     @Test @Order(12)
     void 크리스마스_20401225_N_PUBLIC() {
         var cal = repository.findByCalDateAndDeletedAtIsNull("20401225").orElseThrow();
-        assertThat(cal.getBusinessDayYn()).isEqualTo("N");
+        assertThat(cal.getBusinessDayYn()).isFalse();
         assertThat(cal.getHolidayTypeCd()).isEqualTo("PUBLIC");
         assertThat(cal.getHolidayName()).isEqualTo("크리스마스");
     }
@@ -65,7 +65,7 @@ class CalendarSeederBatchTest extends AbstractLoanIntegrationTest {
     void 토요일_20400107_N_WEEKEND() {
         // 2040-01-07 = 토요일
         var cal = repository.findByCalDateAndDeletedAtIsNull("20400107").orElseThrow();
-        assertThat(cal.getBusinessDayYn()).isEqualTo("N");
+        assertThat(cal.getBusinessDayYn()).isFalse();
         assertThat(cal.getHolidayTypeCd()).isEqualTo("WEEKEND");
     }
 

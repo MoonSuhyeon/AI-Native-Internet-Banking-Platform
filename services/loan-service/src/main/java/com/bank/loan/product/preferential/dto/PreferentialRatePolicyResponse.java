@@ -9,7 +9,7 @@ public record PreferentialRatePolicyResponse(
         String conditionCd,
         Integer preferentialRateBps,
         Integer maxStackBps,
-        String activeYn,
+        Boolean activeYn,
         String effectiveStartDate,
         String effectiveEndDate,
         String policyRemark

@@ -73,7 +73,7 @@ public class DocumentIngestionService {
                         .effectiveStartDate(req.effectiveStartDate())
                         .effectiveEndDate(req.effectiveEndDate())
                         .sourceUri(req.sourceUri())
-                        .activeYn("N")
+                        .activeYn(false)
                         .docDesc(req.docDesc())
                         .build());
 

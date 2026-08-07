@@ -94,7 +94,7 @@ public class PinService {
                         .authMethodTypeCode(AuthMethod.TYPE_PIN)
                         .authMethodAliasName("간편비밀번호")
                         .authMethodStatusCode(AuthMethod.STATUS_ACTIVE)
-                        .primaryAuthMethodYn("F")
+                        .primaryAuthMethodYn(false)
                         .authMethodRegisteredDate(BusinessDate.today())
                         .build())
                         .getAuthMethodId());

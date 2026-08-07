@@ -28,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -61,7 +62,7 @@ class MobileAuthServiceTest {
                 .mobileAuthRequestChannelCode(MobileAuth.CHANNEL_WEB)
                 .mobileAuthSentAt(OffsetDateTime.now())
                 .mobileAuthExpiryAt(OffsetDateTime.now().plusMinutes(3))
-                .mobileAuthVerifiedYn("F")
+                .mobileAuthVerifiedYn(false)
                 .mobileAuthAttemptCount(0)
                 .build();
     }
@@ -71,7 +72,7 @@ class MobileAuthServiceTest {
     void verifyWithRrn_createsIdentityAndReturnsId() {
         when(mobileAuthRepository
                 .findTopByMobileAuthRecipientPhoneNumberAndMobileAuthPurposeCodeAndMobileAuthVerifiedYnOrderByMobileAuthSentAtDesc(
-                        anyString(), anyString(), anyString()))
+                        anyString(), anyString(), anyBoolean()))
                 .thenReturn(Optional.of(pendingAuth("123456")));
         when(identityVerificationPort.resolve(anyString(), anyString(), anyString()))
                 .thenReturn(new VerifiedIdentity("CI-XYZ", "19900101", "M", "DOMESTIC"));
@@ -105,7 +106,7 @@ class MobileAuthServiceTest {
     void verifyWithoutRrn_returnsNull() {
         when(mobileAuthRepository
                 .findTopByMobileAuthRecipientPhoneNumberAndMobileAuthPurposeCodeAndMobileAuthVerifiedYnOrderByMobileAuthSentAtDesc(
-                        anyString(), anyString(), anyString()))
+                        anyString(), anyString(), anyBoolean()))
                 .thenReturn(Optional.of(pendingAuth("123456")));
 
         VerifyMobileAuthRequest req = new VerifyMobileAuthRequest(
@@ -122,7 +123,7 @@ class MobileAuthServiceTest {
     void verifyWrongCode_throws() {
         when(mobileAuthRepository
                 .findTopByMobileAuthRecipientPhoneNumberAndMobileAuthPurposeCodeAndMobileAuthVerifiedYnOrderByMobileAuthSentAtDesc(
-                        anyString(), anyString(), anyString()))
+                        anyString(), anyString(), anyBoolean()))
                 .thenReturn(Optional.of(pendingAuth("123456")));
 
         VerifyMobileAuthRequest req = new VerifyMobileAuthRequest(

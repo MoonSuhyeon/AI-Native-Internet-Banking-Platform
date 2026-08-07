@@ -26,8 +26,8 @@ public record UpdateLoanProductRequest(
         @Min(1) Integer minPeriodMo,
         @Min(1) Integer maxPeriodMo,
 
-        @Pattern(regexp = "[YN]") String collateralRequiredYn,
-        @Pattern(regexp = "[YN]") String guarantorRequiredYn,
+        Boolean collateralRequiredYn,
+        Boolean guarantorRequiredYn,
         @Min(0) Integer minGuarantorCount,
 
         @Min(1) Integer applicationValidityDays,

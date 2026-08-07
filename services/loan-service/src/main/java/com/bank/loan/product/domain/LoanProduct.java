@@ -76,15 +76,15 @@ public class LoanProduct extends BaseEntity {
     @Column(name = "max_period_mo", nullable = false)
     private Integer maxPeriodMo;
 
-    @Column(name = "collateral_required_yn", nullable = false, length = 1)
-    private String collateralRequiredYn;
+    @Column(name = "collateral_required_yn", nullable = false)
+    private Boolean collateralRequiredYn;
 
-    @Column(name = "guarantor_required_yn", nullable = false, length = 1)
-    private String guarantorRequiredYn;
+    @Column(name = "guarantor_required_yn", nullable = false)
+    private Boolean guarantorRequiredYn;
 
     /**
      * 보증 필수 상품에서 요구되는 최소 SIGNED 보증인 수.
-     * guarantorRequiredYn='Y' 이면 반드시 1 이상 — 서비스 레이어에서 강제.
+     * guarantorRequiredYn = true 이면 반드시 1 이상 — 서비스 레이어에서 강제.
      */
     @Column(name = "min_guarantor_count", nullable = false)
     private Integer minGuarantorCount;
@@ -98,12 +98,12 @@ public class LoanProduct extends BaseEntity {
 
     /** 담보 필수 상품 여부. 본심사 시 활성 담보별 LTV PASS 검증의 트리거. */
     public boolean isCollateralRequired() {
-        return "Y".equalsIgnoreCase(collateralRequiredYn);
+        return Boolean.TRUE.equals(collateralRequiredYn);
     }
 
     /** 보증 필수 상품 여부. GuarantorPolicyValidator 가 사전조건 검증에 사용. */
     public boolean isGuarantorRequired() {
-        return "Y".equalsIgnoreCase(guarantorRequiredYn);
+        return Boolean.TRUE.equals(guarantorRequiredYn);
     }
 
     @Column(name = "sale_start_date", length = 8)
@@ -132,7 +132,7 @@ public class LoanProduct extends BaseEntity {
             Integer baseRateBps, Integer minRateBps, Integer maxRateBps,
             Long minAmount, Long maxAmount,
             Integer minPeriodMo, Integer maxPeriodMo,
-            String collateralRequiredYn, String guarantorRequiredYn,
+            Boolean collateralRequiredYn, Boolean guarantorRequiredYn,
             Integer minGuarantorCount,
             Integer applicationValidityDays,
             String saleStartDate, String saleEndDate,

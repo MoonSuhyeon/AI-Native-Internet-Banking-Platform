@@ -9,7 +9,7 @@ public record AdvisoryAckResponse(
         Long advkId,
         Long advrId,
         String ackResponseCd,
-        String decisionChangeYn,
+        Boolean decisionChangeYn,
         OffsetDateTime ackedAt,
         Long ackReviewerId
 ) {

@@ -42,8 +42,8 @@ public class AdvisoryCaseIndex {
     @Column(name = "decision_cd", nullable = false, length = 50)
     private String decisionCd;
 
-    @Column(name = "overturn_yn", nullable = false, length = 1)
-    private String overturnYn;
+    @Column(name = "overturn_yn", nullable = false)
+    private Boolean overturnYn;
 
     @Column(name = "credit_score")
     private Integer creditScore;

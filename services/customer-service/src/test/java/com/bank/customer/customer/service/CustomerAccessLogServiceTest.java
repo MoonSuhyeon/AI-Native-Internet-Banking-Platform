@@ -49,7 +49,7 @@ class CustomerAccessLogServiceTest {
                 .partyTypeCode(Party.TYPE_PERSONAL).partyName(name).partyStatusCode(Party.STATUS_ACTIVE).build());
         return em.persist(Customer.builder()
                 .partyId(p.getPartyId()).customerStatusCode(Customer.STATUS_ACTIVE)
-                .mainCustomerYn("T").smsReceiveYn("T").emailReceiveYn("T").postalReceiveYn("F")
+                .mainCustomerYn(true).smsReceiveYn(true).emailReceiveYn(true).postalReceiveYn(false)
                 .joinedAt(OffsetDateTime.now()).build());
     }
 

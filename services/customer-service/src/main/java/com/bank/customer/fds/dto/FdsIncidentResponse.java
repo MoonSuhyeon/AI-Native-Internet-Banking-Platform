@@ -19,7 +19,7 @@ public record FdsIncidentResponse(
                 i.getFdsIncidentId(), i.getFdsDetectionId(),
                 i.getFdsIncidentHandlerEmployeeId(), i.getFdsIncidentTypeCode(),
                 i.getFdsIncidentProcessStatusCode(),
-                "T".equals(i.getFdsIncidentFssReportedYn()),
+                Boolean.TRUE.equals(i.getFdsIncidentFssReportedYn()),
                 i.getFdsIncidentReportedAt(), i.getFdsIncidentClosedAt());
     }
 }

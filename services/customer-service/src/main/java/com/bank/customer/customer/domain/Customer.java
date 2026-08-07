@@ -60,23 +60,23 @@ public class Customer extends BaseEntity {
     private String customerStatusCode;
 
     /** T / F */
-    @Column(name = "main_customer_yn", nullable = false, columnDefinition = "CHAR(1)")
-    private String mainCustomerYn;
+    @Column(name = "main_customer_yn", nullable = false)
+    private Boolean mainCustomerYn;
 
     @Column(name = "preferred_language_code", length = 2)
     private String preferredLanguageCode;
 
     /** T / F */
-    @Column(name = "sms_receive_yn", nullable = false, columnDefinition = "CHAR(1)")
-    private String smsReceiveYn;
+    @Column(name = "sms_receive_yn", nullable = false)
+    private Boolean smsReceiveYn;
 
     /** T / F */
-    @Column(name = "email_receive_yn", nullable = false, columnDefinition = "CHAR(1)")
-    private String emailReceiveYn;
+    @Column(name = "email_receive_yn", nullable = false)
+    private Boolean emailReceiveYn;
 
     /** T / F */
-    @Column(name = "postal_receive_yn", nullable = false, columnDefinition = "CHAR(1)")
-    private String postalReceiveYn;
+    @Column(name = "postal_receive_yn", nullable = false)
+    private Boolean postalReceiveYn;
 
     @Column(name = "notification_method_code", length = 10)
     private String notificationMethodCode;
@@ -138,8 +138,8 @@ public class Customer extends BaseEntity {
         this.addressDetail = addressDetail;
     }
 
-    public void updateNotification(String smsReceiveYn, String emailReceiveYn,
-                                   String postalReceiveYn, String notificationMethodCode) {
+    public void updateNotification(Boolean smsReceiveYn, Boolean emailReceiveYn,
+                                   Boolean postalReceiveYn, String notificationMethodCode) {
         this.smsReceiveYn            = smsReceiveYn;
         this.emailReceiveYn          = emailReceiveYn;
         this.postalReceiveYn         = postalReceiveYn;

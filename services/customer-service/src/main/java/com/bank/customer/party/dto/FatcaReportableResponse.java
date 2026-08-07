@@ -14,9 +14,9 @@ public record FatcaReportableResponse(
         String         birthDate,
         String         nationalityCode,
         String         fatcaStatusCode,
-        String         fatcaReportableYn,
+        Boolean         fatcaReportableYn,
         String         crsStatusCode,
-        String         crsReportableYn,
+        Boolean         crsReportableYn,
         OffsetDateTime fatcaLastReviewedAt
 ) {
 }

@@ -10,8 +10,8 @@ public interface ReviewAdvisoryRuleRepository extends JpaRepository<ReviewAdviso
 
     Optional<ReviewAdvisoryRule> findByRuleCdAndDeletedAtIsNull(String ruleCd);
 
-    List<ReviewAdvisoryRule> findByActiveYnAndDeletedAtIsNullOrderByRuleCdAsc(String activeYn);
+    List<ReviewAdvisoryRule> findByActiveYnAndDeletedAtIsNullOrderByRuleCdAsc(Boolean activeYn);
 
     List<ReviewAdvisoryRule> findByAdvisoryTypeCdAndActiveYnAndDeletedAtIsNullOrderByRuleCdAsc(
-            String advisoryTypeCd, String activeYn);
+            String advisoryTypeCd, Boolean activeYn);
 }

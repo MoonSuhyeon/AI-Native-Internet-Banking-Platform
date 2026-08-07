@@ -89,7 +89,7 @@ class AuthEventServiceTest {
 
         ArgumentCaptor<LoginAttempt> attemptCaptor = ArgumentCaptor.forClass(LoginAttempt.class);
         verify(loginAttemptRepository).save(attemptCaptor.capture());
-        assertThat(attemptCaptor.getValue().getLoginAttemptSuccessYn()).isEqualTo("T");
+        assertThat(attemptCaptor.getValue().getLoginAttemptSuccessYn()).isTrue();
 
         verify(valueOps).set(eq("RT:1"), any(), any());
         verify(loginSessionService).createSession(eq(1L), eq(100L), eq("127.0.0.1"),
@@ -118,7 +118,7 @@ class AuthEventServiceTest {
 
         ArgumentCaptor<LoginAttempt> attemptCaptor = ArgumentCaptor.forClass(LoginAttempt.class);
         verify(loginAttemptRepository).save(attemptCaptor.capture());
-        assertThat(attemptCaptor.getValue().getLoginAttemptSuccessYn()).isEqualTo("F");
+        assertThat(attemptCaptor.getValue().getLoginAttemptSuccessYn()).isFalse();
 
         verify(fdsService).evaluate(eq(1L), eq(FdsDetection.EVENT_LOGIN_ATTEMPT), eq(100L));
     }

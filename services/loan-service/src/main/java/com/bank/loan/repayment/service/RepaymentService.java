@@ -130,7 +130,7 @@ public class RepaymentService {
                     .valueDate(req.valueDate())
                     .balanceAfter(null)
                     .idempotencyKey(idempotencyKey)
-                    .reversalYn(RepaymentTransaction.YN_N)
+                    .reversalYn(false)
                     .piId(piId)
                     .build());
             return RepaymentTransactionResponse.of(failed);
@@ -180,7 +180,7 @@ public class RepaymentService {
                 .valueDate(req.valueDate())
                 .balanceAfter(schedule.getRemainingBalance())
                 .idempotencyKey(idempotencyKey)
-                .reversalYn(RepaymentTransaction.YN_N)
+                .reversalYn(false)
                 .piId(piId)
                 .build());
         statusHistoryPublisher.publish(StatusChangeEvent.of(

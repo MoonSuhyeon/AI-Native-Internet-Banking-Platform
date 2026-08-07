@@ -76,8 +76,8 @@ public class PartyPerson extends BaseEntity {
     private String capacityLimitTypeCode;
 
     /** T / F */
-    @Column(name = "is_pep_yn", nullable = false, columnDefinition = "CHAR(1)")
-    private String isPepYn;
+    @Column(name = "is_pep_yn", nullable = false)
+    private Boolean isPepYn;
 
     @Column(name = "pep_type_code", length = 10)
     private String pepTypeCode;
@@ -108,6 +108,6 @@ public class PartyPerson extends BaseEntity {
     }
 
     public boolean isPep() {
-        return "T".equals(isPepYn);
+        return Boolean.TRUE.equals(isPepYn);
     }
 }

@@ -121,7 +121,7 @@ class CreditInfoReportRetryFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":600,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code);
         MvcResult result = mockMvc.perform(post("/api/loan-products")

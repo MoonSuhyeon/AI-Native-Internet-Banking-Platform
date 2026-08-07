@@ -36,7 +36,7 @@ export type AckResponseCd = 'MAINTAIN' | 'OVERTURN' | 'ESCALATE' | 'NEEDS_MORE_I
 
 export type AdvisoryAckBody = {
   ackResponseCd: AckResponseCd
-  decisionChangeYn?: 'Y' | 'N'
+  decisionChangeYn?: boolean
   ackReasonCd?: string
   ackRemark?: string
   beforeDecisionCd?: string
@@ -91,14 +91,14 @@ export type AdvisoryRuleResponse = {
   severityCd: string
   ruleParams?: string
   ruleVersion?: string
-  activeYn: string
+  activeYn: boolean
   effectiveStartDate?: string
   effectiveEndDate?: string
   ruleDesc?: string
 }
 
 export type UpdateAdvisoryRuleBody = {
-  activeYn?: string
+  activeYn?: boolean
   ruleParams?: string
   ruleVersion?: string
   effectiveStartDate?: string

@@ -8,7 +8,7 @@ import java.util.List;
 public interface FdsRuleRepository extends JpaRepository<FdsRule, Long> {
 
     List<FdsRule> findByFdsRuleTargetEventCodeAndFdsRuleActiveYnAndDeletedAtIsNull(
-            String targetEventCode, String activeYn);
+            String targetEventCode, Boolean activeYn);
 
     boolean existsByFdsRuleCodeAndDeletedAtIsNull(String ruleCode);
 }

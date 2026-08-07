@@ -59,7 +59,7 @@ public class LoginSession {
     private String sessionStatusCode;
 
     @Column(name = "session_mfa_completed_yn", nullable = false, length = 1)
-    private String sessionMfaCompletedYn;
+    private Boolean sessionMfaCompletedYn;
 
     @Column(name = "session_expiry_at", nullable = false)
     private OffsetDateTime sessionExpiryAt;

@@ -8,7 +8,7 @@ import java.util.List;
 public interface PreferentialRatePolicyRepository extends JpaRepository<PreferentialRatePolicy, Long> {
 
     boolean existsByProdIdAndConditionCdAndActiveYnAndDeletedAtIsNull(
-            Long prodId, String conditionCd, String activeYn);
+            Long prodId, String conditionCd, Boolean activeYn);
 
     List<PreferentialRatePolicy> findAllByProdIdAndDeletedAtIsNullOrderByPolicyIdAsc(Long prodId);
 }

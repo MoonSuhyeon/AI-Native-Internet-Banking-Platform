@@ -153,8 +153,8 @@ class GuarantorCancelImpactTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":450,
                   "minAmount":1000000, "maxAmount":50000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N",
-                  "guarantorRequiredYn":"Y",
+                  "collateralRequiredYn":false,
+                  "guarantorRequiredYn":true,
                   "minGuarantorCount":1
                 }
                 """.formatted(code);
@@ -247,7 +247,7 @@ class GuarantorCancelImpactTest extends AbstractLoanIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "bankCd":"088", "accountNo":"1102345679002",
-                                  "holderName":"홍길동", "autoDebitYn":"Y", "debitDay":15 }
+                                  "holderName":"홍길동", "autoDebitYn":true, "debitDay":15 }
                                 """))
                 .andExpect(status().isCreated());
         mockMvc.perform(post("/api/loan-contracts/{cntrId}/repayment-account/verify", cntrId)

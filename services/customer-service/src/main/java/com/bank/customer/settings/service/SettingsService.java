@@ -64,9 +64,9 @@ public class SettingsService {
                 customer.getZipCode(),
                 customer.getAddress(),
                 customer.getAddressDetail(),
-                "T".equals(customer.getSmsReceiveYn()),
-                "T".equals(customer.getEmailReceiveYn()),
-                "T".equals(customer.getPostalReceiveYn())
+                Boolean.TRUE.equals(customer.getSmsReceiveYn()),
+                Boolean.TRUE.equals(customer.getEmailReceiveYn()),
+                Boolean.TRUE.equals(customer.getPostalReceiveYn())
         );
     }
 
@@ -80,9 +80,9 @@ public class SettingsService {
     public void updateNotification(Long customerId, UpdateNotificationRequest req) {
         Customer customer = findActiveCustomer(customerId);
         customer.updateNotification(
-                req.smsReceiveYn() ? "T" : "F",
-                req.emailReceiveYn() ? "T" : "F",
-                req.postalReceiveYn() ? "T" : "F",
+                req.smsReceiveYn(),
+                req.emailReceiveYn(),
+                req.postalReceiveYn(),
                 customer.getNotificationMethodCode()
         );
     }

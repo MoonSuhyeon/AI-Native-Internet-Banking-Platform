@@ -57,11 +57,11 @@ public class RegisteredDevice extends BaseEntity {
 
     /** 'T' = 신뢰 기기 (추가 인증 생략 가능) */
     @Column(name = "trusted_device_yn", nullable = false, length = 1)
-    private String trustedDeviceYn;
+    private Boolean trustedDeviceYn;
 
     /** 'T' = 지정 PC (인터넷뱅킹 보안 강화용) */
     @Column(name = "designated_pc_yn", nullable = false, length = 1)
-    private String designatedPcYn;
+    private Boolean designatedPcYn;
 
     @Column(name = "device_registered_ip", nullable = false, length = 45)
     private String deviceRegisteredIp;
@@ -73,12 +73,12 @@ public class RegisteredDevice extends BaseEntity {
     private String deviceStatusCode;
 
     public boolean isActive()  { return STATUS_ACTIVE.equals(deviceStatusCode); }
-    public boolean isTrusted() { return "T".equals(trustedDeviceYn); }
+    public boolean isTrusted() { return Boolean.TRUE.equals(trustedDeviceYn); }
 
-    public void trust()    { this.trustedDeviceYn = "T"; }
-    public void untrust()  { this.trustedDeviceYn = "F"; }
-    public void designate()   { this.designatedPcYn = "T"; }
-    public void undesignate() { this.designatedPcYn = "F"; }
+    public void trust()    { this.trustedDeviceYn = true; }
+    public void untrust()  { this.trustedDeviceYn = false; }
+    public void designate()   { this.designatedPcYn = true; }
+    public void undesignate() { this.designatedPcYn = false; }
     public void revoke()   { this.deviceStatusCode = STATUS_REVOKED; }
     public void suspend()  { this.deviceStatusCode = STATUS_SUSPENDED; }
     public void activate() { this.deviceStatusCode = STATUS_ACTIVE; }

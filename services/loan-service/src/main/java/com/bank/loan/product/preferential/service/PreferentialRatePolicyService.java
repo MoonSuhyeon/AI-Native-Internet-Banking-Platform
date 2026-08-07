@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PreferentialRatePolicyService {
 
-    private static final String DEFAULT_ACTIVE = "Y";
+    private static final boolean DEFAULT_ACTIVE = true;
 
     private final PreferentialRatePolicyRepository policyRepository;
     private final LoanProductRepository productRepository;

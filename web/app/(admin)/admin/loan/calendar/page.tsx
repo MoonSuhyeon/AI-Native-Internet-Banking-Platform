@@ -45,7 +45,7 @@ export default function AdminCalendarPage() {
 
   function startEdit(row: any) {
     setEditId(row.calId)
-    setEditBiz(row.businessDayYn === 'Y')
+    setEditBiz(row.businessDayYn)
     setEditHolidayName(row.holidayName ?? '')
   }
 
@@ -53,7 +53,7 @@ export default function AdminCalendarPage() {
     setBusy(true)
     try {
       await businessCalendarApi.update(calId, {
-        businessDayYn: editBiz ? 'Y' : 'N',
+        businessDayYn: editBiz,
         holidayName: editHolidayName,
       })
       notify('수정되었습니다.')
@@ -80,7 +80,7 @@ export default function AdminCalendarPage() {
     try {
       await businessCalendarApi.create({
         calDate: newDate.replace(/-/g, ''),
-        businessDayYn: newBiz ? 'Y' : 'N',
+        businessDayYn: newBiz,
         holidayName: newHolidayName,
       })
       notify('날짜가 등록되었습니다.')
@@ -151,8 +151,8 @@ export default function AdminCalendarPage() {
                             <option value="N">휴일</option>
                           </select>
                         ) : (
-                          <span className={`text-[11px] px-2 py-0.5 rounded border ${r.businessDayYn === 'Y' ? 'bg-green-100 text-green-700 border-green-300' : 'bg-red-100 text-red-700 border-red-300'}`}>
-                            {r.businessDayYn === 'Y' ? '영업일' : '휴일'}
+                          <span className={`text-[11px] px-2 py-0.5 rounded border ${r.businessDayYn ? 'bg-green-100 text-green-700 border-green-300' : 'bg-red-100 text-red-700 border-red-300'}`}>
+                            {r.businessDayYn ? '영업일' : '휴일'}
                           </span>
                         )}
                       </td>

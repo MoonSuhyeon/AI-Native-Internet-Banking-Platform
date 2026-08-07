@@ -36,6 +36,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>대상에서 제외한 4종(chk_otp_status·chk_otp_type·chk_auth_token_status·chk_security_card_status)은
  * V7 이 추가했다가 V9 가 테이블째 DROP 해 최종 스키마에 존재하지 않으므로 기대 집합에 넣지 않는다.
  *
+ * <p>CHAR(1) 도메인 검사 9종도 뺐다(chk_fds_rule_active, chk_identity_verification_consumed,
+ * chk_auth_method_primary, chk_fds_incident_fss_reported, chk_login_attempt_success,
+ * chk_login_session_mfa, chk_mobile_auth_verified, chk_registered_device_designated_pc,
+ * chk_registered_device_trusted). 이들은
+ * {@code CHECK (col IN ('T','F'))} 라는 도메인 검사였는데, V33 이 해당 컬럼을 BOOLEAN 으로
+ * 바꾸면서 타입 자체가 같은 보장을 하게 됐다. 안전장치가 사라진 게 아니라 타입으로 옮겨간
+ * 것이라 기대 집합에서 뺀다 — 남겨두면 {@code boolean IN (true,false)} 라는 항상 참인
+ * 식이 되어 이름만 남는다. chk_party_person_pep 은 업무 규칙이라 불린 형태로 유지된다.
+ *
  * <p>주의: 로컬 Docker Desktop 29 ↔ docker-java 비호환으로 로컬에선 실패할 수 있고, CI(Linux)에서 그린이다.
  */
 @Testcontainers
@@ -48,7 +57,6 @@ class CheckConstraintInventoryTest {
     /** 최종 스키마에 반드시 존재해야 하는 명명 CHECK 제약 (운영 안전장치 인벤토리). */
     private static final List<String> EXPECTED_CHECK_CONSTRAINTS = List.of(
             "chk_api_token_type",
-            "chk_auth_method_primary",
             "chk_auth_method_type",
             "chk_certificate_status",
             "chk_credential_account_status",
@@ -56,25 +64,17 @@ class CheckConstraintInventoryTest {
             "chk_duplicate_review_case_distinct_parties",
             "chk_employee_status",
             "chk_fds_detection_status",
-            "chk_fds_incident_fss_reported",
             "chk_fds_rule_action_type",
-            "chk_fds_rule_active",
             "chk_fds_rule_risk_weight",
             "chk_identity_verification_agency",
-            "chk_identity_verification_consumed",
-            "chk_login_attempt_success",
-            "chk_login_session_mfa",
             "chk_login_session_status",
-            "chk_mobile_auth_verified",
             "chk_party_org_foreign_corp",
             "chk_party_org_subtype",
             "chk_party_person_pep",
             "chk_party_relation_no_self",
             "chk_party_role_end",
             "chk_qr_login_token_status",
-            "chk_registered_device_designated_pc",
             "chk_registered_device_status",
-            "chk_registered_device_trusted",
             "chk_registered_device_type",
             "chk_sanction_screening_hit_rate");
 

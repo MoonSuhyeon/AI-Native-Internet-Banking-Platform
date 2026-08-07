@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Pattern;
  * null 필드는 미변경. activeYn / ruleParams / ruleVersion / effective* 만 갱신 가능.
  */
 public record UpdateAdvisoryRuleRequest(
-        @Pattern(regexp = "[YN]?") String activeYn,
+        Boolean activeYn,
         String ruleParams,
         String ruleVersion,
         @Pattern(regexp = "\\d{8}|^$") String effectiveStartDate,

@@ -160,7 +160,7 @@ class LoanIdentityVerificationFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":%d,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code, BASE_BPS);
         MvcResult result = mockMvc.perform(post("/api/loan-products")

@@ -18,12 +18,12 @@ export default function FATCAPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const fatcaCount = rows.filter(r => r.fatcaReportableYn === 'T').length
-  const crsCount = rows.filter(r => r.crsReportableYn === 'T').length
+  const fatcaCount = rows.filter(r => r.fatcaReportableYn).length
+  const crsCount = rows.filter(r => r.crsReportableYn).length
   const filtered = rows.filter(r =>
     typeFilter === '전체' ||
-    (typeFilter === 'FATCA' && r.fatcaReportableYn === 'T') ||
-    (typeFilter === 'CRS' && r.crsReportableYn === 'T'))
+    (typeFilter === 'FATCA' && r.fatcaReportableYn) ||
+    (typeFilter === 'CRS' && r.crsReportableYn))
 
   return (
     <div className="flex min-h-screen bg-kb-beige-light">
@@ -78,12 +78,12 @@ export default function FATCAPage() {
                     <td className="px-3 py-2.5 text-gray-500">{fmtYmd(r.birthDate)}</td>
                     <td className="px-3 py-2.5 text-gray-600">{r.nationalityCode ?? '-'}</td>
                     <td className="px-3 py-2.5">
-                      {r.fatcaReportableYn === 'T'
+                      {r.fatcaReportableYn
                         ? <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">{r.fatcaStatusCode}</span>
                         : <span className="text-xs text-gray-300">-</span>}
                     </td>
                     <td className="px-3 py-2.5">
-                      {r.crsReportableYn === 'T'
+                      {r.crsReportableYn
                         ? <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">{r.crsStatusCode}</span>
                         : <span className="text-xs text-gray-300">-</span>}
                     </td>

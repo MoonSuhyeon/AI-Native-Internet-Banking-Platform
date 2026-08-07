@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * plan 05 step 3: 스케줄 생성 시 휴일 보정 회귀. 연도 2037.
  *
  * 검증 대상:
- *   1) 주말 fallback — Sat/Sun due 회차가 다음 영업일로 이동, holidayAdjustedYn = 'Y'
+ *   1) 주말 fallback — Sat/Sun due 회차가 다음 영업일로 이동, holidayAdjustedYn = true
  *   2) 영업일 회차는 보정 없이 'N' 유지
  *   3) BULLET 도 동일하게 보정
  *   4) business_calendar 에 등록된 평일 휴일도 보정에 반영
@@ -119,20 +119,20 @@ class ScheduleHolidayAdjustmentFlowTest extends AbstractLoanIntegrationTest {
     private void assertShifted(RepaymentSchedule row, String expectedDueDate) {
         assertThat(row.getDueDate()).isEqualTo(expectedDueDate);
         assertThat(row.isHolidayAdjusted()).isTrue();
-        assertThat(row.getHolidayAdjustedYn()).isEqualTo(RepaymentSchedule.YN_Y);
+        assertThat(row.getHolidayAdjustedYn()).isEqualTo(true);
     }
 
     private void assertNotShifted(RepaymentSchedule row, String expectedDueDate) {
         assertThat(row.getDueDate()).isEqualTo(expectedDueDate);
         assertThat(row.isHolidayAdjusted()).isFalse();
-        assertThat(row.getHolidayAdjustedYn()).isEqualTo(RepaymentSchedule.YN_N);
+        assertThat(row.getHolidayAdjustedYn()).isEqualTo(false);
     }
 
     private void registerHoliday(String calDate, String typeCd, String name) throws Exception {
         String body = """
                 {
                   "calDate":"%s",
-                  "businessDayYn":"N",
+                  "businessDayYn":false,
                   "holidayTypeCd":"%s",
                   "holidayName":"%s",
                   "baseCountryCd":"KR"
@@ -180,7 +180,7 @@ class ScheduleHolidayAdjustmentFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":600,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code, method);
         MvcResult result = mockMvc.perform(post("/api/loan-products")
@@ -240,7 +240,7 @@ class ScheduleHolidayAdjustmentFlowTest extends AbstractLoanIntegrationTest {
     private void registerAndVerifyRepaymentAccount(Long cntrId) throws Exception {
         String body = """
                 { "bankCd":"088", "accountNo":"1102345678901", "holderName":"홍길동",
-                  "autoDebitYn":"Y", "debitDay":15 }
+                  "autoDebitYn":true, "debitDay":15 }
                 """;
         mockMvc.perform(post("/api/loan-contracts/{cntrId}/repayment-account", cntrId)
                         .contentType(MediaType.APPLICATION_JSON).content(body))

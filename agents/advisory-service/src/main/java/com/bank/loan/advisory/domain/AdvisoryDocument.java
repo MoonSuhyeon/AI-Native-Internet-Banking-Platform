@@ -54,23 +54,23 @@ public class AdvisoryDocument extends BaseEntity {
     @Column(name = "source_uri", length = 500)
     private String sourceUri;
 
-    @Column(name = "active_yn", nullable = false, length = 1)
-    private String activeYn;
+    @Column(name = "active_yn", nullable = false)
+    private Boolean activeYn;
 
     @Column(name = "doc_desc", length = 500)
     private String docDesc;
 
     public boolean isActive() {
-        return "Y".equals(activeYn);
+        return Boolean.TRUE.equals(activeYn);
     }
 
     /** 인입 완료 후 검색 대상으로 활성화. */
     public void activate() {
-        this.activeYn = "Y";
+        this.activeYn = true;
     }
 
     /** 청크 재인입 또는 만료 처리 시 비활성화. */
     public void deactivate() {
-        this.activeYn = "N";
+        this.activeYn = false;
     }
 }

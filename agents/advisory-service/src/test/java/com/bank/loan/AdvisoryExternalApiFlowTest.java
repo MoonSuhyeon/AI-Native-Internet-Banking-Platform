@@ -118,7 +118,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
         String body = """
                 {
                   "ackResponseCd":"MAINTAIN",
-                  "decisionChangeYn":"N",
+                  "decisionChangeYn":false,
                   "ackReasonCd":"REVIEWER_JUDGMENT",
                   "ackRemark":"정책 예외 검토 후 유지",
                   "beforeDecisionCd":"APPROVED",
@@ -138,7 +138,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(32)
     void REVIEWER_타인_리포트_ack_시도_404_LOAN_190() throws Exception {
         String body = """
-                { "ackResponseCd":"MAINTAIN", "decisionChangeYn":"N" }
+                { "ackResponseCd":"MAINTAIN", "decisionChangeYn":false }
                 """;
         mockMvc.perform(post("/api/advisory/reports/{id}/ack", advrIdB)
                         .header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A))
@@ -169,7 +169,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(42)
     void AUDITOR_가_rules_수정_시도_403() throws Exception {
         String body = """
-                { "activeYn":"N", "changeReasonCd":"OPS_TEST", "changeRemark":"감사자 시도" }
+                { "activeYn":false, "changeReasonCd":"OPS_TEST", "changeRemark":"감사자 시도" }
                 """;
         mockMvc.perform(put("/api/advisory/rules/{id}", sampleRuleId)
                         .header("X-Actor-Role", "AUDITOR")
@@ -181,22 +181,22 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(43)
     void ADMIN_rules_비활성화_후_재활성화_OK() throws Exception {
         String off = """
-                { "activeYn":"N", "changeReasonCd":"OPS_TEST", "changeRemark":"임시 비활성" }
+                { "activeYn":false, "changeReasonCd":"OPS_TEST", "changeRemark":"임시 비활성" }
                 """;
         mockMvc.perform(put("/api/advisory/rules/{id}", sampleRuleId)
                         .header("X-Actor-Role", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON).content(off))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.activeYn").value("N"));
+                .andExpect(jsonPath("$.data.activeYn").value(false));
 
         String on = """
-                { "activeYn":"Y", "changeReasonCd":"OPS_TEST", "changeRemark":"재활성" }
+                { "activeYn":true, "changeReasonCd":"OPS_TEST", "changeRemark":"재활성" }
                 """;
         mockMvc.perform(put("/api/advisory/rules/{id}", sampleRuleId)
                         .header("X-Actor-Role", "ADMIN")
                         .contentType(MediaType.APPLICATION_JSON).content(on))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.activeYn").value("Y"));
+                .andExpect(jsonPath("$.data.activeYn").value(true));
     }
 
     // ============================================================

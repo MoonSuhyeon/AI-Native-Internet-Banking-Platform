@@ -51,7 +51,7 @@ class MinorRepositoryTest {
                 .birthDate(birthDate)
                 .genderCode("M")
                 .nationalityCode("KR")
-                .isPepYn("F")
+                .isPepYn(false)
                 .build();
         em.persist(pp);
     }

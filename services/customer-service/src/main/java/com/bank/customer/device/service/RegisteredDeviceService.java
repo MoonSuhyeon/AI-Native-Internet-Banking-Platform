@@ -38,8 +38,8 @@ public class RegisteredDeviceService {
                             .deviceOsName(req.deviceOsName())
                             .deviceOsVersion(req.deviceOsVersion())
                             .deviceFingerprintHash(hash)
-                            .trustedDeviceYn("F")
-                            .designatedPcYn("F")
+                            .trustedDeviceYn(false)
+                            .designatedPcYn(false)
                             .deviceRegisteredIp(ip)
                             .deviceStatusCode(RegisteredDevice.STATUS_ACTIVE)
                             .build());

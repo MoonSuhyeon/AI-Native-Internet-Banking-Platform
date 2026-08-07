@@ -12,7 +12,7 @@ public record AdvisoryRuleResponse(
         String severityCd,
         String ruleParams,
         String ruleVersion,
-        String activeYn,
+        Boolean activeYn,
         String effectiveStartDate,
         String effectiveEndDate,
         String ruleDesc

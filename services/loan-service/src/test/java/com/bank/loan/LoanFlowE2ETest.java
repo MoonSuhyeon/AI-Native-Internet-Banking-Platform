@@ -65,8 +65,8 @@ class LoanFlowE2ETest extends AbstractLoanIntegrationTest {
                   "maxAmount":100000000,
                   "minPeriodMo":12,
                   "maxPeriodMo":60,
-                  "collateralRequiredYn":"N",
-                  "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false,
+                  "guarantorRequiredYn":false
                 }
                 """;
         MvcResult result = mockMvc.perform(post("/api/loan-products")
@@ -124,7 +124,7 @@ class LoanFlowE2ETest extends AbstractLoanIntegrationTest {
         MvcResult result = mockMvc.perform(post("/api/loan-products/{prodId}/preferential-rate-policies", prodId)
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.activeYn").value("Y"))
+                .andExpect(jsonPath("$.data.activeYn").value(true))
                 .andExpect(jsonPath("$.data.preferentialRateBps").value(30))
                 .andReturn();
         policyId = extractData(result).get("policyId").asLong();
@@ -194,8 +194,8 @@ class LoanFlowE2ETest extends AbstractLoanIntegrationTest {
         MvcResult result = mockMvc.perform(post("/api/loan-applications/{applId}/credit-consents", applId)
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.consentYn").value("Y"))
-                .andExpect(jsonPath("$.data.withdrawnYn").value("N"))
+                .andExpect(jsonPath("$.data.consentYn").value(true))
+                .andExpect(jsonPath("$.data.withdrawnYn").value(false))
                 .andReturn();
         csntId = extractData(result).get("csntId").asLong();
     }

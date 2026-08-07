@@ -141,7 +141,7 @@ public class AuthEventService {
                 .loginAttemptChannelCode(channel)
                 .loginAttemptIp(ip)
                 .loginAttemptUserAgent(userAgent)
-                .loginAttemptSuccessYn(success ? "T" : "F")
+                .loginAttemptSuccessYn(success)
                 .loginAttemptFailureReasonCode(failureCode)
                 .loginAttemptedAt(OffsetDateTime.now())
                 .build());

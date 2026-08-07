@@ -34,7 +34,7 @@ public class CreditConsentService {
                 .consentTypeCd(req.consentTypeCd())
                 .consentScopeCd(req.consentScopeCd())
                 .consentTargetCd(req.consentTargetCd())
-                .consentYn(CreditConsent.YES)
+                .consentYn(true)
                 .consentedAt(now)
                 .consentMethodCd(req.consentMethodCd())
                 .consentToken(req.consentToken())
@@ -43,7 +43,7 @@ public class CreditConsentService {
                 .clientIp(clientIp)
                 .device(device)
                 .retentionUntil(req.retentionUntil())
-                .withdrawnYn(CreditConsent.NO)
+                .withdrawnYn(false)
                 .build());
 
         return CreditConsentResponse.of(saved);

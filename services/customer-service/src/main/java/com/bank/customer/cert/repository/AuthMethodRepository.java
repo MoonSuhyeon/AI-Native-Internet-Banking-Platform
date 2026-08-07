@@ -17,5 +17,5 @@ public interface AuthMethodRepository extends JpaRepository<AuthMethod, Long> {
             Long authMethodId, Long customerId);
 
     Optional<AuthMethod> findByCustomerIdAndPrimaryAuthMethodYnAndDeletedAtIsNull(
-            Long customerId, String primaryYn);
+            Long customerId, Boolean primaryYn);
 }

@@ -311,7 +311,7 @@ class CommonSyncFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":500,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(prodCd);
         MvcResult result = mockMvc.perform(post("/api/loan-products")
@@ -370,7 +370,7 @@ class CommonSyncFlowTest extends AbstractLoanIntegrationTest {
     private void registerAndVerifyRepaymentAccount(Long cntrId) throws Exception {
         String body = """
                 { "bankCd":"088", "accountNo":"1102345678901", "holderName":"홍길동",
-                  "autoDebitYn":"Y", "debitDay":15 }
+                  "autoDebitYn":true, "debitDay":15 }
                 """;
         mockMvc.perform(post("/api/loan-contracts/{cntrId}/repayment-account", cntrId)
                         .contentType(MediaType.APPLICATION_JSON).content(body))

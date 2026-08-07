@@ -83,7 +83,7 @@ public class SimilarCaseRetriever {
                             rs.getLong("case_idx_id"),
                             rs.getLong("rev_id"),
                             rs.getString("decision_cd"),
-                            rs.getString("overturn_yn"),
+                            rs.getBoolean("overturn_yn"),
                             rs.getObject("credit_score", Integer.class),
                             rs.getObject("dsr_ratio_bps", Integer.class),
                             rs.getObject("ltv_ratio_bps", Integer.class),

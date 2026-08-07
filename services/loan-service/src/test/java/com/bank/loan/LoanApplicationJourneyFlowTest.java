@@ -140,7 +140,7 @@ class LoanApplicationJourneyFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":%d,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code, BASE_BPS);
         MvcResult result = mockMvc.perform(post("/api/loan-products")
@@ -159,7 +159,7 @@ class LoanApplicationJourneyFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":%d,
                   "minAmount":1000000, "maxAmount":1000000000,
                   "minPeriodMo":12, "maxPeriodMo":360,
-                  "collateralRequiredYn":"Y", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":true, "guarantorRequiredYn":false
                 }
                 """.formatted(code, BASE_BPS);
         MvcResult result = mockMvc.perform(post("/api/loan-products")
@@ -254,7 +254,7 @@ class LoanApplicationJourneyFlowTest extends AbstractLoanIntegrationTest {
                 {
                   "colTypeCd":"REAL_ESTATE", "colName":"journey 담보",
                   "declaredValue":200000000, "currencyCd":"KRW", "ownershipTypeCd":"SOLE",
-                  "seniorLienYn":"N", "seniorLienAmount":0
+                  "seniorLienYn":false, "seniorLienAmount":0
                 }
                 """;
         MvcResult result = mockMvc.perform(post("/api/loan-applications/{applId}/collaterals", applId)

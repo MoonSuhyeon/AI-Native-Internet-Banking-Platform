@@ -28,7 +28,7 @@ export type RagDocument = {
   docTitle: string
   docCategoryCd: string
   docVersion: string
-  activeYn: string
+  activeYn: boolean
   createdAt: string
   // 프론트 호환 필드 (페이지에서 d.title, d.status 참조)
   title: string
@@ -40,7 +40,7 @@ function mapDoc(raw: Record<string, unknown>): RagDocument {
     ...(raw as Omit<RagDocument, 'docId' | 'title' | 'status'>),
     docId:  String(raw.docId),
     title:  String(raw.docTitle ?? raw.title ?? ''),
-    status: raw.activeYn === 'Y' ? 'INDEXED' : 'INACTIVE',
+    status: raw.activeYn ? 'INDEXED' : 'INACTIVE',
   }
 }
 

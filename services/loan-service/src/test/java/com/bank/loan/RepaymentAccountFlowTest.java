@@ -81,7 +81,7 @@ class RepaymentAccountFlowTest extends AbstractLoanIntegrationTest {
                   "bankCd":"088",
                   "accountNo":"1102345678901",
                   "holderName":"홍길동",
-                  "autoDebitYn":"Y",
+                  "autoDebitYn":true,
                   "debitDay":15
                 }
                 """;
@@ -92,7 +92,7 @@ class RepaymentAccountFlowTest extends AbstractLoanIntegrationTest {
                 .andExpect(jsonPath("$.data.bankCd").value("088"))
                 .andExpect(jsonPath("$.data.accountNoMasked").value("110-****-8901"))
                 .andExpect(jsonPath("$.data.holderNameMasked").value("홍*동"))
-                .andExpect(jsonPath("$.data.autoDebitYn").value("Y"))
+                .andExpect(jsonPath("$.data.autoDebitYn").value(true))
                 .andExpect(jsonPath("$.data.debitDay").value(15))
                 .andExpect(jsonPath("$.data.verifiedAt").doesNotExist())
                 .andReturn();
@@ -201,7 +201,7 @@ class RepaymentAccountFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":450,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code);
         MvcResult result = mockMvc.perform(post("/api/loan-products")

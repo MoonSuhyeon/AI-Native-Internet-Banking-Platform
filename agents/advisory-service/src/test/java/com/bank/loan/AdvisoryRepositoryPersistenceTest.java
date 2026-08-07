@@ -41,7 +41,7 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
 
     @Test
     void Rule_save_시_감사_컬럼_자동_적재() {
-        ReviewAdvisoryRule saved = ruleRepo.save(buildRule(uniqueCd("RULE_AUDIT"), "Y"));
+        ReviewAdvisoryRule saved = ruleRepo.save(buildRule(uniqueCd("RULE_AUDIT"), true));
 
         ReviewAdvisoryRule loaded = ruleRepo.findByRuleCdAndDeletedAtIsNull(saved.getRuleCd()).orElseThrow();
         assertThat(loaded.getRuleId()).isNotNull();
@@ -57,10 +57,10 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
     void Rule_활성여부_필터_조회() {
         String onCd  = uniqueCd("RULE_ON");
         String offCd = uniqueCd("RULE_OFF");
-        ruleRepo.save(buildRule(onCd, "Y"));
-        ruleRepo.save(buildRule(offCd, "N"));
+        ruleRepo.save(buildRule(onCd, true));
+        ruleRepo.save(buildRule(offCd, false));
 
-        List<String> activeCodes = ruleRepo.findByActiveYnAndDeletedAtIsNullOrderByRuleCdAsc("Y")
+        List<String> activeCodes = ruleRepo.findByActiveYnAndDeletedAtIsNullOrderByRuleCdAsc(true)
                 .stream().map(ReviewAdvisoryRule::getRuleCd).toList();
         assertThat(activeCodes).contains(onCd).doesNotContain(offCd);
     }
@@ -68,12 +68,12 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
     @Test
     void Rule_soft_delete_후_같은_rule_cd_재사용_가능() {
         String cd = uniqueCd("RULE_REUSE");
-        ReviewAdvisoryRule first = ruleRepo.save(buildRule(cd, "Y"));
+        ReviewAdvisoryRule first = ruleRepo.save(buildRule(cd, true));
         first.softDelete(999L);
         ruleRepo.saveAndFlush(first);
 
         // 같은 rule_cd 로 새 row 등록 가능 (partial unique: WHERE deleted_at IS NULL)
-        ReviewAdvisoryRule reused = ruleRepo.save(buildRule(cd, "Y"));
+        ReviewAdvisoryRule reused = ruleRepo.save(buildRule(cd, true));
         assertThat(reused.getRuleId()).isNotEqualTo(first.getRuleId());
 
         ReviewAdvisoryRule activeOnly = ruleRepo.findByRuleCdAndDeletedAtIsNull(cd).orElseThrow();
@@ -89,7 +89,7 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
         // review_advisory_report 는 rev_id → loan_review, rule_id → review_advisory_rule
         // 로 FK 가 걸려 있어 실제 부모 row 가 필요하다.
         Long revId  = saveTestReview();
-        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_PERSIST"), "Y")).getRuleId();
+        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_PERSIST"), true)).getRuleId();
         ReviewAdvisoryReport saved = reportRepo.save(buildReport(revId, ruleId, ReviewAdvisoryReport.SEVERITY_CRITICAL));
 
         List<ReviewAdvisoryReport> found = reportRepo
@@ -123,7 +123,7 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
     @Test
     void Report_target_reviewer_별_조회() {
         Long reviewerId = randomId();
-        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_TARGET"), "Y")).getRuleId();
+        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_TARGET"), true)).getRuleId();
         reportRepo.save(buildReport(saveTestReview(), ruleId, ReviewAdvisoryReport.SEVERITY_WARN, reviewerId));
         reportRepo.save(buildReport(saveTestReview(), ruleId, ReviewAdvisoryReport.SEVERITY_INFO, reviewerId));
 
@@ -205,7 +205,7 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
         return ThreadLocalRandom.current().nextLong(9_000_000L, 9_999_999L);
     }
 
-    private static ReviewAdvisoryRule buildRule(String ruleCd, String activeYn) {
+    private static ReviewAdvisoryRule buildRule(String ruleCd, Boolean activeYn) {
         return ReviewAdvisoryRule.builder()
                 .ruleCd(ruleCd)
                 .ruleName("테스트 룰 " + ruleCd)
@@ -223,7 +223,7 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
      * review_advisory_signal / _ack 의 advr_id FK 용.
      */
     private Long saveTestAdvisoryReport() {
-        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_CHILD"), "Y")).getRuleId();
+        Long ruleId = ruleRepo.save(buildRule(uniqueCd("RULE_CHILD"), true)).getRuleId();
         return reportRepo.save(
                 buildReport(saveTestReview(), ruleId, ReviewAdvisoryReport.SEVERITY_WARN)).getAdvrId();
     }
@@ -264,7 +264,7 @@ class AdvisoryRepositoryPersistenceTest extends AbstractLoanIntegrationTest {
                 .advrId(advrId)
                 .ackReviewerId(randomId())
                 .ackResponseCd(responseCd)
-                .decisionChangeYn("N")
+                .decisionChangeYn(false)
                 .ackReasonCd("REVIEWER_JUDGMENT")
                 .beforeDecisionCd("APPROVED")
                 .afterDecisionCd("APPROVED")

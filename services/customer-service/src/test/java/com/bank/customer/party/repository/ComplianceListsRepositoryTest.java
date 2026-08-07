@@ -47,20 +47,20 @@ class ComplianceListsRepositoryTest {
     }
 
     /** 가변 필드(FATCA/CRS 보고여부·KYC 상태·만료일)를 지정해 컴플라이언스 1건을 생성한다. */
-    private void compliance(String name, String fatcaReportable, String crsReportable,
+    private void compliance(String name, Boolean fatcaReportable, Boolean crsReportable,
                             String kycStatus, String kycExpiry) {
         Party p = party(name);
         ComplianceInfo ci = ComplianceInfo.builder()
                 .partyId(p.getPartyId())
                 .amlRiskLevelCode(ComplianceInfo.AML_LOW)
-                .isOfacSanctionedYn("F")
-                .isUnSanctionedYn("F")
-                .isEuSanctionedYn("F")
-                .isKrSanctionedYn("F")
+                .isOfacSanctionedYn(false)
+                .isUnSanctionedYn(false)
+                .isEuSanctionedYn(false)
+                .isKrSanctionedYn(false)
                 .kycStatusCode(kycStatus)
                 .kycExpiryDate(kycExpiry)
                 .cddLevelCode(ComplianceInfo.CDD_STANDARD)
-                .eddRequiredYn("F")
+                .eddRequiredYn(false)
                 .fatcaStatusCode(ComplianceInfo.FATCA_REPORTABLE)
                 .fatcaReportableYn(fatcaReportable)
                 .crsStatusCode(ComplianceInfo.CRS_REPORTABLE)
@@ -75,9 +75,9 @@ class ComplianceListsRepositoryTest {
         @Test
         @DisplayName("FATCA 또는 CRS 보고대상만 이름과 함께 반환한다")
         void onlyReportable() {
-            compliance("FATCA대상", "T", "F", ComplianceInfo.KYC_COMPLETED, "20300101");
-            compliance("CRS대상",   "F", "T", ComplianceInfo.KYC_COMPLETED, "20300101");
-            compliance("비보고",    "F", "F", ComplianceInfo.KYC_COMPLETED, "20300101");
+            compliance("FATCA대상", true, false, ComplianceInfo.KYC_COMPLETED, "20300101");
+            compliance("CRS대상",   false, true, ComplianceInfo.KYC_COMPLETED, "20300101");
+            compliance("비보고",    false, false, ComplianceInfo.KYC_COMPLETED, "20300101");
             em.flush();
 
             Page<FatcaReportableResponse> result = complianceInfoRepository.searchFatcaCrsReportable(FIRST_20);
@@ -94,10 +94,10 @@ class ComplianceListsRepositoryTest {
         @Test
         @DisplayName("기준일 이하 만료 + COMPLETED만 반환하고 만료 임박 순으로 정렬한다")
         void expiringBeforeTarget_completedOnly_sorted() {
-            compliance("곧만료A", "F", "F", ComplianceInfo.KYC_COMPLETED, "20260701");
-            compliance("곧만료B", "F", "F", ComplianceInfo.KYC_COMPLETED, "20260601");
-            compliance("나중만료", "F", "F", ComplianceInfo.KYC_COMPLETED, "20270101");
-            compliance("미완료",   "F", "F", ComplianceInfo.KYC_PENDING,   "20260601");
+            compliance("곧만료A", false, false, ComplianceInfo.KYC_COMPLETED, "20260701");
+            compliance("곧만료B", false, false, ComplianceInfo.KYC_COMPLETED, "20260601");
+            compliance("나중만료", false, false, ComplianceInfo.KYC_COMPLETED, "20270101");
+            compliance("미완료",   false, false, ComplianceInfo.KYC_PENDING,   "20260601");
             em.flush();
 
             Page<KycExpiringResponse> result =

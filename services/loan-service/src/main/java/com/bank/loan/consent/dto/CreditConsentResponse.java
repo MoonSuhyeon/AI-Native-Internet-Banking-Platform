@@ -11,12 +11,12 @@ public record CreditConsentResponse(
         String consentTypeCd,
         String consentScopeCd,
         String consentTargetCd,
-        String consentYn,
+        Boolean consentYn,
         OffsetDateTime consentedAt,
         String consentMethodCd,
         String signedDocUrl,
         String retentionUntil,
-        String withdrawnYn,
+        Boolean withdrawnYn,
         OffsetDateTime withdrawnAt
 ) {
     public static CreditConsentResponse of(CreditConsent c) {

@@ -51,8 +51,8 @@ public class ReviewAdvisoryAck {
     @Column(name = "ack_response_cd", nullable = false, length = 50)
     private String ackResponseCd;
 
-    @Column(name = "decision_change_yn", nullable = false, length = 1)
-    private String decisionChangeYn;
+    @Column(name = "decision_change_yn", nullable = false)
+    private Boolean decisionChangeYn;
 
     @Column(name = "ack_reason_cd", length = 50)
     private String ackReasonCd;

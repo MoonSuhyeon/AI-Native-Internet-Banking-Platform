@@ -95,7 +95,7 @@ class AdvisoryRagFlowTest extends AbstractLoanIntegrationTest {
                                 """.formatted(DOC_CONTENT.replace("\"", "\\\""))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.docCd").value("DSR_POLICY_2070"))
-                .andExpect(jsonPath("$.data.activeYn").value("Y"))
+                .andExpect(jsonPath("$.data.activeYn").value(true))
                 .andExpect(jsonPath("$.data.chunkCount").value(1))
                 .andReturn();
 
@@ -173,10 +173,10 @@ class AdvisoryRagFlowTest extends AbstractLoanIntegrationTest {
         // 심사 APPROVED 흐름으로 revId 확보
         Long revId = setupReviewApproved();
 
-        // 인덱싱 — overturnYn=N
+        // 인덱싱 — overturnYn=false
         MvcResult indexResult = mockMvc.perform(post("/api/internal/advisory/index/cases")
                         .param("revId", revId.toString())
-                        .param("overturnYn", "N"))
+                        .param("overturnYn", "false"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.indexedCount").value(1))
                 .andReturn();
@@ -344,7 +344,7 @@ class AdvisoryRagFlowTest extends AbstractLoanIntegrationTest {
                                   "baseRateBps":600,
                                   "minAmount":1000000, "maxAmount":100000000,
                                   "minPeriodMo":12, "maxPeriodMo":60,
-                                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                                 }
                                 """.formatted(code)))
                 .andExpect(status().isCreated()).andReturn();

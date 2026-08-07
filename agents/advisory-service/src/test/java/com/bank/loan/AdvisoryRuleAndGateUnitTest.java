@@ -172,7 +172,7 @@ class AdvisoryRuleAndGateUnitTest extends AbstractLoanIntegrationTest {
         Long advrId = blockers.get(0).getAdvrId();
         ReviewAdvisoryAck ack = ackService.acknowledge(advrId, AdvisoryAckService.AdvisoryAckCommand.builder()
                 .ackResponseCd(ReviewAdvisoryAck.RESPONSE_MAINTAIN)
-                .decisionChangeYn("N")
+                .decisionChangeYn(false)
                 .ackReasonCd("REVIEWER_JUDGMENT")
                 .ackRemark("정책 예외 검토 후 유지")
                 .beforeDecisionCd(LoanReview.DECISION_APPROVED)

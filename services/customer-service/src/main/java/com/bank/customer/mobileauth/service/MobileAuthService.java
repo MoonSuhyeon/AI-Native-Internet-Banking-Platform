@@ -60,7 +60,7 @@ public class MobileAuthService {
                 .mobileAuthRequestChannelCode(MobileAuth.CHANNEL_WEB)
                 .mobileAuthSentAt(OffsetDateTime.now())
                 .mobileAuthExpiryAt(OffsetDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES))
-                .mobileAuthVerifiedYn("F")
+                .mobileAuthVerifiedYn(false)
                 .mobileAuthAttemptCount(0)
                 .build());
 
@@ -76,7 +76,7 @@ public class MobileAuthService {
     public VerifyMobileAuthResponse verify(VerifyMobileAuthRequest req, Long customerId) {
         MobileAuth auth = mobileAuthRepository
                 .findTopByMobileAuthRecipientPhoneNumberAndMobileAuthPurposeCodeAndMobileAuthVerifiedYnOrderByMobileAuthSentAtDesc(
-                        req.phoneNumber(), req.purposeCode(), "F")
+                        req.phoneNumber(), req.purposeCode(), false)
                 .orElseThrow(() -> new BusinessException(CustomerErrorCode.CUST_090));
 
         if (auth.isExpired()) {

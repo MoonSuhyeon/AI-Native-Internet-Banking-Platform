@@ -150,7 +150,7 @@ public class PrepaymentService {
                 .valueDate(req.valueDate())
                 .balanceAfter(newOutstanding)
                 .idempotencyKey(idempotencyKey)
-                .reversalYn(RepaymentTransaction.YN_N)
+                .reversalYn(false)
                 .build());
 
         // 5) 스케줄 재생성 (currentVersion 은 위에서 계산)

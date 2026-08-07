@@ -52,9 +52,9 @@ public class EqualPaymentScheduleGenerator implements RepaymentScheduleGenerator
             int installmentNo = i + 1;
             String rawDueDate = startDate.plusMonths(installmentNo).format(DATE);
             String adjustedDueDate = businessDayService.nextBusinessDay(rawDueDate);
-            String adjustedYn = adjustedDueDate.equals(rawDueDate)
-                    ? RepaymentSchedule.YN_N
-                    : RepaymentSchedule.YN_Y;
+            Boolean adjustedYn = adjustedDueDate.equals(rawDueDate)
+                    ? false
+                    : true;
 
             rows.add(RepaymentSchedule.builder()
                     .cntrId(contract.getCntrId())

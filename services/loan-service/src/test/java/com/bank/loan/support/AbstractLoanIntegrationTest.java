@@ -222,7 +222,7 @@ public abstract class AbstractLoanIntegrationTest {
                                       "repaymentMethodCd":"EQUAL","rateTypeCd":"FIXED","baseRateBps":500,
                                       "minAmount":1000000,"maxAmount":500000000,
                                       "minPeriodMo":6,"maxPeriodMo":360,
-                                      "collateralRequiredYn":"N","guarantorRequiredYn":"N"
+                                      "collateralRequiredYn":false,"guarantorRequiredYn":false
                                     }
                                     """.formatted("TESTPROD_" + UUID.randomUUID().toString().substring(0, 12))))
                     .andReturn();
@@ -277,7 +277,7 @@ public abstract class AbstractLoanIntegrationTest {
                 .colNo("TESTCOL_" + UUID.randomUUID().toString().substring(0, 12))
                 .declaredValue(300_000_000L)
                 .currencyCd("KRW")
-                .seniorLienYn("N")
+                .seniorLienYn(false)
                 .seniorLienAmount(0L)
                 .build()).getColId();
     }

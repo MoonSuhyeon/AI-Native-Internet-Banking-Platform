@@ -21,7 +21,7 @@ public record ContractSyncPayload(
         Integer totalRateBps,
         String contractStartDate,
         String contractEndDate,
-        String autoTransferYn,
+        Boolean autoTransferYn,
         Integer autoTransferDay,
         OffsetDateTime signedAt,
         String cntrChannelCd,
@@ -29,6 +29,6 @@ public record ContractSyncPayload(
         String spotName,
         Long managerId,
         String managerName,
-        String proxyYn,
+        Boolean proxyYn,
         String cntrStatusCd
 ) {}

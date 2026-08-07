@@ -1,5 +1,6 @@
 package com.bank.loan.creditscore.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,7 +29,9 @@ public record CreditScorePreviewRequest(
 
         @Min(0) Long estimatedIncomeAmt,
 
-        @NotBlank @Pattern(regexp = "Y", message = "신용조회 동의(Y) 가 필요합니다.")
-        String consentYn
+        // 동의는 "값이 Y" 가 아니라 "참" 이어야 한다.
+        // @AssertTrue 는 null 을 통과시키므로 @NotNull 을 함께 둔다 — 누락도 400 이어야 한다.
+        @NotNull @AssertTrue(message = "신용조회 동의가 필요합니다.")
+        Boolean consentYn
 ) {
 }

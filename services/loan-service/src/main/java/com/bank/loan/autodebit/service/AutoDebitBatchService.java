@@ -165,7 +165,7 @@ public class AutoDebitBatchService {
 
     private Optional<RepaymentAccount> findEligibleAccount(Long cntrId) {
         return repaymentAccountRepository.findByCntrIdAndDeletedAtIsNull(cntrId)
-                .filter(a -> a.isVerified() && RepaymentAccount.YN_Y.equals(a.getAutoDebitYn()));
+                .filter(a -> a.isVerified() && Boolean.TRUE.equals(a.getAutoDebitYn()));
     }
 
     private PaymentRequest buildPaymentRequest(RepaymentSchedule schedule,

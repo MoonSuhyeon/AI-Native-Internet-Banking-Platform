@@ -76,7 +76,7 @@ public class MobileAuth {
     private OffsetDateTime mobileAuthVerifiedAt;
 
     @Column(name = "mobile_auth_verified_yn", nullable = false, length = 1)
-    private String mobileAuthVerifiedYn;
+    private Boolean mobileAuthVerifiedYn;
 
     @Column(name = "mobile_auth_attempt_count", nullable = false)
     private int mobileAuthAttemptCount;
@@ -84,13 +84,13 @@ public class MobileAuth {
     @Column(name = "mobile_auth_failure_reason_code", length = 200)
     private String mobileAuthFailureReasonCode;
 
-    public boolean isVerified() { return "T".equals(mobileAuthVerifiedYn); }
+    public boolean isVerified() { return Boolean.TRUE.equals(mobileAuthVerifiedYn); }
     public boolean isExpired()  { return OffsetDateTime.now().isAfter(mobileAuthExpiryAt); }
 
     public void recordAttempt() { this.mobileAuthAttemptCount++; }
 
     public void verify() {
-        this.mobileAuthVerifiedYn = "T";
+        this.mobileAuthVerifiedYn = true;
         this.mobileAuthVerifiedAt = OffsetDateTime.now();
     }
 

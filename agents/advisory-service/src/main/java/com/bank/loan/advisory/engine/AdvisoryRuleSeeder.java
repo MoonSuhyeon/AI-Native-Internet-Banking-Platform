@@ -40,7 +40,7 @@ public class AdvisoryRuleSeeder implements ApplicationRunner {
                     .ruleCategoryCd(seed.ruleCategoryCd())
                     .severityCd(seed.severityCd())
                     .ruleVersion(seed.ruleVersion())
-                    .activeYn(ReviewAdvisoryRule.ACTIVE_Y)
+                    .activeYn(true)
                     .ruleDesc(seed.ruleDesc())
                     .build());
             inserted++;

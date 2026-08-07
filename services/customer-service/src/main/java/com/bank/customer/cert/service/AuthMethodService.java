@@ -33,7 +33,7 @@ public class AuthMethodService {
     /** 주 인증수단 변경 — 기존 주 인증수단을 해제하고 새로 지정 */
     @Transactional
     public AuthMethodResponse setPrimary(Long customerId, Long authMethodId) {
-        authMethodRepository.findByCustomerIdAndPrimaryAuthMethodYnAndDeletedAtIsNull(customerId, "T")
+        authMethodRepository.findByCustomerIdAndPrimaryAuthMethodYnAndDeletedAtIsNull(customerId, true)
                 .ifPresent(prev -> prev.setPrimary(false));
 
         AuthMethod method = findOwned(customerId, authMethodId);

@@ -41,8 +41,6 @@ public class RepaymentTransaction extends BaseEntity {
     public static final String TYPE_EARLY       = "EARLY";       // 중도상환
     public static final String TYPE_REVERSAL    = "REVERSAL";    // 역분개
 
-    public static final String YN_N = "N";
-    public static final String YN_Y = "Y";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -97,8 +95,8 @@ public class RepaymentTransaction extends BaseEntity {
     @Column(name = "idempotency_key", length = 100, unique = true)
     private String idempotencyKey;
 
-    @Column(name = "reversal_yn", nullable = false, length = 1)
-    private String reversalYn;
+    @Column(name = "reversal_yn", nullable = false)
+    private Boolean reversalYn;
 
     @Column(name = "reversal_target_rtx_id")
     private Long reversalTargetRtxId;

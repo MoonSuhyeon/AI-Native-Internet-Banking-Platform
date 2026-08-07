@@ -62,7 +62,7 @@ public class CertIssueService {
                         default           -> "공동인증서";
                     })
                 .authMethodStatusCode(AuthMethod.STATUS_ACTIVE)
-                .primaryAuthMethodYn("F")
+                .primaryAuthMethodYn(false)
                 .authMethodRegisteredDate(todayStr)
                 .authMethodExpiryDate(expiryStr)
                 .build());

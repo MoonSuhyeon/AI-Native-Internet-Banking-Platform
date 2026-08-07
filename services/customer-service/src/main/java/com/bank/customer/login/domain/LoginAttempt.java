@@ -51,7 +51,7 @@ public class LoginAttempt {
 
     /** 'T' = 성공, 'F' = 실패 */
     @Column(name = "login_attempt_success_yn", nullable = false, length = 1)
-    private String loginAttemptSuccessYn;
+    private Boolean loginAttemptSuccessYn;
 
     /** 실패 사유 코드 (예: CUST_010, CUST_011). 성공 시 null */
     @Column(name = "login_attempt_failure_reason_code", length = 20)

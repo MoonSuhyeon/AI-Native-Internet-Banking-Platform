@@ -276,8 +276,8 @@ public class CommonSyncDispatchService {
                                 .saleStartDate(p.saleStartDate())
                                 .saleEndDate(p.saleEndDate())
                                 .productStatus(p.prodStatus())
-                                .saleYn("Y")
-                                .policyProductYn("N")
+                                .saleYn(true)
+                                .policyProductYn(false)
                                 .build())
                         .getProductId());
     }

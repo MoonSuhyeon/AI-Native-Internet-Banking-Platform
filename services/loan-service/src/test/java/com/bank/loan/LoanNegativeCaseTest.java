@@ -339,7 +339,7 @@ class LoanNegativeCaseTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":450,
                   "minAmount":%d, "maxAmount":%d,
                   "minPeriodMo":%d, "maxPeriodMo":%d,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(prodCd, minAmount, maxAmount, minPeriod, maxPeriod);
     }

@@ -56,13 +56,13 @@ class SanctionedRepositoryTest {
                 .partyId(partyId)
                 .birthDate(birthDate)
                 .nationalityCode(nationality)
-                .isPepYn("F")
+                .isPepYn(false)
                 .build();
         em.persist(pp);
     }
 
     /** 제재 플래그(ofac/un/eu/kr)를 지정해 컴플라이언스 1건을 party와 함께 생성한다. */
-    private Party compliance(String name, String ofac, String un, String eu, String kr) {
+    private Party compliance(String name, Boolean ofac, Boolean un, Boolean eu, Boolean kr) {
         Party p = party(name);
         ComplianceInfo ci = ComplianceInfo.builder()
                 .partyId(p.getPartyId())
@@ -73,11 +73,11 @@ class SanctionedRepositoryTest {
                 .isKrSanctionedYn(kr)
                 .kycStatusCode(ComplianceInfo.KYC_COMPLETED)
                 .cddLevelCode(ComplianceInfo.CDD_STANDARD)
-                .eddRequiredYn("F")
+                .eddRequiredYn(false)
                 .fatcaStatusCode(ComplianceInfo.FATCA_EXEMPT)
-                .fatcaReportableYn("F")
+                .fatcaReportableYn(false)
                 .crsStatusCode(ComplianceInfo.CRS_EXEMPT)
-                .crsReportableYn("F")
+                .crsReportableYn(false)
                 .build();
         em.persist(ci);
         return p;
@@ -88,9 +88,9 @@ class SanctionedRepositoryTest {
     @Test
     @DisplayName("제재 플래그가 있는 party만 이름·인적사항과 함께 반환한다")
     void returnsOnlySanctioned_withIdentity() {
-        Party ofac = compliance("제재대상", "T", "F", "F", "F");
+        Party ofac = compliance("제재대상", true, false, false, false);
         person(ofac.getPartyId(), "19850315", "KR");
-        compliance("정상고객", "F", "F", "F", "F");
+        compliance("정상고객", false, false, false, false);
         em.flush();
 
         Page<SanctionedPartyResponse> result = complianceInfoRepository.searchSanctioned(FIRST_20);
@@ -98,7 +98,7 @@ class SanctionedRepositoryTest {
         assertThat(result.getContent()).hasSize(1);
         SanctionedPartyResponse row = result.getContent().get(0);
         assertThat(row.partyName()).isEqualTo("제재대상");
-        assertThat(row.ofacSanctionedYn()).isEqualTo("T");
+        assertThat(row.ofacSanctionedYn()).isTrue();
         assertThat(row.birthDate()).isEqualTo("19850315");
         assertThat(row.nationalityCode()).isEqualTo("KR");
     }
@@ -106,10 +106,10 @@ class SanctionedRepositoryTest {
     @Test
     @DisplayName("OFAC 외 UN·EU·KR 어느 하나라도 제재면 포함된다")
     void anyOfFourFlags_included() {
-        compliance("UN제재", "F", "T", "F", "F");
-        compliance("EU제재", "F", "F", "T", "F");
-        compliance("KR제재", "F", "F", "F", "T");
-        compliance("정상", "F", "F", "F", "F");
+        compliance("UN제재", false, true, false, false);
+        compliance("EU제재", false, false, true, false);
+        compliance("KR제재", false, false, false, true);
+        compliance("정상", false, false, false, false);
         em.flush();
 
         Page<SanctionedPartyResponse> result = complianceInfoRepository.searchSanctioned(FIRST_20);
@@ -122,7 +122,7 @@ class SanctionedRepositoryTest {
     @Test
     @DisplayName("party_person이 없어도(법인) 제재 목록에는 노출되고 인적사항은 null이다")
     void noPartyPerson_stillListed() {
-        compliance("법인제재", "T", "F", "F", "F");
+        compliance("법인제재", true, false, false, false);
         em.flush();
 
         Page<SanctionedPartyResponse> result = complianceInfoRepository.searchSanctioned(FIRST_20);

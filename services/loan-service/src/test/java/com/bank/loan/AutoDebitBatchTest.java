@@ -56,8 +56,8 @@ class AutoDebitBatchTest extends AbstractLoanIntegrationTest {
 
     @BeforeAll
     void setup() throws Exception {
-        cntrIdA = setupContract("Y");
-        cntrIdB = setupContract("N");
+        cntrIdA = setupContract(true);
+        cntrIdB = setupContract(false);
     }
 
     @Test @Order(10)
@@ -125,7 +125,7 @@ class AutoDebitBatchTest extends AbstractLoanIntegrationTest {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-    private Long setupContract(String autoDebitYn) throws Exception {
+    private Long setupContract(Boolean autoDebitYn) throws Exception {
         Long prodId = createProduct();
         activateProduct(prodId);
         Long applId = createApplication(prodId);
@@ -145,7 +145,7 @@ class AutoDebitBatchTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":600,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code);
         MvcResult result = mockMvc.perform(post("/api/loan-products")
@@ -204,7 +204,7 @@ class AutoDebitBatchTest extends AbstractLoanIntegrationTest {
         return extractData(result).get("cntrId").asLong();
     }
 
-    private void registerAndVerifyRepaymentAccount(Long cntrId, String autoDebitYn) throws Exception {
+    private void registerAndVerifyRepaymentAccount(Long cntrId, Boolean autoDebitYn) throws Exception {
         String body = """
                 { "bankCd":"088", "accountNo":"1102345678901",
                   "holderName":"홍길동", "autoDebitYn":"%s", "debitDay":1 }

@@ -65,7 +65,7 @@ export default function AdminAdvisoryRulesPage() {
     finally { setBusy(false) }
   }
 
-  function setF(key: keyof UpdateAdvisoryRuleBody, val: string) {
+  function setF(key: keyof UpdateAdvisoryRuleBody, val: string | boolean) {
     setEditForm(prev => ({ ...prev, [key]: val }))
   }
 
@@ -103,9 +103,9 @@ export default function AdminAdvisoryRulesPage() {
                     <span className="font-semibold text-gray-800 flex-1">{r.ruleName}</span>
                     <span className="text-[11px] text-gray-400 font-mono">{r.ruleCd}</span>
                     <span className={`text-[11px] px-2 py-0.5 rounded border ${
-                      r.activeYn === 'Y' ? 'bg-green-100 text-green-700 border-green-300' : 'bg-gray-100 text-gray-500 border-gray-300'
+                      r.activeYn ? 'bg-green-100 text-green-700 border-green-300' : 'bg-gray-100 text-gray-500 border-gray-300'
                     }`}>
-                      {r.activeYn === 'Y' ? '활성' : '비활성'}
+                      {r.activeYn ? '활성' : '비활성'}
                     </span>
                     {editId !== r.ruleId ? (
                       <button onClick={() => startEdit(r)}
@@ -129,10 +129,10 @@ export default function AdminAdvisoryRulesPage() {
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <label className="block">
                           <span className="text-[11px] text-gray-500 mb-1 block">활성 여부</span>
-                          <select value={editForm.activeYn} onChange={e => setF('activeYn', e.target.value)}
+                          <select value={String(editForm.activeYn)} onChange={e => setF('activeYn', e.target.value === 'true')}
                             className="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px]">
-                            <option value="Y">활성 (Y)</option>
-                            <option value="N">비활성 (N)</option>
+                            <option value="true">활성</option>
+                            <option value="false">비활성</option>
                           </select>
                         </label>
                         <label className="block">

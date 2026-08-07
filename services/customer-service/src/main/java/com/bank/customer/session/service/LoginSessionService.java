@@ -48,7 +48,7 @@ public class LoginSessionService {
                 .sessionIssuedIp(ip)
                 .sessionChannelCode(LoginSession.CHANNEL_WEB)
                 .sessionStatusCode(LoginSession.STATUS_ACTIVE)
-                .sessionMfaCompletedYn("F")
+                .sessionMfaCompletedYn(false)
                 .sessionExpiryAt(refreshExpiry)
                 .build());
 

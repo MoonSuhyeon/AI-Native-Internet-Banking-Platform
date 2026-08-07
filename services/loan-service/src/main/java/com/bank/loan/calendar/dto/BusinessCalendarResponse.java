@@ -5,7 +5,7 @@ import com.bank.loan.calendar.domain.BusinessCalendar;
 public record BusinessCalendarResponse(
         Long calId,
         String calDate,
-        String businessDayYn,
+        Boolean businessDayYn,
         String holidayTypeCd,
         String holidayName,
         String baseCountryCd

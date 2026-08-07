@@ -137,7 +137,7 @@ class ReversalRefundFlowTest extends AbstractLoanIntegrationTest {
 
         // DB 롤백 확인 — tx2 는 여전히 SUCCESS / reversalYn=N
         var tx2 = txRepository.findByRtxIdAndDeletedAtIsNull(tx2RtxId).orElseThrow();
-        assertThat(tx2.getReversalYn()).isEqualTo("N");
+        assertThat(tx2.getReversalYn()).isFalse();
         assertThat(tx2.getRtxStatusCd()).isEqualTo("SUCCESS");
     }
 
@@ -157,7 +157,7 @@ class ReversalRefundFlowTest extends AbstractLoanIntegrationTest {
                                   "baseRateBps":600,
                                   "minAmount":1000000, "maxAmount":100000000,
                                   "minPeriodMo":12, "maxPeriodMo":60,
-                                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                                 }
                                 """.formatted(code)))
                 .andExpect(status().isCreated())
@@ -215,7 +215,7 @@ class ReversalRefundFlowTest extends AbstractLoanIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "bankCd":"088", "accountNo":"1102345678901",
-                                  "holderName":"홍길동", "autoDebitYn":"Y", "debitDay":1 }
+                                  "holderName":"홍길동", "autoDebitYn":true, "debitDay":1 }
                                 """))
                 .andExpect(status().isCreated());
         mockMvc.perform(post("/api/loan-contracts/{cntrId}/repayment-account/verify", cntrId)

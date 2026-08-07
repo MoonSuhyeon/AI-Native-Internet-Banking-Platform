@@ -140,7 +140,7 @@ class AccountingSummaryAggregationBenchmarkTest extends AbstractLoanIntegrationT
     /** 인메모리 집계: 대상 약정 행을 전부 끌어와 Java 에서 필터·합산 (BEFORE 경로 재현). */
     private RepaymentTxnSummary inMemoryAggregate() {
         record Row(long principal, long interest, long overdue,
-                   String channel, String status, String reversal, String valueDate, boolean deleted) {}
+                   String channel, String status, boolean reversal, String valueDate, boolean deleted) {}
         List<Row> rows = jdbc.query("""
                 SELECT principal_amount, interest_amount, overdue_interest_amount,
                        channel_cd, rtx_status_cd, reversal_yn, value_date, deleted_at
@@ -152,7 +152,7 @@ class AccountingSummaryAggregationBenchmarkTest extends AbstractLoanIntegrationT
                         rs.getLong("overdue_interest_amount"),
                         rs.getString("channel_cd"),
                         rs.getString("rtx_status_cd"),
-                        rs.getString("reversal_yn"),
+                        rs.getBoolean("reversal_yn"),
                         rs.getString("value_date"),
                         rs.getObject("deleted_at") != null),
                 cntrId);
@@ -163,7 +163,7 @@ class AccountingSummaryAggregationBenchmarkTest extends AbstractLoanIntegrationT
             if (BASE_DATE.equals(r.valueDate())
                     && "AUTO_DEBIT".equals(r.channel())
                     && "SUCCESS".equals(r.status())
-                    && "N".equals(r.reversal())
+                    && !r.reversal()
                     && !r.deleted()) {
                 principal += r.principal();
                 interest  += r.interest();
@@ -204,7 +204,7 @@ class AccountingSummaryAggregationBenchmarkTest extends AbstractLoanIntegrationT
                     principal_amount, interest_amount, overdue_interest_amount,
                     channel_cd, rtx_status_cd, value_date, reversal_yn,
                     created_by, updated_by
-                ) VALUES (?, 'REPAYMENT', ?, ?, ?, ?, 'AUTO_DEBIT', 'SUCCESS', ?, 'N', 1, 1)
+                ) VALUES (?, 'REPAYMENT', ?, ?, ?, ?, 'AUTO_DEBIT', 'SUCCESS', ?, false, 1, 1)
                 """;
         // value_date 목록을 미리 만든다: 앞 match개는 BASE_DATE, 나머지는 노이즈 날짜를 순환.
         List<String> dates = new ArrayList<>(total);
@@ -260,7 +260,7 @@ class AccountingSummaryAggregationBenchmarkTest extends AbstractLoanIntegrationT
                   "baseRateBps":600,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code);
         MvcResult result = mockMvc.perform(post("/api/loan-products")

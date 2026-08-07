@@ -72,7 +72,7 @@ public class CalendarSeederBatchService {
             HolidayInfo info = resolveHoliday(d);
             repository.save(BusinessCalendar.builder()
                     .calDate(calDate)
-                    .businessDayYn(info.businessDay ? BusinessCalendar.YN_Y : BusinessCalendar.YN_N)
+                    .businessDayYn(info.businessDay ? true : false)
                     .holidayTypeCd(info.typeCd)
                     .holidayName(info.name)
                     .baseCountryCd(BusinessCalendar.COUNTRY_KR)

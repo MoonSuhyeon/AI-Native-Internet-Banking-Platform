@@ -14,7 +14,7 @@ public record CollateralResponse(
         Long declaredValue,
         String currencyCd,
         String ownershipTypeCd,
-        String seniorLienYn,
+        Boolean seniorLienYn,
         Long seniorLienAmount
 ) {
     public static CollateralResponse of(Collateral c) {

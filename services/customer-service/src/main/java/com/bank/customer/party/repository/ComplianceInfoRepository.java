@@ -18,7 +18,7 @@ public interface ComplianceInfoRepository extends JpaRepository<ComplianceInfo, 
     Optional<ComplianceInfo> findByPartyIdAndDeletedAtIsNull(Long partyId);
 
     /**
-     * EDD 심사 대기 목록 — edd_required_yn='T'. 이름은 party 도메인이라 Party 엔티티 조인으로 가져온다.
+     * EDD 심사 대기 목록 — edd_required_yn=true. 이름은 party 도메인이라 Party 엔티티 조인으로 가져온다.
      * 식별자는 partyId(컴플라이언스 액션이 모두 partyId 기준). party_id 역순 고정 정렬.
      */
     @Query(value = """
@@ -26,14 +26,14 @@ public interface ComplianceInfoRepository extends JpaRepository<ComplianceInfo, 
                 ci.partyId, p.partyName, ci.amlRiskLevelCode, ci.cddLevelCode,
                 ci.kycStatusCode, ci.eddNextReviewDate)
             FROM ComplianceInfo ci JOIN Party p ON p.partyId = ci.partyId
-            WHERE ci.eddRequiredYn = 'T'
+            WHERE ci.eddRequiredYn = true
               AND ci.deletedAt IS NULL
             ORDER BY ci.partyId DESC
             """,
             countQuery = """
             SELECT COUNT(ci)
             FROM ComplianceInfo ci JOIN Party p ON p.partyId = ci.partyId
-            WHERE ci.eddRequiredYn = 'T'
+            WHERE ci.eddRequiredYn = true
               AND ci.deletedAt IS NULL
             """)
     Page<EddPendingResponse> searchEddPending(Pageable pageable);
@@ -41,7 +41,7 @@ public interface ComplianceInfoRepository extends JpaRepository<ComplianceInfo, 
     /** 제재 대상자 목록 (직원 모니터링용) */
     @Query("""
             SELECT c FROM ComplianceInfo c
-            WHERE c.isSanctionedYn = 'T'
+            WHERE c.isSanctionedYn = true
               AND c.deletedAt IS NULL
             """)
     List<ComplianceInfo> findAllSanctioned();
@@ -59,16 +59,16 @@ public interface ComplianceInfoRepository extends JpaRepository<ComplianceInfo, 
             FROM ComplianceInfo ci
             JOIN Party p ON p.partyId = ci.partyId
             LEFT JOIN PartyPerson pp ON pp.partyId = ci.partyId
-            WHERE (ci.isOfacSanctionedYn = 'T' OR ci.isUnSanctionedYn = 'T'
-                   OR ci.isEuSanctionedYn = 'T' OR ci.isKrSanctionedYn = 'T')
+            WHERE (ci.isOfacSanctionedYn = true OR ci.isUnSanctionedYn = true
+                   OR ci.isEuSanctionedYn = true OR ci.isKrSanctionedYn = true)
               AND ci.deletedAt IS NULL
             ORDER BY ci.partyId DESC
             """,
             countQuery = """
             SELECT COUNT(ci)
             FROM ComplianceInfo ci
-            WHERE (ci.isOfacSanctionedYn = 'T' OR ci.isUnSanctionedYn = 'T'
-                   OR ci.isEuSanctionedYn = 'T' OR ci.isKrSanctionedYn = 'T')
+            WHERE (ci.isOfacSanctionedYn = true OR ci.isUnSanctionedYn = true
+                   OR ci.isEuSanctionedYn = true OR ci.isKrSanctionedYn = true)
               AND ci.deletedAt IS NULL
             """)
     Page<SanctionedPartyResponse> searchSanctioned(Pageable pageable);
@@ -84,7 +84,7 @@ public interface ComplianceInfoRepository extends JpaRepository<ComplianceInfo, 
             @org.springframework.data.repository.query.Param("targetDate") String targetDate);
 
     /**
-     * FATCA/CRS 보고대상 목록 — fatca_reportable_yn='T' OR crs_reportable_yn='T'.
+     * FATCA/CRS 보고대상 목록 — fatca_reportable_yn=true OR crs_reportable_yn=true.
      * 이름·인적사항을 Party·PartyPerson 조인으로 가져온다. party_id 역순 고정 정렬.
      */
     @Query(value = """
@@ -95,14 +95,14 @@ public interface ComplianceInfoRepository extends JpaRepository<ComplianceInfo, 
             FROM ComplianceInfo ci
             JOIN Party p ON p.partyId = ci.partyId
             LEFT JOIN PartyPerson pp ON pp.partyId = ci.partyId
-            WHERE (ci.fatcaReportableYn = 'T' OR ci.crsReportableYn = 'T')
+            WHERE (ci.fatcaReportableYn = true OR ci.crsReportableYn = true)
               AND ci.deletedAt IS NULL
             ORDER BY ci.partyId DESC
             """,
             countQuery = """
             SELECT COUNT(ci)
             FROM ComplianceInfo ci
-            WHERE (ci.fatcaReportableYn = 'T' OR ci.crsReportableYn = 'T')
+            WHERE (ci.fatcaReportableYn = true OR ci.crsReportableYn = true)
               AND ci.deletedAt IS NULL
             """)
     Page<FatcaReportableResponse> searchFatcaCrsReportable(Pageable pageable);

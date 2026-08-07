@@ -17,7 +17,7 @@ public record RegisterRepaymentAccountRequest(
 
         Long accountId,
 
-        @Pattern(regexp = "[YN]") String autoDebitYn,
+        Boolean autoDebitYn,
 
         @Min(1) @Max(31) Integer debitDay
 ) {

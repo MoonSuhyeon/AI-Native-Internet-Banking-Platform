@@ -55,7 +55,7 @@ class AutoDebitHolidayTest extends AbstractLoanIntegrationTest {
         mockMvc.perform(post("/api/business-calendar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"calDate":"20370101","businessDayYn":"N",
+                                {"calDate":"20370101","businessDayYn":false,
                                  "holidayTypeCd":"PUBLIC","holidayName":"신정"}
                                 """))
                 .andExpect(status().isCreated());
@@ -77,7 +77,7 @@ class AutoDebitHolidayTest extends AbstractLoanIntegrationTest {
                         cntrIdA, 1, RepaymentSchedule.VERSION_INITIAL)
                 .orElseThrow();
         assertThat(s.getDueDate()).isEqualTo("20370102");
-        assertThat(s.getHolidayAdjustedYn()).isEqualTo("Y");
+        assertThat(s.getHolidayAdjustedYn()).isTrue();
     }
 
     @Test @Order(20)
@@ -131,7 +131,7 @@ class AutoDebitHolidayTest extends AbstractLoanIntegrationTest {
                  "repaymentMethodCd":"EQUAL","rateTypeCd":"FIXED","baseRateBps":%d,
                  "minAmount":1000000,"maxAmount":100000000,
                  "minPeriodMo":12,"maxPeriodMo":60,
-                 "collateralRequiredYn":"N","guarantorRequiredYn":"N"}
+                 "collateralRequiredYn":false,"guarantorRequiredYn":false}
                 """.formatted("HC_" + uniq(), RATE_BPS);
         MvcResult r = mockMvc.perform(post("/api/loan-products")
                         .contentType(MediaType.APPLICATION_JSON).content(body))
@@ -181,7 +181,7 @@ class AutoDebitHolidayTest extends AbstractLoanIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"bankCd":"088","accountNo":"1102345678901","holderName":"테스터",
-                                 "autoDebitYn":"Y","debitDay":1}
+                                 "autoDebitYn":true,"debitDay":1}
                                 """))
                 .andExpect(status().isCreated());
         mockMvc.perform(post("/api/loan-contracts/{id}/repayment-account/verify", cntrId)

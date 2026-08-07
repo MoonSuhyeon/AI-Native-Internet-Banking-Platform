@@ -159,7 +159,7 @@ class RepaymentScheduleBatchInsertBenchmarkTest extends AbstractLoanIntegrationT
                     .appliedRateBps(RATE_BPS)
                     .rschStatusCd(RepaymentSchedule.STATUS_DUE)
                     .rschVersionCd(RepaymentSchedule.VERSION_INITIAL)
-                    .holidayAdjustedYn(RepaymentSchedule.YN_N)
+                    .holidayAdjustedYn(false)
                     .build());
         }
         return rows;
@@ -182,7 +182,7 @@ class RepaymentScheduleBatchInsertBenchmarkTest extends AbstractLoanIntegrationT
                   "baseRateBps":600,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code);
         MvcResult result = mockMvc.perform(post("/api/loan-products")

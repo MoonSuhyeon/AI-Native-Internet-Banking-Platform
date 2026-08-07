@@ -9,7 +9,7 @@ public record AdvisoryAckHistoryItem(
         Long advkId,
         Long ackReviewerId,
         String ackResponseCd,
-        String decisionChangeYn,
+        Boolean decisionChangeYn,
         String ackReasonCd,
         String ackRemark,
         String beforeDecisionCd,

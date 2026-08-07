@@ -47,7 +47,7 @@ type ColItem = {
   colName: string
   colAddress: string
   declaredValue: number
-  seniorLienYn: string
+  seniorLienYn: boolean
   seniorLienAmount: number
 }
 
@@ -73,7 +73,7 @@ export default function CollateralPage() {
   const [colAddress, setColAddress] = useState('')
   const [declaredValue, setDeclaredValue] = useState('')
   const [ownershipType, setOwnershipType] = useState('SOLE')
-  const [seniorLienYn, setSeniorLienYn]   = useState<'Y' | 'N'>('N')
+  const [seniorLienYn, setSeniorLienYn]   = useState(false)
   const [seniorLienAmt, setSeniorLienAmt] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
@@ -103,7 +103,7 @@ export default function CollateralPage() {
         currencyCd:     'KRW',
         ownershipTypeCd: ownershipType,
         seniorLienYn,
-        seniorLienAmount: seniorLienYn === 'Y' && seniorLienAmt
+        seniorLienAmount: seniorLienYn && seniorLienAmt
           ? parseInt(seniorLienAmt.replace(/,/g, ''))
           : 0,
       })
@@ -115,7 +115,7 @@ export default function CollateralPage() {
 
       // 폼 초기화
       setColName(''); setColAddress(''); setDeclaredValue('')
-      setSeniorLienYn('N'); setSeniorLienAmt('')
+      setSeniorLienYn(false); setSeniorLienAmt('')
     } catch (err: any) {
       setError(err.response?.data?.message ?? '담보 등록 중 오류가 발생했습니다.')
     } finally {
@@ -198,7 +198,7 @@ export default function CollateralPage() {
                       <div><span className="font-medium text-kb-text">신고가액</span>: {formatWon(col.declaredValue)}</div>
                     )}
                     <div>
-                      <span className="font-medium text-kb-text">선순위 근저당</span>: {col.seniorLienYn === 'Y'
+                      <span className="font-medium text-kb-text">선순위 근저당</span>: {col.seniorLienYn
                         ? `있음 (${formatWon(col.seniorLienAmount)})`
                         : '없음'}
                     </div>
@@ -312,17 +312,17 @@ export default function CollateralPage() {
             <label className="w-36 text-[13px] font-medium text-kb-text flex-shrink-0 pt-2">선순위 근저당</label>
             <div className="space-y-2">
               <div className="flex gap-2">
-                {(['N', 'Y'] as const).map(v => (
-                  <button key={v} onClick={() => setSeniorLienYn(v)}
+                {([false, true] as const).map(v => (
+                  <button key={String(v)} onClick={() => setSeniorLienYn(v)}
                     className={`px-4 py-1.5 border text-[12px] rounded-lg transition-colors ${
                       seniorLienYn === v
                         ? 'bg-kb-primary border-kb-text font-bold text-kb-text'
                         : 'border-kb-primary-border text-kb-text-muted hover:bg-kb-primary-bg'}`}>
-                    {v === 'N' ? '없음' : '있음'}
+                    {v ? '있음' : '없음'}
                   </button>
                 ))}
               </div>
-              {seniorLienYn === 'Y' && (
+              {seniorLienYn && (
                 <div className="flex items-center gap-2">
                   <input type="text"
                     value={seniorLienAmt ? parseInt(seniorLienAmt.replace(/,/g, '')).toLocaleString('ko-KR') : ''}

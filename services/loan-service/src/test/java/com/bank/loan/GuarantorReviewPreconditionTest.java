@@ -134,8 +134,8 @@ class GuarantorReviewPreconditionTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":%d,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N",
-                  "guarantorRequiredYn":"Y",
+                  "collateralRequiredYn":false,
+                  "guarantorRequiredYn":true,
                   "minGuarantorCount":%d
                 }
                 """.formatted(code, BASE_BPS, minGuarantorCount);

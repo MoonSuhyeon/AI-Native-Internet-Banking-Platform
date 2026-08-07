@@ -39,12 +39,12 @@ public class CaseIndexingService {
      * 단일 심사 사례 인덱싱. 이미 인덱스가 있어도 append (재인덱싱 정책 — append-only).
      *
      * @param revId      인덱싱 대상 심사 ID
-     * @param overturnYn ack 결과 번복 여부 ('Y'/'N')
+     * @param overturnYn ack 결과 번복 여부
      * @param actorId    요청자 ID
      * @return 생성된 case_idx_id
      */
     @Transactional
-    public Long index(Long revId, String overturnYn, Long actorId) {
+    public Long index(Long revId, Boolean overturnYn, Long actorId) {
         LoanReview review = reviewRepo.findById(revId)
                 .filter(r -> r.getDeletedAt() == null)
                 .orElseThrow(() -> new BusinessException(LoanErrorCode.LOAN_042));
@@ -65,7 +65,7 @@ public class CaseIndexingService {
             """,
                 revId,
                 review.getRevDecisionCd(),
-                overturnYn == null ? "N" : overturnYn,
+                overturnYn != null && overturnYn,
                 null,       // credit_score: customer-service 연동 후 채우기 (§10-1)
                 null,       // dsr_ratio_bps
                 null,       // ltv_ratio_bps
@@ -95,7 +95,7 @@ public class CaseIndexingService {
         int count = 0;
         for (LoanReview review : reviews) {
             try {
-                index(review.getRevId(), "N", actorId);
+                index(review.getRevId(), false, actorId);
                 count++;
             } catch (Exception e) {
                 log.warn("사례 인덱싱 실패 — revId={}: {}", review.getRevId(), e.getMessage());

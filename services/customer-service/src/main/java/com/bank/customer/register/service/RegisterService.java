@@ -120,7 +120,7 @@ public class RegisterService {
                 .genderCode(identity.getIdentityVerificationGenderCode())
                 .ciValue(identity.getIdentityVerificationCiValue())
                 .rrnEncrypted(identity.getRrnEncrypted())
-                .isPepYn("F")
+                .isPepYn(false)
                 .build());
 
         saveCustomerRole(party.getPartyId(), today);
@@ -170,17 +170,17 @@ public class RegisterService {
         complianceInfoRepository.save(ComplianceInfo.builder()
                 .partyId(partyId)
                 .amlRiskLevelCode(ComplianceInfo.AML_LOW)
-                .isOfacSanctionedYn("F")
-                .isUnSanctionedYn("F")
-                .isEuSanctionedYn("F")
-                .isKrSanctionedYn("F")
+                .isOfacSanctionedYn(false)
+                .isUnSanctionedYn(false)
+                .isEuSanctionedYn(false)
+                .isKrSanctionedYn(false)
                 .kycStatusCode(ComplianceInfo.KYC_PENDING)
                 .cddLevelCode(ComplianceInfo.CDD_STANDARD)
-                .eddRequiredYn("F")
+                .eddRequiredYn(false)
                 .fatcaStatusCode(ComplianceInfo.FATCA_PENDING)
-                .fatcaReportableYn("F")
+                .fatcaReportableYn(false)
                 .crsStatusCode(ComplianceInfo.CRS_PENDING)
-                .crsReportableYn("F")
+                .crsReportableYn(false)
                 .build());
     }
 
@@ -191,10 +191,10 @@ public class RegisterService {
                 .partyId(partyId)
                 .customerStatusCode(Customer.STATUS_ACTIVE)
                 .customerGradeCode(Customer.GRADE_NORMAL)
-                .mainCustomerYn("F")
-                .smsReceiveYn("F")
-                .emailReceiveYn("F")
-                .postalReceiveYn("F")
+                .mainCustomerYn(false)
+                .smsReceiveYn(false)
+                .emailReceiveYn(false)
+                .postalReceiveYn(false)
                 .joinChannelCode("ONLINE")
                 .firstJoinDate(today)
                 .joinedAt(now)

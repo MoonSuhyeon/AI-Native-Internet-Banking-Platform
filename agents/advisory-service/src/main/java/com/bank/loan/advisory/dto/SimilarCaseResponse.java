@@ -15,7 +15,7 @@ public record SimilarCaseResponse(
             Long   caseIdxId,
             Long   revId,
             String decisionCd,
-            String overturnYn,
+            Boolean overturnYn,
             Integer creditScore,
             Integer dsrRatioBps,
             Integer ltvRatioBps,

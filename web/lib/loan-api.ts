@@ -399,7 +399,7 @@ export const creditScorePreviewApi = {
     loanPurposeCd?: string;
     employmentTypeCd?: string;
     estimatedIncomeAmt?: number;
-    consentYn: string;
+    consentYn: boolean;
   }) => api.post<any>('/api/credit-score/preview', body),
 };
 

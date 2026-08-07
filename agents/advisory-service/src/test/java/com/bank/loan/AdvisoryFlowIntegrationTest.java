@@ -110,7 +110,7 @@ class AdvisoryFlowIntegrationTest extends AbstractLoanIntegrationTest {
         ReviewAdvisoryAck ack = ackService.acknowledge(advrId,
                 AdvisoryAckService.AdvisoryAckCommand.builder()
                         .ackResponseCd(ReviewAdvisoryAck.RESPONSE_MAINTAIN)
-                        .decisionChangeYn("N")
+                        .decisionChangeYn(false)
                         .ackReasonCd("REVIEWER_JUDGMENT")
                         .ackRemark("정책 예외 검토 후 결론 유지")
                         .beforeDecisionCd(LoanReview.DECISION_APPROVED)
@@ -169,7 +169,7 @@ class AdvisoryFlowIntegrationTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":%d,
                   "minAmount":1000000, "maxAmount":100000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false
                 }
                 """.formatted(code, BASE_BPS);
         MvcResult r = mockMvc.perform(post("/api/loan-products")

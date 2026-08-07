@@ -122,7 +122,7 @@ class ApplicationExpiryFlowTest extends AbstractLoanIntegrationTest {
                   "baseRateBps":500,
                   "minAmount":1000000, "maxAmount":50000000,
                   "minPeriodMo":12, "maxPeriodMo":60,
-                  "collateralRequiredYn":"N", "guarantorRequiredYn":"N"%s
+                  "collateralRequiredYn":false, "guarantorRequiredYn":false%s
                 }
                 """.formatted(prodCd, validityField);
         MvcResult r = mockMvc.perform(post("/api/loan-products")

@@ -28,7 +28,7 @@ public interface RepaymentTransactionRepository extends JpaRepository<RepaymentT
             select case when count(t) > 0 then true else false end
               from RepaymentTransaction t
              where t.reversalTargetRtxId = :targetRtxId
-               and t.reversalYn = 'Y'
+               and t.reversalYn = true
                and t.rtxStatusCd = 'SUCCESS'
                and t.deletedAt is null
             """)
@@ -39,7 +39,7 @@ public interface RepaymentTransactionRepository extends JpaRepository<RepaymentT
               from RepaymentTransaction t
              where t.cntrId = :cntrId
                and t.rtxStatusCd = 'SUCCESS'
-               and t.reversalYn = 'N'
+               and t.reversalYn = false
                and t.deletedAt is null
             """)
     long sumInterestAmount(@Param("cntrId") Long cntrId);
@@ -54,7 +54,7 @@ public interface RepaymentTransactionRepository extends JpaRepository<RepaymentT
              where t.cntrId = :cntrId
                and t.rtxTypeCd = 'EARLY'
                and t.rtxStatusCd = 'SUCCESS'
-               and t.reversalYn = 'N'
+               and t.reversalYn = false
                and t.deletedAt is null
             """)
     long sumEarlyPrincipal(@Param("cntrId") Long cntrId);
@@ -69,7 +69,7 @@ public interface RepaymentTransactionRepository extends JpaRepository<RepaymentT
              where t.rschId = :rschId
                and t.rtxTypeCd in ('SCHEDULED','PARTIAL')
                and t.rtxStatusCd = 'SUCCESS'
-               and t.reversalYn = 'N'
+               and t.reversalYn = false
                and t.deletedAt is null
             """)
     long sumPaidByRschId(@Param("rschId") Long rschId);
@@ -84,7 +84,7 @@ public interface RepaymentTransactionRepository extends JpaRepository<RepaymentT
              where t.rschId = :rschId
                and t.rtxTypeCd in ('SCHEDULED','PARTIAL')
                and t.rtxStatusCd = 'SUCCESS'
-               and t.reversalYn = 'N'
+               and t.reversalYn = false
                and t.deletedAt is null
             """)
     long sumPaidInterestByRschId(@Param("rschId") Long rschId);
@@ -99,7 +99,7 @@ public interface RepaymentTransactionRepository extends JpaRepository<RepaymentT
              where t.rschId = :rschId
                and t.rtxTypeCd in ('SCHEDULED','PARTIAL')
                and t.rtxStatusCd = 'SUCCESS'
-               and t.reversalYn = 'N'
+               and t.reversalYn = false
                and t.deletedAt is null
             """)
     long sumPaidOverdueInterestByRschId(@Param("rschId") Long rschId);
@@ -114,7 +114,7 @@ public interface RepaymentTransactionRepository extends JpaRepository<RepaymentT
              where t.cntrId = :cntrId
                and t.rtxTypeCd = 'EARLY'
                and t.rtxStatusCd = 'SUCCESS'
-               and t.reversalYn = 'N'
+               and t.reversalYn = false
                and t.deletedAt is null
                and t.rtxId <> :targetRtxId
                and t.paidAt > :targetPaidAt

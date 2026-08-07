@@ -59,8 +59,8 @@ public class CommonProduct {
     @Column(name = "currency_cd", length = 3)
     private String currencyCd;
 
-    @Column(name = "policy_product_yn", length = 1)
-    private String policyProductYn;
+    @Column(name = "policy_product_yn")
+    private Boolean policyProductYn;
 
     @Column(name = "min_amount")
     private Long minAmount;
@@ -74,8 +74,8 @@ public class CommonProduct {
     @Column(name = "max_period_mo")
     private Integer maxPeriodMo;
 
-    @Column(name = "sale_yn", length = 1)
-    private String saleYn;
+    @Column(name = "sale_yn")
+    private Boolean saleYn;
 
     @Column(name = "sale_start_date", length = 8)
     private String saleStartDate;
@@ -86,8 +86,8 @@ public class CommonProduct {
     @Column(name = "product_brochure_url", length = 500)
     private String productBrochureUrl;
 
-    @Column(name = "financial_consumer_act_yn", length = 1)
-    private String financialConsumerActYn;
+    @Column(name = "financial_consumer_act_yn")
+    private Boolean financialConsumerActYn;
 
     @Column(name = "product_status", length = 50)
     private String productStatus;

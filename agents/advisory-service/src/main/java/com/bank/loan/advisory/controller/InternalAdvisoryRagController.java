@@ -53,7 +53,7 @@ public class InternalAdvisoryRagController {
     @GetMapping("/documents/stats")
     public ApiResponse<DocumentStatsResponse> documentStats() {
         long total  = documentRepository.countByDeletedAtIsNull();
-        long active = documentRepository.countByActiveYnAndDeletedAtIsNull("Y");
+        long active = documentRepository.countByActiveYnAndDeletedAtIsNull(true);
         List<DocumentStatsResponse.ModelChunkCount> chunks = chunkRepository.countByEmbeddingModelCd()
                 .stream()
                 .map(s -> new DocumentStatsResponse.ModelChunkCount(s.getEmbeddingModelCd(), s.getCount()))
@@ -78,7 +78,7 @@ public class InternalAdvisoryRagController {
 
     public record DocumentSummaryResponse(
             Long docId, String docCd, String docTitle, String docCategoryCd,
-            String docVersion, String activeYn, OffsetDateTime createdAt) {
+            String docVersion, Boolean activeYn, OffsetDateTime createdAt) {
         static DocumentSummaryResponse of(AdvisoryDocument d) {
             return new DocumentSummaryResponse(
                     d.getDocId(), d.getDocCd(), d.getDocTitle(), d.getDocCategoryCd(),
@@ -118,7 +118,7 @@ public class InternalAdvisoryRagController {
     @PostMapping("/index/cases")
     public ApiResponse<IndexCasesResult> indexCases(
             @RequestParam(required = false) Long revId,
-            @RequestParam(defaultValue = "N") String overturnYn) {
+            @RequestParam(defaultValue = "false") Boolean overturnYn) {
         Long actorId = currentActor.currentActorId();
         if (revId != null) {
             Long caseIdxId = caseIndexingService.index(revId, overturnYn, actorId);
