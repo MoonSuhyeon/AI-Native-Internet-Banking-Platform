@@ -121,13 +121,25 @@ export interface LoanContract {
   signedAt: string;
 }
 
+/**
+ * GET /api/loan-contracts/{cntrId}/repayment-schedules 의 items 원소.
+ * 필드명은 백엔드 RepaymentScheduleResponse 와 1:1 로 맞춘다 —
+ * 응답을 가공 없이 그대로 담기 때문에 이름이 어긋나면 전부 undefined 가 된다.
+ */
 export interface RepaymentSchedule {
-  seq: number;
-  scheduledDt: string;
-  principalAmt: number;
-  interestAmt: number;
-  totalAmt: number;
-  paidYn: string;
+  rschId: number;
+  cntrId: number;
+  installmentNo: number;
+  /** yyyyMMdd */
+  dueDate: string;
+  scheduledPrincipal: number;
+  scheduledInterest: number;
+  scheduledTotal: number;
+  remainingBalance: number;
+  appliedRateBps: number;
+  /** DUE | PAID | OVERDUE | PARTIAL_PAID | SUPERSEDED */
+  rschStatusCd: string;
+  rschVersionCd: string;
 }
 
 export interface Notification {
@@ -297,7 +309,7 @@ export const loanContractApi = {
 // ─── 상환 ─────────────────────────────────────────────────────
 
 export const repaymentApi = {
-  pay: (cntrId: number, body: { paymentAmt: number; paymentDt: string }) =>
+  pay: (cntrId: number, body: { installmentNo: number; channelCd?: string; valueDate?: string }) =>
     api.post<any>(`/api/loan-contracts/${cntrId}/repayments`, body),
 
   partialPrepay: (cntrId: number, body: { prepaymentAmt: number }) =>

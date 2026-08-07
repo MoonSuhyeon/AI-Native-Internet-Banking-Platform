@@ -188,7 +188,8 @@ function InterestPaymentForm({ contracts, selectedId, setSelectedId }: {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
-  const today = new Date().toISOString().slice(0, 10)
+  // valueDate 는 yyyyMMdd 여야 한다(@Pattern(regexp="\d{8}")).
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
 
   async function handleSearch() {
     if (!selectedId) return
@@ -207,7 +208,8 @@ function InterestPaymentForm({ contracts, selectedId, setSelectedId }: {
     if (!selectedId) return
     setSubmitting(true); setError('')
     try {
-      await repaymentApi.pay(selectedId, { paymentAmt: schedule.totalAmt, paymentDt: today })
+      // 금액·분배는 서버가 스케줄 row 기준으로 산출한다 — 회차 번호만 보낸다.
+      await repaymentApi.pay(selectedId, { installmentNo: schedule.installmentNo, valueDate: today })
       setDone(true)
     } catch (err: any) {
       setError(err.response?.data?.message ?? '납입 처리 중 오류가 발생했습니다.')
@@ -250,19 +252,19 @@ function InterestPaymentForm({ contracts, selectedId, setSelectedId }: {
             </tr></thead>
             <tbody className="divide-y divide-kb-border">
               {schedules.map(s => (
-                <tr key={s.seq} className="hover:bg-kb-primary-bg">
-                  <td className="px-4 py-3 text-center">{s.seq}</td>
-                  <td className="px-4 py-3 text-center">{s.scheduledDt?.slice(0, 10)}</td>
-                  <td className="px-4 py-3 text-right">{s.principalAmt.toLocaleString('ko-KR')}원</td>
-                  <td className="px-4 py-3 text-right">{s.interestAmt.toLocaleString('ko-KR')}원</td>
-                  <td className="px-4 py-3 text-right font-bold">{s.totalAmt.toLocaleString('ko-KR')}원</td>
+                <tr key={s.rschId} className="hover:bg-kb-primary-bg">
+                  <td className="px-4 py-3 text-center">{s.installmentNo}</td>
+                  <td className="px-4 py-3 text-center">{formatDueDate(s.dueDate)}</td>
+                  <td className="px-4 py-3 text-right">{s.scheduledPrincipal.toLocaleString('ko-KR')}원</td>
+                  <td className="px-4 py-3 text-right">{s.scheduledInterest.toLocaleString('ko-KR')}원</td>
+                  <td className="px-4 py-3 text-right font-bold">{s.scheduledTotal.toLocaleString('ko-KR')}원</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 ${s.paidYn === 'Y' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                      {s.paidYn === 'Y' ? '납입완료' : '미납'}
+                    <span className={`text-[11px] font-bold px-2 py-0.5 ${SCHEDULE_STATUS[s.rschStatusCd]?.cls ?? 'bg-gray-100 text-gray-600'}`}>
+                      {SCHEDULE_STATUS[s.rschStatusCd]?.label ?? s.rschStatusCd}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {s.paidYn !== 'Y' && (
+                    {PAYABLE_STATUSES.includes(s.rschStatusCd) && (
                       <button onClick={() => handlePay(s)} disabled={submitting}
                         className="px-3 py-1 text-[11px] bg-kb-primary text-kb-text font-bold hover:brightness-95 disabled:opacity-50">
                         납입
@@ -1161,6 +1163,27 @@ function PageContent({ slug, contracts, selectedId, setSelectedId }: {
     default:
       return <p className="text-[15px] text-kb-text-muted py-20 text-center">페이지를 찾을 수 없습니다.</p>
   }
+}
+
+/**
+ * 상환 회차 상태. 백엔드 RepaymentSchedule 의 rsch_status_cd 와 같은 집합이다.
+ * 예전에는 paidYn 이라는 존재하지 않는 필드를 'Y'/'N' 으로 비교해 전부 "미납"으로 보였다.
+ */
+const SCHEDULE_STATUS: Record<string, { label: string; cls: string }> = {
+  PAID:         { label: '납입완료', cls: 'bg-green-100 text-green-700' },
+  DUE:          { label: '납입예정', cls: 'bg-gray-100 text-gray-600' },
+  OVERDUE:      { label: '연체',     cls: 'bg-red-100 text-red-600' },
+  PARTIAL_PAID: { label: '부분납입', cls: 'bg-yellow-100 text-yellow-700' },
+  SUPERSEDED:   { label: '대체됨',   cls: 'bg-gray-100 text-gray-400' },
+}
+
+/** 납입 버튼을 띄울 상태. 이미 냈거나 대체된 회차에는 띄우지 않는다. */
+const PAYABLE_STATUSES = ['DUE', 'OVERDUE', 'PARTIAL_PAID']
+
+/** yyyyMMdd → yyyy-MM-dd */
+function formatDueDate(yyyymmdd: string): string {
+  if (!yyyymmdd || yyyymmdd.length !== 8) return yyyymmdd ?? ''
+  return `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}`
 }
 
 export default function ManagePage() {
