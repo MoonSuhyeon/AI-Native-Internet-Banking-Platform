@@ -68,6 +68,19 @@ jobs:
       - working-directory: web
         run: npx playwright install --with-deps chromium
 
+      # 커밋된 생성 타입이 지금 백엔드와 같은지 본다.
+      # 백엔드 DTO 를 바꾸고 타입을 재생성하지 않으면 여기서 diff 로 걸린다 —
+      # 프론트가 옛 모양을 계속 믿는 상태를 막는 장치다.
+      - name: API 타입 드리프트 검사
+        working-directory: web
+        run: |
+          bash scripts/generate-api-types.sh
+          if ! git diff --exit-code --stat -- lib/generated; then
+            echo "::error::생성 타입이 백엔드와 다르다. web/scripts/generate-api-types.sh 를 돌려 커밋한다."
+            git diff -- lib/generated | head -100
+            exit 1
+          fi
+
       - name: 계약 E2E
         working-directory: web
         env:

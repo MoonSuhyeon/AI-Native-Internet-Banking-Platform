@@ -1,5 +1,6 @@
 ﻿'use client'
 import { KB_PRIMARY,KB_PRIMARY_BORDER } from '@/lib/theme'
+import type { Loan } from '@/lib/generated'
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -18,19 +19,9 @@ const FILTER_TABS = [
 const PRODUCT_TYPES = ['전체', '직장인', '전문직', '사업자', '연금수급자']
 const JOIN_METHODS  = ['전체', '인터넷뱅킹', '영업점', '스마트대출']
 
-interface Product {
-  prodId: number
-  prodName: string
-  loanTypeCd: string
-  baseRateBps: number
-  minRateBps: number
-  maxRateBps: number
-  minAmount: number
-  maxAmount: number
-  minPeriodMo: number
-  maxPeriodMo: number
-  prodStatusCd: string
-}
+// 목록 응답에는 minRateBps·maxRateBps 가 없다. 예전에는 그 필드를 적어 두고
+// `?? baseRateBps` 로 우회했는데, 타입을 맞추면 우회가 필요 없다.
+type Product = Loan['LoanProductListItem']
 
 interface Props {
   loanTypeCd: string
@@ -184,7 +175,7 @@ export default function LoanListPage({ loanTypeCd, pageTitle, activeHref }: Prop
                             최고 <span className="font-bold text-kb-text">{formatAmount(product.maxAmount)}</span>
                           </span>
                           <span className="text-kb-text-muted">
-                            연 {bpsToRate(product.minRateBps ?? product.baseRateBps)}% ~ {bpsToRate(product.maxRateBps ?? product.baseRateBps)}%
+                            연 {bpsToRate(product.baseRateBps)}%
                           </span>
                           <span className="text-kb-text-muted">{product.minPeriodMo}~{product.maxPeriodMo}개월</span>
                         </div>

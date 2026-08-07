@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import type { Loan } from '@/lib/generated'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { loanApplicationApi } from '@/lib/loan-api'
@@ -12,13 +13,9 @@ const DOC_TYPES = [
   { code: 'ID_CARD', label: '신분증 사본', desc: '주민등록증 또는 운전면허증' },
 ]
 
-interface UploadedDoc {
-  docId: number
-  docTypeCd: string
-  fileName: string
-  uploadedAt: string
-  verifyResultCd?: string
-}
+// 손으로 쓰지 않는다. 예전에는 fileName·uploadedAt 을 적어 뒀는데 백엔드에는 그 이름이
+// 없다(docName·submittedAt 이 정본) — 제출 완료 표시가 undefined 였다.
+type UploadedDoc = Loan['LoanDocumentResponse']
 
 export default function LoanDocumentsPage() {
   const params = useParams()
@@ -122,7 +119,7 @@ export default function LoanDocumentsPage() {
                     </p>
                   ) : (
                     <p className="text-[12px] text-green-600 mt-1">
-                      ✓ {uploaded.fileName} 제출 완료
+                      ✓ {uploaded.docName} 제출 완료
                     </p>
                   )
                 )}

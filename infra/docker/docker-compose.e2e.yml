@@ -14,14 +14,24 @@
 #
 # 그래서 이 스택은 "화면이 진짜 응답으로 그려지는가"만 본다.
 #
-# 담은 것: loan-service 와 그것이 기동에 요구하는 것들뿐.
-#   loan-db(여신) / common-db(공통계 두 번째 데이터소스) / redis / kafka
-# 데이터는 Flyway 시드 마이그레이션(V35·V37~V43)이 넣는다 — 별도 seed 스크립트가 없다.
-#   고객 1006 / 계약 9201 / 상환 12회차(PAID·OVERDUE·DUE)
+# 담은 것: 프론트가 직접 부르는 세 서비스와 그 기동에 필요한 것들.
+#   customer-service(8081) — 인증·고객
+#   core-banking  (8082) — 수신·결제
+#   loan-service  (8083) — 여신 (advisory 소스를 같은 JVM 으로 컴파일)
+#   + loan-db / common-db / customer-db / core-banking-db / redis / kafka
+#
+# 모니터링·에이전트·타행은 뺐다 — 화면 렌더에 관여하지 않는다.
+#
+# 데이터는 Flyway 시드 마이그레이션이 넣는다 — 별도 seed 스크립트가 없다.
+#   여신: 고객 1006 / 계약 9201 / 상환 12회차(PAID·OVERDUE·DUE)
+#
+# **타입 생성원이기도 하다.** 세 서비스 모두 springdoc 으로 /v3/api-docs 를 낸다.
+# web/lib/generated/*.d.ts 는 그 스펙에서 생성한다(web/scripts/generate-api-types.sh).
+# 손으로 쓴 인터페이스가 백엔드와 어긋나는 문제를 원천에서 없애기 위해서다.
 #
 # 사용:
 #   docker compose -f infra/docker/docker-compose.e2e.yml up -d --wait
-#   cd web && NEXT_PUBLIC_LOAN_API_URL=http://localhost:8083 npm run test:e2e
+#   cd web && npm run test:e2e:contract
 # =============================================================================
 
 services:
@@ -118,6 +128,103 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  customer-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: customer_db
+      POSTGRES_USER: customer
+      POSTGRES_PASSWORD: customer
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U customer -d customer_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  core-banking-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: core_banking
+      POSTGRES_USER: core
+      POSTGRES_PASSWORD: core
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U core -d core_banking"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  customer-service:
+    build:
+      context: ../..
+      dockerfile: services/customer-service/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      CUSTOMER_APP_PORT: 8081
+      CUSTOMER_DB_HOST: customer-db
+      CUSTOMER_DB_PORT: 5432
+      CUSTOMER_DB_NAME: customer_db
+      CUSTOMER_DB_USER: customer
+      CUSTOMER_DB_PASSWORD: customer
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: internet-banking-jwt-secret-key-must-be-at-least-32-chars!!
+      CRYPTO_KEY_BASE64: aW50ZXJuZXQtYmFuay1kZXYta2V5LTMyYnl0ZXMhISE=
+      LOG_DIR: /tmp/logs
+    depends_on:
+      customer-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  core-banking:
+    build:
+      context: ../..
+      dockerfile: services/core-banking/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      # 결제계 시각 컬럼이 TIMESTAMPTZ 라 JVM 타임존이 저장 의미에 관여한다.
+      # db-payment/V23 의 UTC 해석 전제와 한 세트다 — 루트 compose 와 같게 못 박는다.
+      TZ: UTC
+      SPRING_PROFILES_ACTIVE: docker
+      CORE_BANKING_APP_PORT: 8082
+      BANK_CODE: "A"
+      CORE_BANKING_DB_HOST: core-banking-db
+      CORE_BANKING_DB_PORT: 5432
+      CORE_BANKING_DB_NAME: core_banking
+      CORE_BANKING_DB_USER: core
+      CORE_BANKING_DB_PASSWORD: core
+      CUSTOMER_SERVICE_URL: http://customer-service:8081
+      KFTC_KAFKA_BOOTSTRAP: kafka:29092
+      BOK_KAFKA_BOOTSTRAP: kafka:29092
+      INTERNAL_KAFKA_BOOTSTRAP: kafka:29092
+      KFTC_CONSUMER_GROUP: core-banking-kftc-e2e
+      BOK_CONSUMER_GROUP: core-banking-bok-e2e
+      INTERNAL_CONSUMER_GROUP: core-banking-internal-e2e
+      # 정본은 payment.kafka.missing-topics-fatal 이다(BokKafkaConfig 등의 @Value).
+      # 루트 compose 는 SPRING_KAFKA_LISTENER_MISSING_TOPICS_FATAL 을 주는데 그 키는
+      # 이 코드가 읽지 않는다 — E2E 는 토픽을 미리 만들지 않으므로 정확한 키로 꺼야 한다.
+      PAYMENT_KAFKA_MISSING_TOPICS_FATAL: "false"
+      APP_CORS_ENABLED: "true"
+      LOG_DIR: /tmp/logs
+    depends_on:
+      core-banking-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/actuator/health | grep -q UP"]
       interval: 10s
       timeout: 5s
       retries: 30

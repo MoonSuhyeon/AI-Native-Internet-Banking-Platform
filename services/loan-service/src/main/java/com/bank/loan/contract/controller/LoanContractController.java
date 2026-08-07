@@ -1,6 +1,7 @@
 package com.bank.loan.contract.controller;
 
 import com.bank.common.web.ApiResponse;
+import com.bank.loan.contract.dto.LoanContractListResponse;
 import com.bank.loan.contract.dto.CreateContractRequest;
 import com.bank.loan.contract.dto.LoanContractResponse;
 import com.bank.loan.contract.service.LoanContractService;
@@ -32,14 +33,14 @@ public class LoanContractController {
 
     @Operation(summary = "고객 대출 계약 목록 조회", description = "customerId 기준 계약 이력을 최신순으로 반환.")
     @GetMapping
-    public ApiResponse<Map<String, Object>> list(
+    public ApiResponse<LoanContractListResponse> list(
             @RequestParam(required = false) Long customerId,
             Authentication auth) {
         // 일반 고객: JWT principal 의 customerId 강제 사용 (요청 파라미터 무시)
         // ROLE_OPS(관리자): 파라미터로 넘긴 customerId 그대로 사용
         Long effectiveCustomerId = isOps(auth) ? customerId : extractPrincipal(auth);
         List<LoanContractResponse> items = service.list(effectiveCustomerId);
-        return ApiResponse.ok(Map.of("items", items, "totalCount", (long) items.size()));
+        return ApiResponse.ok(LoanContractListResponse.of(items));
     }
 
     @Operation(summary = "약정한도 설정",

@@ -42,3 +42,6 @@ public/pdf.worker.min.mjs
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# 타입 생성 시 쓰는 임시 스펙
+.tmp/

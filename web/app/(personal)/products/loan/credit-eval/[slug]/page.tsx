@@ -32,7 +32,8 @@ function BizPlanForm({ applId }: { applId: number | null }) {
     setLoading(true)
     try {
       const { data: res } = await loanApplicationApi.getDocuments(applId)
-      const all: any[] = res.data ?? []
+      // 응답은 배열이 아니라 { items, totalCount } 다.
+      const all = res.data?.items ?? []
       setDocs(all.filter(d => d.docTypeCd === 'BIZ_PLAN' || d.docTypeCd === 'OTHER'))
     } catch { /* ignore */ }
     finally { setLoading(false) }
@@ -228,7 +229,8 @@ function FatiHistoryTable({ applId }: { applId: number | null }) {
     setLoading(true)
     loanApplicationApi.getDocuments(applId)
       .then(({ data: res }) => {
-        const all: any[] = res.data ?? []
+        // 응답은 배열이 아니라 { items, totalCount } 다.
+      const all = res.data?.items ?? []
         setDocs(all.filter(d => d.docTypeCd?.startsWith('FATI')))
       })
       .catch(() => { /* ignore */ })

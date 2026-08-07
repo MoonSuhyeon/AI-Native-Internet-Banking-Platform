@@ -41,7 +41,8 @@ export default function AdminCollateralPage() {
 
   async function reload() {
     const { data: res } = await collateralApi.list(parseInt(applId))
-    setCols(res.data ?? [])
+    // 응답은 배열이 아니라 { items, totalCount } 다.
+    setCols(res.data?.items ?? [])
   }
 
   async function saveEdit() {

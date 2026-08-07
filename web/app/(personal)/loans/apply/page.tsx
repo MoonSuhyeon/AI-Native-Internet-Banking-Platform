@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
+import type { Loan } from '@/lib/generated'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { loanProductApi, loanApplicationApi, creditScorePreviewApi, bpsToRate as bpsToRateUtil } from '@/lib/loan-api'
@@ -19,16 +20,9 @@ const EMPLOYMENT_CD: Record<string, string> = {
 const PERIODS = [6, 12, 24, 36, 48, 60]
 const STEPS = ['대출상품 선택', '신청정보 입력', '결과 확인']
 
-interface Product {
-  prodId: number
-  prodName: string
-  loanTypeCd: string
-  minRateBps: number
-  maxRateBps: number
-  maxAmount: number
-  minPeriodMo: number
-  maxPeriodMo: number
-}
+// 목록 응답(LoanProductListItem)에는 minRateBps·maxRateBps 가 없다 — 상세 응답에만 있다.
+// 예전에는 손으로 그 필드를 적어 두고 렌더해 "연 NaN% ~ NaN%" 가 나왔다.
+type Product = Loan['LoanProductListItem']
 
 function bpsToRate(bps: number) { return (bps / 100).toFixed(2) }
 function formatMax(amt: number) {
@@ -168,7 +162,7 @@ export default function LoanApplyPage() {
                 className={`border rounded-xl p-6 text-left transition-colors ${
                   selectedProdId === p.prodId ? 'border-kb-text bg-kb-primary/20' : 'border-kb-primary-border hover:bg-kb-primary-bg'}`}>
                 <p className="text-[14px] font-bold text-kb-text mb-1">{p.prodName}</p>
-                <p className="text-[12px] text-kb-primary font-medium">연 {bpsToRate(p.minRateBps)}% ~ {bpsToRate(p.maxRateBps)}%</p>
+                <p className="text-[12px] text-kb-primary font-medium">연 {bpsToRate(p.baseRateBps)}%</p>
                 <p className="text-[12px] text-kb-text-muted mt-1">최대 {formatMax(p.maxAmount)}</p>
               </button>
             ))}

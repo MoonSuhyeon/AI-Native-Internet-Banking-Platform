@@ -1,6 +1,7 @@
 package com.bank.loan.contract.controller;
 
 import com.bank.common.web.ApiResponse;
+import com.bank.loan.contract.dto.LoanContractAdminListResponse;
 import com.bank.loan.contract.dto.LoanContractResponse;
 import com.bank.loan.contract.service.LoanContractService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +26,7 @@ public class LoanContractAdminController {
     @Operation(summary = "운영자 계약 목록 조회",
                description = "전체 계약을 상태·시작일 범위로 필터링해 페이지 단위로 반환.")
     @GetMapping
-    public ApiResponse<Map<String, Object>> list(
+    public ApiResponse<LoanContractAdminListResponse> list(
             @RequestParam(required = false) String cntrStatusCd,
             @RequestParam(required = false) String dateFrom,
             @RequestParam(required = false) String dateTo,
@@ -35,11 +36,6 @@ public class LoanContractAdminController {
         Page<LoanContractResponse> result =
                 service.listForAdmin(cntrStatusCd, dateFrom, dateTo, page, size);
 
-        return ApiResponse.ok(Map.of(
-                "items",       result.getContent(),
-                "totalCount",  result.getTotalElements(),
-                "totalPages",  result.getTotalPages(),
-                "currentPage", result.getNumber()
-        ));
+        return ApiResponse.ok(LoanContractAdminListResponse.of(result));
     }
 }

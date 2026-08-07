@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- 대출 API 응답 타입 미정의 구간, 빌드 차단 방지용 임시 처리 */
 import axios from "axios";
 import { getAdminGatewayHeaders } from "@/lib/admin-loan-auth";
+import type { Loan } from "@/lib/generated";
 
 // loan-service 전용 axios 인스턴스.
 // 인증·고객 API(@/lib/api)는 customer-service를 가리키지만, 대출 엔드포인트는
@@ -122,34 +123,27 @@ export interface LoanContract {
 }
 
 /**
- * GET /api/loan-contracts/{cntrId}/repayment-schedules 의 items 원소.
- * 필드명은 백엔드 RepaymentScheduleResponse 와 1:1 로 맞춘다 —
- * 응답을 가공 없이 그대로 담기 때문에 이름이 어긋나면 전부 undefined 가 된다.
+ * 상환 스케줄 한 회차.
+ *
+ * **손으로 쓰지 않는다.** 백엔드 RepaymentScheduleResponse 에서 생성한 타입을 그대로 쓴다
+ * (lib/generated). 예전에는 이 인터페이스를 손으로 적었고 전 필드가 백엔드와 어긋난 채
+ * 3개월 넘게 방치됐다 — 응답을 가공 없이 담으므로 어긋나면 전부 undefined 가 되는데,
+ * `api.get<any>` 라 컴파일러가 아무 말도 하지 않았다.
+ *
+ * optional 을 걷는 처리는 lib/generated 파사드가 한다(DeepRequired) — 이유는 거기 주석 참고.
+ * 실제로 그 필드들이 오는지는 e2e/loan-schedule.contract.spec.ts 가 실제 백엔드로 확인한다.
  */
-export interface RepaymentSchedule {
-  rschId: number;
-  cntrId: number;
-  installmentNo: number;
-  /** yyyyMMdd */
-  dueDate: string;
-  scheduledPrincipal: number;
-  scheduledInterest: number;
-  scheduledTotal: number;
-  remainingBalance: number;
-  appliedRateBps: number;
-  /** DUE | PAID | OVERDUE | PARTIAL_PAID | SUPERSEDED */
-  rschStatusCd: string;
-  rschVersionCd: string;
-}
+export type RepaymentSchedule = Loan['RepaymentScheduleResponse']
 
-export interface Notification {
-  notifId: number;
-  notifTypeCd: string;
-  title: string;
-  content: string;
-  readYn: string;
-  createdAt: string;
-}
+/**
+ * 통지 발송함 한 건.
+ *
+ * **손으로 쓰지 않는다.** 예전에는 notifId·title·content·readYn·createdAt 을 적어 뒀는데
+ * 백엔드 NotificationOutboxResponse 에는 그 이름이 하나도 없다(outboxId·eventTypeCd·
+ * status·sentAt ...). 알림함 화면 전체가 undefined 를 그리고 있었다.
+ */
+// 목록 응답의 원소다. 단건 조회(NotificationOutboxResponse)에는 payload·lastError 가 더 있다.
+export type Notification = Loan['NotificationOutboxListItem']
 
 // ─── 상품 ─────────────────────────────────────────────────────
 
@@ -159,22 +153,22 @@ export const loanProductApi = {
     prodStatusCd?: string;
     page?: number;
     size?: number;
-  }) => api.get<any>("/api/loan-products", { params }),
+  }) => api.get<Loan['ApiResponseLoanProductListResponse']>("/api/loan-products", { params }),
 
   get: (prodId: number) =>
-    api.get<any>(`/api/loan-products/${prodId}`),
+    api.get<Loan['ApiResponseLoanProductResponse']>(`/api/loan-products/${prodId}`),
 
   preferentialRates: (prodId: number) =>
-    api.get<any>(`/api/loan-products/${prodId}/preferential-rate-policies`),
+    api.get<Loan['ApiResponseListPreferentialRatePolicyResponse']>(`/api/loan-products/${prodId}/preferential-rate-policies`),
 
   create: (body: object) =>
-    api.post<any>("/api/loan-products", body),
+    api.post<Loan['ApiResponseLoanProductResponse']>("/api/loan-products", body),
 
   update: (prodId: number, body: object) =>
-    api.patch<any>(`/api/loan-products/${prodId}`, body),
+    api.patch<Loan['ApiResponseLoanProductResponse']>(`/api/loan-products/${prodId}`, body),
 
   discontinue: (prodId: number, body?: object) =>
-    api.post<any>(`/api/loan-products/${prodId}/discontinue`, body ?? {}),
+    api.post<Loan['ApiResponseLoanProductResponse']>(`/api/loan-products/${prodId}/discontinue`, body ?? {}),
 };
 
 // ─── 신청 ─────────────────────────────────────────────────────
@@ -190,214 +184,224 @@ export const loanApplicationApi = {
     repaymentMethodCd: string;
     estimatedIncomeAmt: number;
     employmentTypeCd: string;
-  }) => api.post<any>("/api/loan-applications", body),
+  }) => api.post<Loan['ApiResponseLoanApplicationResponse']>("/api/loan-applications", body),
 
   list: (params: { customerId: number; page?: number; size?: number }) =>
-    api.get<any>("/api/loan-applications", { params }),
+    api.get<Loan['ApiResponseLoanApplicationListResponse']>("/api/loan-applications", { params }),
 
   journey: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/journey`),
+    api.get<Loan['ApiResponseLoanApplicationJourneyResponse']>(`/api/loan-applications/${applId}/journey`),
 
   submitConsent: (
     applId: number,
     body: { consentTypeCd: string; consentScopeCd: string; consentTargetCd: string; consentMethodCd?: string },
   ) =>
-    api.post<any>(`/api/loan-applications/${applId}/credit-consents`, body),
+    api.post<Loan['ApiResponseCreditConsentResponse']>(`/api/loan-applications/${applId}/credit-consents`, body),
 
   verifyIdentity: (applId: number, body: { idvMethodCd: string; idvTargetCd: string; mobileNo: string }) =>
-    api.post<any>(`/api/loan-applications/${applId}/identity-verifications`, body),
+    api.post<Loan['ApiResponseIdentityVerificationResponse']>(`/api/loan-applications/${applId}/identity-verifications`, body),
 
   get: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}`),
+    api.get<Loan['ApiResponseLoanApplicationResponse']>(`/api/loan-applications/${applId}`),
 
   cancel: (applId: number, body?: { cancelReasonCd?: string }) =>
-    api.post<any>(`/api/loan-applications/${applId}/cancel`, body ?? {}),
+    api.post<Loan['ApiResponseLoanApplicationResponse']>(`/api/loan-applications/${applId}/cancel`, body ?? {}),
 
   runPrescreening: (applId: number, body?: { prescResultCd?: string; estimatedLimit?: number }) =>
-    api.post<any>(`/api/loan-applications/${applId}/prescreening`, body ?? {}),
+    api.post<Loan['ApiResponseLoanPrescreeningResponse']>(`/api/loan-applications/${applId}/prescreening`, body ?? {}),
 
   getPrescreening: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/prescreening`),
+    api.get<Loan['ApiResponseLoanPrescreeningResponse']>(`/api/loan-applications/${applId}/prescreening`),
 
   runCreditEvaluation: (applId: number, body: { cevalEngine: string; cevalDecisionCd: string; cevalEngineVersion?: string; cevalGrade?: string; cevalScore?: number; evalLimitAmount?: number; evalRateBps?: number }) =>
-    api.post<any>(`/api/loan-applications/${applId}/credit-evaluation`, body),
+    api.post<Loan['ApiResponseCreditEvaluationResponse']>(`/api/loan-applications/${applId}/credit-evaluation`, body),
 
   getCreditEvaluation: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/credit-evaluation`),
+    api.get<Loan['ApiResponseCreditEvaluationResponse']>(`/api/loan-applications/${applId}/credit-evaluation`),
 
   runDsr: (applId: number, body: { annualIncomeAmt: number; newAnnualRepayAmt?: number; existingAnnualRepayAmt?: number }) =>
-    api.post<any>(`/api/loan-applications/${applId}/dsr-calculation`, body),
+    api.post<Loan['ApiResponseDsrCalculationResponse']>(`/api/loan-applications/${applId}/dsr-calculation`, body),
 
   getDsr: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/dsr-calculation`),
+    api.get<Loan['ApiResponseDsrCalculationResponse']>(`/api/loan-applications/${applId}/dsr-calculation`),
 
   uploadDocument: (applId: number, formData: FormData) =>
-    api.post<any>(`/api/loan-applications/${applId}/documents`, formData, {
+    api.post<Loan['ApiResponseLoanDocumentResponse']>(`/api/loan-applications/${applId}/documents`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 
   getDocuments: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/documents`),
+    api.get<Loan['ApiResponseLoanDocumentListResponse']>(`/api/loan-applications/${applId}/documents`),
 
   getReview: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/review`),
+    api.get<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review`),
 };
 
 // ─── 보증인 동의 ───────────────────────────────────────────────
 
 export const guarantorApi = {
   list: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/guarantor-agreements`),
+    api.get<Loan['ApiResponseGuarantorAgreementListResponse']>(`/api/loan-applications/${applId}/guarantor-agreements`),
 
   register: (applId: number, body: object) =>
-    api.post<any>(`/api/loan-applications/${applId}/guarantor-agreements`, body),
+    api.post<Loan['ApiResponseGuarantorAgreementResponse']>(`/api/loan-applications/${applId}/guarantor-agreements`, body),
 
   sign: (applId: number, gagrId: number, body: { signedDocUrl: string; signedDocHash: string }) =>
-    api.post<any>(`/api/loan-applications/${applId}/guarantor-agreements/${gagrId}/sign`, body),
+    api.post<Loan['ApiResponseGuarantorAgreementResponse']>(`/api/loan-applications/${applId}/guarantor-agreements/${gagrId}/sign`, body),
 
   cancel: (applId: number, gagrId: number, body?: { cancelReasonCd?: string; cancelRemark?: string }) =>
-    api.post<any>(`/api/loan-applications/${applId}/guarantor-agreements/${gagrId}/cancel`, body ?? {}),
+    api.post<Loan['ApiResponseGuarantorAgreementResponse']>(`/api/loan-applications/${applId}/guarantor-agreements/${gagrId}/cancel`, body ?? {}),
 };
 
 // ─── 담보 ─────────────────────────────────────────────────────
 
 export const collateralApi = {
   list: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/collaterals`),
+    api.get<Loan['ApiResponseCollateralListResponse']>(`/api/loan-applications/${applId}/collaterals`),
 
   create: (applId: number, body: object) =>
-    api.post<any>(`/api/loan-applications/${applId}/collaterals`, body),
+    api.post<Loan['ApiResponseCollateralResponse']>(`/api/loan-applications/${applId}/collaterals`, body),
 
   evaluate: (colId: number, body: object) =>
-    api.post<any>(`/api/collaterals/${colId}/evaluations`, body),
+    api.post<Loan['ApiResponseCollateralEvaluationResponse']>(`/api/collaterals/${colId}/evaluations`, body),
 
   calculateLtv: (colId: number, body?: object) =>
-    api.post<any>(`/api/collaterals/${colId}/ltv-calculation`, body ?? {}),
+    api.post<Loan['ApiResponseLtvCalculationResponse']>(`/api/collaterals/${colId}/ltv-calculation`, body ?? {}),
 
   getLtv: (colId: number) =>
-    api.get<any>(`/api/collaterals/${colId}/ltv-calculation`),
+    api.get<Loan['ApiResponseLtvCalculationResponse']>(`/api/collaterals/${colId}/ltv-calculation`),
 };
 
 // ─── 약정 ─────────────────────────────────────────────────────
 
 export const loanContractApi = {
   create: (applId: number, body: object) =>
-    api.post<any>("/api/loan-contracts", { applId, ...body }),
+    api.post<Loan['ApiResponseLoanContractResponse']>("/api/loan-contracts", { applId, ...body }),
 
   list: (params: { customerId: number; page?: number; size?: number }) =>
-    api.get<any>("/api/loan-contracts", { params }),
+    api.get<Loan['ApiResponseLoanContractListResponse']>("/api/loan-contracts", { params }),
 
   adminList: (params: {
     cntrStatusCd?: string; dateFrom?: string; dateTo?: string;
     page?: number; size?: number;
   }) =>
-    api.get<any>("/api/admin/loan-contracts", { params }),
+    api.get<Loan['ApiResponseLoanContractAdminListResponse']>("/api/admin/loan-contracts", { params }),
 
   get: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}`),
+    api.get<Loan['ApiResponseLoanContractResponse']>(`/api/loan-contracts/${cntrId}`),
 
   execute: (cntrId: number, body: object) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/executions`, body),
+    api.post<Loan['ApiResponseLoanExecutionResponse']>(`/api/loan-contracts/${cntrId}/executions`, body),
 
   getRepaymentSchedules: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/repayment-schedules`),
+    api.get<Loan['ApiResponseRepaymentScheduleListResponse']>(`/api/loan-contracts/${cntrId}/repayment-schedules`),
 
   registerRepaymentAccount: (cntrId: number, body: { accountNo: string }) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/repayment-account`, body),
+    api.post<Loan['ApiResponseRepaymentAccountResponse']>(`/api/loan-contracts/${cntrId}/repayment-account`, body),
 };
 
 // ─── 상환 ─────────────────────────────────────────────────────
 
 export const repaymentApi = {
   pay: (cntrId: number, body: { installmentNo: number; channelCd?: string; valueDate?: string }) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/repayments`, body),
+    api.post<Loan['ApiResponseRepaymentTransactionResponse']>(`/api/loan-contracts/${cntrId}/repayments`, body),
 
   partialPrepay: (cntrId: number, body: { prepaymentAmt: number }) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/repayments/partial`, body),
+    api.post<Loan['ApiResponsePartialRepaymentResponse']>(`/api/loan-contracts/${cntrId}/repayments/partial`, body),
 
   fullPrepay: (cntrId: number, body: object) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/prepayments`, body),
+    api.post<Loan['ApiResponsePrepaymentResponse']>(`/api/loan-contracts/${cntrId}/prepayments`, body),
 
   list: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/repayments`),
+    api.get<Loan['ApiResponseRepaymentTransactionListResponse']>(`/api/loan-contracts/${cntrId}/repayments`),
 
   reverse: (cntrId: number, rtxId: number, body?: { reversalReasonCd?: string; reversalRemark?: string }) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/repayments/${rtxId}/reversal`, body ?? {}),
+    api.post<Loan['ApiResponseReversalResponse']>(`/api/loan-contracts/${cntrId}/repayments/${rtxId}/reversal`, body ?? {}),
 };
 
 // ─── 금리/이자 ────────────────────────────────────────────────
 
 export const rateApi = {
   getInterestAccruals: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/interest-accruals`),
+    api.get<Loan['ApiResponseInterestAccrualListResponse']>(`/api/loan-contracts/${cntrId}/interest-accruals`),
 
   requestRateChange: (cntrId: number, body: { requestedRateBps: number; reasonCd: string }) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/rate-changes`, body),
+    api.post<Loan['ApiResponseRateChangeApplyResponse']>(`/api/loan-contracts/${cntrId}/rate-changes`, body),
 
   getRateChanges: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/rate-changes`),
+    api.get<Loan['ApiResponseRateChangeHistoryListResponse']>(`/api/loan-contracts/${cntrId}/rate-changes`),
 };
 
 // ─── 만기/해지 ────────────────────────────────────────────────
 
 export const closureApi = {
   extendMaturity: (cntrId: number, body: { newMaturityDt: string }) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/maturity/extend`, body),
+    api.post<Loan['ApiResponseMaturityResponse']>(`/api/loan-contracts/${cntrId}/maturity/extend`, body),
 
   getMaturity: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/maturity`),
+    api.get<Loan['ApiResponseMaturityResponse']>(`/api/loan-contracts/${cntrId}/maturity`),
 
   close: (cntrId: number, body: { closureReasonCd: string }) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/closure`, body),
+    api.post<Loan['ApiResponseLoanClosureResponse']>(`/api/loan-contracts/${cntrId}/closure`, body),
 
   getClosure: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/closure`),
+    api.get<Loan['ApiResponseLoanClosureResponse']>(`/api/loan-contracts/${cntrId}/closure`),
 };
 
 // ─── 부수 기능 ────────────────────────────────────────────────
 
 export const loanMiscApi = {
+  // ⚠ 백엔드 OpenAPI 스펙에 이 엔드포인트가 없다(lib/generated 생성 시 미매칭).
+  //   호출하면 404 다. 타입을 붙일 수 없어 any 로 남긴다.
+  // 스펙에 있는 것은 POST /api/credit-score/preview 뿐이다. 화면에서 쓰이지 않는다.
   getCreditScore: (customerId: number) =>
     api.get<any>(`/api/credit-score`, { params: { customerId } }),
 
+  // ⚠ 백엔드 OpenAPI 스펙에 이 엔드포인트가 없다(lib/generated 생성 시 미매칭).
+  //   호출하면 404 다. 타입을 붙일 수 없어 any 로 남긴다.
+  // 스펙에는 GET /api/business-calendar 와 /by-date 가 있다. 화면에서 쓰이지 않는다.
   getBusinessCalendar: (params: { yearMonth: string }) =>
-    api.get<any>("/api/business-calendar", { params }),
+    api.get<Loan['ApiResponseBusinessCalendarListResponse']>("/api/business-calendar", { params }),
 
   getStatusHistory: (targetTable: string, targetId: number) =>
-    api.get<any>(`/api/status-history`, { params: { targetTable, targetId } }),
+    api.get<Loan['ApiResponseStatusHistoryListResponse']>(`/api/status-history`, { params: { targetTable, targetId } }),
 
   getDelinquencySnapshots: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/delinquency/snapshots`),
+    api.get<Loan['ApiResponseDelinquencySnapshotListResponse']>(`/api/loan-contracts/${cntrId}/delinquency/snapshots`),
 
   getNotifications: (customerId: number) =>
-    api.get<any>("/api/notifications", { params: { customerId } }),
+    api.get<Loan['ApiResponseNotificationOutboxListResponse']>("/api/notifications", { params: { customerId } }),
 
+  // ⚠ 백엔드 OpenAPI 스펙에 이 엔드포인트가 없다(lib/generated 생성 시 미매칭).
+  //   호출하면 404 다. 타입을 붙일 수 없어 any 로 남긴다.
+  // 스펙에 읽음 처리 엔드포인트가 없다(GET 목록·단건, POST retry 뿐).
+  //   대출관리 알림함의 읽음/미읽음 토글이 이걸 부르므로 그 버튼은 동작하지 않는다.
   updateNotification: (notifId: number, body: { readYn: string }) =>
     api.patch<any>(`/api/notifications/${notifId}`, body),
 
   getCertificate: (cntrId: number, certTypeCd: string) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/certificates`, {
+    api.get<Loan['ApiResponseLoanCertificateListResponse']>(`/api/loan-contracts/${cntrId}/certificates`, {
       params: { certTypeCd },
     }),
 
   getCreditInfoReport: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/credit-info-reports`),
+    api.get<Loan['ApiResponseCreditInfoReportListResponse']>(`/api/loan-contracts/${cntrId}/credit-info-reports`),
 
   getDelinquency: (cntrId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/delinquency`),
+    api.get<Loan['ApiResponseDelinquencyResponse']>(`/api/loan-contracts/${cntrId}/delinquency`),
 };
 
 // ─── 보증보험 ─────────────────────────────────────────────────
 
 export const guaranteeInsuranceApi = {
   issue: (cntrId: number, body: object) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/guarantee-insurance`, body),
+    api.post<Loan['ApiResponseGuaranteeInsuranceResponse']>(`/api/loan-contracts/${cntrId}/guarantee-insurance`, body),
 
   get: (cntrId: number, ginsId: number) =>
-    api.get<any>(`/api/loan-contracts/${cntrId}/guarantee-insurance/${ginsId}`),
+    api.get<Loan['ApiResponseGuaranteeInsuranceResponse']>(`/api/loan-contracts/${cntrId}/guarantee-insurance/${ginsId}`),
 
   cancel: (cntrId: number, ginsId: number, body?: { cancelReasonCd?: string }) =>
-    api.post<any>(`/api/loan-contracts/${cntrId}/guarantee-insurance/${ginsId}/cancel`, body ?? {}),
+    api.post<Loan['ApiResponseGuaranteeInsuranceResponse']>(`/api/loan-contracts/${cntrId}/guarantee-insurance/${ginsId}/cancel`, body ?? {}),
 };
 
 // ─── 신용점수 미리보기 ────────────────────────────────────────
@@ -440,40 +444,40 @@ export const adminReviewApi = {
     api.get<any>('/api/loan-reviews/stats', { params: { from, to } }),
 
   get: (applId: number) =>
-    api.get<any>(`/api/loan-applications/${applId}/review`),
+    api.get<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review`),
 
   run: (applId: number, body: object) =>
-    api.post<any>(`/api/loan-applications/${applId}/review`, body),
+    api.post<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review`, body),
 
   autoDecide: (applId: number) =>
-    api.post<any>(`/api/loan-applications/${applId}/review/auto-decide`, {}),
+    api.post<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review/auto-decide`, {}),
 
   confirm: (applId: number, body: { confirmRemark?: string }) =>
-    api.post<any>(`/api/loan-applications/${applId}/review/confirm`, body),
+    api.post<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review/confirm`, body),
 
   acknowledgeBias: (applId: number, body?: { acknowledgeRemark?: string }) =>
-    api.post<any>(`/api/loan-applications/${applId}/review/acknowledge-bias`, body ?? {}),
+    api.post<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review/acknowledge-bias`, body ?? {}),
 
   approverApprove: (applId: number, body: object) =>
-    api.post<any>(`/api/loan-applications/${applId}/review/approver-approve`, body),
+    api.post<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review/approver-approve`, body),
 
   revise: (applId: number, body: object) =>
-    api.patch<any>(`/api/loan-applications/${applId}/review`, body),
+    api.patch<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review`, body),
 
   getAdvices: (revId: number) =>
-    api.get<any>(`/api/loan-reviews/${revId}/advices`),
+    api.get<Loan['ApiResponseListAiReviewAdviceResponse']>(`/api/loan-reviews/${revId}/advices`),
 
   getChecks: (revId: number) =>
-    api.get<any>(`/api/loan-reviews/${revId}/checks`),
+    api.get<Loan['ApiResponseListReviewCheckLogResponse']>(`/api/loan-reviews/${revId}/checks`),
 
   addCheck: (revId: number, body: object) =>
-    api.post<any>(`/api/loan-reviews/${revId}/checks`, body),
+    api.post<Loan['ApiResponseReviewCheckLogResponse']>(`/api/loan-reviews/${revId}/checks`, body),
 
   biasOverride: (revId: number, body: { overrideReason: string }) =>
-    api.post<any>(`/api/loan-reviews/${revId}/bias-override`, body),
+    api.post<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-reviews/${revId}/bias-override`, body),
 
   getAdvisoryReports: (revId: number) =>
-    api.get<any>(`/api/loan-reviews/${revId}/advisory-reports`),
+    api.get<Loan['ApiResponseListAdvisoryReportSummary']>(`/api/loan-reviews/${revId}/advisory-reports`),
 
   // 본사 상신 건 목록 (ROLE_HQ_REVIEWER) — Page 응답(content/totalElements 등)
   listEscalated: (page = 0, size = 20) =>
@@ -481,7 +485,7 @@ export const adminReviewApi = {
 
   // 이상거래 본사 상신 (ROLE_BRANCH_MANAGER)
   escalateToHq: (applId: number, body: { escalateReason: string }) =>
-    api.post<any>(`/api/loan-applications/${applId}/review/escalate-to-hq`, body),
+    api.post<Loan['ApiResponseLoanReviewResponse']>(`/api/loan-applications/${applId}/review/escalate-to-hq`, body),
 };
 
 // ─── 어드민 - EOD 배치 (ROLE_OPS) ────────────────────────────
@@ -518,73 +522,75 @@ export const breakGlassApi = {
 
 export const adminLoanApi = {
   updateCollateral: (colId: number, body: object) =>
-    api.patch<any>(`/api/collaterals/${colId}`, body),
+    api.patch<Loan['ApiResponseCollateralResponse']>(`/api/collaterals/${colId}`, body),
 
   releaseCollateral: (colId: number, body: object) =>
-    api.post<any>(`/api/collaterals/${colId}/release`, body),
+    api.post<Loan['ApiResponseCollateralResponse']>(`/api/collaterals/${colId}/release`, body),
 
   deleteDocument: (docId: number) =>
-    api.delete<any>(`/api/loan-documents/${docId}`),
+    api.delete<Loan['ApiResponseLoanDocumentResponse']>(`/api/loan-documents/${docId}`),
 
   downloadDocumentUrl: (docId: number) =>
     `/api/loan-documents/${docId}/download`,
 
   getPreferentialPolicies: (prodId: number) =>
-    api.get<any>(`/api/loan-products/${prodId}/preferential-rate-policies`),
+    api.get<Loan['ApiResponseListPreferentialRatePolicyResponse']>(`/api/loan-products/${prodId}/preferential-rate-policies`),
 
   addPreferentialPolicy: (prodId: number, body: object) =>
-    api.post<any>(`/api/loan-products/${prodId}/preferential-rate-policies`, body),
+    api.post<Loan['ApiResponsePreferentialRatePolicyResponse']>(`/api/loan-products/${prodId}/preferential-rate-policies`, body),
 };
 
 // ─── 영업일 캘린더 ────────────────────────────────────────────
 
 export const businessCalendarApi = {
   list: (params?: { from?: string; to?: string; page?: number; size?: number }) =>
-    api.get<any>("/api/business-calendar", { params }),
+    api.get<Loan['ApiResponseBusinessCalendarListResponse']>("/api/business-calendar", { params }),
 
   get: (calId: number) =>
     api.get<any>(`/api/business-calendar/${calId}`),
 
   create: (body: object) =>
-    api.post<any>("/api/business-calendar", body),
+    api.post<Loan['ApiResponseBusinessCalendarResponse']>("/api/business-calendar", body),
 
   update: (calId: number, body: object) =>
-    api.put<any>(`/api/business-calendar/${calId}`, body),
+    api.put<Loan['ApiResponseBusinessCalendarResponse']>(`/api/business-calendar/${calId}`, body),
 
   delete: (calId: number) =>
-    api.delete<any>(`/api/business-calendar/${calId}`),
+    api.delete<void>(`/api/business-calendar/${calId}`),
 };
 
 // ─── 신용정보 보고서 ──────────────────────────────────────────
 
 export const creditInfoReportApi = {
   list: (params?: { statusCd?: string; page?: number; size?: number }) =>
-    api.get<any>("/api/credit-info-reports", { params }),
+    api.get<Loan['ApiResponseAdminCreditInfoReportListResponse']>("/api/credit-info-reports", { params }),
 
   retry: (crptId: number) =>
-    api.post<any>(`/api/credit-info-reports/${crptId}/retry`, {}),
+    api.post<Loan['ApiResponseCreditInfoReportResponse']>(`/api/credit-info-reports/${crptId}/retry`, {}),
 
   ack: (crptId: number, body?: object) =>
-    api.post<any>(`/api/credit-info-reports/${crptId}/ack`, body ?? {}),
+    api.post<Loan['ApiResponseCreditInfoReportResponse']>(`/api/credit-info-reports/${crptId}/ack`, body ?? {}),
 };
 
 // ─── 알림 발송함 ──────────────────────────────────────────────
 
 export const notificationOutboxApi = {
   get: (outboxId: number) =>
-    api.get<any>(`/api/notifications/${outboxId}`),
+    api.get<Loan['ApiResponseNotificationOutboxResponse']>(`/api/notifications/${outboxId}`),
 
   list: (params?: { page?: number; size?: number }) =>
-    api.get<any>("/api/notifications", { params }),
+    api.get<Loan['ApiResponseNotificationOutboxListResponse']>("/api/notifications", { params }),
 
   retry: (outboxId: number) =>
-    api.post<any>(`/api/notifications/${outboxId}/retry`, {}),
+    api.post<Loan['ApiResponseNotificationOutboxResponse']>(`/api/notifications/${outboxId}/retry`, {}),
 };
 
 // ─── 본인인증 ─────────────────────────────────────────────────
 
 export const identityVerificationApi = {
   get: (idvId: number) =>
+    // ⚠ 스펙의 경로는 /api/loan-applications/{applId}/identity-verifications/{idvId} 다.
+    //   이 경로로는 404 다.
     api.get<any>(`/api/identity-verifications/${idvId}`),
 };
 

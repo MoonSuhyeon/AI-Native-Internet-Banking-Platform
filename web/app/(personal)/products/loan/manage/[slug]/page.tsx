@@ -521,13 +521,6 @@ function NotifyForm() {
       .finally(() => setLoading(false))
   }, [])
 
-  async function toggleRead(notif: Notification) {
-    try {
-      await loanMiscApi.updateNotification(notif.notifId, { readYn: notif.readYn === 'Y' ? 'N' : 'Y' })
-      setNotifs(prev => prev.map(n => n.notifId === notif.notifId ? { ...n, readYn: n.readYn === 'Y' ? 'N' : 'Y' } : n))
-    } catch {}
-  }
-
   if (loading) return <p className="text-[13px] text-kb-text-muted py-8 text-center">불러오는 중...</p>
 
   return (
@@ -536,22 +529,23 @@ function NotifyForm() {
         <p className="text-[13px] text-kb-text-muted py-8 text-center">수신된 통지가 없습니다.</p>
       ) : (
         <table className="w-full text-[13px] border-t-2 border-kb-primary">
+          {/* 백엔드 통지 API 는 발송함(outbox)이다 — 제목·본문·읽음 상태를 주지 않는다.
+              예전 화면은 그런 필드가 있는 것처럼 그렸고 전부 undefined 였다.
+              읽음 토글도 없는 엔드포인트를 불러 아무 일도 하지 않았으므로 걷었다.
+              읽음 기능이 필요하면 백엔드에 먼저 만들어야 한다. */}
           <thead><tr className="bg-kb-primary-bg">
-            <th className="px-4 py-3 text-left font-semibold border-b border-kb-primary-border">제목</th>
-            <th className="px-4 py-3 text-center font-semibold border-b border-kb-primary-border">수신일</th>
-            <th className="px-4 py-3 text-center font-semibold border-b border-kb-primary-border">읽음</th>
+            <th className="px-4 py-3 text-left font-semibold border-b border-kb-primary-border">유형</th>
+            <th className="px-4 py-3 text-center font-semibold border-b border-kb-primary-border">채널</th>
+            <th className="px-4 py-3 text-center font-semibold border-b border-kb-primary-border">발송일</th>
+            <th className="px-4 py-3 text-center font-semibold border-b border-kb-primary-border">상태</th>
           </tr></thead>
           <tbody className="divide-y divide-kb-border">
             {notifs.map(n => (
-              <tr key={n.notifId} className={`hover:bg-kb-primary-bg ${n.readYn === 'N' ? 'font-medium' : ''}`}>
-                <td className="px-4 py-3">{n.title}</td>
-                <td className="px-4 py-3 text-center text-kb-text-muted">{n.createdAt?.slice(0, 10)}</td>
-                <td className="px-4 py-3 text-center">
-                  <button onClick={() => toggleRead(n)}
-                    className={`px-3 py-1 text-[11px] border ${n.readYn === 'Y' ? 'border-kb-primary-border text-kb-text-muted' : 'bg-kb-primary border-kb-primary-border text-kb-text font-bold'}`}>
-                    {n.readYn === 'Y' ? '읽음' : '미읽음'}
-                  </button>
-                </td>
+              <tr key={n.outboxId} className="hover:bg-kb-primary-bg">
+                <td className="px-4 py-3">{n.eventTypeCd}</td>
+                <td className="px-4 py-3 text-center text-kb-text-muted">{n.channelCd}</td>
+                <td className="px-4 py-3 text-center text-kb-text-muted">{n.sentAt?.slice(0, 10) ?? '-'}</td>
+                <td className="px-4 py-3 text-center">{n.status}</td>
               </tr>
             ))}
           </tbody>
