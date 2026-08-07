@@ -10,9 +10,8 @@ data:
 
   # DB 호스트 (Cloud SQL 사용시 cloudsql-proxy 사이드카 또는 Private IP)
   CUSTOMER_DB_HOST: "customer-db"
-  DEPOSIT_DB_HOST: "deposit-db"
+  CORE_BANKING_DB_HOST: "core-banking-db"
   LOAN_DB_HOST: "loan-db"
-  PAYMENT_DB_HOST: "payment-db"
   MASTER_DB_HOST: "master-db"
   AI_DB_HOST: "ai-db"
   COMMON_DB_HOST: "common-db"
