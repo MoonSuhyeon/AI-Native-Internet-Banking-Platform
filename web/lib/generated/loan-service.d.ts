@@ -4,1793 +4,18 @@
  */
 
 export interface paths {
-    "/api/internal/advisory/documents/{docId}/activate": {
+    "/api/admin/loan-contracts": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
         /**
-         * 문서 활성화/비활성화
-         * @description active=true 면 활성화(검색 대상 포함), false 면 비활성화(검색 제외).
+         * 운영자 계약 목록 조회
+         * @description 전체 계약을 상태·시작일 범위로 필터링해 페이지 단위로 반환.
          */
-        put: operations["toggleActivate"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/business-calendar/{calId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** 캘린더 항목 수정 */
-        put: operations["update"];
-        post?: never;
-        /** 캘린더 항목 soft delete */
-        delete: operations["delete_1"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/advisory/rules/{ruleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * 룰 활성화/임계치 조정
-         * @description active_yn, rule_params, rule_version, effective 일자, rule_desc 변경. 변경 시 STATUS_HISTORY 에 BEFORE/AFTER 스냅샷 적재. admin 만.
-         */
-        put: operations["update_1"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/notifications/{outboxId}/retry": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 알림 outbox 재전송
-         * @description FAILED/DEAD row 를 PENDING 으로 되돌려 다음 디스패치에 다시 픽업되게 한다. PENDING/SENT 는 LOAN_191. attemptNo 와 lastError 가 초기화되고 status_history 에 NOTI_REQUEUED 기록.
-         */
-        post: operations["retry"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loans/reviews/{revId}/bias-result": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["receive"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-reviews/{revId}/checks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 본심사 체크 로그 목록 조회
-         * @description 자동 적재 5건 + 수동 추가분을 시간순으로 반환.
-         */
-        get: operations["list_2"];
-        put?: never;
-        /**
-         * 본심사 체크 로그 수동 추가
-         * @description 심사관이 서류확인 / 신원확인 / 부수거래 / 기타 항목을 직접 기록. 자동 적재 항목 코드는 거부 (LOAN_043).
-         */
-        post: operations["add"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-reviews/{revId}/bias-override": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 편향 BLOCKED 우회 승인 (상급자)
-         * @description severity=BLOCKED 인 편향 결과를 상급자가 우회 승인. BIAS_REVIEWING 상태일 때만 허용. 우회 후 심사원이 acknowledge-bias 호출 가능.
-         */
-        post: operations["biasOverride"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-products": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 상품 목록
-         * @description loanTypeCd / prodStatusCd 필터 + 페이지네이션으로 상품 목록을 조회한다.
-         */
-        get: operations["list_3"];
-        put?: never;
-        /**
-         * 상품 등록
-         * @description 신규 대출 상품을 등록한다. 초기 상태는 DRAFT.
-         */
-        post: operations["create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-products/{prodId}/preferential-rate-policies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 우대금리 정책 목록 조회 */
-        get: operations["list_4"];
-        put?: never;
-        /**
-         * 우대금리 정책 등록
-         * @description 상품에 우대금리 정책을 등록한다. 초기 active_yn=Y, 동일 조건의 활성 정책은 중복 불가.
-         */
-        post: operations["create_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-products/{prodId}/discontinue": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 상품 단종
-         * @description 판매 종료일과 사유를 받아 상태를 DISCONTINUED 로 전환한다. status_history 에 이력 기록.
-         */
-        post: operations["discontinue"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 고객 대출 계약 목록 조회
-         * @description customerId 기준 계약 이력을 최신순으로 반환.
-         */
-        get: operations["list_5"];
-        put?: never;
-        /**
-         * 약정한도 설정
-         * @description 승인된 신청에 대해 최종 약정 한도·금리·기간을 확정한다. 초기 상태 SIGNED.
-         */
-        post: operations["create_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/virtual-account": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 가상계좌 발급(멱등)
-         * @description 중도·추가 상환용 가상계좌를 발급한다. 이미 있으면 기존 계좌를 반환한다.
-         */
-        post: operations["issue"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/repayments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 상환 거래 목록
-         * @description 계약의 모든 상환 거래를 paid_at 오름차순으로 반환한다.
-         */
-        get: operations["list_6"];
-        put?: never;
-        /**
-         * 회차 상환
-         * @description 지정된 회차(installmentNo)의 예정 금액을 정확히 상환한다. Idempotency-Key 헤더 권장. 중도상환은 POST /api/loan-contracts/{cntrId}/prepayments, 부분상환은 POST /api/loan-contracts/{cntrId}/repayments/partial, 역분개는 POST /api/loan-contracts/{cntrId}/repayments/{rtxId}/reversal 사용.
-         */
-        post: operations["repay"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/repayments/{rtxId}/reversal": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 상환 거래 역분개
-         * @description 지정된 SCHEDULED + SUCCESS 거래를 정정한다. 원본 row 는 보존하고 reversal_yn=Y / reversal_target_rtx_id 로 연결된 새 row 가 발급된다. 대응 회차는 PAID → DUE 로 되돌아간다. 중도상환(EARLY) 정정은 본 단계 미지원.
-         */
-        post: operations["reverse"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/repayments/partial": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 회차 부분상환
-         * @description 지정 회차에 임의 금액(잔액 이하) 을 납부한다. 납부 후 회차 누적이 예정 총액과 같아지면 자동으로 PAID, 미달이면 PARTIAL_PAID 로 전이. 비례 분배(원금/이자) 적용. Idempotency-Key 헤더 권장.
-         */
-        post: operations["repay_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/repayments/online": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 온라인 회차 상환
-         * @description WEB·MOBILE 채널에서 고객이 직접 상환 — payment-service 를 통해 이체 후 원장 기록. Idempotency-Key 헤더 필수(금융 거래 중복 방지). 창구 수납 기록은 POST /repayments 사용.
-         */
-        post: operations["repayOnline"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/repayment-account": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 상환계좌 단건 조회 */
-        get: operations["get_3"];
-        put?: never;
-        /**
-         * 상환계좌 등록
-         * @description 약정에 상환계좌를 등록한다. 계약당 1건만 가능. 초기 상태 REGISTERED — drawdown 전 verify 필요.
-         */
-        post: operations["register"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/repayment-account/verify": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 상환계좌 검증
-         * @description 외부 계좌검증(예금주 실명조회 등) 연계는 stub. 본 호출 자체가 성공으로 처리되어 VERIFIED 로 전이된다.
-         */
-        post: operations["verify"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/rate-changes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 금리 변경 이력 조회
-         * @description 계약의 금리 변경 이력을 changed_at 오름차순으로 반환한다.
-         */
-        get: operations["list_8"];
-        put?: never;
-        /**
-         * 금리 변경 적용
-         * @description 계약 금리를 갱신하고 appliedStartDate 이후 활성 회차(DUE/OVERDUE)를 SUPERSEDED 처리한 뒤 남은 원금 기준으로 신규 버전 스케줄을 생성한다. 모든 회차가 PAID 인 경우 금리 갱신·이력만 남기고 스케줄은 그대로.
-         */
-        post: operations["apply"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/prepayments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 중도상환 실행
-         * @description 잔여 원금 한도 내에서 임의 금액을 즉시 상환한다. 처리 후 최신 버전의 DUE/OVERDUE 회차는 SUPERSEDED 로 전이되고, 잔액이 남아있으면 새 버전(V{n+1}) 으로 같은 회차 수만큼 재계산해 발급한다. Idempotency-Key 헤더 권장. 미발생이자·수수료는 본 단계 0 으로 처리.
-         */
-        post: operations["prepay"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/maturity/extend": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 만기 연장
-         * @description current_maturity_date 를 N개월 연장하고 extension_count 증가. original_maturity_date 는 불변. ACTIVE/MATURED 에서만 가능.
-         */
-        post: operations["extend"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/guarantee-insurance": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 보증보험 발급
-         * @description 외부기관 stub — request 즉시 ISSUED 처리. 발급 가능 계약 상태 SIGNED/ACTIVE. 계약당 활성(ISSUED) 1건 차단. 시작/종료일 미지정 시 계약 기간 자동 적용.
-         */
-        post: operations["issue_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/guarantee-insurance/{ginsId}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 보증보험 취소
-         * @description ISSUED → CANCELED. 다른 상태는 차단.
-         */
-        post: operations["cancel"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/executions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 자금 인출 (Drawdown)
-         * @description 약정한도 범위 내에서 자금을 지급. Idempotency-Key 헤더로 중복 호출 방어. 최초 인출 시 계약 ACTIVE 로 전이.
-         */
-        post: operations["drawdown"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/credit-info-reports": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 신고 이력 목록
-         * @description 계약의 모든 신용정보 신고를 created_at 오름차순으로 반환.
-         */
-        get: operations["list_10"];
-        put?: never;
-        /**
-         * 신용정보 신고
-         * @description 유형(NEW_LOAN/DELINQUENCY/RESOLUTION/CLOSURE)·기관(KCB/NICE) 별 신고 등록. 본 단계는 등록 → 즉시 외부 전송(stub) → SENT 한 트랜잭션 안에서 전이. external_tx_no 자동 채번.
-         */
-        post: operations["submit"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/closure": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 약정 종결 조회
-         * @description 계약의 종결 정보 단건. 종결 안 됐으면 LOAN_124.
-         */
-        get: operations["get_6"];
-        put?: never;
-        /**
-         * 약정 종결
-         * @description ACTIVE 계약을 CLOSED 로 전이한다. NORMAL/EARLY 는 잔액=0 + 활성 회차 없음 필요. WRITE_OFF/SUBROGATION 은 잔액 검증 면제. 정산금액(final_*)은 서버 자동 산출.
-         */
-        post: operations["close"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/certificates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 증명서 발급 이력
-         * @description 계약의 모든 증명서를 issued_at 오름차순으로 반환.
-         */
-        get: operations["list_11"];
-        put?: never;
-        /**
-         * 증명서 발급
-         * @description BALANCE/DEBT/REPAYMENT 등 유형별 즉시 발급. cert_no 자동 채번. 다발 발급 허용 — 재발급은 새 row 로 누적된다.
-         */
-        post: operations["issue_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 고객 대출 신청 목록 조회
-         * @description customerId 기준 신청 이력을 최신순으로 반환.
-         */
-        get: operations["list_12"];
-        put?: never;
-        /**
-         * 대출 신청
-         * @description 본 신청 접수. Idempotency-Key 헤더로 중복 호출 방어. 상태 SUBMITTED.
-         */
-        post: operations["create_3"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/review": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 본심사 결과 조회 */
-        get: operations["get_9"];
-        put?: never;
-        /**
-         * 본심사 실행
-         * @description 사전조건: 신청 PRESCREENED + CB(APPROVE/REVIEW) + DSR PASS. APPROVED 시 한도/금리/기간 자동 산정 (입력값 우선). 신청 상태: PRESCREENED → APPROVED/REJECTED. 신청당 1건 (appl_id UNIQUE).
-         */
-        post: operations["run"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * 본심사 결정 정정(재심사)
-         * @description 사전조건: 신청 APPROVED/REJECTED. CONTRACTED 등 약정 진입 후엔 LOAN_044. 결정·한도·금리·기간을 갱신하고 신청 상태를 동기화한다. 체크로그에 FINAL_DECISION 정정 기록이 누적되고 status_history 양쪽에 이력이 남는다.
-         */
-        patch: operations["revise"];
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/review/escalate-to-hq": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 이상거래 본사 상신
-         * @description 지점장이 심사 진행 중인 건을 이상거래로 판단해 본사에 상신. 이미 상신된 건은 LOAN_203, COMPLETED/EXPIRED 건은 LOAN_204. 상신 후 ROLE_HQ_REVIEWER 만 해당 건을 조회할 수 있다.
-         */
-        post: operations["escalateToHq"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/review/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 본심사 자동 권고 확정
-         * @description PENDING_APPROVAL 상태인 본심사를 권고된 결정 그대로 COMPLETED 로 마감하고 신청 상태를 전이한다. 결정·한도 정정이 필요하면 PATCH /review (revise) 사용. 권고 상태가 아니면 LOAN_049.
-         */
-        post: operations["confirm"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/review/auto-decide": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 본심사 자동 결정(권고)
-         * @description 운영자 입력 없이 누적된 CB·DSR·LTV 결과만으로 APPROVED/REJECTED 자동 산출. 결정은 권고(PENDING_APPROVAL) 만 적재되고 신청 상태는 PRESCREENED 그대로 유지된다. 사람이 POST /review/confirm 호출로 확정해야 신청 상태가 전이된다. CB.REJECT/DSR.FAIL/LTV.FAIL 은 자동 REJECTED, CB.REVIEW 는 LOAN_048 (수동 본심사 권유).
-         */
-        post: operations["autoDecide"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/review/approver-approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 승인자 최종 확정
-         * @description PENDING_APPROVER 상태의 본심사를 승인자가 최종 확정. 4-eye: approverId ≠ reviewerId. APPROVE_AS_IS: 심사원 결정 그대로 확정. OVERRIDE_APPROVED/REJECTED: 결정 변경 — overrideReasonCd 필수, APPROVED 변경 시 금액·금리·기간 필수. 완료 후 신청 상태 PRESCREENED → APPROVED/REJECTED 전이.
-         */
-        post: operations["approverApprove"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/review/acknowledge-bias": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 편향 리포트 확인(acknowledge)
-         * @description 심사원이 편향 검증 리포트를 확인하고 승인자 단계로 진행. 사전조건: BIAS_REVIEWING 상태 + 리포트 1건 이상 + severity != BLOCKED. BLOCKED 이면 상급자 bias-override 후 재호출.
-         */
-        post: operations["acknowledgeBias"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/prescreening": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 가심사 결과 조회 */
-        get: operations["get_10"];
-        put?: never;
-        /**
-         * 가심사 실행
-         * @description 외부 가심사 엔진 stub — PASS/REJECT 는 클라이언트 입력. PASS 시 estimated_limit/rate 자동 채움(미지정 시 requested/baseRate). 신청 상태: SUBMITTED → PRESCREENED/REJECTED. 신청당 1건 (appl_id UNIQUE).
-         */
-        post: operations["run_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/identity-verifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 본인확인(IDV)
-         * @description 외부 인증기관(PASS/카카오/공동인증) 연계. 본 단계에서는 stub — 항상 PASS.
-         */
-        post: operations["verify_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/guarantor-agreements": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 보증 약정 목록 조회 */
-        get: operations["list_13"];
-        put?: never;
-        /**
-         * 보증 약정 등록
-         * @description 보증인 정보(name/mobile/relation) + 약정 정보(type/amount/ratio) 를 함께 받아 GuarantorMaster 와 GuarantorAgreement 를 생성한다. 등록 가능한 신청 상태: SUBMITTED/PRESCREENED/REVIEWING/APPROVED. 동일 보증인 중복 등록 차단.
-         */
-        post: operations["register_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/guarantor-agreements/{gagrId}/sign": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 보증 약정 전자서명 완료
-         * @description REGISTERED → SIGNED. 서명 문서 URL/해시를 기록. flows §1.1: 약정 체결 전제조건(gagr_status_cd=SIGNED).
-         */
-        post: operations["sign"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/guarantor-agreements/{gagrId}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 보증 약정 취소
-         * @description REGISTERED 또는 SIGNED → CANCELED. 사후 해지의 약정 영향은 본 단계 외.
-         */
-        post: operations["cancel_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/dsr-calculation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** DSR 산정 결과 조회 */
-        get: operations["get_13"];
-        put?: never;
-        /**
-         * DSR 산정 실행
-         * @description 사전조건: 신용평가 완료. 신청당 1건 (appl_id UNIQUE). new_annual_repay_amt 미지정 시 상품 baseRate 기반 단순 추정. ratio_bps ≤ limit_bps 면 PASS, 초과 시 FAIL. 신청 상태는 본 단계에서 전이하지 않으며 본심사에서 종합한다.
-         */
-        post: operations["run_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/documents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 서류 목록 조회
-         * @description 신청에 제출된 활성 서류 목록을 submitted_at 오름차순으로 반환한다.
-         */
-        get: operations["list_14"];
-        put?: never;
-        /**
-         * 신청서류 업로드
-         * @description multipart/form-data. docTypeCd 필수, file 필수. doc-agent에 서류를 제출하고 검증 결과(AUTO_PASS/NEEDS_RESUBMIT/HOLD)를 반영한다.
-         */
-        post: operations["upload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/credit-evaluation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 신용평가 결과 조회 */
-        get: operations["get_14"];
-        put?: never;
-        /**
-         * 신용평가(CB) 실행
-         * @description 외부 CB(KCB/NICE)·자동심사 엔진 stub — 결과는 클라이언트 입력. 사전조건: 가심사 PASS 완료. 신청당 1건 (appl_id UNIQUE). 신청 상태는 본 단계에서 전이하지 않으며 본심사에서 종합한다.
-         */
-        post: operations["run_3"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/credit-consents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 신용조회 동의
-         * @description 신청자의 신용정보 조회 동의를 기록한다. 동의 즉시 consentYn=Y / withdrawnYn=N.
-         */
-        post: operations["create_4"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/collaterals": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 대출별 담보 목록
-         * @description 신청에 등록된 활성 담보 목록을 created_at 오름차순으로 반환한다.
-         */
-        get: operations["list_15"];
-        put?: never;
-        /**
-         * 담보 등록
-         * @description 신청에 담보를 등록한다. 초기 상태 REGISTERED, col_no 자동 생성.
-         */
-        post: operations["register_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 대출 신청 취소(고객)
-         * @description 심사 결과 도출 전 단계(SUBMITTED/PRESCREENED/REVIEWING)에서만 취소 가능. status_history 기록.
-         */
-        post: operations["cancel_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/notifications/dispatch": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 알림 outbox 디스패치
-         * @description PENDING/FAILED 상태이면서 nextAttemptAt <= now 인 outbox row 를 한 페이지(200) 단위로 픽업해 채널 어댑터에 전송. SENT/FAILED/DEAD 로 전이.
-         */
-        post: operations["dispatch"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/maturity/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 만기 도래 일배치 실행
-         * @description baseDate 시점에 current_maturity_date 가 도달한 ACTIVE 만기를 MATURED 로 전이한다. 영업일 가드 없음(절대시점 기준).
-         */
-        post: operations["run_4"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/loan-reviews/{revId}/bias-report": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 편향 리포트 수신 (internal)
-         * @description 편향 에이전트가 분석 결과를 밀어넣는 내부 전용 API. BIAS_REVIEWING 상태가 아니더라도 advice 는 저장되나 severity 캐시는 갱신하지 않음 (재전송 무시). 외부 노출 금지.
-         */
-        post: operations["appendBiasReport"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/loan-reviews/{revId}/bias-ops-note": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 편향 운영 노트 주입
-         * @description 운영자가 BIAS_REVIEWING 건에 severity=NONE 운영 노트를 삽입. biasSeverityCd 를 NONE 으로 갱신하여 BLOCKED 차단을 해제. 4-eye 우회 권한 없음 — 심사원이 acknowledge 후 승인자 단계로 진행.
-         */
-        post: operations["addBiasOpsNote"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/loan-reviews/expire-pending": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 권고 만료 배치
-         * @description reviewedAt 이 olderThanDays 일 이전인 PENDING_APPROVAL 본심사를 일괄 EXPIRED 로 전이. 기본값 7일. 만료된 권고는 신청 상태에 영향 없음(PRESCREENED 유지) — 운영자가 별도 수동 본심사 등으로 처리.
-         */
-        post: operations["expirePending"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/loan-reviews/expire-pending-approver": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 승인자 대기 만료 배치
-         * @description pendingApproverSince 가 olderThanDays 일 이전인 PENDING_APPROVER 본심사를 일괄 EXPIRED 로 전이. 기본값 7일. 만료된 건의 신청 상태는 PRESCREENED 유지 — 별도 재심사 필요. 승인자 무응답으로 인한 심사 영구 블로킹 방지 안전망.
-         */
-        post: operations["expirePendingApprover"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/loan-reviews/expire-bias-reviewing": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 편향 검증 만료 배치
-         * @description reviewedAt 이 olderThanDays 일 이전인 BIAS_REVIEWING 본심사를 일괄 EXPIRED 로 전이. 기본값 14일. 만료된 건의 신청 상태는 PRESCREENED 유지 — 별도 재심사 필요.
-         */
-        post: operations["expireBiasReviewing"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/loan-documents/purge-expired": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 보존기한 경과 서류 원본 파기
-         * @description retention_until 이 오늘 이전이면서 아직 파기되지 않은 서류의 원본 파일을 삭제하고 purged_at 을 기록한다. 서류 row(이름·해시·크기·파기시각)는 남긴다 — 무엇을 언제 파기했는지가 증빙이기 때문이다. soft delete 된 서류도 대상에 포함한다. 건별 독립 트랜잭션이라 일부 실패해도 나머지는 진행되며, 실패분은 다음 실행에서 재시도된다.
-         */
-        post: operations["purgeExpired"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/interest-accrual/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 일별 이자 발생 배치
-         * @description ACTIVE 계약 전체에 baseDate 의 일이자를 발생·누적한다. 잔액 0 / 이미 적재된 행은 skip. UNIQUE(cntr_id, accrual_date) 멱등.
-         */
-        post: operations["run_5"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/guarantee-insurance-expiry/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 보증보험 만기 일배치 실행
-         * @description baseDate 시점에 gins_end_date 가 이미 경과한 ISSUED 보증보험을 EXPIRED 로 전이한다. 영업일 가드 없음(절대시점 기준).
-         */
-        post: operations["run_6"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/eom/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * EOM 월마감 배치 실행
-         * @description baseMonth (YYYYMM) 기준으로 월별 회계 요약을 적재한다. 같은 baseMonth 로 이미 완료된 잡이 있으면 SKIPPED 를 반환한다.
-         */
-        post: operations["run_7"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/eod/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * EOD 일마감 배치 실행
-         * @description baseDate 기준으로 이자발생 → 자동이체 → 연체롤오버 → 승인만료 순서로 실행한다. 같은 baseDate 로 이미 완료된 잡이 있으면 SKIPPED 를 반환한다.
-         */
-        post: operations["run_8"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/eod/restart": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * EOD 실패 잡 재처리
-         * @description 지정 baseDate 의 마지막 JobExecution 이 FAILED/STOPPED 인 경우 동일 파라미터로 재실행한다 (Spring Batch 자동 restart — 실패 스텝부터). COMPLETED 잡은 거부, JobExecution 자체가 없으면 NOT_FOUND.
-         */
-        post: operations["restart"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/ecl/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * IFRS9 ECL 월별 산출
-         * @description baseMonth 의 ACTIVE 약정 전체에 대해 PD/LGD/EAD 기반 ECL 을 산출·적재한다. UNIQUE(cntr_id, summary_month) 멱등 — 약정별로 이미 적재된 row 는 skip.
-         */
-        post: operations["run_9"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/delinquency/rollover": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 연체 rollover 실행
-         * @description baseDate 기준으로 due_date 가 지난 DUE 회차를 OVERDUE 로 전이하고 계약별 DELINQUENCY 를 upsert 한다. 활성 연체가 해소되면 RESOLVED 처리.
-         */
-        post: operations["rollover"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/credit-info-reports/dispatch": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 신용정보 신고 outbox 디스패치
-         * @description PENDING/FAILED 상태이면서 nextAttemptAt <= now 인 outbox row 를 한 페이지(200)단위로 픽업해 어댑터에 전송한다. 결과에 따라 SENT/FAILED/DEAD 로 전이.
-         */
-        post: operations["dispatch_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/common-sync/dispatch": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * common_sync_outbox 디스패치
-         * @description PENDING/FAILED 상태이면서 nextAttemptAt <= now 인 outbox 를 pageSize 건 픽업해 common_db upsert + loan_db 브리지 백필을 수행한다. 기본 200건. 결과에 따라 DONE/FAILED/DEAD 로 전이.
-         */
-        post: operations["dispatch_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/common-sync/backfill/products": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 상품 common_db 백필
-         * @description loan_product.product_id 가 null 인 (common_product 미동기화) 상품을 pageSize 건 픽업해 common_sync_outbox 에 적재한다. 서비스 최초 배포 또는 재동기화 필요 시 호출. 적재 후 /dispatch 를 호출해야 실제 동기화가 진행된다.
-         */
-        post: operations["backfillProducts"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/common-sync/backfill/contracts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 계약 common_db 백필
-         * @description ACTIVE/CLOSED 상태이면서 loan_contract.contract_id 가 null 인 (common_contract 미동기화) 계약을 pageSize 건 픽업해 common_sync_outbox 에 적재한다. SIGNED 계약은 대상 외 (아직 ACTIVE 전이 전). 적재 후 /dispatch 를 호출해야 실제 동기화가 진행된다.
-         */
-        post: operations["backfillContracts"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/calendar-seeder/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 특정 연도 캘린더 자동 시드
-         * @description 주말 + 양력 고정 공휴일은 자동, 음력/대체/임시 공휴일은 운영자가 별도 등록. UNIQUE(cal_date) 로 멱등 — 이미 있는 날짜는 skip.
-         */
-        post: operations["run_10"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/auto-debit/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 자동이체 일배치 실행
-         * @description baseDate 의 due_date 와 일치하는 DUE 회차 중 자동이체 설정된 계약만 출금 처리한다. baseDate 가 비영업일(BUSINESS_CALENDAR) 이면 출금 미수행하고 skipReason=NON_BUSINESS_DAY 로 반환. 미설정/미검증/이미 PAID 회차는 skip.
-         */
-        post: operations["run_11"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/auto-debit/payment-result": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 타행 자동이체 CLEARING 완결 콜백
-         * @description payment-service 가 KFTC/BOK 정산 완료(COMPLETED) 또는 거절(FAILED) 통보 후 호출. idempotencyKey('AUTO-{cntrId}-{rschId}-{baseDate}') 를 파싱해 상환 처리를 완결하거나 FAILED 거래를 기록한다.
-         */
-        post: operations["paymentResult"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/application-expiry/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 승인 만료 일배치 실행
-         * @description baseDate 시점에 LoanReview.approvedAt 이 14일 이상 경과한 APPROVED 신청을 EXPIRED 로 전이한다. 영업일 가드 없음 (만료는 절대시점 기준).
-         */
-        post: operations["run_12"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/snapshot": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 심사관 결정 스냅샷 적재
-         * @description baseDate(YYYYMMDD) 의 본심사를 코호트(EMPLOYMENT_TYPE/LOAN_PURPOSE)별로 집계해 REVIEWER_DECISION_SNAPSHOT 에 적재한다. 멱등 — 이미 적재된 (reviewer/date/window/dim/value) 는 skip.
-         */
-        post: operations["runSnapshot"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/rag/case-index/backfill": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 완료 심사 케이스 일괄 백필
-         * @description COMPLETED 심사를 ADVISORY_CASE_INDEX 에 적재한다. from/to 생략 시 전체 대상. dryRun=true 면 INSERT 없이 대상 건수만 반환. revId 당 1건만 적재 (멱등).
-         */
-        post: operations["backfill"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/index/cases": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 심사 사례 인덱싱
-         * @description 지정 심사(revId) 또는 전체 COMPLETED 심사를 사례 인덱스에 적재한다. revId 생략 시 일괄 인덱싱 (초기 구동·모델 교체 후 재인덱싱용).
-         */
-        post: operations["indexCases"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/documents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 정책문서 목록 조회
-         * @description 삭제되지 않은 전체 정책문서를 최신순으로 반환.
-         */
-        get: operations["listDocuments"];
-        put?: never;
-        /**
-         * 정책문서 등록 및 인입
-         * @description 정책문서를 등록하고 청크 분할·임베딩·적재 후 자동 활성화한다. content 필드로 문서 본문을 직접 제공 (source_uri fetch 는 현 단계 미지원).
-         */
-        post: operations["registerDocument"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/batch-evaluate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 어드바이저리 배치 평가
-         * @description baseDate 의 스냅샷을 적재한 뒤 활성 BATCH 룰 전체(BIAS_*, PEER_DECISION_DIVERGENCE)를 일괄 평가해 리포트를 발행한다. 발행된 리포트별로 AdvisoryReportPublishedEvent 가 발행되어 알림 핸들러가 통지한다.
-         */
-        post: operations["runBatchEvaluation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/accounting-summary/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 일일 회계 요약 산출
-         * @description baseDate 의 이자/연체이자/자동이체/실행 합계 + ACTIVE 약정·연체 카운트를 적재한다. UNIQUE(summary_date) 로 멱등 — 동일 baseDate 재호출 시 skip.
-         */
-        post: operations["run_13"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/credit-score/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 한도조회 (외부 신용평가 미리보기)
-         * @description 신청 row 생성 없이 외부 신용평가 엔진을 호출해 예상 한도/점수/등급을 회신. 1회성 신용조회 동의(consentYn=Y) 필수. 결과를 보존하려면 후속으로 정식 신청 + 가심사 API 호출 필요.
-         */
-        post: operations["preview"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/credit-info-reports/{crptId}/retry": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 운영자 재전송
-         * @description DEAD/FAILED 신고를 강제 재시도. outbox attemptNo 리셋 + PENDING 복귀. ACKED 는 LOAN_152.
-         */
-        post: operations["retry_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/credit-info-reports/{crptId}/ack": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 외부 기관 ACK callback
-         * @description 신고 SENT → ACKED 전이. 이미 ACKED 면 동일 row 반환(멱등). SENT 이외 상태는 LOAN_151. 인증/서명검증은 11 plan 에서 보강 예정.
-         */
-        post: operations["ack"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/collaterals/{colId}/release": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 담보 해제
-         * @description 담보 상태를 RELEASED 로 전이한다. status_history 에 사유·해제일 기록.
-         */
-        post: operations["release"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/collaterals/{colId}/ltv-calculation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** LTV 산정 결과 조회 */
-        get: operations["get_16"];
-        put?: never;
-        /**
-         * LTV 산정 실행
-         * @description 사전조건: 담보 감정평가 DONE 1건 이상. 담보당 1건 (col_id UNIQUE 운영). max_loan = applied_col_value × limit_bps/10000 - senior_lien (음수 시 0). ratio_bps = requested_amount / applied_col_value × 10000. requested ≤ max_loan 이면 PASS, 초과 시 FAIL. 기본 한도 7000bps(70%) — 주택담보 보편치.
-         */
-        post: operations["run_14"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/collaterals/{colId}/evaluations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 담보 감정평가
-         * @description 외부 감정평가기관 연계는 stub. applied_value 미지정 시 appraised_value 와 동일 적용. 담보 상태는 본 API 에서 자동 전이하지 않음.
-         */
-        post: operations["evaluate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/business-calendar": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 기간별 캘린더 목록 조회 */
-        get: operations["listRange"];
-        put?: never;
-        /**
-         * 캘린더 항목 등록
-         * @description 공휴일/임시휴일을 명시적으로 등록. 미등록 일자는 요일 기반 fallback.
-         */
-        post: operations["register_3"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/break-glass": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["breakGlass"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/advisory/reports/{advrId}/view": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 리포트 조회 마킹
-         * @description OPEN → VIEWED 전이. first_viewed_at 최초 1회만 채워진다.
-         */
-        post: operations["view"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/advisory/reports/{advrId}/ack": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * ack 등록
-         * @description ack 응답을 적재하고 리포트를 ACKED 로 전이. 같은 리포트에 여러 번 적재 가능.
-         */
-        post: operations["ack_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-products/{prodId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 상품 단건 조회
-         * @description prodId 로 대출 상품 단건을 조회한다.
-         */
-        get: operations["get_1"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * 상품 수정
-         * @description 지정된 필드만 부분 수정한다. prodCd 는 변경 불가.
-         */
-        patch: operations["update_2"];
-        trace?: never;
-    };
-    "/api/collaterals/{colId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * 담보 수정
-         * @description 지정된 필드만 부분 수정. col_no / appl_id / col_status_cd 는 변경 불가. 해제된 담보는 수정 불가.
-         */
-        patch: operations["update_3"];
-        trace?: never;
-    };
-    "/api/status-history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 상태 변경 이력 조회
-         * @description targetTable(예: LOAN_APPLICATION, LOAN_CONTRACT, REPAYMENT_SCHEDULE) 과 targetId 로 변경 시각 오름차순 이력을 반환. targetDomain 은 LOAN 으로 고정.
-         */
-        get: operations["list"];
+        get: operations["list_18"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1799,7 +24,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/notifications": {
+    "/api/advisory/audit/opinions/by-report/{advrId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1807,10 +32,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 알림 outbox 목록
-         * @description eventType / status 필터 + 페이지네이션. size 는 최대 100 으로 캡핑된다.
+         * 리포트별 LLM 감사 의견 조회
+         * @description advrId 에 연결된 AI 감사 의견 전체 반환 (BIAS/COMPLIANCE 각 1건). auditor/admin 권한.
          */
-        get: operations["list_1"];
+        get: operations["opinionsByReport"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1819,7 +44,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/notifications/{outboxId}": {
+    "/api/advisory/audit/opinions/by-reviewer/{reviewerId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1827,10 +52,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 알림 outbox 단건 조회
-         * @description payload 포함 단건 응답. PII 가 포함될 수 있어 운영자 권한 호출 전제.
+         * 심사관별 LLM 감사 의견 이력
+         * @description reviewerId 의 전체 감사 의견을 최신순 반환. auditor/admin 권한.
          */
-        get: operations["get"];
+        get: operations["opinionsByReviewer"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1839,7 +64,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/loan-reviews/{revId}/advisory-reports": {
+    "/api/advisory/audit/opinions/recent": {
         parameters: {
             query?: never;
             header?: never;
@@ -1847,10 +72,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Advisory 리포트 목록 조회
-         * @description advisory-service 에 적재된 해당 본심사의 Advisory 리포트를 반환. advisory-service 장애 시 빈 목록 반환 (fail-open).
+         * 최근 LLM 감사 의견 목록
+         * @description 생성 시각 최신순. limit 기본 20, 최대 100. auditor/admin 권한.
          */
-        get: operations["listAdvisoryReports"];
+        get: operations["recentOpinions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1859,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/loan-reviews/{revId}/advices": {
+    "/api/advisory/audit/quarantine": {
         parameters: {
             query?: never;
             header?: never;
@@ -1867,10 +92,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * AI 심사 advice 목록 조회
-         * @description 해당 본심사에 적재된 모든 AI advice 를 최신순으로 반환. 편향 리포트, 요약, 거절서 등 포함.
+         * 격리(Quarantine) 리포트 목록
+         * @description AI 감사 결론이 BIAS_SUSPECTED 또는 VIOLATION_SUSPECTED 인 리포트. quarantined_at 최신순. auditor/admin 권한.
          */
-        get: operations["listAdvices"];
+        get: operations["quarantinedReports"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1879,7 +104,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/loan-reviews/stats": {
+    "/api/advisory/audit/risk-scores/top/bias": {
         parameters: {
             query?: never;
             header?: never;
@@ -1887,10 +112,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 본심사 통계
-         * @description 기간(reviewedAt) 내 본심사 row 를 revTypeCd × revDecisionCd, revStatusCd, rejectReasonCd 별로 집계. 운영 대시보드용. 날짜는 yyyyMMdd, to 는 inclusive.
+         * 편향 위험도 상위 심사관 목록
+         * @description bias_score 내림차순. limit 기본 20, 최대 100. auditor/admin 권한.
          */
-        get: operations["stats"];
+        get: operations["topBias"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1899,7 +124,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/loan-reviews/pending": {
+    "/api/advisory/audit/risk-scores/top/compliance": {
         parameters: {
             query?: never;
             header?: never;
@@ -1907,10 +132,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 확정 대기 권고 목록
-         * @description 자동 결정으로 PENDING_APPROVAL 상태가 된 본심사를 reviewedAt 오름차순(오래된 권고 우선)으로 반환. 심사관은 본 목록에서 권고를 골라 POST /api/loan-applications/{applId}/review/confirm 으로 확정.
+         * 규정 위반 위험도 상위 심사관 목록
+         * @description compliance_score 내림차순. limit 기본 20, 최대 100. auditor/admin 권한.
          */
-        get: operations["listPending"];
+        get: operations["topCompliance"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1919,7 +144,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/loan-reviews/pending-approver": {
+    "/api/advisory/audit/risk-scores/{reviewerId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1927,524 +152,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 승인자 대기 목록
-         * @description PENDING_APPROVER 상태의 본심사를 reviewedAt 오름차순으로 반환. 승인자는 본 목록에서 건을 골라 POST /api/loan-applications/{applId}/review/approver-approve 로 확정.
+         * 심사관 위험도 스코어 조회
+         * @description reviewerId 의 bias_score / compliance_score 반환. auditor/admin 권한.
          */
-        get: operations["listPendingApprover"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-reviews/escalated": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 본사 상신 건 목록
-         * @description 이상거래로 상신된 본심사 목록. ROLE_HQ_REVIEWER 전용. escalatedAt 기준 최신순 정렬. page/size 파라미터로 페이징.
-         */
-        get: operations["listEscalated"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-documents/{docId}/download": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 서류 다운로드
-         * @description 업로드 시 보관한 원본 바이트를 첨부파일로 내려준다.
-         */
-        get: operations["download"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 대출 계약 단건 조회 */
-        get: operations["get_2"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/repayment-schedules": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 상환 스케줄 조회
-         * @description version 미지정 시 최신 버전(V1, 금리변경/중도상환 시 V2...) 의 회차 목록을 installment_no 오름차순으로 반환한다. SUPERSEDED 회차도 version 을 명시하면 조회 가능. 스케줄은 최초 drawdown 시 자동 생성된다.
-         */
-        get: operations["list_7"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/maturity": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 만기 정보 조회
-         * @description 약정 체결 시 자동 생성된 만기 정보. ACTIVE/MATURED/CLOSED 와 연장 이력.
-         */
-        get: operations["get_4"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/interest-accruals": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 일별 이자 누적 조회
-         * @description accrual_date 오름차순. from/to 범위 미지정 시 전체.
-         */
-        get: operations["list_9"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/guarantee-insurance/{ginsId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 보증보험 단건 조회 */
-        get: operations["get_5"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/delinquency": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 활성 연체 조회
-         * @description 계약의 ACTIVE dlq 단건. 활성 연체가 없으면 LOAN_100.
-         */
-        get: operations["getActive"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-contracts/{cntrId}/delinquency/snapshots": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 연체 일별 스냅샷 목록
-         * @description 활성 dlq 의 snapshot 을 snapshot_date 오름차순으로 반환.
-         */
-        get: operations["listSnapshots"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-certificates/{certId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 증명서 단건 조회 */
-        get: operations["get_7"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 대출 신청 단건 조회 */
-        get: operations["get_8"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/journey": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 신청 진행 상황 조회
-         * @description 한 신청의 가심사 / 신용평가 / DSR / LTV(담보별) / 본심사 결과를 한 응답에 묶어 반환. 수행되지 않은 단계는 null(LTV 는 빈 list). 클라이언트 UI 가 단계별 endpoint 를 따로 호출하지 않고 본 endpoint 한 번으로 진행 상황을 표시할 수 있다.
-         */
-        get: operations["get_11"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/loan-applications/{applId}/identity-verifications/{idvId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** IDV 상태 조회 */
-        get: operations["get_12"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/eod/history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * EOD 실행 이력 조회
-         * @description loanEodJob 의 JobExecution 이력을 최신순으로 반환한다. from/to (YYYYMMDD) 가 주어지면 baseDate 가 그 범위에 있는 실행만 반환한다.
-         */
-        get: operations["history"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/similar-cases": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 유사 과거 사례 검색 (rev_id 기준)
-         * @description rev_id 에 연결된 최신 리포트 기준으로 유사 프로파일 종결 사례를 반환한다. LLM get_similar_cases tool 전용.
-         */
-        get: operations["getSimilarCases"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/reviewer-history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 심사관 결정 이력 조회
-         * @description 최근 N일간 심사관 결정 이력(승인·거절 건수, 승인율)을 반환한다. LLM get_reviewer_history tool 전용.
-         */
-        get: operations["getReviewerHistory"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/policy-citations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 정책 인용 검색
-         * @description query 텍스트로 활성 정책 문서 청크를 벡터 검색한다. LLM get_policy_citation tool 전용.
-         */
-        get: operations["getPolicyCitations"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/documents/stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 정책문서 적재 통계
-         * @description 전체/활성 문서 수와 embedding_model_cd 별 청크 건수를 반환.
-         */
-        get: operations["documentStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/advisory/cohort-stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 코호트 편향 통계 조회
-         * @description 특정 코호트의 최근 스냅샷 승인·거절률 통계를 반환한다. LLM get_cohort_stats tool 전용.
-         */
-        get: operations["getCohortStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/credit-info-reports": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 운영자 신용정보 신고 전체 목록
-         * @description statusCd 파라미터로 REQUESTED/SENT/ACKED/FAILED/DEAD 필터. 없으면 전체. 최신순.
-         */
-        get: operations["listAll"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/credit-info-reports/{crptId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 신고 단건 조회 */
-        get: operations["get_15"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/business-calendar/check": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 영업일 여부 판정
-         * @description DB row 있으면 그 값, 없으면 요일 fallback (토/일=비영업일). source=CALENDAR 또는 WEEKDAY_FALLBACK 로 출처 명시.
-         */
-        get: operations["check"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/business-calendar/by-date": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 일자별 캘린더 항목 단건 조회
-         * @description 미등록 일자는 404.
-         */
-        get: operations["getByDate"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/audit/break-glass": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listBreakGlass"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/audit/access-logs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listByTarget"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/advisory/stats/reviewers/{reviewerId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 심사관별 ack 통계
-         * @description 리포트 총수 + 미해결 수 + ack 응답코드별 카운트 + 룰별 트리거 빈도. auditor/admin 권한.
-         */
-        get: operations["reviewerStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/advisory/rules": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 룰 카탈로그 조회
-         * @description 활성/비활성 룰 전체. admin/auditor 권한.
-         */
-        get: operations["list_16"];
+        get: operations["riskScore"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2493,20 +204,20 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/advisory/reports/{advrId}/similar-cases": {
+    "/api/advisory/reports/{advrId}/ack": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 유사 과거 사례 검색
-         * @description 본 리포트와 유사 프로파일의 종결된 과거 심사 top-5 반환. reviewer 는 X-Actor-Role=REVIEWER 헤더 필수 — 본인 대상 리포트만 허용.
-         */
-        get: operations["similarCases"];
+        get?: never;
         put?: never;
-        post?: never;
+        /**
+         * ack 등록
+         * @description ack 응답을 적재하고 리포트를 ACKED 로 전이. 같은 리포트에 여러 번 적재 가능.
+         */
+        post: operations["ack_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2533,7 +244,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/advisory/audit/risk-scores/{reviewerId}": {
+    "/api/advisory/reports/{advrId}/similar-cases": {
         parameters: {
             query?: never;
             header?: never;
@@ -2541,10 +252,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 심사관 위험도 스코어 조회
-         * @description reviewerId 의 bias_score / compliance_score 반환. auditor/admin 권한.
+         * 유사 과거 사례 검색
+         * @description 본 리포트와 유사 프로파일의 종결된 과거 심사 top-5 반환. reviewer 는 X-Actor-Role=REVIEWER 헤더 필수 — 본인 대상 리포트만 허용.
          */
-        get: operations["riskScore"];
+        get: operations["similarCases"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2553,7 +264,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/advisory/audit/risk-scores/top/compliance": {
+    "/api/advisory/reports/{advrId}/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 리포트 조회 마킹
+         * @description OPEN → VIEWED 전이. first_viewed_at 최초 1회만 채워진다.
+         */
+        post: operations["view"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/advisory/rules": {
         parameters: {
             query?: never;
             header?: never;
@@ -2561,10 +292,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 규정 위반 위험도 상위 심사관 목록
-         * @description compliance_score 내림차순. limit 기본 20, 최대 100. auditor/admin 권한.
+         * 룰 카탈로그 조회
+         * @description 활성/비활성 룰 전체. admin/auditor 권한.
          */
-        get: operations["topCompliance"];
+        get: operations["list_16"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2573,7 +304,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/advisory/audit/risk-scores/top/bias": {
+    "/api/advisory/rules/{ruleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 룰 활성화/임계치 조정
+         * @description active_yn, rule_params, rule_version, effective 일자, rule_desc 변경. 변경 시 STATUS_HISTORY 에 BEFORE/AFTER 스냅샷 적재. admin 만.
+         */
+        put: operations["update_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/advisory/stats/reviewers/{reviewerId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2581,10 +332,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 편향 위험도 상위 심사관 목록
-         * @description bias_score 내림차순. limit 기본 20, 최대 100. auditor/admin 권한.
+         * 심사관별 ack 통계
+         * @description 리포트 총수 + 미해결 수 + ack 응답코드별 카운트 + 룰별 트리거 빈도. auditor/admin 권한.
          */
-        get: operations["topBias"];
+        get: operations["reviewerStats"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2593,18 +344,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/advisory/audit/quarantine": {
+    "/api/audit/access-logs": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 격리(Quarantine) 리포트 목록
-         * @description AI 감사 결론이 BIAS_SUSPECTED 또는 VIOLATION_SUSPECTED 인 리포트. quarantined_at 최신순. auditor/admin 권한.
-         */
-        get: operations["quarantinedReports"];
+        get: operations["listByTarget"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2613,18 +360,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/advisory/audit/opinions/recent": {
+    "/api/audit/break-glass": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 최근 LLM 감사 의견 목록
-         * @description 생성 시각 최신순. limit 기본 20, 최대 100. auditor/admin 권한.
-         */
-        get: operations["recentOpinions"];
+        get: operations["listBreakGlass"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2633,7 +376,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/advisory/audit/opinions/by-reviewer/{reviewerId}": {
+    "/api/break-glass": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["breakGlass"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/business-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 기간별 캘린더 목록 조회 */
+        get: operations["listRange"];
+        put?: never;
+        /**
+         * 캘린더 항목 등록
+         * @description 공휴일/임시휴일을 명시적으로 등록. 미등록 일자는 요일 기반 fallback.
+         */
+        post: operations["register_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/business-calendar/by-date": {
         parameters: {
             query?: never;
             header?: never;
@@ -2641,10 +421,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 심사관별 LLM 감사 의견 이력
-         * @description reviewerId 의 전체 감사 의견을 최신순 반환. auditor/admin 권한.
+         * 일자별 캘린더 항목 단건 조회
+         * @description 미등록 일자는 404.
          */
-        get: operations["opinionsByReviewer"];
+        get: operations["getByDate"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2653,7 +433,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/advisory/audit/opinions/by-report/{advrId}": {
+    "/api/business-calendar/check": {
         parameters: {
             query?: never;
             header?: never;
@@ -2661,10 +441,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 리포트별 LLM 감사 의견 조회
-         * @description advrId 에 연결된 AI 감사 의견 전체 반환 (BIAS/COMPLIANCE 각 1건). auditor/admin 권한.
+         * 영업일 여부 판정
+         * @description DB row 있으면 그 값, 없으면 요일 fallback (토/일=비영업일). source=CALENDAR 또는 WEEKDAY_FALLBACK 로 출처 명시.
          */
-        get: operations["opinionsByReport"];
+        get: operations["check"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2673,7 +453,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/loan-contracts": {
+    "/api/business-calendar/{calId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** 캘린더 항목 수정 */
+        put: operations["update"];
+        post?: never;
+        /** 캘린더 항목 soft delete */
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collaterals/{colId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * 담보 수정
+         * @description 지정된 필드만 부분 수정. col_no / appl_id / col_status_cd 는 변경 불가. 해제된 담보는 수정 불가.
+         */
+        patch: operations["update_3"];
+        trace?: never;
+    };
+    "/api/collaterals/{colId}/evaluations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 담보 감정평가
+         * @description 외부 감정평가기관 연계는 stub. applied_value 미지정 시 appraised_value 와 동일 적용. 담보 상태는 본 API 에서 자동 전이하지 않음.
+         */
+        post: operations["evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collaterals/{colId}/ltv-calculation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** LTV 산정 결과 조회 */
+        get: operations["get_16"];
+        put?: never;
+        /**
+         * LTV 산정 실행
+         * @description 사전조건: 담보 감정평가 DONE 1건 이상. 담보당 1건 (col_id UNIQUE 운영). max_loan = applied_col_value × limit_bps/10000 - senior_lien (음수 시 0). ratio_bps = requested_amount / applied_col_value × 10000. requested ≤ max_loan 이면 PASS, 초과 시 FAIL. 기본 한도 7000bps(70%) — 주택담보 보편치.
+         */
+        post: operations["run_14"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collaterals/{colId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 담보 해제
+         * @description 담보 상태를 RELEASED 로 전이한다. status_history 에 사유·해제일 기록.
+         */
+        post: operations["release"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/credit-info-reports": {
         parameters: {
             query?: never;
             header?: never;
@@ -2681,12 +560,1764 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 운영자 계약 목록 조회
-         * @description 전체 계약을 상태·시작일 범위로 필터링해 페이지 단위로 반환.
+         * 운영자 신용정보 신고 전체 목록
+         * @description statusCd 파라미터로 REQUESTED/SENT/ACKED/FAILED/DEAD 필터. 없으면 전체. 최신순.
          */
-        get: operations["list_18"];
+        get: operations["listAll"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/credit-info-reports/{crptId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 신고 단건 조회 */
+        get: operations["get_15"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/credit-info-reports/{crptId}/ack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 외부 기관 ACK callback
+         * @description 신고 SENT → ACKED 전이. 이미 ACKED 면 동일 row 반환(멱등). SENT 이외 상태는 LOAN_151. 인증/서명검증은 11 plan 에서 보강 예정.
+         */
+        post: operations["ack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/credit-info-reports/{crptId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 운영자 재전송
+         * @description DEAD/FAILED 신고를 강제 재시도. outbox attemptNo 리셋 + PENDING 복귀. ACKED 는 LOAN_152.
+         */
+        post: operations["retry_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/credit-score/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 한도조회 (외부 신용평가 미리보기)
+         * @description 신청 row 생성 없이 외부 신용평가 엔진을 호출해 예상 한도/점수/등급을 회신. 1회성 신용조회 동의(consentYn=Y) 필수. 결과를 보존하려면 후속으로 정식 신청 + 가심사 API 호출 필요.
+         */
+        post: operations["preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/accounting-summary/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 일일 회계 요약 산출
+         * @description baseDate 의 이자/연체이자/자동이체/실행 합계 + ACTIVE 약정·연체 카운트를 적재한다. UNIQUE(summary_date) 로 멱등 — 동일 baseDate 재호출 시 skip.
+         */
+        post: operations["run_13"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/batch-evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 어드바이저리 배치 평가
+         * @description baseDate 의 스냅샷을 적재한 뒤 활성 BATCH 룰 전체(BIAS_*, PEER_DECISION_DIVERGENCE)를 일괄 평가해 리포트를 발행한다. 발행된 리포트별로 AdvisoryReportPublishedEvent 가 발행되어 알림 핸들러가 통지한다.
+         */
+        post: operations["runBatchEvaluation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/cohort-stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 코호트 편향 통계 조회
+         * @description 특정 코호트의 최근 스냅샷 승인·거절률 통계를 반환한다. LLM get_cohort_stats tool 전용.
+         */
+        get: operations["getCohortStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 정책문서 목록 조회
+         * @description 삭제되지 않은 전체 정책문서를 최신순으로 반환.
+         */
+        get: operations["listDocuments"];
+        put?: never;
+        /**
+         * 정책문서 등록 및 인입
+         * @description 정책문서를 등록하고 청크 분할·임베딩·적재 후 자동 활성화한다. content 필드로 문서 본문을 직접 제공 (source_uri fetch 는 현 단계 미지원).
+         */
+        post: operations["registerDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/documents/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 정책문서 적재 통계
+         * @description 전체/활성 문서 수와 embedding_model_cd 별 청크 건수를 반환.
+         */
+        get: operations["documentStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/documents/{docId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 문서 활성화/비활성화
+         * @description active=true 면 활성화(검색 대상 포함), false 면 비활성화(검색 제외).
+         */
+        put: operations["toggleActivate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/index/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 심사 사례 인덱싱
+         * @description 지정 심사(revId) 또는 전체 COMPLETED 심사를 사례 인덱스에 적재한다. revId 생략 시 일괄 인덱싱 (초기 구동·모델 교체 후 재인덱싱용).
+         */
+        post: operations["indexCases"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/policy-citations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 정책 인용 검색
+         * @description query 텍스트로 활성 정책 문서 청크를 벡터 검색한다. LLM get_policy_citation tool 전용.
+         */
+        get: operations["getPolicyCitations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/rag/case-index/backfill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 완료 심사 케이스 일괄 백필
+         * @description COMPLETED 심사를 ADVISORY_CASE_INDEX 에 적재한다. from/to 생략 시 전체 대상. dryRun=true 면 INSERT 없이 대상 건수만 반환. revId 당 1건만 적재 (멱등).
+         */
+        post: operations["backfill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/reviewer-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 심사관 결정 이력 조회
+         * @description 최근 N일간 심사관 결정 이력(승인·거절 건수, 승인율)을 반환한다. LLM get_reviewer_history tool 전용.
+         */
+        get: operations["getReviewerHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/similar-cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 유사 과거 사례 검색 (rev_id 기준)
+         * @description rev_id 에 연결된 최신 리포트 기준으로 유사 프로파일 종결 사례를 반환한다. LLM get_similar_cases tool 전용.
+         */
+        get: operations["getSimilarCases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/advisory/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 심사관 결정 스냅샷 적재
+         * @description baseDate(YYYYMMDD) 의 본심사를 코호트(EMPLOYMENT_TYPE/LOAN_PURPOSE)별로 집계해 REVIEWER_DECISION_SNAPSHOT 에 적재한다. 멱등 — 이미 적재된 (reviewer/date/window/dim/value) 는 skip.
+         */
+        post: operations["runSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/application-expiry/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 승인 만료 일배치 실행
+         * @description baseDate 시점에 LoanReview.approvedAt 이 14일 이상 경과한 APPROVED 신청을 EXPIRED 로 전이한다. 영업일 가드 없음 (만료는 절대시점 기준).
+         */
+        post: operations["run_12"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/auto-debit/payment-result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 타행 자동이체 CLEARING 완결 콜백
+         * @description payment-service 가 KFTC/BOK 정산 완료(COMPLETED) 또는 거절(FAILED) 통보 후 호출. idempotencyKey('AUTO-{cntrId}-{rschId}-{baseDate}') 를 파싱해 상환 처리를 완결하거나 FAILED 거래를 기록한다.
+         */
+        post: operations["paymentResult"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/auto-debit/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 자동이체 일배치 실행
+         * @description baseDate 의 due_date 와 일치하는 DUE 회차 중 자동이체 설정된 계약만 출금 처리한다. baseDate 가 비영업일(BUSINESS_CALENDAR) 이면 출금 미수행하고 skipReason=NON_BUSINESS_DAY 로 반환. 미설정/미검증/이미 PAID 회차는 skip.
+         */
+        post: operations["run_11"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/calendar-seeder/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 특정 연도 캘린더 자동 시드
+         * @description 주말 + 양력 고정 공휴일은 자동, 음력/대체/임시 공휴일은 운영자가 별도 등록. UNIQUE(cal_date) 로 멱등 — 이미 있는 날짜는 skip.
+         */
+        post: operations["run_10"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/common-sync/backfill/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 계약 common_db 백필
+         * @description ACTIVE/CLOSED 상태이면서 loan_contract.contract_id 가 null 인 (common_contract 미동기화) 계약을 pageSize 건 픽업해 common_sync_outbox 에 적재한다. SIGNED 계약은 대상 외 (아직 ACTIVE 전이 전). 적재 후 /dispatch 를 호출해야 실제 동기화가 진행된다.
+         */
+        post: operations["backfillContracts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/common-sync/backfill/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 상품 common_db 백필
+         * @description loan_product.product_id 가 null 인 (common_product 미동기화) 상품을 pageSize 건 픽업해 common_sync_outbox 에 적재한다. 서비스 최초 배포 또는 재동기화 필요 시 호출. 적재 후 /dispatch 를 호출해야 실제 동기화가 진행된다.
+         */
+        post: operations["backfillProducts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/common-sync/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * common_sync_outbox 디스패치
+         * @description PENDING/FAILED 상태이면서 nextAttemptAt <= now 인 outbox 를 pageSize 건 픽업해 common_db upsert + loan_db 브리지 백필을 수행한다. 기본 200건. 결과에 따라 DONE/FAILED/DEAD 로 전이.
+         */
+        post: operations["dispatch_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/credit-info-reports/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 신용정보 신고 outbox 디스패치
+         * @description PENDING/FAILED 상태이면서 nextAttemptAt <= now 인 outbox row 를 한 페이지(200)단위로 픽업해 어댑터에 전송한다. 결과에 따라 SENT/FAILED/DEAD 로 전이.
+         */
+        post: operations["dispatch_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/delinquency/rollover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 연체 rollover 실행
+         * @description baseDate 기준으로 due_date 가 지난 DUE 회차를 OVERDUE 로 전이하고 계약별 DELINQUENCY 를 upsert 한다. 활성 연체가 해소되면 RESOLVED 처리.
+         */
+        post: operations["rollover"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/ecl/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * IFRS9 ECL 월별 산출
+         * @description baseMonth 의 ACTIVE 약정 전체에 대해 PD/LGD/EAD 기반 ECL 을 산출·적재한다. UNIQUE(cntr_id, summary_month) 멱등 — 약정별로 이미 적재된 row 는 skip.
+         */
+        post: operations["run_9"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/eod/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * EOD 실행 이력 조회
+         * @description loanEodJob 의 JobExecution 이력을 최신순으로 반환한다. from/to (YYYYMMDD) 가 주어지면 baseDate 가 그 범위에 있는 실행만 반환한다.
+         */
+        get: operations["history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/eod/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * EOD 실패 잡 재처리
+         * @description 지정 baseDate 의 마지막 JobExecution 이 FAILED/STOPPED 인 경우 동일 파라미터로 재실행한다 (Spring Batch 자동 restart — 실패 스텝부터). COMPLETED 잡은 거부, JobExecution 자체가 없으면 NOT_FOUND.
+         */
+        post: operations["restart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/eod/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * EOD 일마감 배치 실행
+         * @description baseDate 기준으로 이자발생 → 자동이체 → 연체롤오버 → 승인만료 순서로 실행한다. 같은 baseDate 로 이미 완료된 잡이 있으면 SKIPPED 를 반환한다.
+         */
+        post: operations["run_8"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/eom/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * EOM 월마감 배치 실행
+         * @description baseMonth (YYYYMM) 기준으로 월별 회계 요약을 적재한다. 같은 baseMonth 로 이미 완료된 잡이 있으면 SKIPPED 를 반환한다.
+         */
+        post: operations["run_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/guarantee-insurance-expiry/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 보증보험 만기 일배치 실행
+         * @description baseDate 시점에 gins_end_date 가 이미 경과한 ISSUED 보증보험을 EXPIRED 로 전이한다. 영업일 가드 없음(절대시점 기준).
+         */
+        post: operations["run_6"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/interest-accrual/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 일별 이자 발생 배치
+         * @description ACTIVE 계약 전체에 baseDate 의 일이자를 발생·누적한다. 잔액 0 / 이미 적재된 행은 skip. UNIQUE(cntr_id, accrual_date) 멱등.
+         */
+        post: operations["run_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/loan-documents/purge-expired": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 보존기한 경과 서류 원본 파기
+         * @description retention_until 이 오늘 이전이면서 아직 파기되지 않은 서류의 원본 파일을 삭제하고 purged_at 을 기록한다. 서류 row(이름·해시·크기·파기시각)는 남긴다 — 무엇을 언제 파기했는지가 증빙이기 때문이다. soft delete 된 서류도 대상에 포함한다. 건별 독립 트랜잭션이라 일부 실패해도 나머지는 진행되며, 실패분은 다음 실행에서 재시도된다.
+         */
+        post: operations["purgeExpired"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/loan-reviews/expire-bias-reviewing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 편향 검증 만료 배치
+         * @description reviewedAt 이 olderThanDays 일 이전인 BIAS_REVIEWING 본심사를 일괄 EXPIRED 로 전이. 기본값 14일. 만료된 건의 신청 상태는 PRESCREENED 유지 — 별도 재심사 필요.
+         */
+        post: operations["expireBiasReviewing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/loan-reviews/expire-pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 권고 만료 배치
+         * @description reviewedAt 이 olderThanDays 일 이전인 PENDING_APPROVAL 본심사를 일괄 EXPIRED 로 전이. 기본값 7일. 만료된 권고는 신청 상태에 영향 없음(PRESCREENED 유지) — 운영자가 별도 수동 본심사 등으로 처리.
+         */
+        post: operations["expirePending"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/loan-reviews/expire-pending-approver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 승인자 대기 만료 배치
+         * @description pendingApproverSince 가 olderThanDays 일 이전인 PENDING_APPROVER 본심사를 일괄 EXPIRED 로 전이. 기본값 7일. 만료된 건의 신청 상태는 PRESCREENED 유지 — 별도 재심사 필요. 승인자 무응답으로 인한 심사 영구 블로킹 방지 안전망.
+         */
+        post: operations["expirePendingApprover"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/loan-reviews/{revId}/bias-ops-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 편향 운영 노트 주입
+         * @description 운영자가 BIAS_REVIEWING 건에 severity=NONE 운영 노트를 삽입. biasSeverityCd 를 NONE 으로 갱신하여 BLOCKED 차단을 해제. 4-eye 우회 권한 없음 — 심사원이 acknowledge 후 승인자 단계로 진행.
+         */
+        post: operations["addBiasOpsNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/loan-reviews/{revId}/bias-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 편향 리포트 수신 (internal)
+         * @description 편향 에이전트가 분석 결과를 밀어넣는 내부 전용 API. BIAS_REVIEWING 상태가 아니더라도 advice 는 저장되나 severity 캐시는 갱신하지 않음 (재전송 무시). 외부 노출 금지.
+         */
+        post: operations["appendBiasReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/maturity/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 만기 도래 일배치 실행
+         * @description baseDate 시점에 current_maturity_date 가 도달한 ACTIVE 만기를 MATURED 로 전이한다. 영업일 가드 없음(절대시점 기준).
+         */
+        post: operations["run_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/notifications/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 알림 outbox 디스패치
+         * @description PENDING/FAILED 상태이면서 nextAttemptAt <= now 인 outbox row 를 한 페이지(200) 단위로 픽업해 채널 어댑터에 전송. SENT/FAILED/DEAD 로 전이.
+         */
+        post: operations["dispatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 고객 대출 신청 목록 조회
+         * @description customerId 기준 신청 이력을 최신순으로 반환.
+         */
+        get: operations["list_12"];
+        put?: never;
+        /**
+         * 대출 신청
+         * @description 본 신청 접수. Idempotency-Key 헤더로 중복 호출 방어. 상태 SUBMITTED.
+         */
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 대출 신청 단건 조회 */
+        get: operations["get_8"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 대출 신청 취소(고객)
+         * @description 심사 결과 도출 전 단계(SUBMITTED/PRESCREENED/REVIEWING)에서만 취소 가능. status_history 기록.
+         */
+        post: operations["cancel_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/collaterals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 대출별 담보 목록
+         * @description 신청에 등록된 활성 담보 목록을 created_at 오름차순으로 반환한다.
+         */
+        get: operations["list_15"];
+        put?: never;
+        /**
+         * 담보 등록
+         * @description 신청에 담보를 등록한다. 초기 상태 REGISTERED, col_no 자동 생성.
+         */
+        post: operations["register_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/credit-consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 신용조회 동의
+         * @description 신청자의 신용정보 조회 동의를 기록한다. 동의 즉시 consentYn=Y / withdrawnYn=N.
+         */
+        post: operations["create_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/credit-evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 신용평가 결과 조회 */
+        get: operations["get_14"];
+        put?: never;
+        /**
+         * 신용평가(CB) 실행
+         * @description 외부 CB(KCB/NICE)·자동심사 엔진 stub — 결과는 클라이언트 입력. 사전조건: 가심사 PASS 완료. 신청당 1건 (appl_id UNIQUE). 신청 상태는 본 단계에서 전이하지 않으며 본심사에서 종합한다.
+         */
+        post: operations["run_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 서류 목록 조회
+         * @description 신청에 제출된 활성 서류 목록을 submitted_at 오름차순으로 반환한다.
+         */
+        get: operations["list_14"];
+        put?: never;
+        /**
+         * 신청서류 업로드
+         * @description multipart/form-data. docTypeCd 필수, file 필수. doc-agent에 서류를 제출하고 검증 결과(AUTO_PASS/NEEDS_RESUBMIT/HOLD)를 반영한다.
+         */
+        post: operations["upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/dsr-calculation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** DSR 산정 결과 조회 */
+        get: operations["get_13"];
+        put?: never;
+        /**
+         * DSR 산정 실행
+         * @description 사전조건: 신용평가 완료. 신청당 1건 (appl_id UNIQUE). new_annual_repay_amt 미지정 시 상품 baseRate 기반 단순 추정. ratio_bps ≤ limit_bps 면 PASS, 초과 시 FAIL. 신청 상태는 본 단계에서 전이하지 않으며 본심사에서 종합한다.
+         */
+        post: operations["run_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/guarantor-agreements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 보증 약정 목록 조회 */
+        get: operations["list_13"];
+        put?: never;
+        /**
+         * 보증 약정 등록
+         * @description 보증인 정보(name/mobile/relation) + 약정 정보(type/amount/ratio) 를 함께 받아 GuarantorMaster 와 GuarantorAgreement 를 생성한다. 등록 가능한 신청 상태: SUBMITTED/PRESCREENED/REVIEWING/APPROVED. 동일 보증인 중복 등록 차단.
+         */
+        post: operations["register_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/guarantor-agreements/{gagrId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 보증 약정 취소
+         * @description REGISTERED 또는 SIGNED → CANCELED. 사후 해지의 약정 영향은 본 단계 외.
+         */
+        post: operations["cancel_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/guarantor-agreements/{gagrId}/sign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 보증 약정 전자서명 완료
+         * @description REGISTERED → SIGNED. 서명 문서 URL/해시를 기록. flows §1.1: 약정 체결 전제조건(gagr_status_cd=SIGNED).
+         */
+        post: operations["sign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/identity-verifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 본인확인(IDV)
+         * @description 외부 인증기관(PASS/카카오/공동인증) 연계. 본 단계에서는 stub — 항상 PASS.
+         */
+        post: operations["verify_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/identity-verifications/{idvId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** IDV 상태 조회 */
+        get: operations["get_12"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/journey": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 신청 진행 상황 조회
+         * @description 한 신청의 가심사 / 신용평가 / DSR / LTV(담보별) / 본심사 결과를 한 응답에 묶어 반환. 수행되지 않은 단계는 null(LTV 는 빈 list). 클라이언트 UI 가 단계별 endpoint 를 따로 호출하지 않고 본 endpoint 한 번으로 진행 상황을 표시할 수 있다.
+         */
+        get: operations["get_11"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/prescreening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 가심사 결과 조회 */
+        get: operations["get_10"];
+        put?: never;
+        /**
+         * 가심사 실행
+         * @description 외부 가심사 엔진 stub — PASS/REJECT 는 클라이언트 입력. PASS 시 estimated_limit/rate 자동 채움(미지정 시 requested/baseRate). 신청 상태: SUBMITTED → PRESCREENED/REJECTED. 신청당 1건 (appl_id UNIQUE).
+         */
+        post: operations["run_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 본심사 결과 조회 */
+        get: operations["get_9"];
+        put?: never;
+        /**
+         * 본심사 실행
+         * @description 사전조건: 신청 PRESCREENED + CB(APPROVE/REVIEW) + DSR PASS. APPROVED 시 한도/금리/기간 자동 산정 (입력값 우선). 신청 상태: PRESCREENED → APPROVED/REJECTED. 신청당 1건 (appl_id UNIQUE).
+         */
+        post: operations["run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * 본심사 결정 정정(재심사)
+         * @description 사전조건: 신청 APPROVED/REJECTED. CONTRACTED 등 약정 진입 후엔 LOAN_044. 결정·한도·금리·기간을 갱신하고 신청 상태를 동기화한다. 체크로그에 FINAL_DECISION 정정 기록이 누적되고 status_history 양쪽에 이력이 남는다.
+         */
+        patch: operations["revise"];
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/review/acknowledge-bias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 편향 리포트 확인(acknowledge)
+         * @description 심사원이 편향 검증 리포트를 확인하고 승인자 단계로 진행. 사전조건: BIAS_REVIEWING 상태 + 리포트 1건 이상 + severity != BLOCKED. BLOCKED 이면 상급자 bias-override 후 재호출.
+         */
+        post: operations["acknowledgeBias"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/review/approver-approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 승인자 최종 확정
+         * @description PENDING_APPROVER 상태의 본심사를 승인자가 최종 확정. 4-eye: approverId ≠ reviewerId. APPROVE_AS_IS: 심사원 결정 그대로 확정. OVERRIDE_APPROVED/REJECTED: 결정 변경 — overrideReasonCd 필수, APPROVED 변경 시 금액·금리·기간 필수. 완료 후 신청 상태 PRESCREENED → APPROVED/REJECTED 전이.
+         */
+        post: operations["approverApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/review/auto-decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 본심사 자동 결정(권고)
+         * @description 운영자 입력 없이 누적된 CB·DSR·LTV 결과만으로 APPROVED/REJECTED 자동 산출. 결정은 권고(PENDING_APPROVAL) 만 적재되고 신청 상태는 PRESCREENED 그대로 유지된다. 사람이 POST /review/confirm 호출로 확정해야 신청 상태가 전이된다. CB.REJECT/DSR.FAIL/LTV.FAIL 은 자동 REJECTED, CB.REVIEW 는 LOAN_048 (수동 본심사 권유).
+         */
+        post: operations["autoDecide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/review/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 본심사 자동 권고 확정
+         * @description PENDING_APPROVAL 상태인 본심사를 권고된 결정 그대로 COMPLETED 로 마감하고 신청 상태를 전이한다. 결정·한도 정정이 필요하면 PATCH /review (revise) 사용. 권고 상태가 아니면 LOAN_049.
+         */
+        post: operations["confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-applications/{applId}/review/escalate-to-hq": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 이상거래 본사 상신
+         * @description 지점장이 심사 진행 중인 건을 이상거래로 판단해 본사에 상신. 이미 상신된 건은 LOAN_203, COMPLETED/EXPIRED 건은 LOAN_204. 상신 후 ROLE_HQ_REVIEWER 만 해당 건을 조회할 수 있다.
+         */
+        post: operations["escalateToHq"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-certificates/{certId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 증명서 단건 조회 */
+        get: operations["get_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 고객 대출 계약 목록 조회
+         * @description customerId 기준 계약 이력을 최신순으로 반환.
+         */
+        get: operations["list_5"];
+        put?: never;
+        /**
+         * 약정한도 설정
+         * @description 승인된 신청에 대해 최종 약정 한도·금리·기간을 확정한다. 초기 상태 SIGNED.
+         */
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 대출 계약 단건 조회 */
+        get: operations["get_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 증명서 발급 이력
+         * @description 계약의 모든 증명서를 issued_at 오름차순으로 반환.
+         */
+        get: operations["list_11"];
+        put?: never;
+        /**
+         * 증명서 발급
+         * @description BALANCE/DEBT/REPAYMENT 등 유형별 즉시 발급. cert_no 자동 채번. 다발 발급 허용 — 재발급은 새 row 로 누적된다.
+         */
+        post: operations["issue_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/closure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 약정 종결 조회
+         * @description 계약의 종결 정보 단건. 종결 안 됐으면 LOAN_124.
+         */
+        get: operations["get_6"];
+        put?: never;
+        /**
+         * 약정 종결
+         * @description ACTIVE 계약을 CLOSED 로 전이한다. NORMAL/EARLY 는 잔액=0 + 활성 회차 없음 필요. WRITE_OFF/SUBROGATION 은 잔액 검증 면제. 정산금액(final_*)은 서버 자동 산출.
+         */
+        post: operations["close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/credit-info-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 신고 이력 목록
+         * @description 계약의 모든 신용정보 신고를 created_at 오름차순으로 반환.
+         */
+        get: operations["list_10"];
+        put?: never;
+        /**
+         * 신용정보 신고
+         * @description 유형(NEW_LOAN/DELINQUENCY/RESOLUTION/CLOSURE)·기관(KCB/NICE) 별 신고 등록. 본 단계는 등록 → 즉시 외부 전송(stub) → SENT 한 트랜잭션 안에서 전이. external_tx_no 자동 채번.
+         */
+        post: operations["submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/delinquency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 활성 연체 조회
+         * @description 계약의 ACTIVE dlq 단건. 활성 연체가 없으면 LOAN_100.
+         */
+        get: operations["getActive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/delinquency/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 연체 일별 스냅샷 목록
+         * @description 활성 dlq 의 snapshot 을 snapshot_date 오름차순으로 반환.
+         */
+        get: operations["listSnapshots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/executions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 자금 인출 (Drawdown)
+         * @description 약정한도 범위 내에서 자금을 지급. Idempotency-Key 헤더로 중복 호출 방어. 최초 인출 시 계약 ACTIVE 로 전이.
+         */
+        post: operations["drawdown"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/guarantee-insurance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 보증보험 발급
+         * @description 외부기관 stub — request 즉시 ISSUED 처리. 발급 가능 계약 상태 SIGNED/ACTIVE. 계약당 활성(ISSUED) 1건 차단. 시작/종료일 미지정 시 계약 기간 자동 적용.
+         */
+        post: operations["issue_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/guarantee-insurance/{ginsId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 보증보험 단건 조회 */
+        get: operations["get_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/guarantee-insurance/{ginsId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 보증보험 취소
+         * @description ISSUED → CANCELED. 다른 상태는 차단.
+         */
+        post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/interest-accruals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 일별 이자 누적 조회
+         * @description accrual_date 오름차순. from/to 범위 미지정 시 전체.
+         */
+        get: operations["list_9"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/maturity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 만기 정보 조회
+         * @description 약정 체결 시 자동 생성된 만기 정보. ACTIVE/MATURED/CLOSED 와 연장 이력.
+         */
+        get: operations["get_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/maturity/extend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 만기 연장
+         * @description current_maturity_date 를 N개월 연장하고 extension_count 증가. original_maturity_date 는 불변. ACTIVE/MATURED 에서만 가능.
+         */
+        post: operations["extend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/prepayments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 중도상환 실행
+         * @description 잔여 원금 한도 내에서 임의 금액을 즉시 상환한다. 처리 후 최신 버전의 DUE/OVERDUE 회차는 SUPERSEDED 로 전이되고, 잔액이 남아있으면 새 버전(V{n+1}) 으로 같은 회차 수만큼 재계산해 발급한다. Idempotency-Key 헤더 권장. 미발생이자·수수료는 본 단계 0 으로 처리.
+         */
+        post: operations["prepay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/rate-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 금리 변경 이력 조회
+         * @description 계약의 금리 변경 이력을 changed_at 오름차순으로 반환한다.
+         */
+        get: operations["list_8"];
+        put?: never;
+        /**
+         * 금리 변경 적용
+         * @description 계약 금리를 갱신하고 appliedStartDate 이후 활성 회차(DUE/OVERDUE)를 SUPERSEDED 처리한 뒤 남은 원금 기준으로 신규 버전 스케줄을 생성한다. 모든 회차가 PAID 인 경우 금리 갱신·이력만 남기고 스케줄은 그대로.
+         */
+        post: operations["apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/repayment-account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 상환계좌 단건 조회 */
+        get: operations["get_3"];
+        put?: never;
+        /**
+         * 상환계좌 등록
+         * @description 약정에 상환계좌를 등록한다. 계약당 1건만 가능. 초기 상태 REGISTERED — drawdown 전 verify 필요.
+         */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/repayment-account/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 상환계좌 검증
+         * @description 외부 계좌검증(예금주 실명조회 등) 연계는 stub. 본 호출 자체가 성공으로 처리되어 VERIFIED 로 전이된다.
+         */
+        post: operations["verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/repayment-schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 상환 스케줄 조회
+         * @description version 미지정 시 최신 버전(V1, 금리변경/중도상환 시 V2...) 의 회차 목록을 installment_no 오름차순으로 반환한다. SUPERSEDED 회차도 version 을 명시하면 조회 가능. 스케줄은 최초 drawdown 시 자동 생성된다.
+         */
+        get: operations["list_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/repayments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 상환 거래 목록
+         * @description 계약의 모든 상환 거래를 paid_at 오름차순으로 반환한다.
+         */
+        get: operations["list_6"];
+        put?: never;
+        /**
+         * 회차 상환
+         * @description 지정된 회차(installmentNo)의 예정 금액을 정확히 상환한다. Idempotency-Key 헤더 권장. 중도상환은 POST /api/loan-contracts/{cntrId}/prepayments, 부분상환은 POST /api/loan-contracts/{cntrId}/repayments/partial, 역분개는 POST /api/loan-contracts/{cntrId}/repayments/{rtxId}/reversal 사용.
+         */
+        post: operations["repay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/repayments/online": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 온라인 회차 상환
+         * @description WEB·MOBILE 채널에서 고객이 직접 상환 — payment-service 를 통해 이체 후 원장 기록. Idempotency-Key 헤더 필수(금융 거래 중복 방지). 창구 수납 기록은 POST /repayments 사용.
+         */
+        post: operations["repayOnline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/repayments/partial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 회차 부분상환
+         * @description 지정 회차에 임의 금액(잔액 이하) 을 납부한다. 납부 후 회차 누적이 예정 총액과 같아지면 자동으로 PAID, 미달이면 PARTIAL_PAID 로 전이. 비례 분배(원금/이자) 적용. Idempotency-Key 헤더 권장.
+         */
+        post: operations["repay_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/repayments/{rtxId}/reversal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 상환 거래 역분개
+         * @description 지정된 SCHEDULED + SUCCESS 거래를 정정한다. 원본 row 는 보존하고 reversal_yn=Y / reversal_target_rtx_id 로 연결된 새 row 가 발급된다. 대응 회차는 PAID → DUE 로 되돌아간다. 중도상환(EARLY) 정정은 본 단계 미지원.
+         */
+        post: operations["reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-contracts/{cntrId}/virtual-account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 가상계좌 발급(멱등)
+         * @description 중도·추가 상환용 가상계좌를 발급한다. 이미 있으면 기존 계좌를 반환한다.
+         */
+        post: operations["issue"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2713,1657 +2344,1199 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/loan-documents/{docId}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 서류 다운로드
+         * @description 업로드 시 보관한 원본 바이트를 첨부파일로 내려준다.
+         */
+        get: operations["download"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 상품 목록
+         * @description loanTypeCd / prodStatusCd 필터 + 페이지네이션으로 상품 목록을 조회한다.
+         */
+        get: operations["list_3"];
+        put?: never;
+        /**
+         * 상품 등록
+         * @description 신규 대출 상품을 등록한다. 초기 상태는 DRAFT.
+         */
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-products/{prodId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 상품 단건 조회
+         * @description prodId 로 대출 상품 단건을 조회한다.
+         */
+        get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * 상품 수정
+         * @description 지정된 필드만 부분 수정한다. prodCd 는 변경 불가.
+         */
+        patch: operations["update_2"];
+        trace?: never;
+    };
+    "/api/loan-products/{prodId}/discontinue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 상품 단종
+         * @description 판매 종료일과 사유를 받아 상태를 DISCONTINUED 로 전환한다. status_history 에 이력 기록.
+         */
+        post: operations["discontinue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-products/{prodId}/preferential-rate-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 우대금리 정책 목록 조회 */
+        get: operations["list_4"];
+        put?: never;
+        /**
+         * 우대금리 정책 등록
+         * @description 상품에 우대금리 정책을 등록한다. 초기 active_yn=Y, 동일 조건의 활성 정책은 중복 불가.
+         */
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-reviews/escalated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 본사 상신 건 목록
+         * @description 이상거래로 상신된 본심사 목록. ROLE_HQ_REVIEWER 전용. escalatedAt 기준 최신순 정렬. page/size 파라미터로 페이징.
+         */
+        get: operations["listEscalated"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-reviews/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 확정 대기 권고 목록
+         * @description 자동 결정으로 PENDING_APPROVAL 상태가 된 본심사를 reviewedAt 오름차순(오래된 권고 우선)으로 반환. 심사관은 본 목록에서 권고를 골라 POST /api/loan-applications/{applId}/review/confirm 으로 확정.
+         */
+        get: operations["listPending"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-reviews/pending-approver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 승인자 대기 목록
+         * @description PENDING_APPROVER 상태의 본심사를 reviewedAt 오름차순으로 반환. 승인자는 본 목록에서 건을 골라 POST /api/loan-applications/{applId}/review/approver-approve 로 확정.
+         */
+        get: operations["listPendingApprover"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-reviews/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 본심사 통계
+         * @description 기간(reviewedAt) 내 본심사 row 를 revTypeCd × revDecisionCd, revStatusCd, rejectReasonCd 별로 집계. 운영 대시보드용. 날짜는 yyyyMMdd, to 는 inclusive.
+         */
+        get: operations["stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-reviews/{revId}/advices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * AI 심사 advice 목록 조회
+         * @description 해당 본심사에 적재된 모든 AI advice 를 최신순으로 반환. 편향 리포트, 요약, 거절서 등 포함.
+         */
+        get: operations["listAdvices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-reviews/{revId}/advisory-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Advisory 리포트 목록 조회
+         * @description advisory-service 에 적재된 해당 본심사의 Advisory 리포트를 반환. advisory-service 장애 시 빈 목록 반환 (fail-open).
+         */
+        get: operations["listAdvisoryReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-reviews/{revId}/bias-override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 편향 BLOCKED 우회 승인 (상급자)
+         * @description severity=BLOCKED 인 편향 결과를 상급자가 우회 승인. BIAS_REVIEWING 상태일 때만 허용. 우회 후 심사원이 acknowledge-bias 호출 가능.
+         */
+        post: operations["biasOverride"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loan-reviews/{revId}/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 본심사 체크 로그 목록 조회
+         * @description 자동 적재 5건 + 수동 추가분을 시간순으로 반환.
+         */
+        get: operations["list_2"];
+        put?: never;
+        /**
+         * 본심사 체크 로그 수동 추가
+         * @description 심사관이 서류확인 / 신원확인 / 부수거래 / 기타 항목을 직접 기록. 자동 적재 항목 코드는 거부 (LOAN_043).
+         */
+        post: operations["add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/loans/reviews/{revId}/bias-result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 알림 outbox 목록
+         * @description eventType / status 필터 + 페이지네이션. size 는 최대 100 으로 캡핑된다.
+         */
+        get: operations["list_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/{outboxId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 알림 outbox 단건 조회
+         * @description payload 포함 단건 응답. PII 가 포함될 수 있어 운영자 권한 호출 전제.
+         */
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/{outboxId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 알림 outbox 재전송
+         * @description FAILED/DEAD row 를 PENDING 으로 되돌려 다음 디스패치에 다시 픽업되게 한다. PENDING/SENT 는 LOAN_191. attemptNo 와 lastError 가 초기화되고 status_history 에 NOTI_REQUEUED 기록.
+         */
+        post: operations["retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/status-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 상태 변경 이력 조회
+         * @description targetTable(예: LOAN_APPLICATION, LOAN_CONTRACT, REPAYMENT_SCHEDULE) 과 targetId 로 변경 시각 오름차순 이력을 반환. targetDomain 은 LOAN 으로 고정.
+         */
+        get: operations["list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        ApiResponseVoid: {
-            code?: string;
-            message?: string;
-            data?: Record<string, never>;
-        };
-        UpdateBusinessCalendarRequest: {
-            businessDayYn?: boolean;
-            holidayTypeCd?: string;
-            holidayName?: string;
-            baseCountryCd?: string;
-        };
-        ApiResponseBusinessCalendarResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["BusinessCalendarResponse"];
-        };
-        BusinessCalendarResponse: {
-            /** Format: int64 */
-            calId?: number;
-            calDate?: string;
-            businessDayYn?: boolean;
-            holidayTypeCd?: string;
-            holidayName?: string;
-            baseCountryCd?: string;
-        };
-        UpdateAdvisoryRuleRequest: {
-            activeYn?: boolean;
-            ruleParams?: string;
-            ruleVersion?: string;
-            effectiveStartDate?: string;
-            effectiveEndDate?: string;
-            ruleDesc?: string;
-            changeReasonCd?: string;
-            changeRemark?: string;
-        };
-        AdvisoryRuleResponse: {
-            /** Format: int64 */
-            ruleId?: number;
-            ruleCd?: string;
-            ruleName?: string;
-            advisoryTypeCd?: string;
-            ruleCategoryCd?: string;
-            severityCd?: string;
-            ruleParams?: string;
-            ruleVersion?: string;
-            activeYn?: boolean;
-            effectiveStartDate?: string;
-            effectiveEndDate?: string;
-            ruleDesc?: string;
-        };
-        ApiResponseAdvisoryRuleResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AdvisoryRuleResponse"];
-        };
-        ApiResponseNotificationOutboxResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["NotificationOutboxResponse"];
-        };
-        NotificationOutboxResponse: {
-            /** Format: int64 */
-            outboxId?: number;
-            eventTypeCd?: string;
-            /** Format: int64 */
-            referenceId?: number;
-            channelCd?: string;
-            payload?: string;
-            status?: string;
-            /** Format: int32 */
-            attemptNo?: number;
-            /** Format: int32 */
-            maxAttempt?: number;
-            /** Format: date-time */
-            nextAttemptAt?: string;
-            lastError?: string;
-            /** Format: date-time */
-            sentAt?: string;
-            idempotencyKey?: string;
-        };
-        BiasResultCallbackRequest: {
-            status?: string;
-            analysisType?: string;
-            findingSummary?: string;
-            biasDetected?: boolean;
-        };
-        AddReviewCheckLogRequest: {
-            checkItemCd: string;
-            checkResultCd: string;
-            checkRemark?: string;
-            /** Format: int64 */
-            checkerId?: number;
-        };
-        ApiResponseReviewCheckLogResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ReviewCheckLogResponse"];
-        };
-        ReviewCheckLogResponse: {
-            /** Format: int64 */
-            rchkId?: number;
-            /** Format: int64 */
-            revId?: number;
-            checkItemCd?: string;
-            checkResultCd?: string;
-            checkRemark?: string;
-            /** Format: int64 */
-            checkerId?: number;
-            /** Format: date-time */
-            checkedAt?: string;
-        };
-        BiasOverrideRequest: {
-            overrideReason: string;
-        };
-        ApiResponseLoanReviewResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanReviewResponse"];
-        };
-        LoanReviewResponse: {
-            /** Format: int64 */
-            revId?: number;
-            /** Format: int64 */
-            applId?: number;
-            revTypeCd?: string;
-            revStatusCd?: string;
-            revDecisionCd?: string;
-            /** Format: int64 */
-            approvedAmount?: number;
-            /** Format: int32 */
-            approvedRateBps?: number;
-            /** Format: int32 */
-            approvedPeriodMo?: number;
-            rejectReasonCd?: string;
-            revRemark?: string;
-            /** Format: int64 */
-            reviewerId?: number;
-            /** Format: date-time */
-            reviewedAt?: string;
-            /** Format: date-time */
-            approvedAt?: string;
-            /** Format: int64 */
-            approverId?: number;
-            approvedDecisionCd?: string;
-            overrideReasonCd?: string;
-            biasSeverityCd?: string;
-            /** Format: int64 */
-            biasOverrideBy?: number;
-            revAiTrackCd?: string;
-            revAiPd?: number;
-            revAiRationale?: string;
-            /** Format: int64 */
-            estimatedIncomeAmt?: number;
-            estimatedIncomeRange?: string;
-        };
-        CreateLoanProductRequest: {
-            prodCd: string;
-            prodName: string;
-            loanTypeCd: string;
-            targetCustomerCd?: string;
-            repaymentMethodCd: string;
-            rateTypeCd: string;
-            /** Format: int32 */
-            baseRateBps: number;
-            /** Format: int32 */
-            minRateBps?: number;
-            /** Format: int32 */
-            maxRateBps?: number;
-            /** Format: int64 */
-            minAmount: number;
-            /** Format: int64 */
-            maxAmount: number;
-            /** Format: int32 */
-            minPeriodMo: number;
-            /** Format: int32 */
-            maxPeriodMo: number;
-            collateralRequiredYn?: boolean;
-            guarantorRequiredYn?: boolean;
-            /** Format: int32 */
-            minGuarantorCount?: number;
-            /** Format: int32 */
-            applicationValidityDays?: number;
-            saleStartDate?: string;
-            saleEndDate?: string;
-            prodTermsUrl?: string;
-            prodTermsHash?: string;
-            /** Format: int64 */
-            productId?: number;
-        };
-        ApiResponseLoanProductResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanProductResponse"];
-        };
-        LoanProductResponse: {
-            /** Format: int64 */
-            prodId?: number;
-            prodCd?: string;
-            prodName?: string;
-            loanTypeCd?: string;
-            targetCustomerCd?: string;
-            repaymentMethodCd?: string;
-            rateTypeCd?: string;
-            /** Format: int32 */
-            baseRateBps?: number;
-            /** Format: int32 */
-            minRateBps?: number;
-            /** Format: int32 */
-            maxRateBps?: number;
-            /** Format: int64 */
-            minAmount?: number;
-            /** Format: int64 */
-            maxAmount?: number;
-            /** Format: int32 */
-            minPeriodMo?: number;
-            /** Format: int32 */
-            maxPeriodMo?: number;
-            collateralRequiredYn?: boolean;
-            guarantorRequiredYn?: boolean;
-            /** Format: int32 */
-            minGuarantorCount?: number;
-            /** Format: int32 */
-            applicationValidityDays?: number;
-            saleStartDate?: string;
-            saleEndDate?: string;
-            prodStatusCd?: string;
-            prodTermsUrl?: string;
-            prodTermsHash?: string;
-            /** Format: int64 */
-            productId?: number;
-        };
-        CreatePreferentialRatePolicyRequest: {
-            policyName: string;
-            conditionCd: string;
-            /** Format: int32 */
-            preferentialRateBps: number;
-            /** Format: int32 */
-            maxStackBps?: number;
-            effectiveStartDate?: string;
-            effectiveEndDate?: string;
-            policyRemark?: string;
-        };
-        ApiResponsePreferentialRatePolicyResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PreferentialRatePolicyResponse"];
-        };
-        PreferentialRatePolicyResponse: {
-            /** Format: int64 */
-            policyId?: number;
-            /** Format: int64 */
-            prodId?: number;
-            policyName?: string;
-            conditionCd?: string;
-            /** Format: int32 */
-            preferentialRateBps?: number;
-            /** Format: int32 */
-            maxStackBps?: number;
-            activeYn?: boolean;
-            effectiveStartDate?: string;
-            effectiveEndDate?: string;
-            policyRemark?: string;
-        };
-        DiscontinueLoanProductRequest: {
-            saleEndDate: string;
-            reasonCd: string;
-            reasonRemark?: string;
-        };
-        CreateContractRequest: {
-            /** Format: int64 */
-            applId: number;
-            /** Format: int64 */
-            contractedAmount: number;
-            /** Format: int32 */
-            contractedPeriodMo: number;
-            /** Format: int32 */
-            baseRateBps: number;
-            /** Format: int32 */
-            spreadBps?: number;
-            /** Format: int32 */
-            preferentialRateBps?: number;
-            /** Format: int32 */
-            totalRateBps?: number;
-            rateTypeCd: string;
-            repaymentMethodCd: string;
-            currencyCd?: string;
-            cntrStartDate?: string;
-            cntrEndDate?: string;
-            cntrDocUrl?: string;
-            cntrDocHash?: string;
-        };
-        ApiResponseLoanContractResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanContractResponse"];
-        };
-        LoanContractResponse: {
-            /** Format: int64 */
-            cntrId?: number;
-            cntrNo?: string;
-            /** Format: int64 */
-            applId?: number;
-            /** Format: int64 */
-            revId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            /** Format: int64 */
-            prodId?: number;
-            /** Format: int64 */
-            contractedAmount?: number;
-            currencyCd?: string;
-            /** Format: int32 */
-            contractedPeriodMo?: number;
-            /** Format: int32 */
-            totalRateBps?: number;
-            /** Format: int32 */
-            baseRateBps?: number;
-            /** Format: int32 */
-            spreadBps?: number;
-            /** Format: int32 */
-            preferentialRateBps?: number;
-            rateTypeCd?: string;
-            repaymentMethodCd?: string;
-            cntrStatusCd?: string;
-            cntrStartDate?: string;
-            cntrEndDate?: string;
-            cntrDocUrl?: string;
-            cntrDocHash?: string;
-            /** Format: date-time */
-            signedAt?: string;
-        };
-        ApiResponseVirtualAccountResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["VirtualAccountResponse"];
-        };
-        VirtualAccountResponse: {
-            accountNo?: string;
-            bankCode?: string;
-            accountNickname?: string;
-        };
-        RepayInstallmentRequest: {
-            /** Format: int32 */
-            installmentNo: number;
-            channelCd?: string;
-            valueDate?: string;
-        };
-        ApiResponseRepaymentTransactionResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RepaymentTransactionResponse"];
-        };
-        RepaymentTransactionResponse: {
-            /** Format: int64 */
-            rtxId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int64 */
-            rschId?: number;
-            rtxTypeCd?: string;
-            rtxStatusCd?: string;
-            /** Format: int64 */
-            totalAmount?: number;
-            /** Format: int64 */
-            principalAmount?: number;
-            /** Format: int64 */
-            interestAmount?: number;
-            /** Format: int64 */
-            overdueInterestAmount?: number;
-            /** Format: int64 */
-            feeAmount?: number;
-            channelCd?: string;
-            currencyCd?: string;
-            /** Format: date-time */
-            paidAt?: string;
-            valueDate?: string;
-            /** Format: int64 */
-            balanceAfter?: number;
-            idempotencyKey?: string;
-        };
-        ReverseRepaymentRequest: {
-            reversalReasonCd?: string;
-            reversalRemark?: string;
-        };
-        ApiResponseReversalResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ReversalResponse"];
-        };
-        ReversalResponse: {
-            /** Format: int64 */
-            reversalRtxId?: number;
-            /** Format: int64 */
-            targetRtxId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int64 */
-            restoredRschId?: number;
-            /** Format: int64 */
-            amount?: number;
-            /** Format: date-time */
-            reversedAt?: string;
-            supersededVersionCd?: string;
-            /** Format: int32 */
-            supersededCount?: number;
-            restoredVersionCd?: string;
-            /** Format: int32 */
-            restoredCount?: number;
-        };
-        PartialRepayRequest: {
-            /** Format: int32 */
-            installmentNo: number;
-            /** Format: int64 */
-            amount: number;
-            channelCd?: string;
-            valueDate?: string;
-        };
-        ApiResponsePartialRepaymentResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PartialRepaymentResponse"];
-        };
-        PartialRepaymentResponse: {
-            /** Format: int64 */
-            rtxId?: number;
-            /** Format: int64 */
-            rschId?: number;
-            /** Format: int32 */
-            installmentNo?: number;
-            /** Format: int64 */
-            paidAmount?: number;
-            /** Format: int64 */
-            principalPortion?: number;
-            /** Format: int64 */
-            interestPortion?: number;
-            /** Format: int64 */
-            cumulativePaid?: number;
-            /** Format: int64 */
-            scheduledTotal?: number;
-            scheduleStatusAfter?: string;
-            /** Format: date-time */
-            paidAt?: string;
-        };
-        RegisterRepaymentAccountRequest: {
-            bankCd: string;
-            accountNo: string;
-            holderName?: string;
-            /** Format: int64 */
-            accountId?: number;
-            autoDebitYn?: boolean;
-            /** Format: int32 */
-            debitDay?: number;
-        };
-        ApiResponseRepaymentAccountResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RepaymentAccountResponse"];
-        };
-        RepaymentAccountResponse: {
-            /** Format: int64 */
-            racctId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int64 */
-            accountId?: number;
-            bankCd?: string;
-            accountNoMasked?: string;
-            holderNameMasked?: string;
-            racctStatusCd?: string;
-            autoDebitYn?: boolean;
-            /** Format: int32 */
-            debitDay?: number;
-            /** Format: date-time */
-            verifiedAt?: string;
-        };
-        VerifyRepaymentAccountRequest: {
-            verifyChannelCd?: string;
-            verifyRemark?: string;
-        };
-        CreateRateChangeRequest: {
-            /** Format: int32 */
-            newBaseRateBps: number;
-            /** Format: int32 */
-            newSpreadBps?: number;
-            /** Format: int32 */
-            newPreferentialRateBps?: number;
-            /** Format: int32 */
-            newTotalRateBps?: number;
-            appliedStartDate: string;
-            rateChangeReasonCd: string;
-        };
-        ApiResponseRateChangeApplyResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RateChangeApplyResponse"];
-        };
-        RateChangeApplyResponse: {
-            /** Format: int64 */
-            rchgId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int32 */
-            previousRateBps?: number;
-            /** Format: int32 */
-            newRateBps?: number;
-            appliedStartDate?: string;
-            rateChangeReasonCd?: string;
-            newScheduleVersionCd?: string;
-            /** Format: int32 */
-            supersededInstallments?: number;
-            /** Format: int32 */
-            newInstallments?: number;
-            /** Format: date-time */
-            changedAt?: string;
-        };
-        PrepayRequest: {
-            /** Format: int64 */
-            amount: number;
-            channelCd?: string;
-            valueDate?: string;
-        };
-        ApiResponsePrepaymentResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PrepaymentResponse"];
-        };
-        PrepaymentResponse: {
-            /** Format: int64 */
-            rtxId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int64 */
-            prepaidPrincipal?: number;
-            /** Format: int64 */
-            feeAmount?: number;
-            /** Format: int64 */
-            totalAmount?: number;
-            /** Format: int64 */
-            outstandingAfter?: number;
-            /** Format: int32 */
-            supersededInstallments?: number;
-            newScheduleVersionCd?: string;
-            /** Format: int32 */
-            newInstallmentCount?: number;
-            /** Format: date-time */
-            paidAt?: string;
-        };
-        ExtendMaturityRequest: {
-            /** Format: int32 */
-            extendedPeriodMo: number;
-            extensionTypeCd?: string;
-            extensionReason?: string;
-        };
-        ApiResponseMaturityResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["MaturityResponse"];
-        };
-        MaturityResponse: {
-            /** Format: int64 */
-            matId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            originalMaturityDate?: string;
-            currentMaturityDate?: string;
-            matStatusCd?: string;
-            extensionTypeCd?: string;
-            /** Format: int32 */
-            extensionCount?: number;
-            lastExtendedDate?: string;
-            /** Format: int32 */
-            extendedPeriodMo?: number;
-            noticeStatusCd?: string;
-            /** Format: date-time */
-            lastNoticeAt?: string;
-        };
-        IssueGuaranteeInsuranceRequest: {
-            ginsAgencyCd: string;
-            /** Format: int64 */
-            guaranteeAmount: number;
-            /** Format: int32 */
-            guaranteeRatioBps: number;
-            /** Format: int64 */
-            premiumAmount: number;
-            ginsStartDate?: string;
-            ginsEndDate?: string;
-            ginsDocUrl?: string;
-            ginsDocHash?: string;
-        };
-        ApiResponseGuaranteeInsuranceResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["GuaranteeInsuranceResponse"];
-        };
-        GuaranteeInsuranceResponse: {
-            /** Format: int64 */
-            ginsId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            ginsAgencyCd?: string;
-            ginsPolicyNo?: string;
-            /** Format: int64 */
-            guaranteeAmount?: number;
-            /** Format: int32 */
-            guaranteeRatioBps?: number;
-            /** Format: int64 */
-            premiumAmount?: number;
-            ginsStatusCd?: string;
-            ginsStartDate?: string;
-            ginsEndDate?: string;
-            ginsDocUrl?: string;
-            ginsDocHash?: string;
-            /** Format: date-time */
-            issuedAt?: string;
-        };
-        CancelGuaranteeInsuranceRequest: {
-            cancelReasonCd?: string;
-            cancelRemark?: string;
-        };
-        DrawdownRequest: {
-            /** Format: int64 */
-            executedAmount: number;
-            currencyCd?: string;
-            disbursementBankCd?: string;
-            disbursementAccountNo: string;
-            valueDate?: string;
-            /** Format: int64 */
-            feeAmount?: number;
-        };
-        ApiResponseLoanExecutionResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanExecutionResponse"];
-        };
-        LoanExecutionResponse: {
-            /** Format: int64 */
-            execId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int64 */
-            executedAmount?: number;
-            /** Format: int64 */
-            cumulativeExecutedAmount?: number;
-            currencyCd?: string;
-            execStatusCd?: string;
-            disbursementBankCd?: string;
-            disbursementAccountMasked?: string;
-            /** Format: date-time */
-            executedAt?: string;
-            valueDate?: string;
-            /** Format: int64 */
-            feeAmount?: number;
-            journalEntryNo?: string;
-        };
-        SubmitReportRequest: {
-            reportTypeCd: string;
-            agencyCd: string;
-            reportTargetCd: string;
-            reportReasonCd?: string;
-            reportPayload?: string;
-        };
-        ApiResponseCreditInfoReportResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CreditInfoReportResponse"];
-        };
-        CreditInfoReportResponse: {
-            /** Format: int64 */
-            crptId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int64 */
-            dlqId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            crptTypeCd?: string;
-            crptAgencyCd?: string;
-            crptStatusCd?: string;
-            reportTargetCd?: string;
-            reportReasonCd?: string;
-            reportPayload?: string;
-            externalTxNo?: string;
-            /** Format: date-time */
-            reportedAt?: string;
-            /** Format: date-time */
-            ackAt?: string;
-        };
-        CloseLoanRequest: {
-            closureTypeCd: string;
-            closureReasonCd?: string;
-            closureDate?: string;
-            /** Format: int64 */
-            finalFeeAmt?: number;
-            /** Format: int64 */
-            prepaymentFeeAmt?: number;
-            closureDocUrl?: string;
-            closureDocHash?: string;
-            subrogationPartyRef?: string;
-            writeOffReasonCd?: string;
-        };
-        ApiResponseLoanClosureResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanClosureResponse"];
-        };
-        LoanClosureResponse: {
-            /** Format: int64 */
-            closId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            closTypeCd?: string;
-            closReasonCd?: string;
-            closStatusCd?: string;
-            /** Format: int64 */
-            finalPrincipalAmt?: number;
-            /** Format: int64 */
-            finalInterestAmt?: number;
-            /** Format: int64 */
-            finalFeeAmt?: number;
-            /** Format: int64 */
-            prepaymentFeeAmt?: number;
-            /** Format: int64 */
-            totalSettledAmt?: number;
-            closDate?: string;
-            /** Format: date-time */
-            closedAt?: string;
-            closDocUrl?: string;
-            closDocHash?: string;
-            /** Format: int64 */
-            writeOffAmount?: number;
-            /** Format: int64 */
-            subrogationAmount?: number;
-            subrogationPartyRef?: string;
-            writeOffReasonCd?: string;
-        };
-        IssueCertificateRequest: {
-            certTypeCd: string;
-            certPurposeCd?: string;
-            issueChannelCd?: string;
-            certDocUrl?: string;
-            certDocHash?: string;
-            retentionUntil?: string;
-        };
-        ApiResponseLoanCertificateResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanCertificateResponse"];
-        };
-        LoanCertificateResponse: {
-            /** Format: int64 */
-            certId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            certTypeCd?: string;
-            certNo?: string;
-            certStatusCd?: string;
-            certPurposeCd?: string;
-            certDocUrl?: string;
-            certDocHash?: string;
-            issueChannelCd?: string;
-            /** Format: date-time */
-            issuedAt?: string;
-            retentionUntil?: string;
-        };
-        CreateLoanApplicationRequest: {
-            /** Format: int64 */
-            customerId: number;
-            /** Format: int64 */
-            prodId: number;
-            channelCd: string;
-            /** Format: int64 */
-            requestedAmount: number;
-            /** Format: int32 */
-            requestedPeriodMo: number;
-            loanPurposeCd?: string;
-            repaymentMethodCd?: string;
-            /** Format: int64 */
-            estimatedIncomeAmt?: number;
-            employmentTypeCd?: string;
-        };
-        ApiResponseLoanApplicationResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanApplicationResponse"];
-        };
-        LoanApplicationResponse: {
-            /** Format: int64 */
-            applId?: number;
-            applNo?: string;
-            /** Format: int64 */
-            customerId?: number;
-            /** Format: int64 */
-            prodId?: number;
-            channelCd?: string;
-            /** Format: int64 */
-            requestedAmount?: number;
-            /** Format: int32 */
-            requestedPeriodMo?: number;
-            loanPurposeCd?: string;
-            repaymentMethodCd?: string;
-            /** Format: int64 */
-            estimatedIncomeAmt?: number;
-            employmentTypeCd?: string;
-            applStatusCd?: string;
-            /** Format: date-time */
-            appliedAt?: string;
-        };
-        RunReviewRequest: {
-            revTypeCd: string;
-            revDecisionCd: string;
-            /** Format: int64 */
-            approvedAmount?: number;
-            /** Format: int32 */
-            approvedRateBps?: number;
-            /** Format: int32 */
-            approvedPeriodMo?: number;
-            rejectReasonCd?: string;
-            revRemark?: string;
-        };
-        EscalateToHqRequest: {
-            escalateReason: string;
-        };
-        ConfirmReviewRequest: {
-            confirmRemark?: string;
-        };
-        ApproverApproveRequest: {
-            approverDecisionCd: string;
-            overrideReasonCd?: string;
-            overrideRemark?: string;
-            /** Format: int64 */
-            overrideAmount?: number;
-            /** Format: int32 */
-            overrideRateBps?: number;
-            /** Format: int32 */
-            overridePeriodMo?: number;
-            overrideRejectReasonCd?: string;
-        };
-        AcknowledgeBiasRequest: {
-            acknowledgeRemark?: string;
-        };
-        RunPrescreeningRequest: {
-            prescResultCd?: string;
-            /** Format: int64 */
-            estimatedLimitAmt?: number;
-            /** Format: int32 */
-            estimatedRateBps?: number;
-            estimatedGrade?: string;
-            /** Format: int32 */
-            estimatedScore?: number;
-            rejectReasonCd?: string;
-            prescRemark?: string;
-            prescEngineVersion?: string;
-        };
-        ApiResponseLoanPrescreeningResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanPrescreeningResponse"];
-        };
-        LoanPrescreeningResponse: {
-            /** Format: int64 */
-            prescId?: number;
-            /** Format: int64 */
-            applId?: number;
-            prescResultCd?: string;
-            /** Format: int64 */
-            estimatedLimitAmt?: number;
-            /** Format: int32 */
-            estimatedRateBps?: number;
-            estimatedGrade?: string;
-            /** Format: int32 */
-            estimatedScore?: number;
-            rejectReasonCd?: string;
-            prescRemark?: string;
-            /** Format: date-time */
-            prescreenedAt?: string;
-            prescEngineVersion?: string;
-            aiTrackCd?: string;
-        };
-        VerifyIdentityRequest: {
-            idvMethodCd: string;
-            idvTargetCd: string;
-            mobileNo: string;
-        };
-        ApiResponseIdentityVerificationResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["IdentityVerificationResponse"];
-        };
-        IdentityVerificationResponse: {
-            /** Format: int64 */
-            idvId?: number;
-            /** Format: int64 */
-            applId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            idvMethodCd?: string;
-            idvStatusCd?: string;
-            idvResultCd?: string;
-            idvTargetCd?: string;
-            ciHash?: string;
-            diHash?: string;
-            mobileNoMasked?: string;
-            /** Format: date-time */
-            verifiedAt?: string;
-            externalTxNo?: string;
-        };
-        RegisterGuarantorAgreementRequest: {
-            guarantorName: string;
-            guarantorMobileNo: string;
-            relationTypeCd?: string;
-            gagrTypeCd: string;
-            /** Format: int64 */
-            guaranteeAmount: number;
-            /** Format: int32 */
-            guaranteeRatioBps?: number;
-        };
-        ApiResponseGuarantorAgreementResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["GuarantorAgreementResponse"];
-        };
-        GuarantorAgreementResponse: {
-            /** Format: int64 */
-            gagrId?: number;
-            /** Format: int64 */
-            applId?: number;
-            /** Format: int64 */
-            gmstId?: number;
-            guarantorNameMasked?: string;
-            mobileNoMasked?: string;
-            relationTypeCd?: string;
-            gagrTypeCd?: string;
-            /** Format: int64 */
-            guaranteeAmount?: number;
-            /** Format: int32 */
-            guaranteeRatioBps?: number;
-            gagrStatusCd?: string;
-            /** Format: date-time */
-            consentedAt?: string;
-            signedDocUrl?: string;
-            signedDocHash?: string;
-        };
-        SignGuarantorAgreementRequest: {
-            signedDocUrl: string;
-            signedDocHash: string;
-        };
-        CancelGuarantorAgreementRequest: {
-            cancelReasonCd?: string;
-            cancelRemark?: string;
-        };
-        RunDsrCalculationRequest: {
-            /** Format: int64 */
-            annualIncomeAmt: number;
-            /** Format: int64 */
-            existingPrincipalTotal?: number;
-            /** Format: int64 */
-            existingAnnualRepayAmt?: number;
-            /** Format: int64 */
-            newAnnualRepayAmt?: number;
-            /** Format: int32 */
-            dsrLimitBps?: number;
-            dsrRegTypeCd?: string;
-            calcEngineVersion?: string;
-            dsrDetail?: string;
-        };
-        ApiResponseDsrCalculationResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["DsrCalculationResponse"];
-        };
-        DsrCalculationResponse: {
-            /** Format: int64 */
-            dsrId?: number;
-            /** Format: int64 */
-            applId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            /** Format: int64 */
-            annualIncomeAmt?: number;
-            /** Format: int64 */
-            existingPrincipalTotal?: number;
-            /** Format: int64 */
-            existingAnnualRepayAmt?: number;
-            /** Format: int64 */
-            newAnnualRepayAmt?: number;
-            /** Format: int64 */
-            totalAnnualRepayAmt?: number;
-            /** Format: int32 */
-            dsrRatioBps?: number;
-            /** Format: int32 */
-            dsrLimitBps?: number;
-            dsrStatusCd?: string;
-            dsrRegTypeCd?: string;
-            /** Format: date-time */
-            calculatedAt?: string;
-            calcEngineVersion?: string;
-            dsrDetail?: string;
-        };
-        ApiResponseLoanDocumentResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanDocumentResponse"];
-        };
-        LoanDocumentResponse: {
-            /** Format: int64 */
-            docId?: number;
-            /** Format: int64 */
-            applId?: number;
-            docTypeCd?: string;
-            docStatusCd?: string;
-            docSourceCd?: string;
-            docName?: string;
-            docUrl?: string;
-            docHash?: string;
-            mimeType?: string;
-            /** Format: int64 */
-            fileSizeBytes?: number;
-            /** Format: date-time */
-            submittedAt?: string;
-            /** Format: date-time */
-            verifiedAt?: string;
-            verifyResultCd?: string;
-            retentionUntil?: string;
-        };
-        RunCreditEvaluationRequest: {
-            cevalEngine: string;
-            cevalEngineVersion?: string;
-            cevalGrade?: string;
-            /** Format: int32 */
-            cevalScore?: number;
-            /** Format: int32 */
-            pdBps?: number;
-            cevalDecisionCd: string;
-            /** Format: int64 */
-            evalLimitAmount?: number;
-            /** Format: int32 */
-            evalRateBps?: number;
-            cevalFactors?: string;
-        };
-        ApiResponseCreditEvaluationResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CreditEvaluationResponse"];
-        };
-        CreditEvaluationResponse: {
-            /** Format: int64 */
-            cevalId?: number;
-            /** Format: int64 */
-            applId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            cevalEngine?: string;
-            cevalEngineVersion?: string;
-            cevalGrade?: string;
-            /** Format: int32 */
-            cevalScore?: number;
-            /** Format: int32 */
-            pdBps?: number;
-            cevalDecisionCd?: string;
-            /** Format: int64 */
-            evalLimitAmount?: number;
-            /** Format: int32 */
-            evalRateBps?: number;
-            cevalStatusCd?: string;
-            cevalFactors?: string;
-            /** Format: date-time */
-            evaluatedAt?: string;
-        };
-        CreateCreditConsentRequest: {
-            consentTypeCd: string;
-            consentScopeCd: string;
-            consentTargetCd: string;
-            consentMethodCd?: string;
-            consentToken?: string;
-            signedDocUrl?: string;
-            signedDocHash?: string;
-            retentionUntil?: string;
-        };
-        ApiResponseCreditConsentResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CreditConsentResponse"];
-        };
-        CreditConsentResponse: {
-            /** Format: int64 */
-            csntId?: number;
-            /** Format: int64 */
-            applId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            consentTypeCd?: string;
-            consentScopeCd?: string;
-            consentTargetCd?: string;
-            consentYn?: boolean;
-            /** Format: date-time */
-            consentedAt?: string;
-            consentMethodCd?: string;
-            signedDocUrl?: string;
-            retentionUntil?: string;
-            withdrawnYn?: boolean;
-            /** Format: date-time */
-            withdrawnAt?: string;
-        };
-        CreateCollateralRequest: {
-            colTypeCd: string;
-            colName?: string;
-            colAddress?: string;
-            colRegistryNo?: string;
-            /** Format: int64 */
-            declaredValue?: number;
-            currencyCd?: string;
-            ownershipTypeCd?: string;
-            seniorLienYn?: boolean;
-            /** Format: int64 */
-            seniorLienAmount?: number;
-        };
-        ApiResponseCollateralResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CollateralResponse"];
-        };
-        CollateralResponse: {
-            /** Format: int64 */
-            colId?: number;
-            /** Format: int64 */
-            applId?: number;
-            colTypeCd?: string;
-            colStatusCd?: string;
-            colNo?: string;
-            colName?: string;
-            colAddress?: string;
-            colRegistryNo?: string;
-            /** Format: int64 */
-            declaredValue?: number;
-            currencyCd?: string;
-            ownershipTypeCd?: string;
-            seniorLienYn?: boolean;
-            /** Format: int64 */
-            seniorLienAmount?: number;
-        };
-        CancelLoanApplicationRequest: {
-            cancelReasonCd: string;
-            cancelRemark?: string;
-        };
-        ApiResponseNotificationDispatchSummary: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["NotificationDispatchSummary"];
-        };
-        NotificationDispatchSummary: {
-            /** Format: int32 */
-            processed?: number;
-            /** Format: int32 */
-            sent?: number;
-            /** Format: int32 */
-            failed?: number;
-            /** Format: int32 */
-            dead?: number;
-        };
-        ApiResponseMaturityRunResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["MaturityRunResponse"];
-        };
-        MaturityRunResponse: {
-            baseDate?: string;
-            /** Format: int32 */
-            totalCandidates?: number;
-            /** Format: int32 */
-            processed?: number;
-        };
-        BiasReportRequest: {
-            severityCd: string;
-            summary: string;
-            findings?: components["schemas"]["Finding"][];
-            model?: string;
-            modelVersion?: string;
-            promptHash?: string;
-            /** Format: int32 */
-            inputToken?: number;
-            /** Format: int32 */
-            outputToken?: number;
-            /** Format: int32 */
-            latencyMs?: number;
-        };
-        Finding: {
-            code: string;
-            result: string;
-            detail?: string;
-        };
-        AiReviewAdviceResponse: {
-            /** Format: int64 */
-            adviceId?: number;
-            /** Format: int64 */
-            revId?: number;
-            adviceTypeCd?: string;
-            severityCd?: string;
-            adviceBody?: string;
-            model?: string;
-            modelVersion?: string;
-            /** Format: int32 */
-            latencyMs?: number;
-            /** Format: date-time */
-            createdAt?: string;
-        };
-        ApiResponseAiReviewAdviceResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AiReviewAdviceResponse"];
-        };
-        BiasOpsNoteRequest: {
-            /** Format: int64 */
-            opsStaffId: number;
-            note: string;
-        };
-        ApiResponseExpirePendingReviewsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ExpirePendingReviewsResponse"];
-        };
-        ExpirePendingReviewsResponse: {
-            /** Format: int32 */
-            processed?: number;
-            expiredRevIds?: number[];
-            /** Format: date-time */
-            cutoffAt?: string;
-        };
-        ApiResponseExpirePendingApproverResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ExpirePendingApproverResponse"];
-        };
-        ExpirePendingApproverResponse: {
-            /** Format: int32 */
-            processed?: number;
-            expiredRevIds?: number[];
-            /** Format: date-time */
-            cutoffAt?: string;
-        };
-        ApiResponseExpireBiasReviewingResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ExpireBiasReviewingResponse"];
-        };
-        ExpireBiasReviewingResponse: {
-            /** Format: int32 */
-            processed?: number;
-            expiredRevIds?: number[];
-            /** Format: date-time */
-            cutoffAt?: string;
-        };
-        ApiResponsePurgeExpiredDocumentsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PurgeExpiredDocumentsResponse"];
-        };
-        PurgeExpiredDocumentsResponse: {
-            /** Format: int32 */
-            scanned?: number;
-            /** Format: int32 */
-            purged?: number;
-            /** Format: int32 */
-            failed?: number;
-            purgedDocIds?: number[];
-        };
-        ApiResponseInterestAccrualRunResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["InterestAccrualRunResponse"];
-        };
-        InterestAccrualRunResponse: {
-            baseDate?: string;
-            /** Format: int32 */
-            totalCandidates?: number;
-            /** Format: int32 */
-            processed?: number;
-            /** Format: int32 */
-            skipped?: number;
-        };
-        ApiResponseGuaranteeInsuranceExpiryRunResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["GuaranteeInsuranceExpiryRunResponse"];
-        };
-        GuaranteeInsuranceExpiryRunResponse: {
-            baseDate?: string;
-            /** Format: int32 */
-            totalCandidates?: number;
-            /** Format: int32 */
-            processed?: number;
-        };
-        ApiResponseEodRunResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["EodRunResponse"];
-        };
-        EodRunResponse: {
-            baseDate?: string;
-            jobStatus?: string;
-            /** Format: int64 */
-            jobExecutionId?: number;
-            message?: string;
-        };
-        ApiResponseEclCalculationRunResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["EclCalculationRunResponse"];
-        };
-        EclCalculationRunResponse: {
-            baseMonth?: string;
-            /** Format: int32 */
-            totalCandidates?: number;
-            /** Format: int32 */
-            processed?: number;
-            /** Format: int32 */
-            skipped?: number;
-            /** Format: int64 */
-            totalEcl?: number;
-        };
-        ApiResponseDelinquencyRolloverResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["DelinquencyRolloverResponse"];
-        };
-        DelinquencyRolloverResponse: {
-            baseDate?: string;
-            /** Format: int32 */
-            newlyOverdueInstallments?: number;
-            /** Format: int32 */
-            activeDelinquencies?: number;
-            /** Format: int32 */
-            resolvedDelinquencies?: number;
-            /** Format: int32 */
-            snapshotsCreated?: number;
-        };
-        ApiResponseCreditInfoReportDispatchSummary: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CreditInfoReportDispatchSummary"];
-        };
-        CreditInfoReportDispatchSummary: {
-            /** Format: int32 */
-            processed?: number;
-            /** Format: int32 */
-            sent?: number;
-            /** Format: int32 */
-            failed?: number;
-            /** Format: int32 */
-            dead?: number;
-        };
-        ApiResponseCommonSyncDispatchSummary: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CommonSyncDispatchSummary"];
-        };
-        CommonSyncDispatchSummary: {
-            /** Format: int32 */
-            total?: number;
-            /** Format: int32 */
-            done?: number;
-            /** Format: int32 */
-            failed?: number;
-            /** Format: int32 */
-            dead?: number;
-        };
-        ApiResponseInteger: {
-            code?: string;
-            message?: string;
-            /** Format: int32 */
-            data?: number;
-        };
-        ApiResponseCalendarSeederRunResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CalendarSeederRunResponse"];
-        };
-        CalendarSeederRunResponse: {
-            /** Format: int32 */
-            year?: number;
-            /** Format: int32 */
-            totalDays?: number;
-            /** Format: int32 */
-            inserted?: number;
-            /** Format: int32 */
-            skipped?: number;
-        };
-        ApiResponseAutoDebitRunResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AutoDebitRunResponse"];
-        };
-        AutoDebitRunResponse: {
-            baseDate?: string;
-            /** Format: int32 */
-            totalCandidates?: number;
-            /** Format: int32 */
-            processed?: number;
-            /** Format: int32 */
-            skipped?: number;
-            skipReason?: string;
-        };
-        AutoDebitPaymentResultRequest: {
-            piId: string;
-            idempotencyKey: string;
-            status: string;
-            failureCategory?: string;
-        };
-        ApiResponseApplicationExpiryRunResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ApplicationExpiryRunResponse"];
-        };
-        ApplicationExpiryRunResponse: {
-            baseDate?: string;
-            /** Format: date-time */
-            threshold?: string;
-            /** Format: int32 */
-            totalCandidates?: number;
-            /** Format: int32 */
-            processed?: number;
-        };
-        ApiResponseSnapshotRunResult: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["SnapshotRunResult"];
-        };
-        SnapshotRunResult: {
-            baseDate?: string;
-            /** Format: int32 */
-            reviewCount?: number;
-            /** Format: int32 */
-            inserted?: number;
-            /** Format: int32 */
-            skipped?: number;
-        };
-        ApiResponseBackfillResultResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["BackfillResultResponse"];
-        };
-        BackfillResultResponse: {
-            /** Format: int32 */
-            processed?: number;
-            /** Format: int32 */
-            skipped?: number;
-            /** Format: int32 */
-            failed?: number;
-            dryRun?: boolean;
-        };
-        ApiResponseIndexCasesResult: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["IndexCasesResult"];
-        };
-        IndexCasesResult: {
-            /** Format: int32 */
-            indexedCount?: number;
-            /** Format: int64 */
-            lastCaseIdxId?: number;
-        };
-        DocumentRegisterRequest: {
-            docCd: string;
-            docTitle: string;
-            docCategoryCd: string;
-            docVersion: string;
-            effectiveStartDate?: string;
-            effectiveEndDate?: string;
-            sourceUri?: string;
-            docDesc?: string;
-            content?: string;
-        };
-        ApiResponseDocumentRegisterResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["DocumentRegisterResponse"];
-        };
-        DocumentRegisterResponse: {
-            /** Format: int64 */
-            docId?: number;
-            docCd?: string;
-            docTitle?: string;
-            docVersion?: string;
-            activeYn?: boolean;
-            /** Format: int32 */
-            chunkCount?: number;
-        };
-        ApiResponseBatchEvaluationResult: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["BatchEvaluationResult"];
-        };
-        BatchEvaluationResult: {
-            baseDate?: string;
-            snapshot?: components["schemas"]["SnapshotRunResult"];
-            /** Format: int32 */
-            reportsPublished?: number;
-        };
         AccountingSummaryRunResponse: {
-            created?: boolean;
-            summaryDate?: string;
-            /** Format: int64 */
-            interestRevenue?: number;
-            /** Format: int64 */
-            overdueInterestRevenue?: number;
-            /** Format: int64 */
-            autoDebitTotal?: number;
-            /** Format: int32 */
-            autoDebitCount?: number;
-            /** Format: int64 */
-            disbursedAmount?: number;
-            /** Format: int32 */
-            disbursedCount?: number;
             /** Format: int32 */
             activeContractCount?: number;
             /** Format: int32 */
             activeDelinquencyCount?: number;
+            /** Format: int32 */
+            autoDebitCount?: number;
+            /** Format: int64 */
+            autoDebitTotal?: number;
+            created?: boolean;
+            /** Format: int64 */
+            disbursedAmount?: number;
+            /** Format: int32 */
+            disbursedCount?: number;
+            /** Format: int64 */
+            interestRevenue?: number;
+            /** Format: int64 */
+            overdueInterestRevenue?: number;
+            summaryDate?: string;
+        };
+        AckCallbackRequest: {
+            /** Format: date-time */
+            ackedAt: string;
+            externalAckNo: string;
+        };
+        AcknowledgeBiasRequest: {
+            acknowledgeRemark?: string;
+        };
+        AddReviewCheckLogRequest: {
+            checkItemCd: string;
+            checkRemark?: string;
+            checkResultCd: string;
+            /** Format: int64 */
+            checkerId?: number;
+        };
+        AdminCreditInfoReportListResponse: {
+            items?: components["schemas"]["CreditInfoReportResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalCount?: number;
+        };
+        AdvisoryAckHistoryItem: {
+            ackReasonCd?: string;
+            ackRemark?: string;
+            ackResponseCd?: string;
+            /** Format: int64 */
+            ackReviewerId?: number;
+            /** Format: date-time */
+            ackedAt?: string;
+            /** Format: int64 */
+            advkId?: number;
+            afterDecisionCd?: string;
+            beforeDecisionCd?: string;
+            decisionChangeYn?: boolean;
+        };
+        AdvisoryAckRequest: {
+            ackReasonCd?: string;
+            ackRemark?: string;
+            ackResponseCd: string;
+            afterDecisionCd?: string;
+            beforeDecisionCd?: string;
+            decisionChangeYn?: boolean;
+        };
+        AdvisoryAckResponse: {
+            ackResponseCd?: string;
+            /** Format: int64 */
+            ackReviewerId?: number;
+            /** Format: date-time */
+            ackedAt?: string;
+            /** Format: int64 */
+            advkId?: number;
+            /** Format: int64 */
+            advrId?: number;
+            decisionChangeYn?: boolean;
+        };
+        AdvisoryReportDetailResponse: {
+            acks?: components["schemas"]["AdvisoryAckHistoryItem"][];
+            advisoryTypeCd?: string;
+            /** Format: int64 */
+            advrId?: number;
+            advrPayload?: string;
+            advrStatusCd?: string;
+            advrSummary?: string;
+            advrTitle?: string;
+            /** Format: date-time */
+            firstViewedAt?: string;
+            /** Format: date-time */
+            generatedAt?: string;
+            /** Format: date-time */
+            resolvedAt?: string;
+            /** Format: int64 */
+            revId?: number;
+            /** Format: int64 */
+            ruleId?: number;
+            severityCd?: string;
+            signals?: components["schemas"]["AdvisorySignalResponse"][];
+            /** Format: int64 */
+            targetReviewerId?: number;
+        };
+        AdvisoryReportListResponse: {
+            items?: components["schemas"]["AdvisoryReportSummaryResponse"][];
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        AdvisoryReportSummary: {
+            advisoryTypeCd?: string;
+            /** Format: int64 */
+            advrId?: number;
+            advrStatusCd?: string;
+            advrSummary?: string;
+            advrTitle?: string;
+            /** Format: int64 */
+            revId?: number;
+            severityCd?: string;
+            targetReviewerId?: string;
+        };
+        AdvisoryReportSummaryResponse: {
+            advisoryTypeCd?: string;
+            /** Format: int64 */
+            advrId?: number;
+            advrStatusCd?: string;
+            advrTitle?: string;
+            /** Format: date-time */
+            firstViewedAt?: string;
+            /** Format: date-time */
+            generatedAt?: string;
+            /** Format: date-time */
+            resolvedAt?: string;
+            /** Format: int64 */
+            revId?: number;
+            /** Format: int64 */
+            ruleId?: number;
+            severityCd?: string;
+            /** Format: int64 */
+            targetReviewerId?: number;
+        };
+        AdvisoryRuleListResponse: {
+            items?: components["schemas"]["AdvisoryRuleResponse"][];
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        AdvisoryRuleResponse: {
+            activeYn?: boolean;
+            advisoryTypeCd?: string;
+            effectiveEndDate?: string;
+            effectiveStartDate?: string;
+            ruleCategoryCd?: string;
+            ruleCd?: string;
+            ruleDesc?: string;
+            /** Format: int64 */
+            ruleId?: number;
+            ruleName?: string;
+            ruleParams?: string;
+            ruleVersion?: string;
+            severityCd?: string;
+        };
+        AdvisorySignalResponse: {
+            /** Format: int64 */
+            advsId?: number;
+            /** Format: date-time */
+            observedAt?: string;
+            observedValue?: number;
+            observedWindowEnd?: string;
+            observedWindowStart?: string;
+            peerBaselineValue?: number;
+            /** Format: int32 */
+            sampleSize?: number;
+            signalDetail?: string;
+            signalKindCd?: string;
+            signalMetric?: string;
+            thresholdValue?: number;
+        };
+        AiAuditOpinionResponse: {
+            /** Format: int64 */
+            advrId?: number;
+            analysisTypeCd?: string;
+            conclusionCd?: string;
+            /** Format: double */
+            confidenceScore?: number;
+            /** Format: date-time */
+            generatedAt?: string;
+            /** Format: int32 */
+            inputTokens?: number;
+            /** Format: int64 */
+            opinionId?: number;
+            /** Format: int32 */
+            outputTokens?: number;
+            reasoningSummary?: string;
+            /** Format: int64 */
+            revId?: number;
+            /** Format: int64 */
+            reviewerId?: number;
+        };
+        AiReviewAdviceResponse: {
+            adviceBody?: string;
+            /** Format: int64 */
+            adviceId?: number;
+            adviceTypeCd?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: int32 */
+            latencyMs?: number;
+            model?: string;
+            modelVersion?: string;
+            /** Format: int64 */
+            revId?: number;
+            severityCd?: string;
         };
         ApiResponseAccountingSummaryRunResponse: {
             code?: string;
-            message?: string;
             data?: components["schemas"]["AccountingSummaryRunResponse"];
-        };
-        CreditScorePreviewRequest: {
-            /** Format: int64 */
-            customerId: number;
-            loanTypeCd: string;
-            /** Format: int64 */
-            requestedAmount: number;
-            /** Format: int32 */
-            requestedPeriodMo: number;
-            loanPurposeCd?: string;
-            employmentTypeCd?: string;
-            /** Format: int64 */
-            estimatedIncomeAmt?: number;
-            consentYn: boolean;
-        };
-        ApiResponseCreditScorePreviewResponse: {
-            code?: string;
             message?: string;
-            data?: components["schemas"]["CreditScorePreviewResponse"];
         };
-        CreditScorePreviewResponse: {
-            decision?: string;
-            /** Format: int32 */
-            score?: number;
-            grade?: string;
-            /** Format: int32 */
-            pdBps?: number;
-            /** Format: int64 */
-            estimatedLimitAmt?: number;
-            rejectReasonCd?: string;
-            engineVersion?: string;
-        };
-        AckCallbackRequest: {
-            externalAckNo: string;
-            /** Format: date-time */
-            ackedAt: string;
-        };
-        ReleaseCollateralRequest: {
-            releaseReasonCd: string;
-            releaseDate?: string;
-            releaseRemark?: string;
-        };
-        RunLtvCalculationRequest: {
-            /** Format: int64 */
-            appliedColValue?: number;
-            /** Format: int64 */
-            seniorLienAmount?: number;
-            /** Format: int64 */
-            requestedAmount?: number;
-            /** Format: int32 */
-            ltvLimitBps?: number;
-            calcEngineVersion?: string;
-        };
-        ApiResponseLtvCalculationResponse: {
+        ApiResponseAdminCreditInfoReportListResponse: {
             code?: string;
+            data?: components["schemas"]["AdminCreditInfoReportListResponse"];
             message?: string;
-            data?: components["schemas"]["LtvCalculationResponse"];
         };
-        LtvCalculationResponse: {
-            /** Format: int64 */
-            ltvId?: number;
-            /** Format: int64 */
-            applId?: number;
-            /** Format: int64 */
-            colId?: number;
-            /** Format: int64 */
-            appliedColValue?: number;
-            /** Format: int64 */
-            seniorLienAmount?: number;
-            /** Format: int64 */
-            requestedAmount?: number;
-            /** Format: int32 */
-            ltvRatioBps?: number;
-            /** Format: int32 */
-            ltvLimitBps?: number;
-            /** Format: int64 */
-            maxLoanAmount?: number;
-            ltvStatusCd?: string;
-            /** Format: date-time */
-            calculatedAt?: string;
-            calcEngineVersion?: string;
+        ApiResponseAdvisoryAckResponse: {
+            code?: string;
+            data?: components["schemas"]["AdvisoryAckResponse"];
+            message?: string;
         };
-        EvaluateCollateralRequest: {
-            evalMethodCd: string;
-            evalAgencyCd?: string;
-            /** Format: int64 */
-            appraisedValue: number;
-            /** Format: int64 */
-            appliedValue?: number;
-            evalReportUrl?: string;
-            evalReportHash?: string;
-            appliedStartDate?: string;
-            appliedEndDate?: string;
+        ApiResponseAdvisoryReportDetailResponse: {
+            code?: string;
+            data?: components["schemas"]["AdvisoryReportDetailResponse"];
+            message?: string;
+        };
+        ApiResponseAdvisoryReportListResponse: {
+            code?: string;
+            data?: components["schemas"]["AdvisoryReportListResponse"];
+            message?: string;
+        };
+        ApiResponseAdvisoryReportSummaryResponse: {
+            code?: string;
+            data?: components["schemas"]["AdvisoryReportSummaryResponse"];
+            message?: string;
+        };
+        ApiResponseAdvisoryRuleListResponse: {
+            code?: string;
+            data?: components["schemas"]["AdvisoryRuleListResponse"];
+            message?: string;
+        };
+        ApiResponseAdvisoryRuleResponse: {
+            code?: string;
+            data?: components["schemas"]["AdvisoryRuleResponse"];
+            message?: string;
+        };
+        ApiResponseAiReviewAdviceResponse: {
+            code?: string;
+            data?: components["schemas"]["AiReviewAdviceResponse"];
+            message?: string;
+        };
+        ApiResponseApplicationExpiryRunResponse: {
+            code?: string;
+            data?: components["schemas"]["ApplicationExpiryRunResponse"];
+            message?: string;
+        };
+        ApiResponseAutoDebitRunResponse: {
+            code?: string;
+            data?: components["schemas"]["AutoDebitRunResponse"];
+            message?: string;
+        };
+        ApiResponseBackfillResultResponse: {
+            code?: string;
+            data?: components["schemas"]["BackfillResultResponse"];
+            message?: string;
+        };
+        ApiResponseBatchEvaluationResult: {
+            code?: string;
+            data?: components["schemas"]["BatchEvaluationResult"];
+            message?: string;
+        };
+        ApiResponseBusinessCalendarListResponse: {
+            code?: string;
+            data?: components["schemas"]["BusinessCalendarListResponse"];
+            message?: string;
+        };
+        ApiResponseBusinessCalendarResponse: {
+            code?: string;
+            data?: components["schemas"]["BusinessCalendarResponse"];
+            message?: string;
+        };
+        ApiResponseBusinessDayCheckResponse: {
+            code?: string;
+            data?: components["schemas"]["BusinessDayCheckResponse"];
+            message?: string;
+        };
+        ApiResponseCalendarSeederRunResponse: {
+            code?: string;
+            data?: components["schemas"]["CalendarSeederRunResponse"];
+            message?: string;
+        };
+        ApiResponseCohortStatsResponse: {
+            code?: string;
+            data?: components["schemas"]["CohortStatsResponse"];
+            message?: string;
         };
         ApiResponseCollateralEvaluationResponse: {
             code?: string;
-            message?: string;
             data?: components["schemas"]["CollateralEvaluationResponse"];
+            message?: string;
         };
-        CollateralEvaluationResponse: {
-            /** Format: int64 */
-            cevalColId?: number;
-            /** Format: int64 */
-            colId?: number;
-            evalMethodCd?: string;
-            evalAgencyCd?: string;
-            /** Format: int64 */
-            appraisedValue?: number;
-            /** Format: int64 */
-            appliedValue?: number;
-            evalStatusCd?: string;
-            evalReportUrl?: string;
-            evalReportHash?: string;
+        ApiResponseCollateralListResponse: {
+            code?: string;
+            data?: components["schemas"]["CollateralListResponse"];
+            message?: string;
+        };
+        ApiResponseCollateralResponse: {
+            code?: string;
+            data?: components["schemas"]["CollateralResponse"];
+            message?: string;
+        };
+        ApiResponseCommonSyncDispatchSummary: {
+            code?: string;
+            data?: components["schemas"]["CommonSyncDispatchSummary"];
+            message?: string;
+        };
+        ApiResponseCreditConsentResponse: {
+            code?: string;
+            data?: components["schemas"]["CreditConsentResponse"];
+            message?: string;
+        };
+        ApiResponseCreditEvaluationResponse: {
+            code?: string;
+            data?: components["schemas"]["CreditEvaluationResponse"];
+            message?: string;
+        };
+        ApiResponseCreditInfoReportDispatchSummary: {
+            code?: string;
+            data?: components["schemas"]["CreditInfoReportDispatchSummary"];
+            message?: string;
+        };
+        ApiResponseCreditInfoReportListResponse: {
+            code?: string;
+            data?: components["schemas"]["CreditInfoReportListResponse"];
+            message?: string;
+        };
+        ApiResponseCreditInfoReportResponse: {
+            code?: string;
+            data?: components["schemas"]["CreditInfoReportResponse"];
+            message?: string;
+        };
+        ApiResponseCreditScorePreviewResponse: {
+            code?: string;
+            data?: components["schemas"]["CreditScorePreviewResponse"];
+            message?: string;
+        };
+        ApiResponseDelinquencyResponse: {
+            code?: string;
+            data?: components["schemas"]["DelinquencyResponse"];
+            message?: string;
+        };
+        ApiResponseDelinquencyRolloverResponse: {
+            code?: string;
+            data?: components["schemas"]["DelinquencyRolloverResponse"];
+            message?: string;
+        };
+        ApiResponseDelinquencySnapshotListResponse: {
+            code?: string;
+            data?: components["schemas"]["DelinquencySnapshotListResponse"];
+            message?: string;
+        };
+        ApiResponseDocumentRegisterResponse: {
+            code?: string;
+            data?: components["schemas"]["DocumentRegisterResponse"];
+            message?: string;
+        };
+        ApiResponseDocumentStatsResponse: {
+            code?: string;
+            data?: components["schemas"]["DocumentStatsResponse"];
+            message?: string;
+        };
+        ApiResponseDsrCalculationResponse: {
+            code?: string;
+            data?: components["schemas"]["DsrCalculationResponse"];
+            message?: string;
+        };
+        ApiResponseEclCalculationRunResponse: {
+            code?: string;
+            data?: components["schemas"]["EclCalculationRunResponse"];
+            message?: string;
+        };
+        ApiResponseEodRunResponse: {
+            code?: string;
+            data?: components["schemas"]["EodRunResponse"];
+            message?: string;
+        };
+        ApiResponseExpireBiasReviewingResponse: {
+            code?: string;
+            data?: components["schemas"]["ExpireBiasReviewingResponse"];
+            message?: string;
+        };
+        ApiResponseExpirePendingApproverResponse: {
+            code?: string;
+            data?: components["schemas"]["ExpirePendingApproverResponse"];
+            message?: string;
+        };
+        ApiResponseExpirePendingReviewsResponse: {
+            code?: string;
+            data?: components["schemas"]["ExpirePendingReviewsResponse"];
+            message?: string;
+        };
+        ApiResponseGuaranteeInsuranceExpiryRunResponse: {
+            code?: string;
+            data?: components["schemas"]["GuaranteeInsuranceExpiryRunResponse"];
+            message?: string;
+        };
+        ApiResponseGuaranteeInsuranceResponse: {
+            code?: string;
+            data?: components["schemas"]["GuaranteeInsuranceResponse"];
+            message?: string;
+        };
+        ApiResponseGuarantorAgreementListResponse: {
+            code?: string;
+            data?: components["schemas"]["GuarantorAgreementListResponse"];
+            message?: string;
+        };
+        ApiResponseGuarantorAgreementResponse: {
+            code?: string;
+            data?: components["schemas"]["GuarantorAgreementResponse"];
+            message?: string;
+        };
+        ApiResponseIdentityVerificationResponse: {
+            code?: string;
+            data?: components["schemas"]["IdentityVerificationResponse"];
+            message?: string;
+        };
+        ApiResponseIndexCasesResult: {
+            code?: string;
+            data?: components["schemas"]["IndexCasesResult"];
+            message?: string;
+        };
+        ApiResponseInteger: {
+            code?: string;
+            /** Format: int32 */
+            data?: number;
+            message?: string;
+        };
+        ApiResponseInterestAccrualListResponse: {
+            code?: string;
+            data?: components["schemas"]["InterestAccrualListResponse"];
+            message?: string;
+        };
+        ApiResponseInterestAccrualRunResponse: {
+            code?: string;
+            data?: components["schemas"]["InterestAccrualRunResponse"];
+            message?: string;
+        };
+        ApiResponseListAdvisoryReportSummary: {
+            code?: string;
+            data?: components["schemas"]["AdvisoryReportSummary"][];
+            message?: string;
+        };
+        ApiResponseListAiAuditOpinionResponse: {
+            code?: string;
+            data?: components["schemas"]["AiAuditOpinionResponse"][];
+            message?: string;
+        };
+        ApiResponseListAiReviewAdviceResponse: {
+            code?: string;
+            data?: components["schemas"]["AiReviewAdviceResponse"][];
+            message?: string;
+        };
+        ApiResponseListDocumentSummaryResponse: {
+            code?: string;
+            data?: components["schemas"]["DocumentSummaryResponse"][];
+            message?: string;
+        };
+        ApiResponseListEodHistoryResponse: {
+            code?: string;
+            data?: components["schemas"]["EodHistoryResponse"][];
+            message?: string;
+        };
+        ApiResponseListLoanReviewResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanReviewResponse"][];
+            message?: string;
+        };
+        ApiResponseListPreferentialRatePolicyResponse: {
+            code?: string;
+            data?: components["schemas"]["PreferentialRatePolicyResponse"][];
+            message?: string;
+        };
+        ApiResponseListQuarantineReportResponse: {
+            code?: string;
+            data?: components["schemas"]["QuarantineReportResponse"][];
+            message?: string;
+        };
+        ApiResponseListReviewCheckLogResponse: {
+            code?: string;
+            data?: components["schemas"]["ReviewCheckLogResponse"][];
+            message?: string;
+        };
+        ApiResponseListReviewerRiskScoreResponse: {
+            code?: string;
+            data?: components["schemas"]["ReviewerRiskScoreResponse"][];
+            message?: string;
+        };
+        ApiResponseLoanApplicationJourneyResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanApplicationJourneyResponse"];
+            message?: string;
+        };
+        ApiResponseLoanApplicationListResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanApplicationListResponse"];
+            message?: string;
+        };
+        ApiResponseLoanApplicationResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanApplicationResponse"];
+            message?: string;
+        };
+        ApiResponseLoanCertificateListResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanCertificateListResponse"];
+            message?: string;
+        };
+        ApiResponseLoanCertificateResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanCertificateResponse"];
+            message?: string;
+        };
+        ApiResponseLoanClosureResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanClosureResponse"];
+            message?: string;
+        };
+        ApiResponseLoanContractAdminListResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanContractAdminListResponse"];
+            message?: string;
+        };
+        ApiResponseLoanContractListResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanContractListResponse"];
+            message?: string;
+        };
+        ApiResponseLoanContractResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanContractResponse"];
+            message?: string;
+        };
+        ApiResponseLoanDocumentListResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanDocumentListResponse"];
+            message?: string;
+        };
+        ApiResponseLoanDocumentResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanDocumentResponse"];
+            message?: string;
+        };
+        ApiResponseLoanExecutionResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanExecutionResponse"];
+            message?: string;
+        };
+        ApiResponseLoanPrescreeningResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanPrescreeningResponse"];
+            message?: string;
+        };
+        ApiResponseLoanProductListResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanProductListResponse"];
+            message?: string;
+        };
+        ApiResponseLoanProductResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanProductResponse"];
+            message?: string;
+        };
+        ApiResponseLoanReviewResponse: {
+            code?: string;
+            data?: components["schemas"]["LoanReviewResponse"];
+            message?: string;
+        };
+        ApiResponseLtvCalculationResponse: {
+            code?: string;
+            data?: components["schemas"]["LtvCalculationResponse"];
+            message?: string;
+        };
+        ApiResponseMaturityResponse: {
+            code?: string;
+            data?: components["schemas"]["MaturityResponse"];
+            message?: string;
+        };
+        ApiResponseMaturityRunResponse: {
+            code?: string;
+            data?: components["schemas"]["MaturityRunResponse"];
+            message?: string;
+        };
+        ApiResponseNotificationDispatchSummary: {
+            code?: string;
+            data?: components["schemas"]["NotificationDispatchSummary"];
+            message?: string;
+        };
+        ApiResponseNotificationOutboxListResponse: {
+            code?: string;
+            data?: components["schemas"]["NotificationOutboxListResponse"];
+            message?: string;
+        };
+        ApiResponseNotificationOutboxResponse: {
+            code?: string;
+            data?: components["schemas"]["NotificationOutboxResponse"];
+            message?: string;
+        };
+        ApiResponsePageLoanReviewResponse: {
+            code?: string;
+            data?: components["schemas"]["PageLoanReviewResponse"];
+            message?: string;
+        };
+        ApiResponsePartialRepaymentResponse: {
+            code?: string;
+            data?: components["schemas"]["PartialRepaymentResponse"];
+            message?: string;
+        };
+        ApiResponsePolicyCitationResponse: {
+            code?: string;
+            data?: components["schemas"]["PolicyCitationResponse"];
+            message?: string;
+        };
+        ApiResponsePreferentialRatePolicyResponse: {
+            code?: string;
+            data?: components["schemas"]["PreferentialRatePolicyResponse"];
+            message?: string;
+        };
+        ApiResponsePrepaymentResponse: {
+            code?: string;
+            data?: components["schemas"]["PrepaymentResponse"];
+            message?: string;
+        };
+        ApiResponsePurgeExpiredDocumentsResponse: {
+            code?: string;
+            data?: components["schemas"]["PurgeExpiredDocumentsResponse"];
+            message?: string;
+        };
+        ApiResponseRateChangeApplyResponse: {
+            code?: string;
+            data?: components["schemas"]["RateChangeApplyResponse"];
+            message?: string;
+        };
+        ApiResponseRateChangeHistoryListResponse: {
+            code?: string;
+            data?: components["schemas"]["RateChangeHistoryListResponse"];
+            message?: string;
+        };
+        ApiResponseRepaymentAccountResponse: {
+            code?: string;
+            data?: components["schemas"]["RepaymentAccountResponse"];
+            message?: string;
+        };
+        ApiResponseRepaymentScheduleListResponse: {
+            code?: string;
+            data?: components["schemas"]["RepaymentScheduleListResponse"];
+            message?: string;
+        };
+        ApiResponseRepaymentTransactionListResponse: {
+            code?: string;
+            data?: components["schemas"]["RepaymentTransactionListResponse"];
+            message?: string;
+        };
+        ApiResponseRepaymentTransactionResponse: {
+            code?: string;
+            data?: components["schemas"]["RepaymentTransactionResponse"];
+            message?: string;
+        };
+        ApiResponseReversalResponse: {
+            code?: string;
+            data?: components["schemas"]["ReversalResponse"];
+            message?: string;
+        };
+        ApiResponseReviewCheckLogResponse: {
+            code?: string;
+            data?: components["schemas"]["ReviewCheckLogResponse"];
+            message?: string;
+        };
+        ApiResponseReviewStatsResponse: {
+            code?: string;
+            data?: components["schemas"]["ReviewStatsResponse"];
+            message?: string;
+        };
+        ApiResponseReviewerAckStatsResponse: {
+            code?: string;
+            data?: components["schemas"]["ReviewerAckStatsResponse"];
+            message?: string;
+        };
+        ApiResponseReviewerHistoryResponse: {
+            code?: string;
+            data?: components["schemas"]["ReviewerHistoryResponse"];
+            message?: string;
+        };
+        ApiResponseReviewerRiskScoreResponse: {
+            code?: string;
+            data?: components["schemas"]["ReviewerRiskScoreResponse"];
+            message?: string;
+        };
+        ApiResponseSimilarCaseResponse: {
+            code?: string;
+            data?: components["schemas"]["SimilarCaseResponse"];
+            message?: string;
+        };
+        ApiResponseSnapshotRunResult: {
+            code?: string;
+            data?: components["schemas"]["SnapshotRunResult"];
+            message?: string;
+        };
+        ApiResponseStatusHistoryListResponse: {
+            code?: string;
+            data?: components["schemas"]["StatusHistoryListResponse"];
+            message?: string;
+        };
+        ApiResponseVirtualAccountResponse: {
+            code?: string;
+            data?: components["schemas"]["VirtualAccountResponse"];
+            message?: string;
+        };
+        ApiResponseVoid: {
+            code?: string;
+            data?: Record<string, never>;
+            message?: string;
+        };
+        ApplicationExpiryRunResponse: {
+            baseDate?: string;
+            /** Format: int32 */
+            processed?: number;
             /** Format: date-time */
-            evaluatedAt?: string;
-            appliedStartDate?: string;
-            appliedEndDate?: string;
+            threshold?: string;
+            /** Format: int32 */
+            totalCandidates?: number;
         };
-        RegisterBusinessCalendarRequest: {
-            calDate: string;
-            businessDayYn?: boolean;
-            holidayTypeCd?: string;
-            holidayName?: string;
-            baseCountryCd?: string;
+        ApproverApproveRequest: {
+            approverDecisionCd: string;
+            /** Format: int64 */
+            overrideAmount?: number;
+            /** Format: int32 */
+            overridePeriodMo?: number;
+            /** Format: int32 */
+            overrideRateBps?: number;
+            overrideReasonCd?: string;
+            overrideRejectReasonCd?: string;
+            overrideRemark?: string;
+        };
+        AuditLogEntry: {
+            actionCd?: string;
+            /** Format: int64 */
+            actorId?: number;
+            branchId?: string;
+            breakGlassReason?: string;
+            /** Format: int64 */
+            logId?: number;
+            /** Format: date-time */
+            loggedAt?: string;
+            /** Format: int64 */
+            targetId?: number;
+            targetType?: string;
+        };
+        AutoDebitPaymentResultRequest: {
+            failureCategory?: string;
+            idempotencyKey: string;
+            piId: string;
+            status: string;
+        };
+        AutoDebitRunResponse: {
+            baseDate?: string;
+            /** Format: int32 */
+            processed?: number;
+            skipReason?: string;
+            /** Format: int32 */
+            skipped?: number;
+            /** Format: int32 */
+            totalCandidates?: number;
+        };
+        BackfillResultResponse: {
+            dryRun?: boolean;
+            /** Format: int32 */
+            failed?: number;
+            /** Format: int32 */
+            processed?: number;
+            /** Format: int32 */
+            skipped?: number;
+        };
+        BatchEvaluationResult: {
+            baseDate?: string;
+            /** Format: int32 */
+            reportsPublished?: number;
+            snapshot?: components["schemas"]["SnapshotRunResult"];
+        };
+        BiasOpsNoteRequest: {
+            note: string;
+            /** Format: int64 */
+            opsStaffId: number;
+        };
+        BiasOverrideRequest: {
+            overrideReason: string;
+        };
+        BiasReportRequest: {
+            findings?: components["schemas"]["Finding"][];
+            /** Format: int32 */
+            inputToken?: number;
+            /** Format: int32 */
+            latencyMs?: number;
+            model?: string;
+            modelVersion?: string;
+            /** Format: int32 */
+            outputToken?: number;
+            promptHash?: string;
+            severityCd: string;
+            summary: string;
+        };
+        BiasResultCallbackRequest: {
+            analysisType?: string;
+            biasDetected?: boolean;
+            findingSummary?: string;
+            status?: string;
         };
         BreakGlassRequest: {
             /** Format: int64 */
@@ -4371,562 +3544,652 @@ export interface components {
             reason: string;
         };
         BreakGlassResponse: {
-            /** Format: int64 */
-            logId?: number;
             /** Format: date-time */
             grantExpiresAt?: string;
+            /** Format: int64 */
+            logId?: number;
         };
-        AdvisoryReportSummaryResponse: {
-            /** Format: int64 */
-            advrId?: number;
-            /** Format: int64 */
-            revId?: number;
-            /** Format: int64 */
-            ruleId?: number;
-            advisoryTypeCd?: string;
-            severityCd?: string;
-            advrStatusCd?: string;
-            advrTitle?: string;
-            /** Format: int64 */
-            targetReviewerId?: number;
-            /** Format: date-time */
-            generatedAt?: string;
-            /** Format: date-time */
-            firstViewedAt?: string;
-            /** Format: date-time */
-            resolvedAt?: string;
-        };
-        ApiResponseAdvisoryReportSummaryResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AdvisoryReportSummaryResponse"];
-        };
-        AdvisoryAckRequest: {
-            ackResponseCd: string;
-            decisionChangeYn?: boolean;
-            ackReasonCd?: string;
-            ackRemark?: string;
-            beforeDecisionCd?: string;
-            afterDecisionCd?: string;
-        };
-        AdvisoryAckResponse: {
-            /** Format: int64 */
-            advkId?: number;
-            /** Format: int64 */
-            advrId?: number;
-            ackResponseCd?: string;
-            decisionChangeYn?: boolean;
-            /** Format: date-time */
-            ackedAt?: string;
-            /** Format: int64 */
-            ackReviewerId?: number;
-        };
-        ApiResponseAdvisoryAckResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AdvisoryAckResponse"];
-        };
-        UpdateLoanProductRequest: {
-            prodName?: string;
-            loanTypeCd?: string;
-            targetCustomerCd?: string;
-            repaymentMethodCd?: string;
-            rateTypeCd?: string;
-            /** Format: int32 */
-            baseRateBps?: number;
-            /** Format: int32 */
-            minRateBps?: number;
-            /** Format: int32 */
-            maxRateBps?: number;
-            /** Format: int64 */
-            minAmount?: number;
-            /** Format: int64 */
-            maxAmount?: number;
-            /** Format: int32 */
-            minPeriodMo?: number;
-            /** Format: int32 */
-            maxPeriodMo?: number;
-            collateralRequiredYn?: boolean;
-            guarantorRequiredYn?: boolean;
-            /** Format: int32 */
-            minGuarantorCount?: number;
-            /** Format: int32 */
-            applicationValidityDays?: number;
-            saleStartDate?: string;
-            saleEndDate?: string;
-            prodTermsUrl?: string;
-            prodTermsHash?: string;
-            prodStatusCd?: string;
-        };
-        ReviseReviewRequest: {
-            revDecisionCd: string;
-            /** Format: int64 */
-            approvedAmount?: number;
-            /** Format: int32 */
-            approvedRateBps?: number;
-            /** Format: int32 */
-            approvedPeriodMo?: number;
-            rejectReasonCd?: string;
-            revRemark?: string;
-            revisitReasonCd: string;
-        };
-        UpdateCollateralRequest: {
-            colTypeCd?: string;
-            colName?: string;
-            colAddress?: string;
-            colRegistryNo?: string;
-            /** Format: int64 */
-            declaredValue?: number;
-            currencyCd?: string;
-            ownershipTypeCd?: string;
-            seniorLienYn?: boolean;
-            /** Format: int64 */
-            seniorLienAmount?: number;
-        };
-        ApiResponseStatusHistoryListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["StatusHistoryListResponse"];
-        };
-        StatusHistoryListResponse: {
-            targetDomainCd?: string;
-            targetTableCd?: string;
-            /** Format: int64 */
-            targetId?: number;
+        BusinessCalendarListResponse: {
             /** Format: int32 */
             count?: number;
-            items?: components["schemas"]["StatusHistoryResponse"][];
+            fromDate?: string;
+            items?: components["schemas"]["BusinessCalendarResponse"][];
+            toDate?: string;
         };
-        StatusHistoryResponse: {
+        BusinessCalendarResponse: {
+            baseCountryCd?: string;
+            businessDayYn?: boolean;
+            calDate?: string;
             /** Format: int64 */
-            sthistId?: number;
-            targetDomainCd?: string;
-            targetTableCd?: string;
-            /** Format: int64 */
-            targetId?: number;
-            beforeStatusCd?: string;
-            afterStatusCd?: string;
-            changeReasonCd?: string;
-            changeRemark?: string;
-            /** Format: date-time */
-            changedAt?: string;
-            /** Format: int64 */
-            changedBy?: number;
+            calId?: number;
+            holidayName?: string;
+            holidayTypeCd?: string;
         };
-        Pageable: {
+        BusinessDayCheckResponse: {
+            businessDay?: boolean;
+            calDate?: string;
+            holidayName?: string;
+            holidayTypeCd?: string;
+            source?: string;
+        };
+        CalendarSeederRunResponse: {
             /** Format: int32 */
-            page?: number;
+            inserted?: number;
             /** Format: int32 */
-            size?: number;
-            sort?: string[];
+            skipped?: number;
+            /** Format: int32 */
+            totalDays?: number;
+            /** Format: int32 */
+            year?: number;
         };
-        ApiResponseNotificationOutboxListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["NotificationOutboxListResponse"];
+        CancelGuaranteeInsuranceRequest: {
+            cancelReasonCd?: string;
+            cancelRemark?: string;
         };
-        NotificationOutboxListItem: {
+        CancelGuarantorAgreementRequest: {
+            cancelReasonCd?: string;
+            cancelRemark?: string;
+        };
+        CancelLoanApplicationRequest: {
+            cancelReasonCd: string;
+            cancelRemark?: string;
+        };
+        CaseItem: {
             /** Format: int64 */
-            outboxId?: number;
-            eventTypeCd?: string;
-            /** Format: int64 */
-            referenceId?: number;
-            channelCd?: string;
-            status?: string;
+            caseIdxId?: number;
+            cohortEmploymentTypeCd?: string;
+            cohortLoanPurposeCd?: string;
             /** Format: int32 */
-            attemptNo?: number;
+            creditScore?: number;
+            decisionCd?: string;
             /** Format: int32 */
-            maxAttempt?: number;
-            /** Format: date-time */
-            nextAttemptAt?: string;
-            /** Format: date-time */
-            sentAt?: string;
-        };
-        NotificationOutboxListResponse: {
-            items?: components["schemas"]["NotificationOutboxListItem"][];
-            /** Format: int64 */
-            totalCount?: number;
+            dsrRatioBps?: number;
             /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            size?: number;
-        };
-        ApiResponseListReviewCheckLogResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ReviewCheckLogResponse"][];
-        };
-        AdvisoryReportSummary: {
-            /** Format: int64 */
-            advrId?: number;
+            ltvRatioBps?: number;
+            overturnYn?: boolean;
             /** Format: int64 */
             revId?: number;
-            advisoryTypeCd?: string;
-            severityCd?: string;
-            advrStatusCd?: string;
-            advrTitle?: string;
-            advrSummary?: string;
-            targetReviewerId?: string;
+            /** Format: double */
+            score?: number;
+            summaryText?: string;
         };
-        ApiResponseListAdvisoryReportSummary: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AdvisoryReportSummary"][];
-        };
-        ApiResponseListAiReviewAdviceResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AiReviewAdviceResponse"][];
-        };
-        ApiResponseReviewStatsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ReviewStatsResponse"];
-        };
-        ReviewStatsResponse: {
-            from?: string;
-            to?: string;
+        CitationItem: {
             /** Format: int64 */
-            totalCount?: number;
-            byTypeDecision?: {
-                [key: string]: number;
-            };
-            byStatus?: {
-                [key: string]: number;
-            };
-            byRejectReason?: {
-                [key: string]: number;
-            };
-        };
-        ApiResponseListLoanReviewResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanReviewResponse"][];
-        };
-        ApiResponsePageLoanReviewResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageLoanReviewResponse"];
-        };
-        PageLoanReviewResponse: {
-            /** Format: int32 */
-            totalPages?: number;
+            chunkId?: number;
+            chunkText?: string;
+            docCd?: string;
             /** Format: int64 */
-            totalElements?: number;
-            last?: boolean;
-            pageable?: components["schemas"]["PageableObject"];
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["LoanReviewResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
+            docId?: number;
+            docTitle?: string;
+            /** Format: double */
+            score?: number;
+            sectionPath?: string;
         };
-        PageableObject: {
-            unpaged?: boolean;
-            paged?: boolean;
-            /** Format: int32 */
-            pageNumber?: number;
-            /** Format: int32 */
-            pageSize?: number;
+        CloseLoanRequest: {
+            closureDate?: string;
+            closureDocHash?: string;
+            closureDocUrl?: string;
+            closureReasonCd?: string;
+            closureTypeCd: string;
             /** Format: int64 */
-            offset?: number;
-            sort?: components["schemas"]["SortObject"][];
-        };
-        SortObject: {
-            direction?: string;
-            nullHandling?: string;
-            ascending?: boolean;
-            property?: string;
-            ignoreCase?: boolean;
-        };
-        ApiResponseLoanProductListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanProductListResponse"];
-        };
-        LoanProductListItem: {
+            finalFeeAmt?: number;
             /** Format: int64 */
-            prodId?: number;
-            prodCd?: string;
-            prodName?: string;
-            loanTypeCd?: string;
+            prepaymentFeeAmt?: number;
+            subrogationPartyRef?: string;
+            writeOffReasonCd?: string;
+        };
+        CohortStatsResponse: {
+            /** Format: double */
+            avgApproveRateBps?: number;
+            /** Format: double */
+            avgRejectRateBps?: number;
+            dimension?: string;
+            latestSnapshotDate?: string;
             /** Format: int32 */
-            baseRateBps?: number;
-            /** Format: int64 */
-            minAmount?: number;
-            /** Format: int64 */
-            maxAmount?: number;
+            reviewerCount?: number;
             /** Format: int32 */
-            minPeriodMo?: number;
+            totalApproved?: number;
             /** Format: int32 */
-            maxPeriodMo?: number;
-            prodStatusCd?: string;
-        };
-        LoanProductListResponse: {
-            items?: components["schemas"]["LoanProductListItem"][];
-            /** Format: int64 */
-            totalCount?: number;
+            totalRejected?: number;
             /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            size?: number;
+            totalReviews?: number;
+            value?: string;
         };
-        ApiResponseListPreferentialRatePolicyResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PreferentialRatePolicyResponse"][];
-        };
-        ApiResponseLoanContractListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanContractListResponse"];
-        };
-        LoanContractListResponse: {
-            items?: components["schemas"]["LoanContractResponse"][];
+        CollateralEvaluationResponse: {
+            appliedEndDate?: string;
+            appliedStartDate?: string;
             /** Format: int64 */
-            totalCount?: number;
-        };
-        ApiResponseRepaymentTransactionListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RepaymentTransactionListResponse"];
-        };
-        RepaymentTransactionListResponse: {
+            appliedValue?: number;
             /** Format: int64 */
-            cntrId?: number;
+            appraisedValue?: number;
+            /** Format: int64 */
+            cevalColId?: number;
+            /** Format: int64 */
+            colId?: number;
+            evalAgencyCd?: string;
+            evalMethodCd?: string;
+            evalReportHash?: string;
+            evalReportUrl?: string;
+            evalStatusCd?: string;
+            /** Format: date-time */
+            evaluatedAt?: string;
+        };
+        CollateralListResponse: {
+            items?: components["schemas"]["CollateralResponse"][];
             /** Format: int32 */
             totalCount?: number;
-            /** Format: int64 */
-            totalPaidAmount?: number;
-            items?: components["schemas"]["RepaymentTransactionResponse"][];
         };
-        ApiResponseRepaymentScheduleListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RepaymentScheduleListResponse"];
+        CollateralResponse: {
+            /** Format: int64 */
+            applId?: number;
+            colAddress?: string;
+            /** Format: int64 */
+            colId?: number;
+            colName?: string;
+            colNo?: string;
+            colRegistryNo?: string;
+            colStatusCd?: string;
+            colTypeCd?: string;
+            currencyCd?: string;
+            /** Format: int64 */
+            declaredValue?: number;
+            ownershipTypeCd?: string;
+            /** Format: int64 */
+            seniorLienAmount?: number;
+            seniorLienYn?: boolean;
         };
-        RepaymentScheduleListResponse: {
-            /** Format: int64 */
-            cntrId?: number;
-            rschVersionCd?: string;
+        CommonSyncDispatchSummary: {
             /** Format: int32 */
-            totalCount?: number;
-            /** Format: int64 */
-            totalScheduledPrincipal?: number;
-            /** Format: int64 */
-            totalScheduledInterest?: number;
-            /** Format: int64 */
-            totalScheduledAmount?: number;
-            items?: components["schemas"]["RepaymentScheduleResponse"][];
+            dead?: number;
+            /** Format: int32 */
+            done?: number;
+            /** Format: int32 */
+            failed?: number;
+            /** Format: int32 */
+            total?: number;
         };
-        RepaymentScheduleResponse: {
-            /** Format: int64 */
-            rschId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            /** Format: int32 */
-            installmentNo?: number;
-            dueDate?: string;
-            /** Format: int64 */
-            scheduledPrincipal?: number;
-            /** Format: int64 */
-            scheduledInterest?: number;
-            /** Format: int64 */
-            scheduledTotal?: number;
-            /** Format: int64 */
-            remainingBalance?: number;
-            /** Format: int32 */
-            appliedRateBps?: number;
-            rschStatusCd?: string;
-            rschVersionCd?: string;
+        ConfirmReviewRequest: {
+            confirmRemark?: string;
         };
-        ApiResponseRateChangeHistoryListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RateChangeHistoryListResponse"];
+        CreateCollateralRequest: {
+            colAddress?: string;
+            colName?: string;
+            colRegistryNo?: string;
+            colTypeCd: string;
+            currencyCd?: string;
+            /** Format: int64 */
+            declaredValue?: number;
+            ownershipTypeCd?: string;
+            /** Format: int64 */
+            seniorLienAmount?: number;
+            seniorLienYn?: boolean;
         };
-        RateChangeHistoryListResponse: {
+        CreateContractRequest: {
             /** Format: int64 */
-            cntrId?: number;
+            applId: number;
             /** Format: int32 */
-            totalCount?: number;
-            items?: components["schemas"]["RateChangeHistoryResponse"][];
-        };
-        RateChangeHistoryResponse: {
+            baseRateBps: number;
+            cntrDocHash?: string;
+            cntrDocUrl?: string;
+            cntrEndDate?: string;
+            cntrStartDate?: string;
             /** Format: int64 */
-            rchgId?: number;
-            /** Format: int64 */
-            cntrId?: number;
-            rateChangeReasonCd?: string;
+            contractedAmount: number;
             /** Format: int32 */
-            previousRateBps?: number;
+            contractedPeriodMo: number;
+            currencyCd?: string;
             /** Format: int32 */
-            newRateBps?: number;
-            /** Format: int32 */
-            baseRateBps?: number;
+            preferentialRateBps?: number;
+            rateTypeCd: string;
+            repaymentMethodCd: string;
             /** Format: int32 */
             spreadBps?: number;
             /** Format: int32 */
-            preferentialRateBps?: number;
-            appliedStartDate?: string;
-            appliedEndDate?: string;
+            totalRateBps?: number;
+        };
+        CreateCreditConsentRequest: {
+            consentMethodCd?: string;
+            consentScopeCd: string;
+            consentTargetCd: string;
+            consentToken?: string;
+            consentTypeCd: string;
+            retentionUntil?: string;
+            signedDocHash?: string;
+            signedDocUrl?: string;
+        };
+        CreateLoanApplicationRequest: {
+            channelCd: string;
+            /** Format: int64 */
+            customerId: number;
+            employmentTypeCd?: string;
+            /** Format: int64 */
+            estimatedIncomeAmt?: number;
+            loanPurposeCd?: string;
+            /** Format: int64 */
+            prodId: number;
+            repaymentMethodCd?: string;
+            /** Format: int64 */
+            requestedAmount: number;
+            /** Format: int32 */
+            requestedPeriodMo: number;
+        };
+        CreateLoanProductRequest: {
+            /** Format: int32 */
+            applicationValidityDays?: number;
+            /** Format: int32 */
+            baseRateBps: number;
+            collateralRequiredYn?: boolean;
+            guarantorRequiredYn?: boolean;
+            loanTypeCd: string;
+            /** Format: int64 */
+            maxAmount: number;
+            /** Format: int32 */
+            maxPeriodMo: number;
+            /** Format: int32 */
+            maxRateBps?: number;
+            /** Format: int64 */
+            minAmount: number;
+            /** Format: int32 */
+            minGuarantorCount?: number;
+            /** Format: int32 */
+            minPeriodMo: number;
+            /** Format: int32 */
+            minRateBps?: number;
+            prodCd: string;
+            prodName: string;
+            prodTermsHash?: string;
+            prodTermsUrl?: string;
+            /** Format: int64 */
+            productId?: number;
+            rateTypeCd: string;
+            repaymentMethodCd: string;
+            saleEndDate?: string;
+            saleStartDate?: string;
+            targetCustomerCd?: string;
+        };
+        CreatePreferentialRatePolicyRequest: {
+            conditionCd: string;
+            effectiveEndDate?: string;
+            effectiveStartDate?: string;
+            /** Format: int32 */
+            maxStackBps?: number;
+            policyName: string;
+            policyRemark?: string;
+            /** Format: int32 */
+            preferentialRateBps: number;
+        };
+        CreateRateChangeRequest: {
+            appliedStartDate: string;
+            /** Format: int32 */
+            newBaseRateBps: number;
+            /** Format: int32 */
+            newPreferentialRateBps?: number;
+            /** Format: int32 */
+            newSpreadBps?: number;
+            /** Format: int32 */
+            newTotalRateBps?: number;
+            rateChangeReasonCd: string;
+        };
+        CreditConsentResponse: {
+            /** Format: int64 */
+            applId?: number;
+            consentMethodCd?: string;
+            consentScopeCd?: string;
+            consentTargetCd?: string;
+            consentTypeCd?: string;
+            consentYn?: boolean;
             /** Format: date-time */
-            changedAt?: string;
+            consentedAt?: string;
+            /** Format: int64 */
+            csntId?: number;
+            /** Format: int64 */
+            customerId?: number;
+            retentionUntil?: string;
+            signedDocUrl?: string;
+            /** Format: date-time */
+            withdrawnAt?: string;
+            withdrawnYn?: boolean;
         };
-        ApiResponseInterestAccrualListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["InterestAccrualListResponse"];
+        CreditEvaluationResponse: {
+            /** Format: int64 */
+            applId?: number;
+            cevalDecisionCd?: string;
+            cevalEngine?: string;
+            cevalEngineVersion?: string;
+            cevalFactors?: string;
+            cevalGrade?: string;
+            /** Format: int64 */
+            cevalId?: number;
+            /** Format: int32 */
+            cevalScore?: number;
+            cevalStatusCd?: string;
+            /** Format: int64 */
+            customerId?: number;
+            /** Format: int64 */
+            evalLimitAmount?: number;
+            /** Format: int32 */
+            evalRateBps?: number;
+            /** Format: date-time */
+            evaluatedAt?: string;
+            /** Format: int32 */
+            pdBps?: number;
         };
-        InterestAccrualListResponse: {
+        CreditInfoReportDispatchSummary: {
+            /** Format: int32 */
+            dead?: number;
+            /** Format: int32 */
+            failed?: number;
+            /** Format: int32 */
+            processed?: number;
+            /** Format: int32 */
+            sent?: number;
+        };
+        CreditInfoReportListResponse: {
             /** Format: int64 */
             cntrId?: number;
+            items?: components["schemas"]["CreditInfoReportResponse"][];
             /** Format: int32 */
             totalCount?: number;
-            /** Format: int64 */
-            sumDailyInterest?: number;
-            /** Format: int64 */
-            latestCumulativeInterest?: number;
-            items?: components["schemas"]["InterestAccrualResponse"][];
         };
-        InterestAccrualResponse: {
-            /** Format: int64 */
-            iaccId?: number;
+        CreditInfoReportResponse: {
+            /** Format: date-time */
+            ackAt?: string;
             /** Format: int64 */
             cntrId?: number;
-            accrualDate?: string;
+            crptAgencyCd?: string;
             /** Format: int64 */
-            principalBalance?: number;
-            /** Format: int32 */
-            appliedRateBps?: number;
-            dayCountBasisCd?: string;
+            crptId?: number;
+            crptStatusCd?: string;
+            crptTypeCd?: string;
             /** Format: int64 */
-            dailyInterestAmt?: number;
+            customerId?: number;
             /** Format: int64 */
-            cumulativeInterestAmt?: number;
-            iaccStatusCd?: string;
+            dlqId?: number;
+            externalTxNo?: string;
+            reportPayload?: string;
+            reportReasonCd?: string;
+            reportTargetCd?: string;
             /** Format: date-time */
-            accruedAt?: string;
+            reportedAt?: string;
         };
-        ApiResponseDelinquencyResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["DelinquencyResponse"];
+        CreditScorePreviewRequest: {
+            consentYn: boolean;
+            /** Format: int64 */
+            customerId: number;
+            employmentTypeCd?: string;
+            /** Format: int64 */
+            estimatedIncomeAmt?: number;
+            loanPurposeCd?: string;
+            loanTypeCd: string;
+            /** Format: int64 */
+            requestedAmount: number;
+            /** Format: int32 */
+            requestedPeriodMo: number;
+        };
+        CreditScorePreviewResponse: {
+            decision?: string;
+            engineVersion?: string;
+            /** Format: int64 */
+            estimatedLimitAmt?: number;
+            grade?: string;
+            /** Format: int32 */
+            pdBps?: number;
+            rejectReasonCd?: string;
+            /** Format: int32 */
+            score?: number;
         };
         DelinquencyResponse: {
             /** Format: int64 */
-            dlqId?: number;
-            /** Format: int64 */
             cntrId?: number;
-            dlqStatusCd?: string;
-            dlqStartDate?: string;
-            dlqEndDate?: string;
             /** Format: int32 */
             dlqDays?: number;
+            dlqEndDate?: string;
             /** Format: int64 */
-            dlqPrincipalAmt?: number;
+            dlqId?: number;
             /** Format: int64 */
             dlqInterestAmt?: number;
+            /** Format: int64 */
+            dlqPrincipalAmt?: number;
+            dlqStageCd?: string;
+            dlqStartDate?: string;
+            dlqStatusCd?: string;
             /** Format: int64 */
             dlqTotalAmt?: number;
             /** Format: int32 */
             overdueRateBps?: number;
-            dlqStageCd?: string;
             /** Format: date-time */
             resolvedAt?: string;
         };
-        ApiResponseDelinquencySnapshotListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["DelinquencySnapshotListResponse"];
+        DelinquencyRolloverResponse: {
+            /** Format: int32 */
+            activeDelinquencies?: number;
+            baseDate?: string;
+            /** Format: int32 */
+            newlyOverdueInstallments?: number;
+            /** Format: int32 */
+            resolvedDelinquencies?: number;
+            /** Format: int32 */
+            snapshotsCreated?: number;
         };
         DelinquencySnapshotListResponse: {
             /** Format: int64 */
             cntrId?: number;
             /** Format: int64 */
             dlqId?: number;
+            items?: components["schemas"]["DelinquencySnapshotResponse"][];
             /** Format: int32 */
             totalCount?: number;
-            items?: components["schemas"]["DelinquencySnapshotResponse"][];
         };
         DelinquencySnapshotResponse: {
             /** Format: int64 */
-            dlqsId?: number;
-            /** Format: int64 */
-            dlqId?: number;
-            /** Format: int64 */
             cntrId?: number;
-            snapshotDate?: string;
             /** Format: int32 */
             dlqDays?: number;
             /** Format: int64 */
-            dlqPrincipalAmt?: number;
+            dlqId?: number;
             /** Format: int64 */
             dlqInterestAmt?: number;
             /** Format: int64 */
+            dlqPrincipalAmt?: number;
+            dlqStageCd?: string;
+            /** Format: int64 */
             dlqTotalAmt?: number;
+            /** Format: int64 */
+            dlqsId?: number;
             /** Format: int32 */
             overdueRateBps?: number;
-            dlqStageCd?: string;
+            snapshotDate?: string;
             /** Format: date-time */
             snapshottedAt?: string;
         };
-        ApiResponseCreditInfoReportListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CreditInfoReportListResponse"];
+        DiscontinueLoanProductRequest: {
+            reasonCd: string;
+            reasonRemark?: string;
+            saleEndDate: string;
         };
-        CreditInfoReportListResponse: {
+        DocumentRegisterRequest: {
+            content?: string;
+            docCategoryCd: string;
+            docCd: string;
+            docDesc?: string;
+            docTitle: string;
+            docVersion: string;
+            effectiveEndDate?: string;
+            effectiveStartDate?: string;
+            sourceUri?: string;
+        };
+        DocumentRegisterResponse: {
+            activeYn?: boolean;
+            /** Format: int32 */
+            chunkCount?: number;
+            docCd?: string;
+            /** Format: int64 */
+            docId?: number;
+            docTitle?: string;
+            docVersion?: string;
+        };
+        DocumentStatsResponse: {
+            /** Format: int64 */
+            activeDocuments?: number;
+            chunksByModel?: components["schemas"]["ModelChunkCount"][];
+            /** Format: int64 */
+            totalDocuments?: number;
+        };
+        DocumentSummaryResponse: {
+            activeYn?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            docCategoryCd?: string;
+            docCd?: string;
+            /** Format: int64 */
+            docId?: number;
+            docTitle?: string;
+            docVersion?: string;
+        };
+        DrawdownRequest: {
+            currencyCd?: string;
+            disbursementAccountNo: string;
+            disbursementBankCd?: string;
+            /** Format: int64 */
+            executedAmount: number;
+            /** Format: int64 */
+            feeAmount?: number;
+            valueDate?: string;
+        };
+        DsrCalculationResponse: {
+            /** Format: int64 */
+            annualIncomeAmt?: number;
+            /** Format: int64 */
+            applId?: number;
+            calcEngineVersion?: string;
+            /** Format: date-time */
+            calculatedAt?: string;
+            /** Format: int64 */
+            customerId?: number;
+            dsrDetail?: string;
+            /** Format: int64 */
+            dsrId?: number;
+            /** Format: int32 */
+            dsrLimitBps?: number;
+            /** Format: int32 */
+            dsrRatioBps?: number;
+            dsrRegTypeCd?: string;
+            dsrStatusCd?: string;
+            /** Format: int64 */
+            existingAnnualRepayAmt?: number;
+            /** Format: int64 */
+            existingPrincipalTotal?: number;
+            /** Format: int64 */
+            newAnnualRepayAmt?: number;
+            /** Format: int64 */
+            totalAnnualRepayAmt?: number;
+        };
+        EclCalculationRunResponse: {
+            baseMonth?: string;
+            /** Format: int32 */
+            processed?: number;
+            /** Format: int32 */
+            skipped?: number;
+            /** Format: int32 */
+            totalCandidates?: number;
+            /** Format: int64 */
+            totalEcl?: number;
+        };
+        EodHistoryResponse: {
+            baseDate?: string;
+            /** Format: int64 */
+            durationMs?: number;
+            /** Format: date-time */
+            endTime?: string;
+            exitCode?: string;
+            /** Format: int64 */
+            jobExecutionId?: number;
+            /** Format: date-time */
+            startTime?: string;
+            status?: string;
+            steps?: components["schemas"]["StepInfo"][];
+        };
+        EodRunResponse: {
+            baseDate?: string;
+            /** Format: int64 */
+            jobExecutionId?: number;
+            jobStatus?: string;
+            message?: string;
+        };
+        EscalateToHqRequest: {
+            escalateReason: string;
+        };
+        EvaluateCollateralRequest: {
+            appliedEndDate?: string;
+            appliedStartDate?: string;
+            /** Format: int64 */
+            appliedValue?: number;
+            /** Format: int64 */
+            appraisedValue: number;
+            evalAgencyCd?: string;
+            evalMethodCd: string;
+            evalReportHash?: string;
+            evalReportUrl?: string;
+        };
+        ExpireBiasReviewingResponse: {
+            /** Format: date-time */
+            cutoffAt?: string;
+            expiredRevIds?: number[];
+            /** Format: int32 */
+            processed?: number;
+        };
+        ExpirePendingApproverResponse: {
+            /** Format: date-time */
+            cutoffAt?: string;
+            expiredRevIds?: number[];
+            /** Format: int32 */
+            processed?: number;
+        };
+        ExpirePendingReviewsResponse: {
+            /** Format: date-time */
+            cutoffAt?: string;
+            expiredRevIds?: number[];
+            /** Format: int32 */
+            processed?: number;
+        };
+        ExtendMaturityRequest: {
+            /** Format: int32 */
+            extendedPeriodMo: number;
+            extensionReason?: string;
+            extensionTypeCd?: string;
+        };
+        Finding: {
+            code: string;
+            detail?: string;
+            result: string;
+        };
+        GuaranteeInsuranceExpiryRunResponse: {
+            baseDate?: string;
+            /** Format: int32 */
+            processed?: number;
+            /** Format: int32 */
+            totalCandidates?: number;
+        };
+        GuaranteeInsuranceResponse: {
             /** Format: int64 */
             cntrId?: number;
-            /** Format: int32 */
-            totalCount?: number;
-            items?: components["schemas"]["CreditInfoReportResponse"][];
-        };
-        ApiResponseLoanCertificateListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanCertificateListResponse"];
-        };
-        LoanCertificateListResponse: {
+            ginsAgencyCd?: string;
+            ginsDocHash?: string;
+            ginsDocUrl?: string;
+            ginsEndDate?: string;
             /** Format: int64 */
-            cntrId?: number;
-            /** Format: int32 */
-            totalCount?: number;
-            items?: components["schemas"]["LoanCertificateResponse"][];
-        };
-        ApiResponseLoanApplicationListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanApplicationListResponse"];
-        };
-        LoanApplicationListResponse: {
-            items?: components["schemas"]["LoanApplicationResponse"][];
+            ginsId?: number;
+            ginsPolicyNo?: string;
+            ginsStartDate?: string;
+            ginsStatusCd?: string;
             /** Format: int64 */
-            totalCount?: number;
-        };
-        ApiResponseLoanApplicationJourneyResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanApplicationJourneyResponse"];
-        };
-        LoanApplicationJourneyResponse: {
-            application?: components["schemas"]["LoanApplicationResponse"];
-            prescreening?: components["schemas"]["LoanPrescreeningResponse"];
-            creditEvaluation?: components["schemas"]["CreditEvaluationResponse"];
-            dsr?: components["schemas"]["DsrCalculationResponse"];
-            ltv?: components["schemas"]["LtvCalculationResponse"][];
-            review?: components["schemas"]["LoanReviewResponse"];
-        };
-        ApiResponseGuarantorAgreementListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["GuarantorAgreementListResponse"];
+            guaranteeAmount?: number;
+            /** Format: int32 */
+            guaranteeRatioBps?: number;
+            /** Format: date-time */
+            issuedAt?: string;
+            /** Format: int64 */
+            premiumAmount?: number;
         };
         GuarantorAgreementListResponse: {
             /** Format: int64 */
@@ -4935,346 +4198,920 @@ export interface components {
             count?: number;
             items?: components["schemas"]["GuarantorAgreementResponse"][];
         };
-        ApiResponseLoanDocumentListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanDocumentListResponse"];
+        GuarantorAgreementResponse: {
+            /** Format: int64 */
+            applId?: number;
+            /** Format: date-time */
+            consentedAt?: string;
+            /** Format: int64 */
+            gagrId?: number;
+            gagrStatusCd?: string;
+            gagrTypeCd?: string;
+            /** Format: int64 */
+            gmstId?: number;
+            /** Format: int64 */
+            guaranteeAmount?: number;
+            /** Format: int32 */
+            guaranteeRatioBps?: number;
+            guarantorNameMasked?: string;
+            mobileNoMasked?: string;
+            relationTypeCd?: string;
+            signedDocHash?: string;
+            signedDocUrl?: string;
+        };
+        IdentityVerificationResponse: {
+            /** Format: int64 */
+            applId?: number;
+            ciHash?: string;
+            /** Format: int64 */
+            customerId?: number;
+            diHash?: string;
+            externalTxNo?: string;
+            /** Format: int64 */
+            idvId?: number;
+            idvMethodCd?: string;
+            idvResultCd?: string;
+            idvStatusCd?: string;
+            idvTargetCd?: string;
+            mobileNoMasked?: string;
+            /** Format: date-time */
+            verifiedAt?: string;
+        };
+        IndexCasesResult: {
+            /** Format: int32 */
+            indexedCount?: number;
+            /** Format: int64 */
+            lastCaseIdxId?: number;
+        };
+        InterestAccrualListResponse: {
+            /** Format: int64 */
+            cntrId?: number;
+            items?: components["schemas"]["InterestAccrualResponse"][];
+            /** Format: int64 */
+            latestCumulativeInterest?: number;
+            /** Format: int64 */
+            sumDailyInterest?: number;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        InterestAccrualResponse: {
+            accrualDate?: string;
+            /** Format: date-time */
+            accruedAt?: string;
+            /** Format: int32 */
+            appliedRateBps?: number;
+            /** Format: int64 */
+            cntrId?: number;
+            /** Format: int64 */
+            cumulativeInterestAmt?: number;
+            /** Format: int64 */
+            dailyInterestAmt?: number;
+            dayCountBasisCd?: string;
+            /** Format: int64 */
+            iaccId?: number;
+            iaccStatusCd?: string;
+            /** Format: int64 */
+            principalBalance?: number;
+        };
+        InterestAccrualRunResponse: {
+            baseDate?: string;
+            /** Format: int32 */
+            processed?: number;
+            /** Format: int32 */
+            skipped?: number;
+            /** Format: int32 */
+            totalCandidates?: number;
+        };
+        IssueCertificateRequest: {
+            certDocHash?: string;
+            certDocUrl?: string;
+            certPurposeCd?: string;
+            certTypeCd: string;
+            issueChannelCd?: string;
+            retentionUntil?: string;
+        };
+        IssueGuaranteeInsuranceRequest: {
+            ginsAgencyCd: string;
+            ginsDocHash?: string;
+            ginsDocUrl?: string;
+            ginsEndDate?: string;
+            ginsStartDate?: string;
+            /** Format: int64 */
+            guaranteeAmount: number;
+            /** Format: int32 */
+            guaranteeRatioBps: number;
+            /** Format: int64 */
+            premiumAmount: number;
+        };
+        LoanApplicationJourneyResponse: {
+            application?: components["schemas"]["LoanApplicationResponse"];
+            creditEvaluation?: components["schemas"]["CreditEvaluationResponse"];
+            dsr?: components["schemas"]["DsrCalculationResponse"];
+            ltv?: components["schemas"]["LtvCalculationResponse"][];
+            prescreening?: components["schemas"]["LoanPrescreeningResponse"];
+            review?: components["schemas"]["LoanReviewResponse"];
+        };
+        LoanApplicationListResponse: {
+            items?: components["schemas"]["LoanApplicationResponse"][];
+            /** Format: int64 */
+            totalCount?: number;
+        };
+        LoanApplicationResponse: {
+            /** Format: int64 */
+            applId?: number;
+            applNo?: string;
+            applStatusCd?: string;
+            /** Format: date-time */
+            appliedAt?: string;
+            channelCd?: string;
+            /** Format: int64 */
+            customerId?: number;
+            employmentTypeCd?: string;
+            /** Format: int64 */
+            estimatedIncomeAmt?: number;
+            loanPurposeCd?: string;
+            /** Format: int64 */
+            prodId?: number;
+            repaymentMethodCd?: string;
+            /** Format: int64 */
+            requestedAmount?: number;
+            /** Format: int32 */
+            requestedPeriodMo?: number;
+        };
+        LoanCertificateListResponse: {
+            /** Format: int64 */
+            cntrId?: number;
+            items?: components["schemas"]["LoanCertificateResponse"][];
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        LoanCertificateResponse: {
+            certDocHash?: string;
+            certDocUrl?: string;
+            /** Format: int64 */
+            certId?: number;
+            certNo?: string;
+            certPurposeCd?: string;
+            certStatusCd?: string;
+            certTypeCd?: string;
+            /** Format: int64 */
+            cntrId?: number;
+            /** Format: int64 */
+            customerId?: number;
+            issueChannelCd?: string;
+            /** Format: date-time */
+            issuedAt?: string;
+            retentionUntil?: string;
+        };
+        LoanClosureResponse: {
+            closDate?: string;
+            closDocHash?: string;
+            closDocUrl?: string;
+            /** Format: int64 */
+            closId?: number;
+            closReasonCd?: string;
+            closStatusCd?: string;
+            closTypeCd?: string;
+            /** Format: date-time */
+            closedAt?: string;
+            /** Format: int64 */
+            cntrId?: number;
+            /** Format: int64 */
+            finalFeeAmt?: number;
+            /** Format: int64 */
+            finalInterestAmt?: number;
+            /** Format: int64 */
+            finalPrincipalAmt?: number;
+            /** Format: int64 */
+            prepaymentFeeAmt?: number;
+            /** Format: int64 */
+            subrogationAmount?: number;
+            subrogationPartyRef?: string;
+            /** Format: int64 */
+            totalSettledAmt?: number;
+            /** Format: int64 */
+            writeOffAmount?: number;
+            writeOffReasonCd?: string;
+        };
+        LoanContractAdminListResponse: {
+            /** Format: int32 */
+            currentPage?: number;
+            items?: components["schemas"]["LoanContractResponse"][];
+            /** Format: int64 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        LoanContractListResponse: {
+            items?: components["schemas"]["LoanContractResponse"][];
+            /** Format: int64 */
+            totalCount?: number;
+        };
+        LoanContractResponse: {
+            /** Format: int64 */
+            applId?: number;
+            /** Format: int32 */
+            baseRateBps?: number;
+            cntrDocHash?: string;
+            cntrDocUrl?: string;
+            cntrEndDate?: string;
+            /** Format: int64 */
+            cntrId?: number;
+            cntrNo?: string;
+            cntrStartDate?: string;
+            cntrStatusCd?: string;
+            /** Format: int64 */
+            contractedAmount?: number;
+            /** Format: int32 */
+            contractedPeriodMo?: number;
+            currencyCd?: string;
+            /** Format: int64 */
+            customerId?: number;
+            /** Format: int32 */
+            preferentialRateBps?: number;
+            /** Format: int64 */
+            prodId?: number;
+            rateTypeCd?: string;
+            repaymentMethodCd?: string;
+            /** Format: int64 */
+            revId?: number;
+            /** Format: date-time */
+            signedAt?: string;
+            /** Format: int32 */
+            spreadBps?: number;
+            /** Format: int32 */
+            totalRateBps?: number;
         };
         LoanDocumentListResponse: {
             items?: components["schemas"]["LoanDocumentResponse"][];
             /** Format: int32 */
             totalCount?: number;
         };
-        ApiResponseCollateralListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CollateralListResponse"];
-        };
-        CollateralListResponse: {
-            items?: components["schemas"]["CollateralResponse"][];
-            /** Format: int32 */
-            totalCount?: number;
-        };
-        ApiResponseListEodHistoryResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["EodHistoryResponse"][];
-        };
-        EodHistoryResponse: {
+        LoanDocumentResponse: {
             /** Format: int64 */
-            jobExecutionId?: number;
-            baseDate?: string;
-            status?: string;
-            exitCode?: string;
-            /** Format: date-time */
-            startTime?: string;
-            /** Format: date-time */
-            endTime?: string;
-            /** Format: int64 */
-            durationMs?: number;
-            steps?: components["schemas"]["StepInfo"][];
-        };
-        StepInfo: {
-            /** Format: int64 */
-            stepExecutionId?: number;
-            stepName?: string;
-            status?: string;
-            exitCode?: string;
-            /** Format: date-time */
-            startTime?: string;
-            /** Format: date-time */
-            endTime?: string;
-            /** Format: int64 */
-            durationMs?: number;
-            exitDescription?: string;
-        };
-        ApiResponseSimilarCaseResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["SimilarCaseResponse"];
-        };
-        CaseItem: {
-            /** Format: int64 */
-            caseIdxId?: number;
-            /** Format: int64 */
-            revId?: number;
-            decisionCd?: string;
-            overturnYn?: boolean;
-            /** Format: int32 */
-            creditScore?: number;
-            /** Format: int32 */
-            dsrRatioBps?: number;
-            /** Format: int32 */
-            ltvRatioBps?: number;
-            cohortEmploymentTypeCd?: string;
-            cohortLoanPurposeCd?: string;
-            summaryText?: string;
-            /** Format: double */
-            score?: number;
-        };
-        SimilarCaseResponse: {
-            /** Format: int64 */
-            advrId?: number;
-            /** Format: int32 */
-            totalCount?: number;
-            cases?: components["schemas"]["CaseItem"][];
-        };
-        ApiResponseReviewerHistoryResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ReviewerHistoryResponse"];
-        };
-        ReviewerHistoryResponse: {
-            /** Format: int64 */
-            reviewerId?: number;
-            /** Format: int32 */
-            days?: number;
-            /** Format: int32 */
-            totalCount?: number;
-            /** Format: int32 */
-            approvedCount?: number;
-            /** Format: int32 */
-            rejectedCount?: number;
-            /** Format: double */
-            approvalRate?: number;
-        };
-        ApiResponsePolicyCitationResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PolicyCitationResponse"];
-        };
-        CitationItem: {
-            /** Format: int64 */
-            chunkId?: number;
+            applId?: number;
+            docHash?: string;
             /** Format: int64 */
             docId?: number;
-            docCd?: string;
-            docTitle?: string;
-            sectionPath?: string;
-            chunkText?: string;
-            /** Format: double */
-            score?: number;
-        };
-        PolicyCitationResponse: {
+            docName?: string;
+            docSourceCd?: string;
+            docStatusCd?: string;
+            docTypeCd?: string;
+            docUrl?: string;
             /** Format: int64 */
-            advrId?: number;
-            /** Format: int32 */
-            totalCount?: number;
-            citations?: components["schemas"]["CitationItem"][];
-        };
-        ApiResponseListDocumentSummaryResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["DocumentSummaryResponse"][];
-        };
-        DocumentSummaryResponse: {
-            /** Format: int64 */
-            docId?: number;
-            docCd?: string;
-            docTitle?: string;
-            docCategoryCd?: string;
-            docVersion?: string;
-            activeYn?: boolean;
+            fileSizeBytes?: number;
+            mimeType?: string;
+            retentionUntil?: string;
             /** Format: date-time */
-            createdAt?: string;
+            submittedAt?: string;
+            /** Format: date-time */
+            verifiedAt?: string;
+            verifyResultCd?: string;
         };
-        ApiResponseDocumentStatsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["DocumentStatsResponse"];
-        };
-        DocumentStatsResponse: {
+        LoanExecutionResponse: {
             /** Format: int64 */
-            totalDocuments?: number;
+            cntrId?: number;
             /** Format: int64 */
-            activeDocuments?: number;
-            chunksByModel?: components["schemas"]["ModelChunkCount"][];
-        };
-        ModelChunkCount: {
-            embeddingModelCd?: string;
+            cumulativeExecutedAmount?: number;
+            currencyCd?: string;
+            disbursementAccountMasked?: string;
+            disbursementBankCd?: string;
             /** Format: int64 */
-            count?: number;
-        };
-        ApiResponseCohortStatsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CohortStatsResponse"];
-        };
-        CohortStatsResponse: {
-            dimension?: string;
-            value?: string;
-            latestSnapshotDate?: string;
-            /** Format: int32 */
-            reviewerCount?: number;
-            /** Format: int32 */
-            totalReviews?: number;
-            /** Format: int32 */
-            totalApproved?: number;
-            /** Format: int32 */
-            totalRejected?: number;
-            /** Format: double */
-            avgApproveRateBps?: number;
-            /** Format: double */
-            avgRejectRateBps?: number;
-        };
-        AdminCreditInfoReportListResponse: {
-            items?: components["schemas"]["CreditInfoReportResponse"][];
+            execId?: number;
+            execStatusCd?: string;
             /** Format: int64 */
-            totalCount?: number;
+            executedAmount?: number;
+            /** Format: date-time */
+            executedAt?: string;
+            /** Format: int64 */
+            feeAmount?: number;
+            journalEntryNo?: string;
+            valueDate?: string;
+        };
+        LoanPrescreeningResponse: {
+            aiTrackCd?: string;
+            /** Format: int64 */
+            applId?: number;
+            estimatedGrade?: string;
+            /** Format: int64 */
+            estimatedLimitAmt?: number;
+            /** Format: int32 */
+            estimatedRateBps?: number;
+            /** Format: int32 */
+            estimatedScore?: number;
+            prescEngineVersion?: string;
+            /** Format: int64 */
+            prescId?: number;
+            prescRemark?: string;
+            prescResultCd?: string;
+            /** Format: date-time */
+            prescreenedAt?: string;
+            rejectReasonCd?: string;
+        };
+        LoanProductListItem: {
+            /** Format: int32 */
+            baseRateBps?: number;
+            loanTypeCd?: string;
+            /** Format: int64 */
+            maxAmount?: number;
+            /** Format: int32 */
+            maxPeriodMo?: number;
+            /** Format: int64 */
+            minAmount?: number;
+            /** Format: int32 */
+            minPeriodMo?: number;
+            prodCd?: string;
+            /** Format: int64 */
+            prodId?: number;
+            prodName?: string;
+            prodStatusCd?: string;
+        };
+        LoanProductListResponse: {
+            items?: components["schemas"]["LoanProductListItem"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             size?: number;
+            /** Format: int64 */
+            totalCount?: number;
         };
-        ApiResponseAdminCreditInfoReportListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AdminCreditInfoReportListResponse"];
-        };
-        ApiResponseBusinessCalendarListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["BusinessCalendarListResponse"];
-        };
-        BusinessCalendarListResponse: {
-            fromDate?: string;
-            toDate?: string;
+        LoanProductResponse: {
             /** Format: int32 */
-            count?: number;
-            items?: components["schemas"]["BusinessCalendarResponse"][];
-        };
-        ApiResponseBusinessDayCheckResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["BusinessDayCheckResponse"];
-        };
-        BusinessDayCheckResponse: {
-            calDate?: string;
-            businessDay?: boolean;
-            source?: string;
-            holidayTypeCd?: string;
-            holidayName?: string;
-        };
-        AuditLogEntry: {
+            applicationValidityDays?: number;
+            /** Format: int32 */
+            baseRateBps?: number;
+            collateralRequiredYn?: boolean;
+            guarantorRequiredYn?: boolean;
+            loanTypeCd?: string;
             /** Format: int64 */
-            logId?: number;
+            maxAmount?: number;
+            /** Format: int32 */
+            maxPeriodMo?: number;
+            /** Format: int32 */
+            maxRateBps?: number;
             /** Format: int64 */
-            actorId?: number;
-            targetType?: string;
+            minAmount?: number;
+            /** Format: int32 */
+            minGuarantorCount?: number;
+            /** Format: int32 */
+            minPeriodMo?: number;
+            /** Format: int32 */
+            minRateBps?: number;
+            prodCd?: string;
             /** Format: int64 */
-            targetId?: number;
-            actionCd?: string;
-            branchId?: string;
-            breakGlassReason?: string;
+            prodId?: number;
+            prodName?: string;
+            prodStatusCd?: string;
+            prodTermsHash?: string;
+            prodTermsUrl?: string;
+            /** Format: int64 */
+            productId?: number;
+            rateTypeCd?: string;
+            repaymentMethodCd?: string;
+            saleEndDate?: string;
+            saleStartDate?: string;
+            targetCustomerCd?: string;
+        };
+        LoanReviewResponse: {
+            /** Format: int64 */
+            applId?: number;
+            /** Format: int64 */
+            approvedAmount?: number;
             /** Format: date-time */
-            loggedAt?: string;
-        };
-        ApiResponseReviewerAckStatsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ReviewerAckStatsResponse"];
-        };
-        ReviewerAckStatsResponse: {
+            approvedAt?: string;
+            approvedDecisionCd?: string;
+            /** Format: int32 */
+            approvedPeriodMo?: number;
+            /** Format: int32 */
+            approvedRateBps?: number;
+            /** Format: int64 */
+            approverId?: number;
+            /** Format: int64 */
+            biasOverrideBy?: number;
+            biasSeverityCd?: string;
+            /** Format: int64 */
+            estimatedIncomeAmt?: number;
+            estimatedIncomeRange?: string;
+            overrideReasonCd?: string;
+            rejectReasonCd?: string;
+            revAiPd?: number;
+            revAiRationale?: string;
+            revAiTrackCd?: string;
+            revDecisionCd?: string;
+            /** Format: int64 */
+            revId?: number;
+            revRemark?: string;
+            revStatusCd?: string;
+            revTypeCd?: string;
+            /** Format: date-time */
+            reviewedAt?: string;
             /** Format: int64 */
             reviewerId?: number;
+        };
+        LtvCalculationResponse: {
+            /** Format: int64 */
+            applId?: number;
+            /** Format: int64 */
+            appliedColValue?: number;
+            calcEngineVersion?: string;
+            /** Format: date-time */
+            calculatedAt?: string;
+            /** Format: int64 */
+            colId?: number;
+            /** Format: int64 */
+            ltvId?: number;
+            /** Format: int32 */
+            ltvLimitBps?: number;
+            /** Format: int32 */
+            ltvRatioBps?: number;
+            ltvStatusCd?: string;
+            /** Format: int64 */
+            maxLoanAmount?: number;
+            /** Format: int64 */
+            requestedAmount?: number;
+            /** Format: int64 */
+            seniorLienAmount?: number;
+        };
+        MaturityResponse: {
+            /** Format: int64 */
+            cntrId?: number;
+            currentMaturityDate?: string;
+            /** Format: int32 */
+            extendedPeriodMo?: number;
+            /** Format: int32 */
+            extensionCount?: number;
+            extensionTypeCd?: string;
+            lastExtendedDate?: string;
+            /** Format: date-time */
+            lastNoticeAt?: string;
+            /** Format: int64 */
+            matId?: number;
+            matStatusCd?: string;
+            noticeStatusCd?: string;
+            originalMaturityDate?: string;
+        };
+        MaturityRunResponse: {
+            baseDate?: string;
+            /** Format: int32 */
+            processed?: number;
+            /** Format: int32 */
+            totalCandidates?: number;
+        };
+        ModelChunkCount: {
+            /** Format: int64 */
+            count?: number;
+            embeddingModelCd?: string;
+        };
+        NotificationDispatchSummary: {
+            /** Format: int32 */
+            dead?: number;
+            /** Format: int32 */
+            failed?: number;
+            /** Format: int32 */
+            processed?: number;
+            /** Format: int32 */
+            sent?: number;
+        };
+        NotificationOutboxListItem: {
+            /** Format: int32 */
+            attemptNo?: number;
+            channelCd?: string;
+            eventTypeCd?: string;
+            /** Format: int32 */
+            maxAttempt?: number;
+            /** Format: date-time */
+            nextAttemptAt?: string;
+            /** Format: int64 */
+            outboxId?: number;
+            /** Format: int64 */
+            referenceId?: number;
+            /** Format: date-time */
+            sentAt?: string;
+            status?: string;
+        };
+        NotificationOutboxListResponse: {
+            items?: components["schemas"]["NotificationOutboxListItem"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalCount?: number;
+        };
+        NotificationOutboxResponse: {
+            /** Format: int32 */
+            attemptNo?: number;
+            channelCd?: string;
+            eventTypeCd?: string;
+            idempotencyKey?: string;
+            lastError?: string;
+            /** Format: int32 */
+            maxAttempt?: number;
+            /** Format: date-time */
+            nextAttemptAt?: string;
+            /** Format: int64 */
+            outboxId?: number;
+            payload?: string;
+            /** Format: int64 */
+            referenceId?: number;
+            /** Format: date-time */
+            sentAt?: string;
+            status?: string;
+        };
+        PageLoanReviewResponse: {
+            content?: components["schemas"]["LoanReviewResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        Pageable: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            sort?: string[];
+        };
+        PageableObject: {
+            /** Format: int64 */
+            offset?: number;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            paged?: boolean;
+            sort?: components["schemas"]["SortObject"][];
+            unpaged?: boolean;
+        };
+        PartialRepayRequest: {
+            /** Format: int64 */
+            amount: number;
+            channelCd?: string;
+            /** Format: int32 */
+            installmentNo: number;
+            valueDate?: string;
+        };
+        PartialRepaymentResponse: {
+            /** Format: int64 */
+            cumulativePaid?: number;
+            /** Format: int32 */
+            installmentNo?: number;
+            /** Format: int64 */
+            interestPortion?: number;
+            /** Format: int64 */
+            paidAmount?: number;
+            /** Format: date-time */
+            paidAt?: string;
+            /** Format: int64 */
+            principalPortion?: number;
+            /** Format: int64 */
+            rschId?: number;
+            /** Format: int64 */
+            rtxId?: number;
+            scheduleStatusAfter?: string;
+            /** Format: int64 */
+            scheduledTotal?: number;
+        };
+        PolicyCitationResponse: {
+            /** Format: int64 */
+            advrId?: number;
+            citations?: components["schemas"]["CitationItem"][];
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        PreferentialRatePolicyResponse: {
+            activeYn?: boolean;
+            conditionCd?: string;
+            effectiveEndDate?: string;
+            effectiveStartDate?: string;
+            /** Format: int32 */
+            maxStackBps?: number;
+            /** Format: int64 */
+            policyId?: number;
+            policyName?: string;
+            policyRemark?: string;
+            /** Format: int32 */
+            preferentialRateBps?: number;
+            /** Format: int64 */
+            prodId?: number;
+        };
+        PrepayRequest: {
+            /** Format: int64 */
+            amount: number;
+            channelCd?: string;
+            valueDate?: string;
+        };
+        PrepaymentResponse: {
+            /** Format: int64 */
+            cntrId?: number;
+            /** Format: int64 */
+            feeAmount?: number;
+            /** Format: int32 */
+            newInstallmentCount?: number;
+            newScheduleVersionCd?: string;
+            /** Format: int64 */
+            outstandingAfter?: number;
+            /** Format: date-time */
+            paidAt?: string;
+            /** Format: int64 */
+            prepaidPrincipal?: number;
+            /** Format: int64 */
+            rtxId?: number;
+            /** Format: int32 */
+            supersededInstallments?: number;
+            /** Format: int64 */
+            totalAmount?: number;
+        };
+        PurgeExpiredDocumentsResponse: {
+            /** Format: int32 */
+            failed?: number;
+            /** Format: int32 */
+            purged?: number;
+            purgedDocIds?: number[];
+            /** Format: int32 */
+            scanned?: number;
+        };
+        QuarantineReportResponse: {
+            advisoryTypeCd?: string;
+            /** Format: int64 */
+            advrId?: number;
+            advrTitle?: string;
+            /** Format: date-time */
+            generatedAt?: string;
+            /** Format: date-time */
+            quarantinedAt?: string;
+            /** Format: int64 */
+            revId?: number;
+            severityCd?: string;
+            /** Format: int64 */
+            targetReviewerId?: number;
+        };
+        RateChangeApplyResponse: {
+            appliedStartDate?: string;
+            /** Format: date-time */
+            changedAt?: string;
+            /** Format: int64 */
+            cntrId?: number;
+            /** Format: int32 */
+            newInstallments?: number;
+            /** Format: int32 */
+            newRateBps?: number;
+            newScheduleVersionCd?: string;
+            /** Format: int32 */
+            previousRateBps?: number;
+            rateChangeReasonCd?: string;
+            /** Format: int64 */
+            rchgId?: number;
+            /** Format: int32 */
+            supersededInstallments?: number;
+        };
+        RateChangeHistoryListResponse: {
+            /** Format: int64 */
+            cntrId?: number;
+            items?: components["schemas"]["RateChangeHistoryResponse"][];
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        RateChangeHistoryResponse: {
+            appliedEndDate?: string;
+            appliedStartDate?: string;
+            /** Format: int32 */
+            baseRateBps?: number;
+            /** Format: date-time */
+            changedAt?: string;
+            /** Format: int64 */
+            cntrId?: number;
+            /** Format: int32 */
+            newRateBps?: number;
+            /** Format: int32 */
+            preferentialRateBps?: number;
+            /** Format: int32 */
+            previousRateBps?: number;
+            rateChangeReasonCd?: string;
+            /** Format: int64 */
+            rchgId?: number;
+            /** Format: int32 */
+            spreadBps?: number;
+        };
+        RegisterBusinessCalendarRequest: {
+            baseCountryCd?: string;
+            businessDayYn?: boolean;
+            calDate: string;
+            holidayName?: string;
+            holidayTypeCd?: string;
+        };
+        RegisterGuarantorAgreementRequest: {
+            gagrTypeCd: string;
+            /** Format: int64 */
+            guaranteeAmount: number;
+            /** Format: int32 */
+            guaranteeRatioBps?: number;
+            guarantorMobileNo: string;
+            guarantorName: string;
+            relationTypeCd?: string;
+        };
+        RegisterRepaymentAccountRequest: {
+            /** Format: int64 */
+            accountId?: number;
+            accountNo: string;
+            autoDebitYn?: boolean;
+            bankCd: string;
+            /** Format: int32 */
+            debitDay?: number;
+            holderName?: string;
+        };
+        ReleaseCollateralRequest: {
+            releaseDate?: string;
+            releaseReasonCd: string;
+            releaseRemark?: string;
+        };
+        RepayInstallmentRequest: {
+            channelCd?: string;
+            /** Format: int32 */
+            installmentNo: number;
+            valueDate?: string;
+        };
+        RepaymentAccountResponse: {
+            /** Format: int64 */
+            accountId?: number;
+            accountNoMasked?: string;
+            autoDebitYn?: boolean;
+            bankCd?: string;
+            /** Format: int64 */
+            cntrId?: number;
+            /** Format: int32 */
+            debitDay?: number;
+            holderNameMasked?: string;
+            /** Format: int64 */
+            racctId?: number;
+            racctStatusCd?: string;
+            /** Format: date-time */
+            verifiedAt?: string;
+        };
+        RepaymentScheduleListResponse: {
+            /** Format: int64 */
+            cntrId?: number;
+            items?: components["schemas"]["RepaymentScheduleResponse"][];
+            rschVersionCd?: string;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int64 */
+            totalScheduledAmount?: number;
+            /** Format: int64 */
+            totalScheduledInterest?: number;
+            /** Format: int64 */
+            totalScheduledPrincipal?: number;
+        };
+        RepaymentScheduleResponse: {
+            /** Format: int32 */
+            appliedRateBps?: number;
+            /** Format: int64 */
+            cntrId?: number;
+            dueDate?: string;
+            /** Format: int32 */
+            installmentNo?: number;
+            /** Format: int64 */
+            remainingBalance?: number;
+            /** Format: int64 */
+            rschId?: number;
+            rschStatusCd?: string;
+            rschVersionCd?: string;
+            /** Format: int64 */
+            scheduledInterest?: number;
+            /** Format: int64 */
+            scheduledPrincipal?: number;
+            /** Format: int64 */
+            scheduledTotal?: number;
+        };
+        RepaymentTransactionListResponse: {
+            /** Format: int64 */
+            cntrId?: number;
+            items?: components["schemas"]["RepaymentTransactionResponse"][];
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int64 */
+            totalPaidAmount?: number;
+        };
+        RepaymentTransactionResponse: {
+            /** Format: int64 */
+            balanceAfter?: number;
+            channelCd?: string;
+            /** Format: int64 */
+            cntrId?: number;
+            currencyCd?: string;
+            /** Format: int64 */
+            feeAmount?: number;
+            idempotencyKey?: string;
+            /** Format: int64 */
+            interestAmount?: number;
+            /** Format: int64 */
+            overdueInterestAmount?: number;
+            /** Format: date-time */
+            paidAt?: string;
+            /** Format: int64 */
+            principalAmount?: number;
+            /** Format: int64 */
+            rschId?: number;
+            /** Format: int64 */
+            rtxId?: number;
+            rtxStatusCd?: string;
+            rtxTypeCd?: string;
+            /** Format: int64 */
+            totalAmount?: number;
+            valueDate?: string;
+        };
+        ReversalResponse: {
+            /** Format: int64 */
+            amount?: number;
+            /** Format: int64 */
+            cntrId?: number;
+            /** Format: int32 */
+            restoredCount?: number;
+            /** Format: int64 */
+            restoredRschId?: number;
+            restoredVersionCd?: string;
+            /** Format: int64 */
+            reversalRtxId?: number;
+            /** Format: date-time */
+            reversedAt?: string;
+            /** Format: int32 */
+            supersededCount?: number;
+            supersededVersionCd?: string;
+            /** Format: int64 */
+            targetRtxId?: number;
+        };
+        ReverseRepaymentRequest: {
+            reversalReasonCd?: string;
+            reversalRemark?: string;
+        };
+        ReviewCheckLogResponse: {
+            checkItemCd?: string;
+            checkRemark?: string;
+            checkResultCd?: string;
+            /** Format: date-time */
+            checkedAt?: string;
+            /** Format: int64 */
+            checkerId?: number;
+            /** Format: int64 */
+            rchkId?: number;
+            /** Format: int64 */
+            revId?: number;
+        };
+        ReviewStatsResponse: {
+            byRejectReason?: {
+                [key: string]: number;
+            };
+            byStatus?: {
+                [key: string]: number;
+            };
+            byTypeDecision?: {
+                [key: string]: number;
+            };
+            from?: string;
+            to?: string;
+            /** Format: int64 */
+            totalCount?: number;
+        };
+        ReviewerAckStatsResponse: {
+            ackResponseCounts?: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            reviewerId?: number;
+            ruleTriggerCounts?: {
+                [key: string]: number;
+            };
             /** Format: int64 */
             totalReports?: number;
             /** Format: int64 */
             unresolvedCount?: number;
-            ackResponseCounts?: {
-                [key: string]: number;
-            };
-            ruleTriggerCounts?: {
-                [key: string]: number;
-            };
         };
-        AdvisoryRuleListResponse: {
+        ReviewerHistoryResponse: {
+            /** Format: double */
+            approvalRate?: number;
             /** Format: int32 */
-            totalCount?: number;
-            items?: components["schemas"]["AdvisoryRuleResponse"][];
-        };
-        ApiResponseAdvisoryRuleListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AdvisoryRuleListResponse"];
-        };
-        AdvisoryReportListResponse: {
+            approvedCount?: number;
             /** Format: int32 */
-            totalCount?: number;
-            items?: components["schemas"]["AdvisoryReportSummaryResponse"][];
-        };
-        ApiResponseAdvisoryReportListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AdvisoryReportListResponse"];
-        };
-        AdvisoryAckHistoryItem: {
-            /** Format: int64 */
-            advkId?: number;
-            /** Format: int64 */
-            ackReviewerId?: number;
-            ackResponseCd?: string;
-            decisionChangeYn?: boolean;
-            ackReasonCd?: string;
-            ackRemark?: string;
-            beforeDecisionCd?: string;
-            afterDecisionCd?: string;
-            /** Format: date-time */
-            ackedAt?: string;
-        };
-        AdvisoryReportDetailResponse: {
-            /** Format: int64 */
-            advrId?: number;
-            /** Format: int64 */
-            revId?: number;
-            /** Format: int64 */
-            ruleId?: number;
-            advisoryTypeCd?: string;
-            severityCd?: string;
-            advrStatusCd?: string;
-            advrTitle?: string;
-            advrSummary?: string;
-            advrPayload?: string;
-            /** Format: int64 */
-            targetReviewerId?: number;
-            /** Format: date-time */
-            generatedAt?: string;
-            /** Format: date-time */
-            firstViewedAt?: string;
-            /** Format: date-time */
-            resolvedAt?: string;
-            signals?: components["schemas"]["AdvisorySignalResponse"][];
-            acks?: components["schemas"]["AdvisoryAckHistoryItem"][];
-        };
-        AdvisorySignalResponse: {
-            /** Format: int64 */
-            advsId?: number;
-            signalKindCd?: string;
-            signalMetric?: string;
-            observedValue?: number;
-            thresholdValue?: number;
-            peerBaselineValue?: number;
+            days?: number;
             /** Format: int32 */
-            sampleSize?: number;
-            signalDetail?: string;
-            observedWindowStart?: string;
-            observedWindowEnd?: string;
-            /** Format: date-time */
-            observedAt?: string;
-        };
-        ApiResponseAdvisoryReportDetailResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AdvisoryReportDetailResponse"];
-        };
-        ApiResponseReviewerRiskScoreResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ReviewerRiskScoreResponse"];
-        };
-        ReviewerRiskScoreResponse: {
+            rejectedCount?: number;
             /** Format: int64 */
             reviewerId?: number;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        ReviewerRiskScoreResponse: {
             /** Format: double */
             biasScore?: number;
             /** Format: double */
@@ -5283,71 +5120,234 @@ export interface components {
             evaluationCount?: number;
             /** Format: date-time */
             lastEvaluatedAt?: string;
-        };
-        ApiResponseListReviewerRiskScoreResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ReviewerRiskScoreResponse"][];
-        };
-        ApiResponseListQuarantineReportResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["QuarantineReportResponse"][];
-        };
-        QuarantineReportResponse: {
-            /** Format: int64 */
-            advrId?: number;
-            /** Format: int64 */
-            revId?: number;
-            /** Format: int64 */
-            targetReviewerId?: number;
-            advisoryTypeCd?: string;
-            severityCd?: string;
-            advrTitle?: string;
-            /** Format: date-time */
-            quarantinedAt?: string;
-            /** Format: date-time */
-            generatedAt?: string;
-        };
-        AiAuditOpinionResponse: {
-            /** Format: int64 */
-            opinionId?: number;
-            /** Format: int64 */
-            advrId?: number;
-            /** Format: int64 */
-            revId?: number;
             /** Format: int64 */
             reviewerId?: number;
-            analysisTypeCd?: string;
-            conclusionCd?: string;
-            reasoningSummary?: string;
-            /** Format: double */
-            confidenceScore?: number;
-            /** Format: int32 */
-            inputTokens?: number;
-            /** Format: int32 */
-            outputTokens?: number;
-            /** Format: date-time */
-            generatedAt?: string;
         };
-        ApiResponseListAiAuditOpinionResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AiAuditOpinionResponse"][];
-        };
-        ApiResponseLoanContractAdminListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoanContractAdminListResponse"];
-        };
-        LoanContractAdminListResponse: {
-            items?: components["schemas"]["LoanContractResponse"][];
+        ReviseReviewRequest: {
             /** Format: int64 */
+            approvedAmount?: number;
+            /** Format: int32 */
+            approvedPeriodMo?: number;
+            /** Format: int32 */
+            approvedRateBps?: number;
+            rejectReasonCd?: string;
+            revDecisionCd: string;
+            revRemark?: string;
+            revisitReasonCd: string;
+        };
+        RunCreditEvaluationRequest: {
+            cevalDecisionCd: string;
+            cevalEngine: string;
+            cevalEngineVersion?: string;
+            cevalFactors?: string;
+            cevalGrade?: string;
+            /** Format: int32 */
+            cevalScore?: number;
+            /** Format: int64 */
+            evalLimitAmount?: number;
+            /** Format: int32 */
+            evalRateBps?: number;
+            /** Format: int32 */
+            pdBps?: number;
+        };
+        RunDsrCalculationRequest: {
+            /** Format: int64 */
+            annualIncomeAmt: number;
+            calcEngineVersion?: string;
+            dsrDetail?: string;
+            /** Format: int32 */
+            dsrLimitBps?: number;
+            dsrRegTypeCd?: string;
+            /** Format: int64 */
+            existingAnnualRepayAmt?: number;
+            /** Format: int64 */
+            existingPrincipalTotal?: number;
+            /** Format: int64 */
+            newAnnualRepayAmt?: number;
+        };
+        RunLtvCalculationRequest: {
+            /** Format: int64 */
+            appliedColValue?: number;
+            calcEngineVersion?: string;
+            /** Format: int32 */
+            ltvLimitBps?: number;
+            /** Format: int64 */
+            requestedAmount?: number;
+            /** Format: int64 */
+            seniorLienAmount?: number;
+        };
+        RunPrescreeningRequest: {
+            estimatedGrade?: string;
+            /** Format: int64 */
+            estimatedLimitAmt?: number;
+            /** Format: int32 */
+            estimatedRateBps?: number;
+            /** Format: int32 */
+            estimatedScore?: number;
+            prescEngineVersion?: string;
+            prescRemark?: string;
+            prescResultCd?: string;
+            rejectReasonCd?: string;
+        };
+        RunReviewRequest: {
+            /** Format: int64 */
+            approvedAmount?: number;
+            /** Format: int32 */
+            approvedPeriodMo?: number;
+            /** Format: int32 */
+            approvedRateBps?: number;
+            rejectReasonCd?: string;
+            revDecisionCd: string;
+            revRemark?: string;
+            revTypeCd: string;
+        };
+        SignGuarantorAgreementRequest: {
+            signedDocHash: string;
+            signedDocUrl: string;
+        };
+        SimilarCaseResponse: {
+            /** Format: int64 */
+            advrId?: number;
+            cases?: components["schemas"]["CaseItem"][];
+            /** Format: int32 */
             totalCount?: number;
+        };
+        SnapshotRunResult: {
+            baseDate?: string;
             /** Format: int32 */
-            totalPages?: number;
+            inserted?: number;
             /** Format: int32 */
-            currentPage?: number;
+            reviewCount?: number;
+            /** Format: int32 */
+            skipped?: number;
+        };
+        SortObject: {
+            ascending?: boolean;
+            direction?: string;
+            ignoreCase?: boolean;
+            nullHandling?: string;
+            property?: string;
+        };
+        StatusHistoryListResponse: {
+            /** Format: int32 */
+            count?: number;
+            items?: components["schemas"]["StatusHistoryResponse"][];
+            targetDomainCd?: string;
+            /** Format: int64 */
+            targetId?: number;
+            targetTableCd?: string;
+        };
+        StatusHistoryResponse: {
+            afterStatusCd?: string;
+            beforeStatusCd?: string;
+            changeReasonCd?: string;
+            changeRemark?: string;
+            /** Format: date-time */
+            changedAt?: string;
+            /** Format: int64 */
+            changedBy?: number;
+            /** Format: int64 */
+            sthistId?: number;
+            targetDomainCd?: string;
+            /** Format: int64 */
+            targetId?: number;
+            targetTableCd?: string;
+        };
+        StepInfo: {
+            /** Format: int64 */
+            durationMs?: number;
+            /** Format: date-time */
+            endTime?: string;
+            exitCode?: string;
+            exitDescription?: string;
+            /** Format: date-time */
+            startTime?: string;
+            status?: string;
+            /** Format: int64 */
+            stepExecutionId?: number;
+            stepName?: string;
+        };
+        SubmitReportRequest: {
+            agencyCd: string;
+            reportPayload?: string;
+            reportReasonCd?: string;
+            reportTargetCd: string;
+            reportTypeCd: string;
+        };
+        UpdateAdvisoryRuleRequest: {
+            activeYn?: boolean;
+            changeReasonCd?: string;
+            changeRemark?: string;
+            effectiveEndDate?: string;
+            effectiveStartDate?: string;
+            ruleDesc?: string;
+            ruleParams?: string;
+            ruleVersion?: string;
+        };
+        UpdateBusinessCalendarRequest: {
+            baseCountryCd?: string;
+            businessDayYn?: boolean;
+            holidayName?: string;
+            holidayTypeCd?: string;
+        };
+        UpdateCollateralRequest: {
+            colAddress?: string;
+            colName?: string;
+            colRegistryNo?: string;
+            colTypeCd?: string;
+            currencyCd?: string;
+            /** Format: int64 */
+            declaredValue?: number;
+            ownershipTypeCd?: string;
+            /** Format: int64 */
+            seniorLienAmount?: number;
+            seniorLienYn?: boolean;
+        };
+        UpdateLoanProductRequest: {
+            /** Format: int32 */
+            applicationValidityDays?: number;
+            /** Format: int32 */
+            baseRateBps?: number;
+            collateralRequiredYn?: boolean;
+            guarantorRequiredYn?: boolean;
+            loanTypeCd?: string;
+            /** Format: int64 */
+            maxAmount?: number;
+            /** Format: int32 */
+            maxPeriodMo?: number;
+            /** Format: int32 */
+            maxRateBps?: number;
+            /** Format: int64 */
+            minAmount?: number;
+            /** Format: int32 */
+            minGuarantorCount?: number;
+            /** Format: int32 */
+            minPeriodMo?: number;
+            /** Format: int32 */
+            minRateBps?: number;
+            prodName?: string;
+            prodStatusCd?: string;
+            prodTermsHash?: string;
+            prodTermsUrl?: string;
+            rateTypeCd?: string;
+            repaymentMethodCd?: string;
+            saleEndDate?: string;
+            saleStartDate?: string;
+            targetCustomerCd?: string;
+        };
+        VerifyIdentityRequest: {
+            idvMethodCd: string;
+            idvTargetCd: string;
+            mobileNo: string;
+        };
+        VerifyRepaymentAccountRequest: {
+            verifyChannelCd?: string;
+            verifyRemark?: string;
+        };
+        VirtualAccountResponse: {
+            accountNickname?: string;
+            accountNo?: string;
+            bankCode?: string;
         };
     };
     responses: never;
@@ -5358,14 +5358,40 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    toggleActivate: {
+    list_18: {
         parameters: {
             query?: {
-                active?: boolean;
+                cntrStatusCd?: string;
+                dateFrom?: string;
+                dateTo?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanContractAdminListResponse"];
+                };
+            };
+        };
+    };
+    opinionsByReport: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
             path: {
-                docId: number;
+                advrId: number;
             };
             cookie?: never;
         };
@@ -5377,7 +5403,537 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
+                    "application/json": components["schemas"]["ApiResponseListAiAuditOpinionResponse"];
+                };
+            };
+        };
+    };
+    opinionsByReviewer: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                reviewerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListAiAuditOpinionResponse"];
+                };
+            };
+        };
+    };
+    recentOpinions: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListAiAuditOpinionResponse"];
+                };
+            };
+        };
+    };
+    quarantinedReports: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListQuarantineReportResponse"];
+                };
+            };
+        };
+    };
+    topBias: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListReviewerRiskScoreResponse"];
+                };
+            };
+        };
+    };
+    topCompliance: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListReviewerRiskScoreResponse"];
+                };
+            };
+        };
+    };
+    riskScore: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                reviewerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseReviewerRiskScoreResponse"];
+                };
+            };
+        };
+    };
+    list_17: {
+        parameters: {
+            query?: {
+                targetReviewerId?: number;
+                revId?: number;
+                advisoryTypeCd?: string;
+                severityCd?: string;
+                advrStatusCd?: string;
+            };
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAdvisoryReportListResponse"];
+                };
+            };
+        };
+    };
+    get_17: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                advrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAdvisoryReportDetailResponse"];
+                };
+            };
+        };
+    };
+    ack_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                advrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdvisoryAckRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAdvisoryAckResponse"];
+                };
+            };
+        };
+    };
+    citations: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                advrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePolicyCitationResponse"];
+                };
+            };
+        };
+    };
+    similarCases: {
+        parameters: {
+            query?: {
+                topK?: number;
+            };
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                advrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseSimilarCaseResponse"];
+                };
+            };
+        };
+    };
+    view: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                advrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAdvisoryReportSummaryResponse"];
+                };
+            };
+        };
+    };
+    list_16: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAdvisoryRuleListResponse"];
+                };
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                ruleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAdvisoryRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAdvisoryRuleResponse"];
+                };
+            };
+        };
+    };
+    reviewerStats: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Actor-Role"?: string;
+            };
+            path: {
+                reviewerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseReviewerAckStatsResponse"];
+                };
+            };
+        };
+    };
+    listByTarget: {
+        parameters: {
+            query: {
+                targetType: string;
+                targetId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogEntry"][];
+                };
+            };
+        };
+    };
+    listBreakGlass: {
+        parameters: {
+            query?: {
+                actorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogEntry"][];
+                };
+            };
+        };
+    };
+    breakGlass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BreakGlassRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BreakGlassResponse"];
+                };
+            };
+        };
+    };
+    listRange: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseBusinessCalendarListResponse"];
+                };
+            };
+        };
+    };
+    register_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterBusinessCalendarRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseBusinessCalendarResponse"];
+                };
+            };
+        };
+    };
+    getByDate: {
+        parameters: {
+            query: {
+                calDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseBusinessCalendarResponse"];
+                };
+            };
+        };
+    };
+    check: {
+        parameters: {
+            query: {
+                calDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseBusinessDayCheckResponse"];
                 };
             };
         };
@@ -5428,20 +5984,18 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_3: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
-                ruleId: number;
+                colId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateAdvisoryRuleRequest"];
+                "application/json": components["schemas"]["UpdateCollateralRequest"];
             };
         };
         responses: {
@@ -5451,17 +6005,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseAdvisoryRuleResponse"];
+                    "application/json": components["schemas"]["ApiResponseCollateralResponse"];
                 };
             };
         };
     };
-    retry: {
+    evaluate: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                outboxId: number;
+                colId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvaluateCollateralRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCollateralEvaluationResponse"];
+                };
+            };
+        };
+    };
+    get_16: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                colId: number;
             };
             cookie?: never;
         };
@@ -5473,69 +6053,23 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseNotificationOutboxResponse"];
+                    "application/json": components["schemas"]["ApiResponseLtvCalculationResponse"];
                 };
             };
         };
     };
-    receive: {
+    run_14: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                revId: number;
+                colId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["BiasResultCallbackRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                revId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListReviewCheckLogResponse"];
-                };
-            };
-        };
-    };
-    add: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                revId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddReviewCheckLogRequest"];
+                "application/json": components["schemas"]["RunLtvCalculationRequest"];
             };
         };
         responses: {
@@ -5545,23 +6079,23 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseReviewCheckLogResponse"];
+                    "application/json": components["schemas"]["ApiResponseLtvCalculationResponse"];
                 };
             };
         };
     };
-    biasOverride: {
+    release: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                revId: number;
+                colId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["BiasOverrideRequest"];
+                "application/json": components["schemas"]["ReleaseCollateralRequest"];
             };
         };
         responses: {
@@ -5571,16 +6105,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseLoanReviewResponse"];
+                    "application/json": components["schemas"]["ApiResponseCollateralResponse"];
                 };
             };
         };
     };
-    list_3: {
+    listAll: {
         parameters: {
             query: {
-                loanTypeCd?: string;
-                prodStatusCd?: string;
+                statusCd?: string;
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;
@@ -5595,41 +6128,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseLoanProductListResponse"];
+                    "application/json": components["schemas"]["ApiResponseAdminCreditInfoReportListResponse"];
                 };
             };
         };
     };
-    create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateLoanProductRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanProductResponse"];
-                };
-            };
-        };
-    };
-    list_4: {
+    get_15: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                prodId: number;
+                crptId: number;
             };
             cookie?: never;
         };
@@ -5641,557 +6150,23 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseListPreferentialRatePolicyResponse"];
+                    "application/json": components["schemas"]["ApiResponseCreditInfoReportResponse"];
                 };
             };
         };
     };
-    create_1: {
+    ack: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                prodId: number;
+                crptId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreatePreferentialRatePolicyRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePreferentialRatePolicyResponse"];
-                };
-            };
-        };
-    };
-    discontinue: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                prodId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DiscontinueLoanProductRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanProductResponse"];
-                };
-            };
-        };
-    };
-    list_5: {
-        parameters: {
-            query?: {
-                customerId?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanContractListResponse"];
-                };
-            };
-        };
-    };
-    create_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateContractRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanContractResponse"];
-                };
-            };
-        };
-    };
-    issue: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVirtualAccountResponse"];
-                };
-            };
-        };
-    };
-    list_6: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRepaymentTransactionListResponse"];
-                };
-            };
-        };
-    };
-    repay: {
-        parameters: {
-            query?: never;
-            header?: {
-                "Idempotency-Key"?: string;
-            };
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RepayInstallmentRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRepaymentTransactionResponse"];
-                };
-            };
-        };
-    };
-    reverse: {
-        parameters: {
-            query?: never;
-            header?: {
-                "Idempotency-Key"?: string;
-            };
-            path: {
-                cntrId: number;
-                rtxId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ReverseRepaymentRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseReversalResponse"];
-                };
-            };
-        };
-    };
-    repay_1: {
-        parameters: {
-            query?: never;
-            header?: {
-                "Idempotency-Key"?: string;
-            };
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PartialRepayRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePartialRepaymentResponse"];
-                };
-            };
-        };
-    };
-    repayOnline: {
-        parameters: {
-            query?: never;
-            header?: {
-                "Idempotency-Key"?: string;
-            };
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RepayInstallmentRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRepaymentTransactionResponse"];
-                };
-            };
-        };
-    };
-    get_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRepaymentAccountResponse"];
-                };
-            };
-        };
-    };
-    register: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterRepaymentAccountRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRepaymentAccountResponse"];
-                };
-            };
-        };
-    };
-    verify: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VerifyRepaymentAccountRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRepaymentAccountResponse"];
-                };
-            };
-        };
-    };
-    list_8: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRateChangeHistoryListResponse"];
-                };
-            };
-        };
-    };
-    apply: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateRateChangeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRateChangeApplyResponse"];
-                };
-            };
-        };
-    };
-    prepay: {
-        parameters: {
-            query?: never;
-            header?: {
-                "Idempotency-Key"?: string;
-            };
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PrepayRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePrepaymentResponse"];
-                };
-            };
-        };
-    };
-    extend: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ExtendMaturityRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseMaturityResponse"];
-                };
-            };
-        };
-    };
-    issue_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["IssueGuaranteeInsuranceRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseGuaranteeInsuranceResponse"];
-                };
-            };
-        };
-    };
-    cancel: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-                ginsId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CancelGuaranteeInsuranceRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseGuaranteeInsuranceResponse"];
-                };
-            };
-        };
-    };
-    drawdown: {
-        parameters: {
-            query?: never;
-            header?: {
-                "Idempotency-Key"?: string;
-            };
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DrawdownRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanExecutionResponse"];
-                };
-            };
-        };
-    };
-    list_10: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCreditInfoReportListResponse"];
-                };
-            };
-        };
-    };
-    submit: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SubmitReportRequest"];
+                "application/json": components["schemas"]["AckCallbackRequest"];
             };
         };
         responses: {
@@ -6206,12 +6181,12 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    retry_1: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                cntrId: number;
+                crptId: number;
             };
             cookie?: never;
         };
@@ -6223,23 +6198,21 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseLoanClosureResponse"];
+                    "application/json": components["schemas"]["ApiResponseCreditInfoReportResponse"];
                 };
             };
         };
     };
-    close: {
+    preview: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                cntrId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CloseLoanRequest"];
+                "application/json": components["schemas"]["CreditScorePreviewRequest"];
             };
         };
         responses: {
@@ -6249,17 +6222,150 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseLoanClosureResponse"];
+                    "application/json": components["schemas"]["ApiResponseCreditScorePreviewResponse"];
                 };
             };
         };
     };
-    list_11: {
+    run_13: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAccountingSummaryRunResponse"];
+                };
+            };
+        };
+    };
+    runBatchEvaluation: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseBatchEvaluationResult"];
+                };
+            };
+        };
+    };
+    getCohortStats: {
+        parameters: {
+            query: {
+                dimension: string;
+                value: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCohortStatsResponse"];
+                };
+            };
+        };
+    };
+    listDocuments: {
         parameters: {
             query?: never;
             header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListDocumentSummaryResponse"];
+                };
+            };
+        };
+    };
+    registerDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseDocumentRegisterResponse"];
+                };
+            };
+        };
+    };
+    documentStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseDocumentStatsResponse"];
+                };
+            };
+        };
+    };
+    toggleActivate: {
+        parameters: {
+            query?: {
+                active?: boolean;
+            };
+            header?: never;
             path: {
-                cntrId: number;
+                docId: number;
             };
             cookie?: never;
         };
@@ -6271,23 +6377,180 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseLoanCertificateListResponse"];
+                    "application/json": components["schemas"]["ApiResponseVoid"];
                 };
             };
         };
     };
-    issue_2: {
+    indexCases: {
+        parameters: {
+            query?: {
+                revId?: number;
+                overturnYn?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseIndexCasesResult"];
+                };
+            };
+        };
+    };
+    getPolicyCitations: {
+        parameters: {
+            query: {
+                query: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePolicyCitationResponse"];
+                };
+            };
+        };
+    };
+    backfill: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                dryRun?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseBackfillResultResponse"];
+                };
+            };
+        };
+    };
+    getReviewerHistory: {
+        parameters: {
+            query: {
+                reviewerId: number;
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseReviewerHistoryResponse"];
+                };
+            };
+        };
+    };
+    getSimilarCases: {
+        parameters: {
+            query: {
+                revId: number;
+                topK?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseSimilarCaseResponse"];
+                };
+            };
+        };
+    };
+    runSnapshot: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseSnapshotRunResult"];
+                };
+            };
+        };
+    };
+    run_12: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseApplicationExpiryRunResponse"];
+                };
+            };
+        };
+    };
+    paymentResult: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                cntrId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IssueCertificateRequest"];
+                "application/json": components["schemas"]["AutoDebitPaymentResultRequest"];
             };
         };
         responses: {
@@ -6297,7 +6560,496 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseLoanCertificateResponse"];
+                    "application/json": components["schemas"]["ApiResponseRepaymentTransactionResponse"];
+                };
+            };
+        };
+    };
+    run_11: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAutoDebitRunResponse"];
+                };
+            };
+        };
+    };
+    run_10: {
+        parameters: {
+            query: {
+                year: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCalendarSeederRunResponse"];
+                };
+            };
+        };
+    };
+    backfillContracts: {
+        parameters: {
+            query?: {
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseInteger"];
+                };
+            };
+        };
+    };
+    backfillProducts: {
+        parameters: {
+            query?: {
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseInteger"];
+                };
+            };
+        };
+    };
+    dispatch_2: {
+        parameters: {
+            query?: {
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCommonSyncDispatchSummary"];
+                };
+            };
+        };
+    };
+    dispatch_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCreditInfoReportDispatchSummary"];
+                };
+            };
+        };
+    };
+    rollover: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseDelinquencyRolloverResponse"];
+                };
+            };
+        };
+    };
+    run_9: {
+        parameters: {
+            query: {
+                baseMonth: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseEclCalculationRunResponse"];
+                };
+            };
+        };
+    };
+    history: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListEodHistoryResponse"];
+                };
+            };
+        };
+    };
+    restart: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseEodRunResponse"];
+                };
+            };
+        };
+    };
+    run_8: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseEodRunResponse"];
+                };
+            };
+        };
+    };
+    run_7: {
+        parameters: {
+            query: {
+                baseMonth: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseEodRunResponse"];
+                };
+            };
+        };
+    };
+    run_6: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseGuaranteeInsuranceExpiryRunResponse"];
+                };
+            };
+        };
+    };
+    run_5: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseInterestAccrualRunResponse"];
+                };
+            };
+        };
+    };
+    purgeExpired: {
+        parameters: {
+            query?: {
+                batchSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePurgeExpiredDocumentsResponse"];
+                };
+            };
+        };
+    };
+    expireBiasReviewing: {
+        parameters: {
+            query?: {
+                olderThanDays?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseExpireBiasReviewingResponse"];
+                };
+            };
+        };
+    };
+    expirePending: {
+        parameters: {
+            query?: {
+                olderThanDays?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseExpirePendingReviewsResponse"];
+                };
+            };
+        };
+    };
+    expirePendingApprover: {
+        parameters: {
+            query?: {
+                olderThanDays?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseExpirePendingApproverResponse"];
+                };
+            };
+        };
+    };
+    addBiasOpsNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BiasOpsNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAiReviewAdviceResponse"];
+                };
+            };
+        };
+    };
+    appendBiasReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BiasReportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAiReviewAdviceResponse"];
+                };
+            };
+        };
+    };
+    run_4: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseMaturityRunResponse"];
+                };
+            };
+        };
+    };
+    dispatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseNotificationDispatchSummary"];
                 };
             };
         };
@@ -6346,6 +7098,501 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseLoanApplicationResponse"];
+                };
+            };
+        };
+    };
+    get_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanApplicationResponse"];
+                };
+            };
+        };
+    };
+    cancel_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelLoanApplicationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanApplicationResponse"];
+                };
+            };
+        };
+    };
+    list_15: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCollateralListResponse"];
+                };
+            };
+        };
+    };
+    register_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCollateralRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCollateralResponse"];
+                };
+            };
+        };
+    };
+    create_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCreditConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCreditConsentResponse"];
+                };
+            };
+        };
+    };
+    get_14: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCreditEvaluationResponse"];
+                };
+            };
+        };
+    };
+    run_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunCreditEvaluationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCreditEvaluationResponse"];
+                };
+            };
+        };
+    };
+    list_14: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanDocumentListResponse"];
+                };
+            };
+        };
+    };
+    upload: {
+        parameters: {
+            query: {
+                docTypeCd: string;
+                docSourceCd?: string;
+            };
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanDocumentResponse"];
+                };
+            };
+        };
+    };
+    get_13: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseDsrCalculationResponse"];
+                };
+            };
+        };
+    };
+    run_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunDsrCalculationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseDsrCalculationResponse"];
+                };
+            };
+        };
+    };
+    list_13: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseGuarantorAgreementListResponse"];
+                };
+            };
+        };
+    };
+    register_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterGuarantorAgreementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseGuarantorAgreementResponse"];
+                };
+            };
+        };
+    };
+    cancel_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+                gagrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelGuarantorAgreementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseGuarantorAgreementResponse"];
+                };
+            };
+        };
+    };
+    sign: {
+        parameters: {
+            query?: never;
+            header?: {
+                "User-Agent"?: string;
+            };
+            path: {
+                applId: number;
+                gagrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignGuarantorAgreementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseGuarantorAgreementResponse"];
+                };
+            };
+        };
+    };
+    verify_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyIdentityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseIdentityVerificationResponse"];
+                };
+            };
+        };
+    };
+    get_12: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+                idvId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseIdentityVerificationResponse"];
+                };
+            };
+        };
+    };
+    get_11: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanApplicationJourneyResponse"];
+                };
+            };
+        };
+    };
+    get_10: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanPrescreeningResponse"];
+                };
+            };
+        };
+    };
+    run_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunPrescreeningRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanPrescreeningResponse"];
                 };
             };
         };
@@ -6424,7 +7671,7 @@ export interface operations {
             };
         };
     };
-    escalateToHq: {
+    acknowledgeBias: {
         parameters: {
             query?: never;
             header?: never;
@@ -6433,59 +7680,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["EscalateToHqRequest"];
+                "application/json": components["schemas"]["AcknowledgeBiasRequest"];
             };
         };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanReviewResponse"];
-                };
-            };
-        };
-    };
-    confirm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ConfirmReviewRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanReviewResponse"];
-                };
-            };
-        };
-    };
-    autoDecide: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -6524,7 +7723,7 @@ export interface operations {
             };
         };
     };
-    acknowledgeBias: {
+    autoDecide: {
         parameters: {
             query?: never;
             header?: never;
@@ -6533,9 +7732,31 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: {
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanReviewResponse"];
+                };
+            };
+        };
+    };
+    confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
             content: {
-                "application/json": components["schemas"]["AcknowledgeBiasRequest"];
+                "application/json": components["schemas"]["ConfirmReviewRequest"];
             };
         };
         responses: {
@@ -6550,12 +7771,38 @@ export interface operations {
             };
         };
     };
-    get_10: {
+    escalateToHq: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 applId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EscalateToHqRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanReviewResponse"];
+                };
+            };
+        };
+    };
+    get_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                certId: number;
             };
             cookie?: never;
         };
@@ -6567,23 +7814,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseLoanPrescreeningResponse"];
+                    "application/json": components["schemas"]["ApiResponseLoanCertificateResponse"];
                 };
             };
         };
     };
-    run_1: {
+    list_5: {
+        parameters: {
+            query?: {
+                customerId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanContractListResponse"];
+                };
+            };
+        };
+    };
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                applId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RunPrescreeningRequest"];
+                "application/json": components["schemas"]["CreateContractRequest"];
             };
         };
         responses: {
@@ -6593,43 +7860,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseLoanPrescreeningResponse"];
+                    "application/json": components["schemas"]["ApiResponseLoanContractResponse"];
                 };
             };
         };
     };
-    verify_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VerifyIdentityRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseIdentityVerificationResponse"];
-                };
-            };
-        };
-    };
-    list_13: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
+                cntrId: number;
             };
             cookie?: never;
         };
@@ -6641,23 +7882,45 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseGuarantorAgreementListResponse"];
+                    "application/json": components["schemas"]["ApiResponseLoanContractResponse"];
                 };
             };
         };
     };
-    register_1: {
+    list_11: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                applId: number;
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanCertificateListResponse"];
+                };
+            };
+        };
+    };
+    issue_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RegisterGuarantorAgreementRequest"];
+                "application/json": components["schemas"]["IssueCertificateRequest"];
             };
         };
         responses: {
@@ -6667,26 +7930,165 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseGuarantorAgreementResponse"];
+                    "application/json": components["schemas"]["ApiResponseLoanCertificateResponse"];
                 };
             };
         };
     };
-    sign: {
+    get_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanClosureResponse"];
+                };
+            };
+        };
+    };
+    close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseLoanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanClosureResponse"];
+                };
+            };
+        };
+    };
+    list_10: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCreditInfoReportListResponse"];
+                };
+            };
+        };
+    };
+    submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitReportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCreditInfoReportResponse"];
+                };
+            };
+        };
+    };
+    getActive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseDelinquencyResponse"];
+                };
+            };
+        };
+    };
+    listSnapshots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseDelinquencySnapshotListResponse"];
+                };
+            };
+        };
+    };
+    drawdown: {
         parameters: {
             query?: never;
             header?: {
-                "User-Agent"?: string;
+                "Idempotency-Key"?: string;
             };
             path: {
-                applId: number;
-                gagrId: number;
+                cntrId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SignGuarantorAgreementRequest"];
+                "application/json": components["schemas"]["DrawdownRequest"];
             };
         };
         responses: {
@@ -6696,24 +8098,73 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseGuarantorAgreementResponse"];
+                    "application/json": components["schemas"]["ApiResponseLoanExecutionResponse"];
                 };
             };
         };
     };
-    cancel_1: {
+    issue_1: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                applId: number;
-                gagrId: number;
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueGuaranteeInsuranceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseGuaranteeInsuranceResponse"];
+                };
+            };
+        };
+    };
+    get_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+                ginsId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseGuaranteeInsuranceResponse"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+                ginsId: number;
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CancelGuarantorAgreementRequest"];
+                "application/json": components["schemas"]["CancelGuaranteeInsuranceRequest"];
             };
         };
         responses: {
@@ -6723,362 +8174,21 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseGuarantorAgreementResponse"];
+                    "application/json": components["schemas"]["ApiResponseGuaranteeInsuranceResponse"];
                 };
             };
         };
     };
-    get_13: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseDsrCalculationResponse"];
-                };
-            };
-        };
-    };
-    run_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RunDsrCalculationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseDsrCalculationResponse"];
-                };
-            };
-        };
-    };
-    list_14: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanDocumentListResponse"];
-                };
-            };
-        };
-    };
-    upload: {
-        parameters: {
-            query: {
-                docTypeCd: string;
-                docSourceCd?: string;
-            };
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanDocumentResponse"];
-                };
-            };
-        };
-    };
-    get_14: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCreditEvaluationResponse"];
-                };
-            };
-        };
-    };
-    run_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RunCreditEvaluationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCreditEvaluationResponse"];
-                };
-            };
-        };
-    };
-    create_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateCreditConsentRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCreditConsentResponse"];
-                };
-            };
-        };
-    };
-    list_15: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCollateralListResponse"];
-                };
-            };
-        };
-    };
-    register_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateCollateralRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCollateralResponse"];
-                };
-            };
-        };
-    };
-    cancel_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CancelLoanApplicationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanApplicationResponse"];
-                };
-            };
-        };
-    };
-    dispatch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseNotificationDispatchSummary"];
-                };
-            };
-        };
-    };
-    run_4: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseMaturityRunResponse"];
-                };
-            };
-        };
-    };
-    appendBiasReport: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                revId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BiasReportRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAiReviewAdviceResponse"];
-                };
-            };
-        };
-    };
-    addBiasOpsNote: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                revId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BiasOpsNoteRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAiReviewAdviceResponse"];
-                };
-            };
-        };
-    };
-    expirePending: {
+    list_9: {
         parameters: {
             query?: {
-                olderThanDays?: number;
+                from?: string;
+                to?: string;
             };
             header?: never;
-            path?: never;
+            path: {
+                cntrId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7089,236 +8199,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseExpirePendingReviewsResponse"];
+                    "application/json": components["schemas"]["ApiResponseInterestAccrualListResponse"];
                 };
             };
         };
     };
-    expirePendingApprover: {
-        parameters: {
-            query?: {
-                olderThanDays?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseExpirePendingApproverResponse"];
-                };
-            };
-        };
-    };
-    expireBiasReviewing: {
-        parameters: {
-            query?: {
-                olderThanDays?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseExpireBiasReviewingResponse"];
-                };
-            };
-        };
-    };
-    purgeExpired: {
-        parameters: {
-            query?: {
-                batchSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePurgeExpiredDocumentsResponse"];
-                };
-            };
-        };
-    };
-    run_5: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseInterestAccrualRunResponse"];
-                };
-            };
-        };
-    };
-    run_6: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseGuaranteeInsuranceExpiryRunResponse"];
-                };
-            };
-        };
-    };
-    run_7: {
-        parameters: {
-            query: {
-                baseMonth: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseEodRunResponse"];
-                };
-            };
-        };
-    };
-    run_8: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseEodRunResponse"];
-                };
-            };
-        };
-    };
-    restart: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseEodRunResponse"];
-                };
-            };
-        };
-    };
-    run_9: {
-        parameters: {
-            query: {
-                baseMonth: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseEclCalculationRunResponse"];
-                };
-            };
-        };
-    };
-    rollover: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseDelinquencyRolloverResponse"];
-                };
-            };
-        };
-    };
-    dispatch_1: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                cntrId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7329,131 +8221,247 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseCreditInfoReportDispatchSummary"];
+                    "application/json": components["schemas"]["ApiResponseMaturityResponse"];
                 };
             };
         };
     };
-    dispatch_2: {
-        parameters: {
-            query?: {
-                pageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCommonSyncDispatchSummary"];
-                };
-            };
-        };
-    };
-    backfillProducts: {
-        parameters: {
-            query?: {
-                pageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseInteger"];
-                };
-            };
-        };
-    };
-    backfillContracts: {
-        parameters: {
-            query?: {
-                pageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseInteger"];
-                };
-            };
-        };
-    };
-    run_10: {
-        parameters: {
-            query: {
-                year: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCalendarSeederRunResponse"];
-                };
-            };
-        };
-    };
-    run_11: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAutoDebitRunResponse"];
-                };
-            };
-        };
-    };
-    paymentResult: {
+    extend: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                cntrId: number;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AutoDebitPaymentResultRequest"];
+                "application/json": components["schemas"]["ExtendMaturityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseMaturityResponse"];
+                };
+            };
+        };
+    };
+    prepay: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrepayRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePrepaymentResponse"];
+                };
+            };
+        };
+    };
+    list_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRateChangeHistoryListResponse"];
+                };
+            };
+        };
+    };
+    apply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRateChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRateChangeApplyResponse"];
+                };
+            };
+        };
+    };
+    get_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRepaymentAccountResponse"];
+                };
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRepaymentAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRepaymentAccountResponse"];
+                };
+            };
+        };
+    };
+    verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyRepaymentAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRepaymentAccountResponse"];
+                };
+            };
+        };
+    };
+    list_7: {
+        parameters: {
+            query?: {
+                version?: string;
+            };
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRepaymentScheduleListResponse"];
+                };
+            };
+        };
+    };
+    list_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRepaymentTransactionListResponse"];
+                };
+            };
+        };
+    };
+    repay: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepayInstallmentRequest"];
             };
         };
         responses: {
@@ -7468,436 +8476,97 @@ export interface operations {
             };
         };
     };
-    run_12: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseApplicationExpiryRunResponse"];
-                };
-            };
-        };
-    };
-    runSnapshot: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseSnapshotRunResult"];
-                };
-            };
-        };
-    };
-    backfill: {
-        parameters: {
-            query?: {
-                from?: string;
-                to?: string;
-                dryRun?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseBackfillResultResponse"];
-                };
-            };
-        };
-    };
-    indexCases: {
-        parameters: {
-            query?: {
-                revId?: number;
-                overturnYn?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseIndexCasesResult"];
-                };
-            };
-        };
-    };
-    listDocuments: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListDocumentSummaryResponse"];
-                };
-            };
-        };
-    };
-    registerDocument: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DocumentRegisterRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseDocumentRegisterResponse"];
-                };
-            };
-        };
-    };
-    runBatchEvaluation: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseBatchEvaluationResult"];
-                };
-            };
-        };
-    };
-    run_13: {
-        parameters: {
-            query: {
-                baseDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAccountingSummaryRunResponse"];
-                };
-            };
-        };
-    };
-    preview: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreditScorePreviewRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCreditScorePreviewResponse"];
-                };
-            };
-        };
-    };
-    retry_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                crptId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCreditInfoReportResponse"];
-                };
-            };
-        };
-    };
-    ack: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                crptId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AckCallbackRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCreditInfoReportResponse"];
-                };
-            };
-        };
-    };
-    release: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                colId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReleaseCollateralRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCollateralResponse"];
-                };
-            };
-        };
-    };
-    get_16: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                colId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLtvCalculationResponse"];
-                };
-            };
-        };
-    };
-    run_14: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                colId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RunLtvCalculationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLtvCalculationResponse"];
-                };
-            };
-        };
-    };
-    evaluate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                colId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EvaluateCollateralRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCollateralEvaluationResponse"];
-                };
-            };
-        };
-    };
-    listRange: {
-        parameters: {
-            query: {
-                from: string;
-                to: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseBusinessCalendarListResponse"];
-                };
-            };
-        };
-    };
-    register_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterBusinessCalendarRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseBusinessCalendarResponse"];
-                };
-            };
-        };
-    };
-    breakGlass: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BreakGlassRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BreakGlassResponse"];
-                };
-            };
-        };
-    };
-    view: {
+    repayOnline: {
         parameters: {
             query?: never;
             header?: {
-                "X-Actor-Role"?: string;
+                "Idempotency-Key"?: string;
             };
             path: {
-                advrId: number;
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepayInstallmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRepaymentTransactionResponse"];
+                };
+            };
+        };
+    };
+    repay_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                cntrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartialRepayRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePartialRepaymentResponse"];
+                };
+            };
+        };
+    };
+    reverse: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                cntrId: number;
+                rtxId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReverseRepaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseReversalResponse"];
+                };
+            };
+        };
+    };
+    issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cntrId: number;
             };
             cookie?: never;
         };
@@ -7909,25 +8578,89 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseAdvisoryReportSummaryResponse"];
+                    "application/json": components["schemas"]["ApiResponseVirtualAccountResponse"];
                 };
             };
         };
     };
-    ack_1: {
+    delete: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
-                advrId: number;
+                docId: number;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanDocumentResponse"];
+                };
+            };
+        };
+    };
+    download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                docId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query: {
+                loanTypeCd?: string;
+                prodStatusCd?: string;
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanProductListResponse"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AdvisoryAckRequest"];
+                "application/json": components["schemas"]["CreateLoanProductRequest"];
             };
         };
         responses: {
@@ -7937,7 +8670,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseAdvisoryAckResponse"];
+                    "application/json": components["schemas"]["ApiResponseLoanProductResponse"];
                 };
             };
         };
@@ -7990,18 +8723,18 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    discontinue: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                colId: number;
+                prodId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateCollateralRequest"];
+                "application/json": components["schemas"]["DiscontinueLoanProductRequest"];
             };
         };
         responses: {
@@ -8011,16 +8744,63 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseCollateralResponse"];
+                    "application/json": components["schemas"]["ApiResponseLoanProductResponse"];
                 };
             };
         };
     };
-    list: {
+    list_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                prodId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListPreferentialRatePolicyResponse"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                prodId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePreferentialRatePolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePreferentialRatePolicyResponse"];
+                };
+            };
+        };
+    };
+    listEscalated: {
         parameters: {
             query: {
-                targetTable: string;
-                targetId: number;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -8034,8 +8814,213 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseStatusHistoryListResponse"];
+                    "application/json": components["schemas"]["ApiResponsePageLoanReviewResponse"];
                 };
+            };
+        };
+    };
+    listPending: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListLoanReviewResponse"];
+                };
+            };
+        };
+    };
+    listPendingApprover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListLoanReviewResponse"];
+                };
+            };
+        };
+    };
+    stats: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseReviewStatsResponse"];
+                };
+            };
+        };
+    };
+    listAdvices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListAiReviewAdviceResponse"];
+                };
+            };
+        };
+    };
+    listAdvisoryReports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListAdvisoryReportSummary"];
+                };
+            };
+        };
+    };
+    biasOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BiasOverrideRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoanReviewResponse"];
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListReviewCheckLogResponse"];
+                };
+            };
+        };
+    };
+    add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddReviewCheckLogRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseReviewCheckLogResponse"];
+                };
+            };
+        };
+    };
+    receive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BiasResultCallbackRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -8085,12 +9070,12 @@ export interface operations {
             };
         };
     };
-    listAdvisoryReports: {
+    retry: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                revId: number;
+                outboxId: number;
             };
             cookie?: never;
         };
@@ -8102,638 +9087,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseListAdvisoryReportSummary"];
+                    "application/json": components["schemas"]["ApiResponseNotificationOutboxResponse"];
                 };
             };
         };
     };
-    listAdvices: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                revId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListAiReviewAdviceResponse"];
-                };
-            };
-        };
-    };
-    stats: {
+    list: {
         parameters: {
             query: {
-                from: string;
-                to: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseReviewStatsResponse"];
-                };
-            };
-        };
-    };
-    listPending: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListLoanReviewResponse"];
-                };
-            };
-        };
-    };
-    listPendingApprover: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListLoanReviewResponse"];
-                };
-            };
-        };
-    };
-    listEscalated: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePageLoanReviewResponse"];
-                };
-            };
-        };
-    };
-    download: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                docId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": string;
-                };
-            };
-        };
-    };
-    get_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanContractResponse"];
-                };
-            };
-        };
-    };
-    list_7: {
-        parameters: {
-            query?: {
-                version?: string;
-            };
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRepaymentScheduleListResponse"];
-                };
-            };
-        };
-    };
-    get_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseMaturityResponse"];
-                };
-            };
-        };
-    };
-    list_9: {
-        parameters: {
-            query?: {
-                from?: string;
-                to?: string;
-            };
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseInterestAccrualListResponse"];
-                };
-            };
-        };
-    };
-    get_5: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-                ginsId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseGuaranteeInsuranceResponse"];
-                };
-            };
-        };
-    };
-    getActive: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseDelinquencyResponse"];
-                };
-            };
-        };
-    };
-    listSnapshots: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cntrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseDelinquencySnapshotListResponse"];
-                };
-            };
-        };
-    };
-    get_7: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                certId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanCertificateResponse"];
-                };
-            };
-        };
-    };
-    get_8: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanApplicationResponse"];
-                };
-            };
-        };
-    };
-    get_11: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanApplicationJourneyResponse"];
-                };
-            };
-        };
-    };
-    get_12: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                applId: number;
-                idvId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseIdentityVerificationResponse"];
-                };
-            };
-        };
-    };
-    history: {
-        parameters: {
-            query?: {
-                from?: string;
-                to?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListEodHistoryResponse"];
-                };
-            };
-        };
-    };
-    getSimilarCases: {
-        parameters: {
-            query: {
-                revId: number;
-                topK?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseSimilarCaseResponse"];
-                };
-            };
-        };
-    };
-    getReviewerHistory: {
-        parameters: {
-            query: {
-                reviewerId: number;
-                days?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseReviewerHistoryResponse"];
-                };
-            };
-        };
-    };
-    getPolicyCitations: {
-        parameters: {
-            query: {
-                query: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePolicyCitationResponse"];
-                };
-            };
-        };
-    };
-    documentStats: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseDocumentStatsResponse"];
-                };
-            };
-        };
-    };
-    getCohortStats: {
-        parameters: {
-            query: {
-                dimension: string;
-                value: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCohortStatsResponse"];
-                };
-            };
-        };
-    };
-    listAll: {
-        parameters: {
-            query: {
-                statusCd?: string;
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAdminCreditInfoReportListResponse"];
-                };
-            };
-        };
-    };
-    get_15: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                crptId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCreditInfoReportResponse"];
-                };
-            };
-        };
-    };
-    check: {
-        parameters: {
-            query: {
-                calDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseBusinessDayCheckResponse"];
-                };
-            };
-        };
-    };
-    getByDate: {
-        parameters: {
-            query: {
-                calDate: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseBusinessCalendarResponse"];
-                };
-            };
-        };
-    };
-    listBreakGlass: {
-        parameters: {
-            query?: {
-                actorId?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuditLogEntry"][];
-                };
-            };
-        };
-    };
-    listByTarget: {
-        parameters: {
-            query: {
-                targetType: string;
+                targetTable: string;
                 targetId: number;
             };
             header?: never;
@@ -8748,369 +9110,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuditLogEntry"][];
-                };
-            };
-        };
-    };
-    reviewerStats: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path: {
-                reviewerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseReviewerAckStatsResponse"];
-                };
-            };
-        };
-    };
-    list_16: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAdvisoryRuleListResponse"];
-                };
-            };
-        };
-    };
-    list_17: {
-        parameters: {
-            query?: {
-                targetReviewerId?: number;
-                revId?: number;
-                advisoryTypeCd?: string;
-                severityCd?: string;
-                advrStatusCd?: string;
-            };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAdvisoryReportListResponse"];
-                };
-            };
-        };
-    };
-    get_17: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path: {
-                advrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAdvisoryReportDetailResponse"];
-                };
-            };
-        };
-    };
-    similarCases: {
-        parameters: {
-            query?: {
-                topK?: number;
-            };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path: {
-                advrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseSimilarCaseResponse"];
-                };
-            };
-        };
-    };
-    citations: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path: {
-                advrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePolicyCitationResponse"];
-                };
-            };
-        };
-    };
-    riskScore: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path: {
-                reviewerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseReviewerRiskScoreResponse"];
-                };
-            };
-        };
-    };
-    topCompliance: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListReviewerRiskScoreResponse"];
-                };
-            };
-        };
-    };
-    topBias: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListReviewerRiskScoreResponse"];
-                };
-            };
-        };
-    };
-    quarantinedReports: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListQuarantineReportResponse"];
-                };
-            };
-        };
-    };
-    recentOpinions: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListAiAuditOpinionResponse"];
-                };
-            };
-        };
-    };
-    opinionsByReviewer: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path: {
-                reviewerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListAiAuditOpinionResponse"];
-                };
-            };
-        };
-    };
-    opinionsByReport: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
-            path: {
-                advrId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListAiAuditOpinionResponse"];
-                };
-            };
-        };
-    };
-    list_18: {
-        parameters: {
-            query?: {
-                cntrStatusCd?: string;
-                dateFrom?: string;
-                dateTo?: string;
-                page?: number;
-                size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanContractAdminListResponse"];
-                };
-            };
-        };
-    };
-    delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                docId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoanDocumentResponse"];
+                    "application/json": components["schemas"]["ApiResponseStatusHistoryListResponse"];
                 };
             };
         };

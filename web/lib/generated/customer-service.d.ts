@@ -4,15 +4,15 @@
  */
 
 export interface paths {
-    "/api/v1/customers/me/profile": {
+    "/api/internal/customers/{customerId}/holder-info": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put: operations["updateProfile"];
+        get: operations["getHolderInfo"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -20,23 +20,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/person-info": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getPersonInfo"];
-        put: operations["updatePersonInfo"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/password": {
+    "/api/internal/transaction-approvals/verify": {
         parameters: {
             query?: never;
             header?: never;
@@ -44,15 +28,15 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["changePassword"];
-        post?: never;
+        put?: never;
+        post: operations["verify_1"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/notification": {
+    "/api/v1/auth/cert-login": {
         parameters: {
             query?: never;
             header?: never;
@@ -60,15 +44,15 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["updateNotification"];
-        post?: never;
+        put?: never;
+        post: operations["certLogin"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/foreigner-info/stay": {
+    "/api/v1/auth/cert/issue": {
         parameters: {
             query?: never;
             header?: never;
@@ -76,56 +60,8 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["updateStay"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/foreigner-info/passport": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["updatePassport"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/cert/manage/pin": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["changePin"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/banking/withdrawal-accounts/order": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["updateOrder"];
-        post?: never;
+        put?: never;
+        post: operations["issue_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -148,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/mobile-auth/verify": {
+    "/api/v1/auth/find-id": {
         parameters: {
             query?: never;
             header?: never;
@@ -157,14 +93,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["verify"];
+        post: operations["findId"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/mobile-auth/send": {
+    "/api/v1/auth/login": {
         parameters: {
             query?: never;
             header?: never;
@@ -173,14 +109,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send"];
+        post: operations["login_1"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/internal/party/{fromPartyId}/relations": {
+    "/api/v1/auth/pin-login": {
         parameters: {
             query?: never;
             header?: never;
@@ -189,30 +125,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["addRelation"];
+        post: operations["login"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/internal/fds/rules": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listRules"];
-        put?: never;
-        post: operations["createRule"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/fds/incidents": {
+    "/api/v1/auth/qr-cert/approve": {
         parameters: {
             query?: never;
             header?: never;
@@ -221,14 +141,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["openIncident"];
+        post: operations["approve_1"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/internal/customers/{customerId}/access-log": {
+    "/api/v1/auth/qr-cert/generate": {
         parameters: {
             query?: never;
             header?: never;
@@ -237,14 +157,30 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["recordAccess"];
+        post: operations["generate_1"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/withdraw": {
+    "/api/v1/auth/qr-cert/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/qr/approve": {
         parameters: {
             query?: never;
             header?: never;
@@ -253,14 +189,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["withdraw"];
+        post: operations["approve"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/transaction-approvals": {
+    "/api/v1/auth/qr/generate": {
         parameters: {
             query?: never;
             header?: never;
@@ -269,30 +205,30 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["issue"];
+        post: operations["generate"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/tax-residencies": {
+    "/api/v1/auth/qr/status": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["getTaxResidencies"];
+        get: operations["status"];
         put?: never;
-        post: operations["addTaxResidency"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/pin": {
+    "/api/v1/auth/refresh": {
         parameters: {
             query?: never;
             header?: never;
@@ -301,71 +237,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["register"];
-        delete: operations["revoke"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/internet-banking/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["cancelInternetBanking"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/devices": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listMyDevices"];
-        put?: never;
-        post: operations["register_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/banking/withdrawal-accounts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_2"];
-        put?: never;
-        post: operations["register_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/reset-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["resetPassword"];
+        post: operations["refresh"];
         delete?: never;
         options?: never;
         head?: never;
@@ -404,7 +276,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/refresh": {
+    "/api/v1/auth/reset-password": {
         parameters: {
             query?: never;
             header?: never;
@@ -413,30 +285,30 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["refresh"];
+        post: operations["resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/qr/generate": {
+    "/api/v1/banking/withdrawal-accounts": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["list_2"];
         put?: never;
-        post: operations["generate"];
+        post: operations["register_2"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/qr/approve": {
+    "/api/v1/banking/withdrawal-accounts/order": {
         parameters: {
             query?: never;
             header?: never;
@@ -444,15 +316,15 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
-        post: operations["approve"];
+        put: operations["updateOrder"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/qr-cert/generate": {
+    "/api/v1/banking/withdrawal-accounts/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -461,581 +333,21 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["generate_1"];
-        delete?: never;
+        post?: never;
+        delete: operations["delete"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/qr-cert/approve": {
+    "/api/v1/cert/manage": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        post: operations["approve_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/pin-login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["login_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/find-id": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["findId"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/cert/issue": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["issue_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/cert-login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["certLogin"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/transaction-approvals/verify": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["verify_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/party/{partyId}/compliance/kyc-complete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["completeKyc"];
-        trace?: never;
-    };
-    "/api/v1/internal/party/{partyId}/compliance/aml-risk": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["updateAmlRisk"];
-        trace?: never;
-    };
-    "/api/v1/internal/party/roles/{roleId}/close": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["closeRole"];
-        trace?: never;
-    };
-    "/api/v1/internal/party/relations/{relationId}/reject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["rejectReview"];
-        trace?: never;
-    };
-    "/api/v1/internal/party/relations/{relationId}/end": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["endRelation"];
-        trace?: never;
-    };
-    "/api/v1/internal/party/relations/{relationId}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["approveReview"];
-        trace?: never;
-    };
-    "/api/v1/internal/party/duplicates/{caseId}/duplicate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["markDuplicate"];
-        trace?: never;
-    };
-    "/api/v1/internal/party/duplicates/{caseId}/distinct": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["markDistinct"];
-        trace?: never;
-    };
-    "/api/v1/internal/fds/rules/{ruleId}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["deactivateRule"];
-        trace?: never;
-    };
-    "/api/v1/internal/fds/rules/{ruleId}/activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["activateRule"];
-        trace?: never;
-    };
-    "/api/v1/internal/fds/incidents/{incidentId}/report-fss": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["reportToFss"];
-        trace?: never;
-    };
-    "/api/v1/internal/fds/incidents/{incidentId}/close": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["closeIncident"];
-        trace?: never;
-    };
-    "/api/v1/internal/fds/detections/{detectionId}/false-positive": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["markFalsePositive"];
-        trace?: never;
-    };
-    "/api/v1/internal/fds/detections/{detectionId}/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["confirmDetection"];
-        trace?: never;
-    };
-    "/api/v1/internal/customers/{customerId}/suspend": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["suspend"];
-        trace?: never;
-    };
-    "/api/v1/internal/customers/{customerId}/reactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["reactivate"];
-        trace?: never;
-    };
-    "/api/v1/internal/customers/{customerId}/grade": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["changeGrade"];
-        trace?: never;
-    };
-    "/api/v1/internal/customers/{customerId}/dormant": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["makeDormant"];
-        trace?: never;
-    };
-    "/api/v1/internal/customers/{customerId}/credit-rating": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["updateCreditRating"];
-        trace?: never;
-    };
-    "/api/v1/internal/customers/{customerId}/close": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["close"];
-        trace?: never;
-    };
-    "/api/v1/internal/compliance/screening-hits/{hitId}/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["confirmScreeningHit"];
-        trace?: never;
-    };
-    "/api/v1/internal/compliance/screening-hits/{hitId}/clear": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["clearScreeningHit"];
-        trace?: never;
-    };
-    "/api/v1/customers/me/transfer-limit": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getLimit"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["reduce"];
-        trace?: never;
-    };
-    "/api/v1/customers/me/devices/{deviceId}/untrust": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["untrust"];
-        trace?: never;
-    };
-    "/api/v1/customers/me/devices/{deviceId}/trust": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["trust"];
-        trace?: never;
-    };
-    "/api/v1/customers/me/devices/{deviceId}/designate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["designate"];
-        trace?: never;
-    };
-    "/api/v1/customers/me/auth-methods/{authMethodId}/primary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["setPrimary"];
-        trace?: never;
-    };
-    "/api/v1/customers/me/auth-methods/{authMethodId}/alias": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["updateAlias"];
-        trace?: never;
-    };
-    "/api/v1/internal/party/{partyId}/relations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getRelations"];
+        get: operations["list_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1044,15 +356,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/internal/party/{partyId}/compliance": {
+    "/api/v1/cert/manage/pin": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["getCompliance"];
-        put?: never;
+        get?: never;
+        put: operations["changePin"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1060,241 +372,17 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/internal/party/relations/review-pending": {
+    "/api/v1/cert/manage/{serialNumber}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["listPendingAgentReviews"];
+        get: operations["detail"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/party/minors": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listMinors"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/party/duplicates/pending": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listPendingDuplicates"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/fds/incidents/open": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listOpenIncidents"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/fds/detections/pending": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listPendingDetections"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/customers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["searchCustomers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/customers/{customerId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getCustomerDetail"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/customers/join-stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getJoinStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/customers/access-logs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getAccessLogs"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/compliance/screening-hits/pending": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listPendingScreeningHits"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/compliance/sanctioned": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listSanctioned"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/compliance/kyc-expiring": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listKycExpiring"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/compliance/fatca-crs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listFatcaCrsReportable"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/compliance/edd-pending": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listEddPending"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/internal/auth/{customerId}/events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getAuthEvents"];
-        put?: never;
-        post?: never;
-        delete?: never;
+        delete: operations["revoke_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1308,86 +396,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getMyPage"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/status-history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getStatusHistory"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/settings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getSettings"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/roles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getMyRoles"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/grade-history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getGradeHistory"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customers/me/foreigner-info": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getForeignerInfo"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1412,14 +420,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/cert/manage": {
+    "/api/v1/customers/me/auth-methods/{authMethodId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deactivate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/auth-methods/{authMethodId}/alias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateAlias"];
+        trace?: never;
+    };
+    "/api/v1/customers/me/auth-methods/{authMethodId}/primary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["setPrimary"];
+        trace?: never;
+    };
+    "/api/v1/customers/me/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listMyDevices"];
+        put?: never;
+        post: operations["register_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/devices/{deviceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["revoke_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/devices/{deviceId}/designate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["designate"];
+        trace?: never;
+    };
+    "/api/v1/customers/me/devices/{deviceId}/trust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["trust"];
+        trace?: never;
+    };
+    "/api/v1/customers/me/devices/{deviceId}/untrust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["untrust"];
+        trace?: never;
+    };
+    "/api/v1/customers/me/foreigner-info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getForeignerInfo"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1428,30 +564,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/cert/manage/{serialNumber}": {
+    "/api/v1/customers/me/foreigner-info/passport": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["detail"];
-        put?: never;
+        get?: never;
+        put: operations["updatePassport"];
         post?: never;
-        delete: operations["revoke_2"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/qr/status": {
+    "/api/v1/customers/me/foreigner-info/stay": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["status"];
+        get?: never;
+        put: operations["updateStay"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/grade-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGradeHistory"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1460,14 +612,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/qr-cert/status": {
+    "/api/v1/customers/me/internet-banking/cancel": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["status_1"];
+        get?: never;
+        put?: never;
+        post: operations["cancelInternetBanking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/notification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateNotification"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changePassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/person-info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPersonInfo"];
+        put: operations["updatePersonInfo"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["register"];
+        delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMyRoles"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1476,16 +724,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/internal/customers/{customerId}/holder-info": {
+    "/api/v1/customers/me/settings": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["getHolderInfo"];
+        get: operations["getSettings"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/status-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getStatusHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/tax-residencies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getTaxResidencies"];
+        put?: never;
+        post: operations["addTaxResidency"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1508,7 +788,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/devices/{deviceId}": {
+    "/api/v1/customers/me/transaction-approvals": {
         parameters: {
             query?: never;
             header?: never;
@@ -1517,14 +797,30 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post?: never;
-        delete: operations["revoke_1"];
+        post: operations["issue"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/customers/me/auth-methods/{authMethodId}": {
+    "/api/v1/customers/me/transfer-limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getLimit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["reduce"];
+        trace?: never;
+    };
+    "/api/v1/customers/me/withdraw": {
         parameters: {
             query?: never;
             header?: never;
@@ -1533,14 +829,110 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post?: never;
-        delete: operations["deactivate"];
+        post: operations["withdraw"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/banking/withdrawal-accounts/{id}": {
+    "/api/v1/internal/auth/{customerId}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAuthEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/compliance/edd-pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listEddPending"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/compliance/fatca-crs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listFatcaCrsReportable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/compliance/kyc-expiring": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listKycExpiring"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/compliance/sanctioned": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listSanctioned"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/compliance/screening-hits/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPendingScreeningHits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/compliance/screening-hits/{hitId}/clear": {
         parameters: {
             query?: never;
             header?: never;
@@ -1550,7 +942,615 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["clearScreeningHit"];
+        trace?: never;
+    };
+    "/api/v1/internal/compliance/screening-hits/{hitId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["confirmScreeningHit"];
+        trace?: never;
+    };
+    "/api/v1/internal/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["searchCustomers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/customers/access-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccessLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/customers/join-stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getJoinStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/customers/{customerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCustomerDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/customers/{customerId}/access-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["recordAccess"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/customers/{customerId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["close"];
+        trace?: never;
+    };
+    "/api/v1/internal/customers/{customerId}/credit-rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateCreditRating"];
+        trace?: never;
+    };
+    "/api/v1/internal/customers/{customerId}/dormant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["makeDormant"];
+        trace?: never;
+    };
+    "/api/v1/internal/customers/{customerId}/grade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["changeGrade"];
+        trace?: never;
+    };
+    "/api/v1/internal/customers/{customerId}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["reactivate"];
+        trace?: never;
+    };
+    "/api/v1/internal/customers/{customerId}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["suspend"];
+        trace?: never;
+    };
+    "/api/v1/internal/fds/detections/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPendingDetections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/fds/detections/{detectionId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["confirmDetection"];
+        trace?: never;
+    };
+    "/api/v1/internal/fds/detections/{detectionId}/false-positive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["markFalsePositive"];
+        trace?: never;
+    };
+    "/api/v1/internal/fds/incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["openIncident"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/fds/incidents/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOpenIncidents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/fds/incidents/{incidentId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["closeIncident"];
+        trace?: never;
+    };
+    "/api/v1/internal/fds/incidents/{incidentId}/report-fss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["reportToFss"];
+        trace?: never;
+    };
+    "/api/v1/internal/fds/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listRules"];
+        put?: never;
+        post: operations["createRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/fds/rules/{ruleId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["activateRule"];
+        trace?: never;
+    };
+    "/api/v1/internal/fds/rules/{ruleId}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["deactivateRule"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/duplicates/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPendingDuplicates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/party/duplicates/{caseId}/distinct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["markDistinct"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/duplicates/{caseId}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["markDuplicate"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/minors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listMinors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/party/relations/review-pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPendingAgentReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/party/relations/{relationId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["approveReview"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/relations/{relationId}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["endRelation"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/relations/{relationId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["rejectReview"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/roles/{roleId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["closeRole"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/{fromPartyId}/relations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addRelation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/party/{partyId}/compliance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCompliance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/party/{partyId}/compliance/aml-risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateAmlRisk"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/{partyId}/compliance/kyc-complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["completeKyc"];
+        trace?: never;
+    };
+    "/api/v1/internal/party/{partyId}/relations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getRelations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mobile-auth/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mobile-auth/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["verify"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1560,179 +1560,624 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        UpdateProfileRequest: {
-            email?: string;
-            phone?: string;
-            zipCode?: string;
-            address?: string;
-            addressDetail?: string;
-        };
-        ApiResponseVoid: {
-            code?: string;
-            message?: string;
-            data?: Record<string, never>;
-        };
-        UpdatePersonInfoRequest: {
-            occupationCode?: string;
-            occupationName?: string;
-            workplaceName?: string;
+        AccessLogResponse: {
+            accessActionCode?: string;
+            accessReason?: string;
+            /** Format: date-time */
+            accessedAt?: string;
+            accessorBranchCode?: string;
             /** Format: int64 */
-            annualIncomeAmount?: number;
-            incomeProofCode?: string;
-            maritalStatusCode?: string;
+            accessorEmployeeId?: number;
+            accessorName?: string;
+            accessorRole?: string;
+            /** Format: int64 */
+            customerAccessLogId?: number;
+            /** Format: int64 */
+            targetCustomerId?: number;
+            targetCustomerName?: string;
         };
-        ApiResponsePersonInfoResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PersonInfoResponse"];
-        };
-        PersonInfoResponse: {
-            birthDate?: string;
-            genderCode?: string;
-            nationalityTypeCode?: string;
-            nationalityCode?: string;
-            maritalStatusCode?: string;
+        AddPartyRelationRequest: {
             /** Format: int32 */
-            dependentCount?: number;
-            occupationCode?: string;
-            occupationName?: string;
-            workplaceName?: string;
+            equityRatioBps?: number;
+            proofUrl?: string;
+            relationDetailCode?: string;
+            relationStartDate: string;
+            relationTypeCode: string;
+            representationScope?: string;
             /** Format: int64 */
-            annualIncomeAmount?: number;
-            incomeProofCode?: string;
-            isPep?: boolean;
-            pepTypeCode?: string;
+            toPartyId: number;
         };
-        ChangePasswordRequest: {
-            currentPassword?: string;
-            newPassword?: string;
+        AddTaxResidencyRequest: {
+            foreignTin?: string;
+            residentTypeCode: string;
+            taxCountryCode?: string;
+            taxResidencyConfirmDate: string;
+            /** Format: int32 */
+            withholdingRateBps?: number;
         };
-        UpdateNotificationRequest: {
-            smsReceiveYn?: boolean;
-            emailReceiveYn?: boolean;
-            postalReceiveYn?: boolean;
+        AgentReviewResponse: {
+            agentName?: string;
+            /** Format: int64 */
+            agentPartyId?: number;
+            /** Format: int64 */
+            ownerPartyId?: number;
+            proofUrl?: string;
+            relationDetailCode?: string;
+            /** Format: int64 */
+            relationId?: number;
+            relationReviewStatusCode?: string;
+            relationStartDate?: string;
+            relationTypeCode?: string;
+            representationScope?: string;
         };
-        UpdateStayRequest: {
-            stayQualificationCode: string;
-            stayExpiryDate: string;
+        ApiResponseAuthEventsResponse: {
+            code?: string;
+            data?: components["schemas"]["AuthEventsResponse"];
+            message?: string;
+        };
+        ApiResponseAuthMethodResponse: {
+            code?: string;
+            data?: components["schemas"]["AuthMethodResponse"];
+            message?: string;
+        };
+        ApiResponseCertDetailResponse: {
+            code?: string;
+            data?: components["schemas"]["CertDetailResponse"];
+            message?: string;
+        };
+        ApiResponseCertIssueResponse: {
+            code?: string;
+            data?: components["schemas"]["CertIssueResponse"];
+            message?: string;
+        };
+        ApiResponseComplianceInfo: {
+            code?: string;
+            data?: components["schemas"]["ComplianceInfo"];
+            message?: string;
+        };
+        ApiResponseCustomerDetailResponse: {
+            code?: string;
+            data?: components["schemas"]["CustomerDetailResponse"];
+            message?: string;
+        };
+        ApiResponseFdsDetectionResponse: {
+            code?: string;
+            data?: components["schemas"]["FdsDetectionResponse"];
+            message?: string;
+        };
+        ApiResponseFdsIncidentResponse: {
+            code?: string;
+            data?: components["schemas"]["FdsIncidentResponse"];
+            message?: string;
+        };
+        ApiResponseFdsRuleResponse: {
+            code?: string;
+            data?: components["schemas"]["FdsRuleResponse"];
+            message?: string;
+        };
+        ApiResponseFindIdResponse: {
+            code?: string;
+            data?: components["schemas"]["FindIdResponse"];
+            message?: string;
         };
         ApiResponseForeignerInfoResponse: {
             code?: string;
-            message?: string;
             data?: components["schemas"]["ForeignerInfoResponse"];
+            message?: string;
         };
-        ForeignerInfoResponse: {
-            passportNo?: string;
-            passportCountryCode?: string;
-            passportExpiryDate?: string;
-            stayQualificationCode?: string;
-            stayExpiryDate?: string;
-            recentEntryDate?: string;
-            stayAddress?: string;
+        ApiResponseJoinStatsResponse: {
+            code?: string;
+            data?: components["schemas"]["JoinStatsResponse"];
+            message?: string;
         };
-        UpdatePassportRequest: {
-            passportNo: string;
-            countryCode: string;
-            expiryDate: string;
+        ApiResponseListAuthMethodResponse: {
+            code?: string;
+            data?: components["schemas"]["AuthMethodResponse"][];
+            message?: string;
+        };
+        ApiResponseListCertSummaryResponse: {
+            code?: string;
+            data?: components["schemas"]["CertSummaryResponse"][];
+            message?: string;
+        };
+        ApiResponseListCustomerGradeHistory: {
+            code?: string;
+            data?: components["schemas"]["CustomerGradeHistory"][];
+            message?: string;
+        };
+        ApiResponseListCustomerStatusHistory: {
+            code?: string;
+            data?: components["schemas"]["CustomerStatusHistory"][];
+            message?: string;
+        };
+        ApiResponseListFdsRuleResponse: {
+            code?: string;
+            data?: components["schemas"]["FdsRuleResponse"][];
+            message?: string;
+        };
+        ApiResponseListPartyRelationResponse: {
+            code?: string;
+            data?: components["schemas"]["PartyRelationResponse"][];
+            message?: string;
+        };
+        ApiResponseListPartyRoleResponse: {
+            code?: string;
+            data?: components["schemas"]["PartyRoleResponse"][];
+            message?: string;
+        };
+        ApiResponseListRegisteredDeviceResponse: {
+            code?: string;
+            data?: components["schemas"]["RegisteredDeviceResponse"][];
+            message?: string;
+        };
+        ApiResponseListTaxResidencyResponse: {
+            code?: string;
+            data?: components["schemas"]["TaxResidencyResponse"][];
+            message?: string;
+        };
+        ApiResponseListWithdrawalAccountResponse: {
+            code?: string;
+            data?: components["schemas"]["WithdrawalAccountResponse"][];
+            message?: string;
+        };
+        ApiResponseLoginResponse: {
+            code?: string;
+            data?: components["schemas"]["LoginResponse"];
+            message?: string;
+        };
+        ApiResponseLong: {
+            code?: string;
+            /** Format: int64 */
+            data?: number;
+            message?: string;
+        };
+        ApiResponseMyPageResponse: {
+            code?: string;
+            data?: components["schemas"]["MyPageResponse"];
+            message?: string;
+        };
+        ApiResponsePageAccessLogResponse: {
+            code?: string;
+            data?: components["schemas"]["PageAccessLogResponse"];
+            message?: string;
+        };
+        ApiResponsePageAgentReviewResponse: {
+            code?: string;
+            data?: components["schemas"]["PageAgentReviewResponse"];
+            message?: string;
+        };
+        ApiResponsePageCustomerSummaryResponse: {
+            code?: string;
+            data?: components["schemas"]["PageCustomerSummaryResponse"];
+            message?: string;
+        };
+        ApiResponsePageDuplicateReviewResponse: {
+            code?: string;
+            data?: components["schemas"]["PageDuplicateReviewResponse"];
+            message?: string;
+        };
+        ApiResponsePageEddPendingResponse: {
+            code?: string;
+            data?: components["schemas"]["PageEddPendingResponse"];
+            message?: string;
+        };
+        ApiResponsePageFatcaReportableResponse: {
+            code?: string;
+            data?: components["schemas"]["PageFatcaReportableResponse"];
+            message?: string;
+        };
+        ApiResponsePageFdsDetectionResponse: {
+            code?: string;
+            data?: components["schemas"]["PageFdsDetectionResponse"];
+            message?: string;
+        };
+        ApiResponsePageFdsIncidentResponse: {
+            code?: string;
+            data?: components["schemas"]["PageFdsIncidentResponse"];
+            message?: string;
+        };
+        ApiResponsePageKycExpiringResponse: {
+            code?: string;
+            data?: components["schemas"]["PageKycExpiringResponse"];
+            message?: string;
+        };
+        ApiResponsePageMinorResponse: {
+            code?: string;
+            data?: components["schemas"]["PageMinorResponse"];
+            message?: string;
+        };
+        ApiResponsePageSanctionHitResponse: {
+            code?: string;
+            data?: components["schemas"]["PageSanctionHitResponse"];
+            message?: string;
+        };
+        ApiResponsePageSanctionedPartyResponse: {
+            code?: string;
+            data?: components["schemas"]["PageSanctionedPartyResponse"];
+            message?: string;
+        };
+        ApiResponsePartyRelationResponse: {
+            code?: string;
+            data?: components["schemas"]["PartyRelationResponse"];
+            message?: string;
+        };
+        ApiResponsePartyRoleResponse: {
+            code?: string;
+            data?: components["schemas"]["PartyRoleResponse"];
+            message?: string;
+        };
+        ApiResponsePersonInfoResponse: {
+            code?: string;
+            data?: components["schemas"]["PersonInfoResponse"];
+            message?: string;
+        };
+        ApiResponseQrCertStatusResponse: {
+            code?: string;
+            data?: components["schemas"]["QrCertStatusResponse"];
+            message?: string;
+        };
+        ApiResponseQrGenerateResponse: {
+            code?: string;
+            data?: components["schemas"]["QrGenerateResponse"];
+            message?: string;
+        };
+        ApiResponseQrStatusResponse: {
+            code?: string;
+            data?: components["schemas"]["QrStatusResponse"];
+            message?: string;
+        };
+        ApiResponseRegisterResponse: {
+            code?: string;
+            data?: components["schemas"]["RegisterResponse"];
+            message?: string;
+        };
+        ApiResponseRegisteredDeviceResponse: {
+            code?: string;
+            data?: components["schemas"]["RegisteredDeviceResponse"];
+            message?: string;
+        };
+        ApiResponseSettingsResponse: {
+            code?: string;
+            data?: components["schemas"]["SettingsResponse"];
+            message?: string;
+        };
+        ApiResponseTaxResidencyResponse: {
+            code?: string;
+            data?: components["schemas"]["TaxResidencyResponse"];
+            message?: string;
+        };
+        ApiResponseTransactionApprovalIssueResponse: {
+            code?: string;
+            data?: components["schemas"]["TransactionApprovalIssueResponse"];
+            message?: string;
+        };
+        ApiResponseTransferLimitResponse: {
+            code?: string;
+            data?: components["schemas"]["TransferLimitResponse"];
+            message?: string;
+        };
+        ApiResponseVerifyMobileAuthResponse: {
+            code?: string;
+            data?: components["schemas"]["VerifyMobileAuthResponse"];
+            message?: string;
+        };
+        ApiResponseVoid: {
+            code?: string;
+            data?: Record<string, never>;
+            message?: string;
+        };
+        ApiResponseWithdrawalAccountResponse: {
+            code?: string;
+            data?: components["schemas"]["WithdrawalAccountResponse"];
+            message?: string;
+        };
+        AuthEventsResponse: {
+            /** Format: int64 */
+            customerId?: number;
+            passwordChangedRecently?: boolean;
+            /** Format: int64 */
+            recentCertFail?: number;
+            /** Format: int32 */
+            windowHours?: number;
+        };
+        AuthMethodResponse: {
+            authMethodAliasName?: string;
+            authMethodExpiryDate?: string;
+            /** Format: int64 */
+            authMethodId?: number;
+            authMethodRegisteredDate?: string;
+            authMethodStatusCode?: string;
+            authMethodTypeCode?: string;
+            /** Format: date-time */
+            lastUsedAt?: string;
+            primary?: boolean;
+        };
+        CertDetailResponse: {
+            certType?: string;
+            certTypeName?: string;
+            expiryDate?: string;
+            hasPinSet?: boolean;
+            issuedDate?: string;
+            issuerDn?: string;
+            issuerName?: string;
+            purposeCode?: string;
+            serialNumber?: string;
+            status?: string;
+            statusName?: string;
+            subjectDn?: string;
+        };
+        CertIssueRequest: {
+            certPin: string;
+            certPinLengthValid?: boolean;
+            certType: string;
+            loginId: string;
+            password: string;
+        };
+        CertIssueResponse: {
+            certType?: string;
+            expiryDate?: string;
+            issuedDate?: string;
+            issuerName?: string;
+            serialNumber?: string;
+            subjectDn?: string;
+        };
+        CertLoginRequest: {
+            certSerialNumber: string;
+            certType: string;
+            pin: string;
         };
         CertPinChangeRequest: {
             certSerialNumber: string;
             currentPin: string;
             newPin: string;
         };
-        UpdateOrderRequest: {
-            orderedIds: number[];
+        CertSummaryResponse: {
+            certType?: string;
+            certTypeName?: string;
+            expiryDate?: string;
+            issuedDate?: string;
+            issuerName?: string;
+            serialNumber?: string;
+            status?: string;
+            statusName?: string;
         };
-        VerifyMobileAuthRequest: {
-            phoneNumber: string;
-            purposeCode: string;
-            code: string;
-            name?: string;
-            rrn?: string;
+        ChangeGradeRequest: {
+            newGradeCode: string;
+            reasonCode: string;
+            reasonDetail?: string;
+            systemTriggered?: boolean;
         };
-        ApiResponseVerifyMobileAuthResponse: {
+        ChangePasswordRequest: {
+            currentPassword?: string;
+            newPassword?: string;
+        };
+        CloseCustomerRequest: {
+            closeReasonCode: string;
+            reasonDetail?: string;
+        };
+        CodeCount: {
             code?: string;
-            message?: string;
-            data?: components["schemas"]["VerifyMobileAuthResponse"];
-        };
-        VerifyMobileAuthResponse: {
             /** Format: int64 */
-            verificationId?: number;
+            count?: number;
         };
-        SendMobileAuthRequest: {
-            phoneNumber: string;
-            telecomCarrierCode: string;
-            purposeCode: string;
-            methodTypeCode: string;
-        };
-        ApiResponseLong: {
-            code?: string;
-            message?: string;
+        ComplianceInfo: {
+            /** Format: date-time */
+            amlLastAssessedAt?: string;
             /** Format: int64 */
-            data?: number;
-        };
-        AddPartyRelationRequest: {
+            amlLastAssessedByEmployeeId?: number;
+            amlNextReviewDate?: string;
+            amlRiskLevelCode?: string;
+            /** Format: date-time */
+            cddLastReviewedAt?: string;
+            cddLevelCode?: string;
+            cddNextReviewDate?: string;
+            /** Format: date-time */
+            createdAt?: string;
             /** Format: int64 */
-            toPartyId: number;
-            relationTypeCode: string;
-            relationDetailCode?: string;
+            createdBy?: number;
+            /** Format: date-time */
+            crsLastReviewedAt?: string;
+            crsNextReviewDate?: string;
+            crsReportableYn?: boolean;
+            crsStatusCode?: string;
+            deleted?: boolean;
+            /** Format: date-time */
+            deletedAt?: string;
+            /** Format: int64 */
+            deletedBy?: number;
+            /** Format: date-time */
+            eddLastReviewedAt?: string;
+            eddNextReviewDate?: string;
+            eddRequired?: boolean;
+            eddRequiredYn?: boolean;
+            /** Format: date-time */
+            fatcaLastReviewedAt?: string;
+            fatcaNextReviewDate?: string;
+            fatcaReportableYn?: boolean;
+            fatcaStatusCode?: string;
+            identityVerificationMethodCode?: string;
+            isEuSanctionedYn?: boolean;
+            isKrSanctionedYn?: boolean;
+            isOfacSanctionedYn?: boolean;
+            isSanctionedYn?: boolean;
+            isUnSanctionedYn?: boolean;
+            /** Format: date-time */
+            kycCompletedAt?: string;
+            /** Format: int64 */
+            kycCompletedByEmployeeId?: number;
+            kycExpiryDate?: string;
+            kycNextReviewDate?: string;
+            kycStatusCode?: string;
+            /** Format: int64 */
+            partyId?: number;
+            /** Format: date-time */
+            sanctionLastScreenedAt?: string;
+            sanctionNextScreenDate?: string;
+            sanctioned?: boolean;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: int64 */
+            updatedBy?: number;
             /** Format: int32 */
-            equityRatioBps?: number;
-            representationScope?: string;
-            proofUrl?: string;
-            relationStartDate: string;
+            version?: number;
         };
-        ApiResponsePartyRelationResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PartyRelationResponse"];
+        CorporateRegisterRequest: {
+            bizItemCode: string;
+            bizRegNo: string;
+            corpEnglishName: string;
+            corpName: string;
+            corpRegNo: string;
+            email: string;
+            ksicCode: string;
+            loginId: string;
+            ntsIndustryCode: string;
+            openingDate: string;
+            password: string;
+            phone: string;
+            taxTypeCode: string;
+            tradeName: string;
         };
-        PartyRelationResponse: {
+        CustomerDetailResponse: {
+            address?: string;
+            addressDetail?: string;
+            birthDate?: string;
+            /** Format: date-time */
+            closedAt?: string;
+            creditEvaluationDate?: string;
+            creditRatingCode?: string;
+            customerGradeCode?: string;
             /** Format: int64 */
-            relationId?: number;
+            customerId?: number;
+            customerStatusCode?: string;
+            /** Format: date-time */
+            dormantAt?: string;
+            email?: string;
+            firstJoinDate?: string;
+            genderCode?: string;
+            joinChannelCode?: string;
+            /** Format: date-time */
+            joinedAt?: string;
+            /** Format: date-time */
+            lastTransactionAt?: string;
+            nationalityCode?: string;
             /** Format: int64 */
-            fromPartyId?: number;
+            partyId?: number;
+            partyName?: string;
+            partyStatusCode?: string;
+            pep?: boolean;
+            phone?: string;
+            zipCode?: string;
+        };
+        CustomerGradeHistory: {
             /** Format: int64 */
-            toPartyId?: number;
-            relationTypeCode?: string;
-            relationDetailCode?: string;
-            /** Format: int32 */
-            equityRatioBps?: number;
-            representationScope?: string;
-            relationStartDate?: string;
-            relationEndDate?: string;
+            changedByEmployeeId?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: int64 */
+            createdBy?: number;
+            customerGradeChangeReasonCode?: string;
+            customerGradeChangeReasonDetail?: string;
+            customerGradeCode?: string;
+            customerGradeEffectiveEndDate?: string;
+            customerGradeEffectiveStartDate?: string;
+            /** Format: date-time */
+            customerGradeEvaluatedAt?: string;
+            /** Format: int64 */
+            customerGradeHistoryId?: number;
+            /** Format: int64 */
+            customerId?: number;
+            previousCustomerGradeCode?: string;
+            /** Format: int64 */
+            previousCustomerGradeHistoryId?: number;
+            systemAutoTriggeredYn?: boolean;
         };
-        FdsRuleRequest: {
-            fdsRuleCode: string;
-            fdsRuleName: string;
-            fdsRuleCategoryCode: string;
-            fdsRuleTargetEventCode: string;
-            fdsRuleConditionJson: string;
-            /** Format: int32 */
-            fdsRuleRiskWeight: number;
-            fdsRuleActionTypeCode: string;
-            fdsRuleEffectiveDate: string;
-            fdsRuleExpiryDate?: string;
+        CustomerStatusHistory: {
+            /** Format: int64 */
+            changedByEmployeeId?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: int64 */
+            createdBy?: number;
+            /** Format: int64 */
+            customerId?: number;
+            customerStatusChangeReasonCode?: string;
+            customerStatusChangeReasonDetail?: string;
+            customerStatusCode?: string;
+            /** Format: date-time */
+            customerStatusEffectiveEndAt?: string;
+            /** Format: date-time */
+            customerStatusEffectiveStartAt?: string;
+            /** Format: int64 */
+            customerStatusHistoryId?: number;
+            previousCustomerStatusCode?: string;
+            /** Format: int64 */
+            previousCustomerStatusHistoryId?: number;
+            systemAutoTriggeredYn?: boolean;
         };
-        ApiResponseFdsRuleResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["FdsRuleResponse"];
+        CustomerSummaryResponse: {
+            customerGradeCode?: string;
+            /** Format: int64 */
+            customerId?: number;
+            customerStatusCode?: string;
+            email?: string;
+            /** Format: date-time */
+            joinedAt?: string;
+            /** Format: date-time */
+            lastTransactionAt?: string;
+            /** Format: int64 */
+            partyId?: number;
+            partyName?: string;
+            phone?: string;
         };
-        FdsRuleResponse: {
+        DuplicateReviewResponse: {
+            /** Format: date-time */
+            detectedAt?: string;
+            /** Format: int64 */
+            duplicateReviewCaseId?: number;
+            /** Format: int64 */
+            existingPartyId?: number;
+            existingPartyName?: string;
+            matchTypeCode?: string;
+            /** Format: int64 */
+            newPartyId?: number;
+            newPartyName?: string;
+            reviewStatusCode?: string;
+        };
+        EddPendingResponse: {
+            amlRiskLevelCode?: string;
+            cddLevelCode?: string;
+            eddNextReviewDate?: string;
+            kycStatusCode?: string;
+            /** Format: int64 */
+            partyId?: number;
+            partyName?: string;
+        };
+        FatcaReportableResponse: {
+            birthDate?: string;
+            crsReportableYn?: boolean;
+            crsStatusCode?: string;
+            /** Format: date-time */
+            fatcaLastReviewedAt?: string;
+            fatcaReportableYn?: boolean;
+            fatcaStatusCode?: string;
+            nationalityCode?: string;
+            /** Format: int64 */
+            partyId?: number;
+            partyName?: string;
+        };
+        FdsDetectionResponse: {
+            /** Format: int64 */
+            customerId?: number;
+            /** Format: date-time */
+            fdsDetectedAt?: string;
+            /** Format: int64 */
+            fdsDetectionEventReferenceId?: number;
+            fdsDetectionEventTypeCode?: string;
+            /** Format: int64 */
+            fdsDetectionId?: number;
+            fdsDetectionStatusCode?: string;
             /** Format: int64 */
             fdsRuleId?: number;
-            fdsRuleCode?: string;
-            fdsRuleName?: string;
-            fdsRuleCategoryCode?: string;
-            fdsRuleTargetEventCode?: string;
-            fdsRuleConditionJson?: string;
-            /** Format: int32 */
-            fdsRuleRiskWeight?: number;
-            fdsRuleActionTypeCode?: string;
-            active?: boolean;
-            fdsRuleEffectiveDate?: string;
-            fdsRuleExpiryDate?: string;
         };
         FdsIncidentRequest: {
             /** Format: int64 */
@@ -1741,405 +2186,354 @@ export interface components {
             /** Format: int64 */
             handlerEmployeeId?: number;
         };
-        ApiResponseFdsIncidentResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["FdsIncidentResponse"];
-        };
         FdsIncidentResponse: {
             /** Format: int64 */
-            fdsIncidentId?: number;
-            /** Format: int64 */
             fdsDetectionId?: number;
-            /** Format: int64 */
-            handlerEmployeeId?: number;
-            fdsIncidentTypeCode?: string;
-            fdsIncidentProcessStatusCode?: string;
-            fssReported?: boolean;
-            /** Format: date-time */
-            fdsIncidentReportedAt?: string;
             /** Format: date-time */
             fdsIncidentClosedAt?: string;
-        };
-        RecordAccessRequest: {
-            actionCode: string;
-            reason?: string;
-        };
-        WithdrawRequest: {
-            currentPassword?: string;
-        };
-        TransactionApprovalIssueRequest: {
-            fromAccountNo: string;
-            toAccountNo: string;
-            amount: number;
-            certSerialNumber: string;
-            pin: string;
-        };
-        ApiResponseTransactionApprovalIssueResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["TransactionApprovalIssueResponse"];
-        };
-        TransactionApprovalIssueResponse: {
-            approvalToken?: string;
+            /** Format: int64 */
+            fdsIncidentId?: number;
+            fdsIncidentProcessStatusCode?: string;
             /** Format: date-time */
-            expiresAt?: string;
+            fdsIncidentReportedAt?: string;
+            fdsIncidentTypeCode?: string;
+            fssReported?: boolean;
+            /** Format: int64 */
+            handlerEmployeeId?: number;
         };
-        AddTaxResidencyRequest: {
-            residentTypeCode: string;
-            taxCountryCode?: string;
-            foreignTin?: string;
+        FdsRuleRequest: {
+            fdsRuleActionTypeCode: string;
+            fdsRuleCategoryCode: string;
+            fdsRuleCode: string;
+            fdsRuleConditionJson: string;
+            fdsRuleEffectiveDate: string;
+            fdsRuleExpiryDate?: string;
+            fdsRuleName: string;
             /** Format: int32 */
-            withholdingRateBps?: number;
-            taxResidencyConfirmDate: string;
+            fdsRuleRiskWeight: number;
+            fdsRuleTargetEventCode: string;
         };
-        ApiResponseTaxResidencyResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["TaxResidencyResponse"];
-        };
-        TaxResidencyResponse: {
+        FdsRuleResponse: {
+            active?: boolean;
+            fdsRuleActionTypeCode?: string;
+            fdsRuleCategoryCode?: string;
+            fdsRuleCode?: string;
+            fdsRuleConditionJson?: string;
+            fdsRuleEffectiveDate?: string;
+            fdsRuleExpiryDate?: string;
             /** Format: int64 */
-            taxResidencyId?: number;
-            residentTypeCode?: string;
-            taxCountryCode?: string;
-            foreignTin?: string;
+            fdsRuleId?: number;
+            fdsRuleName?: string;
             /** Format: int32 */
-            withholdingRateBps?: number;
-            taxResidencyConfirmDate?: string;
-        };
-        RegisterPinRequest: {
-            /** Format: int64 */
-            deviceId: number;
-            pin: string;
-            currentPassword: string;
-        };
-        InternetBankingCancelRequest: {
-            currentPassword?: string;
-        };
-        RegisterDeviceRequest: {
-            deviceTypeCode: string;
-            deviceName?: string;
-            deviceOsName?: string;
-            deviceOsVersion?: string;
-            deviceIdentifier: string;
-        };
-        ApiResponseRegisteredDeviceResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RegisteredDeviceResponse"];
-        };
-        RegisteredDeviceResponse: {
-            /** Format: int64 */
-            deviceId?: number;
-            deviceName?: string;
-            deviceTypeCode?: string;
-            deviceOsName?: string;
-            deviceOsVersion?: string;
-            trusted?: boolean;
-            designatedPc?: boolean;
-            deviceStatusCode?: string;
-            /** Format: date-time */
-            deviceLastUsedAt?: string;
-            /** Format: date-time */
-            registeredAt?: string;
-        };
-        RegisterWithdrawalAccountRequest: {
-            accountNumber: string;
-            bankCode: string;
-            bankName: string;
-            accountHolderName?: string;
-            accountAlias?: string;
-        };
-        ApiResponseWithdrawalAccountResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["WithdrawalAccountResponse"];
-        };
-        WithdrawalAccountResponse: {
-            /** Format: int64 */
-            withdrawalAccountId?: number;
-            accountNumber?: string;
-            bankCode?: string;
-            bankName?: string;
-            accountHolderName?: string;
-            accountAlias?: string;
-            registrationType?: string;
-            /** Format: int32 */
-            priorityOrder?: number;
-            registeredAt?: string;
-        };
-        ResetPasswordRequest: {
-            /** Format: int64 */
-            verificationId?: number;
-            newPassword?: string;
-        };
-        RegisterRequest: {
-            loginId: string;
-            password: string;
-            /** Format: int64 */
-            verificationId: number;
-            phone?: string;
-            email?: string;
-        };
-        ApiResponseRegisterResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RegisterResponse"];
-        };
-        RegisterResponse: {
-            /** Format: int64 */
-            customerId?: number;
-            loginId?: string;
-        };
-        CorporateRegisterRequest: {
-            corpName: string;
-            corpEnglishName: string;
-            corpRegNo: string;
-            bizRegNo: string;
-            tradeName: string;
-            openingDate: string;
-            ntsIndustryCode: string;
-            ksicCode: string;
-            bizItemCode: string;
-            taxTypeCode: string;
-            loginId: string;
-            password: string;
-            email: string;
-            phone: string;
-        };
-        RefreshRequest: {
-            refreshToken: string;
-        };
-        ApiResponseLoginResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["LoginResponse"];
-        };
-        LoginResponse: {
-            /** Format: int64 */
-            customerId?: number;
-            accessToken?: string;
-            refreshToken?: string;
-        };
-        ApiResponseQrGenerateResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["QrGenerateResponse"];
-        };
-        QrGenerateResponse: {
-            tokenHash?: string;
-            confirmCode?: string;
-            /** Format: date-time */
-            expiryAt?: string;
-        };
-        QrApproveRequest: {
-            tokenHash: string;
-            loginId: string;
-            password: string;
-        };
-        QrCertApproveRequest: {
-            tokenHash: string;
-            loginId: string;
-            password: string;
-        };
-        PinLoginRequest: {
-            loginId: string;
-            /** Format: int64 */
-            deviceId: number;
-            pin: string;
-        };
-        LoginRequest: {
-            loginId: string;
-            password: string;
+            fdsRuleRiskWeight?: number;
+            fdsRuleTargetEventCode?: string;
         };
         FindIdRequest: {
             /** Format: int64 */
             verificationId?: number;
         };
-        ApiResponseFindIdResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["FindIdResponse"];
-        };
         FindIdResponse: {
-            loginId?: string;
             customerName?: string;
+            loginId?: string;
         };
-        CertIssueRequest: {
-            loginId: string;
-            password: string;
-            certType: string;
-            certPin: string;
-            certPinLengthValid?: boolean;
+        ForeignerInfoResponse: {
+            passportCountryCode?: string;
+            passportExpiryDate?: string;
+            passportNo?: string;
+            recentEntryDate?: string;
+            stayAddress?: string;
+            stayExpiryDate?: string;
+            stayQualificationCode?: string;
         };
-        ApiResponseCertIssueResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CertIssueResponse"];
+        GradeInfo: {
+            changeReasonCode?: string;
+            effectiveStartDate?: string;
+            newGradeCode?: string;
+            previousGradeCode?: string;
         };
-        CertIssueResponse: {
-            serialNumber?: string;
-            certType?: string;
-            issuerName?: string;
-            subjectDn?: string;
-            issuedDate?: string;
-            expiryDate?: string;
+        HolderInfoResponse: {
+            customerId?: string;
+            deceasedFlag?: boolean;
+            holderName?: string;
+            holderType?: string;
         };
-        CertLoginRequest: {
-            certSerialNumber: string;
-            pin: string;
-            certType: string;
+        InternetBankingCancelRequest: {
+            currentPassword?: string;
         };
-        TransactionApprovalVerifyRequest: {
-            approvalToken: string;
-            fromAccountNo: string;
-            toAccountNo: string;
-            amount: number;
-        };
-        ApiResponsePartyRoleResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PartyRoleResponse"];
-        };
-        PartyRoleResponse: {
+        JoinStatsResponse: {
+            byChannel?: components["schemas"]["CodeCount"][];
+            byGrade?: components["schemas"]["CodeCount"][];
+            byStatus?: components["schemas"]["CodeCount"][];
             /** Format: int64 */
-            roleId?: number;
+            joinedThisMonth?: number;
             /** Format: int64 */
-            partyId?: number;
-            roleTypeCode?: string;
-            roleStatusCode?: string;
-            roleStartDate?: string;
-            roleEndDate?: string;
-            roleEndReasonCode?: string;
+            joinedToday?: number;
+            /** Format: int64 */
+            total?: number;
         };
-        ApiResponseFdsDetectionResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["FdsDetectionResponse"];
-        };
-        FdsDetectionResponse: {
-            /** Format: int64 */
-            fdsDetectionId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            /** Format: int64 */
-            fdsRuleId?: number;
-            fdsDetectionEventTypeCode?: string;
-            /** Format: int64 */
-            fdsDetectionEventReferenceId?: number;
-            /** Format: date-time */
-            fdsDetectedAt?: string;
-            fdsDetectionStatusCode?: string;
-        };
-        ChangeGradeRequest: {
-            newGradeCode: string;
-            reasonCode: string;
-            reasonDetail?: string;
-            systemTriggered?: boolean;
-        };
-        UpdateCreditRatingRequest: {
-            ratingCode: string;
-            evaluationDate: string;
-            agencyCode: string;
-        };
-        CloseCustomerRequest: {
-            closeReasonCode: string;
-            reasonDetail?: string;
-        };
-        ReduceTransferLimitRequest: {
-            /** Format: int64 */
-            dailyLimit?: number;
-            /** Format: int64 */
-            onceLimit?: number;
-        };
-        ApiResponseAuthMethodResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AuthMethodResponse"];
-        };
-        AuthMethodResponse: {
-            /** Format: int64 */
-            authMethodId?: number;
-            authMethodTypeCode?: string;
-            authMethodAliasName?: string;
-            authMethodStatusCode?: string;
-            primary?: boolean;
-            authMethodRegisteredDate?: string;
-            authMethodExpiryDate?: string;
-            /** Format: date-time */
-            lastUsedAt?: string;
-        };
-        ApiResponseListPartyRelationResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PartyRelationResponse"][];
-        };
-        ApiResponseComplianceInfo: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ComplianceInfo"];
-        };
-        ComplianceInfo: {
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: int64 */
-            createdBy?: number;
-            /** Format: date-time */
-            updatedAt?: string;
-            /** Format: int64 */
-            updatedBy?: number;
-            /** Format: date-time */
-            deletedAt?: string;
-            /** Format: int64 */
-            deletedBy?: number;
-            /** Format: int32 */
-            version?: number;
-            /** Format: int64 */
-            partyId?: number;
-            amlRiskLevelCode?: string;
-            /** Format: date-time */
-            amlLastAssessedAt?: string;
-            amlNextReviewDate?: string;
-            /** Format: int64 */
-            amlLastAssessedByEmployeeId?: number;
-            isOfacSanctionedYn?: boolean;
-            isUnSanctionedYn?: boolean;
-            isEuSanctionedYn?: boolean;
-            isKrSanctionedYn?: boolean;
-            isSanctionedYn?: boolean;
-            /** Format: date-time */
-            sanctionLastScreenedAt?: string;
-            sanctionNextScreenDate?: string;
-            kycStatusCode?: string;
-            /** Format: date-time */
-            kycCompletedAt?: string;
+        KycExpiringResponse: {
             kycExpiryDate?: string;
             kycNextReviewDate?: string;
+            kycStatusCode?: string;
             /** Format: int64 */
-            kycCompletedByEmployeeId?: number;
-            identityVerificationMethodCode?: string;
-            cddLevelCode?: string;
+            partyId?: number;
+            partyName?: string;
+        };
+        LoginRequest: {
+            loginId: string;
+            password: string;
+        };
+        LoginResponse: {
+            accessToken?: string;
+            /** Format: int64 */
+            customerId?: number;
+            refreshToken?: string;
+        };
+        MinorResponse: {
+            birthDate?: string;
+            genderCode?: string;
+            nationalityCode?: string;
+            /** Format: int64 */
+            partyId?: number;
+            partyName?: string;
+        };
+        MyPageResponse: {
+            address?: string;
+            addressDetail?: string;
+            birthDate?: string;
+            creditRatingCode?: string;
+            customerGradeCode?: string;
+            /** Format: int64 */
+            customerId?: number;
+            customerStatusCode?: string;
+            email?: string;
+            genderCode?: string;
             /** Format: date-time */
-            cddLastReviewedAt?: string;
-            cddNextReviewDate?: string;
-            eddRequiredYn?: boolean;
+            joinedAt?: string;
             /** Format: date-time */
-            eddLastReviewedAt?: string;
-            eddNextReviewDate?: string;
-            fatcaStatusCode?: string;
-            /** Format: date-time */
-            fatcaLastReviewedAt?: string;
-            fatcaNextReviewDate?: string;
-            fatcaReportableYn?: boolean;
-            crsStatusCode?: string;
-            /** Format: date-time */
-            crsLastReviewedAt?: string;
-            crsNextReviewDate?: string;
-            crsReportableYn?: boolean;
-            sanctioned?: boolean;
-            eddRequired?: boolean;
-            deleted?: boolean;
+            lastLoginAt?: string;
+            latestGrade?: components["schemas"]["GradeInfo"];
+            latestStatus?: components["schemas"]["StatusInfo"];
+            loginId?: string;
+            name?: string;
+            phone?: string;
+            zipCode?: string;
+        };
+        PageAccessLogResponse: {
+            content?: components["schemas"]["AccessLogResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageAgentReviewResponse: {
+            content?: components["schemas"]["AgentReviewResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageCustomerSummaryResponse: {
+            content?: components["schemas"]["CustomerSummaryResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageDuplicateReviewResponse: {
+            content?: components["schemas"]["DuplicateReviewResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageEddPendingResponse: {
+            content?: components["schemas"]["EddPendingResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageFatcaReportableResponse: {
+            content?: components["schemas"]["FatcaReportableResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageFdsDetectionResponse: {
+            content?: components["schemas"]["FdsDetectionResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageFdsIncidentResponse: {
+            content?: components["schemas"]["FdsIncidentResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageKycExpiringResponse: {
+            content?: components["schemas"]["KycExpiringResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageMinorResponse: {
+            content?: components["schemas"]["MinorResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageSanctionHitResponse: {
+            content?: components["schemas"]["SanctionHitResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageSanctionedPartyResponse: {
+            content?: components["schemas"]["SanctionedPartyResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         Pageable: {
             /** Format: int32 */
@@ -2148,547 +2542,248 @@ export interface components {
             size?: number;
             sort?: string[];
         };
-        AgentReviewResponse: {
-            /** Format: int64 */
-            relationId?: number;
-            /** Format: int64 */
-            ownerPartyId?: number;
-            /** Format: int64 */
-            agentPartyId?: number;
-            agentName?: string;
-            relationTypeCode?: string;
-            relationDetailCode?: string;
-            representationScope?: string;
-            proofUrl?: string;
-            relationStartDate?: string;
-            relationReviewStatusCode?: string;
-        };
-        ApiResponsePageAgentReviewResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageAgentReviewResponse"];
-        };
-        PageAgentReviewResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["AgentReviewResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
         PageableObject: {
-            paged?: boolean;
+            /** Format: int64 */
+            offset?: number;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            paged?: boolean;
+            sort?: components["schemas"]["SortObject"][];
             unpaged?: boolean;
+        };
+        PartyRelationResponse: {
+            /** Format: int32 */
+            equityRatioBps?: number;
             /** Format: int64 */
-            offset?: number;
-            sort?: components["schemas"]["SortObject"][];
+            fromPartyId?: number;
+            relationDetailCode?: string;
+            relationEndDate?: string;
+            /** Format: int64 */
+            relationId?: number;
+            relationStartDate?: string;
+            relationTypeCode?: string;
+            representationScope?: string;
+            /** Format: int64 */
+            toPartyId?: number;
         };
-        SortObject: {
-            direction?: string;
-            nullHandling?: string;
-            ascending?: boolean;
-            property?: string;
-            ignoreCase?: boolean;
-        };
-        ApiResponsePageMinorResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageMinorResponse"];
-        };
-        MinorResponse: {
+        PartyRoleResponse: {
             /** Format: int64 */
             partyId?: number;
-            partyName?: string;
+            roleEndDate?: string;
+            roleEndReasonCode?: string;
+            /** Format: int64 */
+            roleId?: number;
+            roleStartDate?: string;
+            roleStatusCode?: string;
+            roleTypeCode?: string;
+        };
+        PersonInfoResponse: {
+            /** Format: int64 */
+            annualIncomeAmount?: number;
             birthDate?: string;
+            /** Format: int32 */
+            dependentCount?: number;
             genderCode?: string;
+            incomeProofCode?: string;
+            isPep?: boolean;
+            maritalStatusCode?: string;
             nationalityCode?: string;
+            nationalityTypeCode?: string;
+            occupationCode?: string;
+            occupationName?: string;
+            pepTypeCode?: string;
+            workplaceName?: string;
         };
-        PageMinorResponse: {
-            /** Format: int32 */
-            totalPages?: number;
+        PinLoginRequest: {
             /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["MinorResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
+            deviceId: number;
+            loginId: string;
+            pin: string;
         };
-        ApiResponsePageDuplicateReviewResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageDuplicateReviewResponse"];
+        QrApproveRequest: {
+            loginId: string;
+            password: string;
+            tokenHash: string;
         };
-        DuplicateReviewResponse: {
-            /** Format: int64 */
-            duplicateReviewCaseId?: number;
-            /** Format: int64 */
-            newPartyId?: number;
-            newPartyName?: string;
-            /** Format: int64 */
-            existingPartyId?: number;
-            existingPartyName?: string;
-            matchTypeCode?: string;
-            reviewStatusCode?: string;
+        QrCertApproveRequest: {
+            loginId: string;
+            password: string;
+            tokenHash: string;
+        };
+        QrCertStatusResponse: {
+            expiryDate?: string;
+            issuedDate?: string;
+            serialNumber?: string;
+            status?: string;
+        };
+        QrGenerateResponse: {
+            confirmCode?: string;
             /** Format: date-time */
-            detectedAt?: string;
+            expiryAt?: string;
+            tokenHash?: string;
         };
-        PageDuplicateReviewResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["DuplicateReviewResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        ApiResponseListFdsRuleResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["FdsRuleResponse"][];
-        };
-        ApiResponsePageFdsIncidentResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageFdsIncidentResponse"];
-        };
-        PageFdsIncidentResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["FdsIncidentResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        ApiResponsePageFdsDetectionResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageFdsDetectionResponse"];
-        };
-        PageFdsDetectionResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["FdsDetectionResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        ApiResponsePageCustomerSummaryResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageCustomerSummaryResponse"];
-        };
-        CustomerSummaryResponse: {
+        QrStatusResponse: {
+            accessToken?: string;
             /** Format: int64 */
             customerId?: number;
+            refreshToken?: string;
+            status?: string;
+        };
+        RecordAccessRequest: {
+            actionCode: string;
+            reason?: string;
+        };
+        ReduceTransferLimitRequest: {
             /** Format: int64 */
-            partyId?: number;
-            partyName?: string;
-            phone?: string;
+            dailyLimit?: number;
+            /** Format: int64 */
+            onceLimit?: number;
+        };
+        RefreshRequest: {
+            refreshToken: string;
+        };
+        RegisterDeviceRequest: {
+            deviceIdentifier: string;
+            deviceName?: string;
+            deviceOsName?: string;
+            deviceOsVersion?: string;
+            deviceTypeCode: string;
+        };
+        RegisterPinRequest: {
+            currentPassword: string;
+            /** Format: int64 */
+            deviceId: number;
+            pin: string;
+        };
+        RegisterRequest: {
             email?: string;
-            customerGradeCode?: string;
-            customerStatusCode?: string;
-            /** Format: date-time */
-            joinedAt?: string;
-            /** Format: date-time */
-            lastTransactionAt?: string;
-        };
-        PageCustomerSummaryResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["CustomerSummaryResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        ApiResponseCustomerDetailResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CustomerDetailResponse"];
-        };
-        CustomerDetailResponse: {
-            /** Format: int64 */
-            customerId?: number;
-            /** Format: int64 */
-            partyId?: number;
-            customerGradeCode?: string;
-            creditRatingCode?: string;
-            creditEvaluationDate?: string;
-            customerStatusCode?: string;
-            email?: string;
+            loginId: string;
+            password: string;
             phone?: string;
-            zipCode?: string;
-            address?: string;
-            addressDetail?: string;
-            joinChannelCode?: string;
-            firstJoinDate?: string;
-            /** Format: date-time */
-            joinedAt?: string;
-            /** Format: date-time */
-            lastTransactionAt?: string;
-            /** Format: date-time */
-            dormantAt?: string;
-            /** Format: date-time */
-            closedAt?: string;
-            partyName?: string;
-            partyStatusCode?: string;
-            birthDate?: string;
-            genderCode?: string;
-            nationalityCode?: string;
-            pep?: boolean;
-        };
-        ApiResponseJoinStatsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["JoinStatsResponse"];
-        };
-        CodeCount: {
-            code?: string;
             /** Format: int64 */
-            count?: number;
+            verificationId: number;
         };
-        JoinStatsResponse: {
-            /** Format: int64 */
-            total?: number;
-            /** Format: int64 */
-            joinedToday?: number;
-            /** Format: int64 */
-            joinedThisMonth?: number;
-            byStatus?: components["schemas"]["CodeCount"][];
-            byGrade?: components["schemas"]["CodeCount"][];
-            byChannel?: components["schemas"]["CodeCount"][];
-        };
-        AccessLogResponse: {
-            /** Format: int64 */
-            customerAccessLogId?: number;
-            /** Format: int64 */
-            accessorEmployeeId?: number;
-            accessorName?: string;
-            accessorRole?: string;
-            accessorBranchCode?: string;
-            /** Format: int64 */
-            targetCustomerId?: number;
-            targetCustomerName?: string;
-            accessActionCode?: string;
-            accessReason?: string;
-            /** Format: date-time */
-            accessedAt?: string;
-        };
-        ApiResponsePageAccessLogResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageAccessLogResponse"];
-        };
-        PageAccessLogResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["AccessLogResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        ApiResponsePageSanctionHitResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageSanctionHitResponse"];
-        };
-        PageSanctionHitResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["SanctionHitResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        SanctionHitResponse: {
-            /** Format: int64 */
-            sanctionScreeningHitId?: number;
-            /** Format: int64 */
-            partyId?: number;
-            partyName?: string;
-            birthDate?: string;
-            nationalityCode?: string;
-            hitTypeCode?: string;
-            /** Format: int32 */
-            matchRate?: number;
-            screeningStatusCode?: string;
-            /** Format: date-time */
-            detectedAt?: string;
-        };
-        ApiResponsePageSanctionedPartyResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageSanctionedPartyResponse"];
-        };
-        PageSanctionedPartyResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["SanctionedPartyResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        SanctionedPartyResponse: {
-            /** Format: int64 */
-            partyId?: number;
-            partyName?: string;
-            birthDate?: string;
-            nationalityCode?: string;
-            ofacSanctionedYn?: boolean;
-            unSanctionedYn?: boolean;
-            euSanctionedYn?: boolean;
-            krSanctionedYn?: boolean;
-            amlRiskLevelCode?: string;
-            /** Format: date-time */
-            sanctionLastScreenedAt?: string;
-        };
-        ApiResponsePageKycExpiringResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageKycExpiringResponse"];
-        };
-        KycExpiringResponse: {
-            /** Format: int64 */
-            partyId?: number;
-            partyName?: string;
-            kycStatusCode?: string;
-            kycExpiryDate?: string;
-            kycNextReviewDate?: string;
-        };
-        PageKycExpiringResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["KycExpiringResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        ApiResponsePageFatcaReportableResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageFatcaReportableResponse"];
-        };
-        FatcaReportableResponse: {
-            /** Format: int64 */
-            partyId?: number;
-            partyName?: string;
-            birthDate?: string;
-            nationalityCode?: string;
-            fatcaStatusCode?: string;
-            fatcaReportableYn?: boolean;
-            crsStatusCode?: string;
-            crsReportableYn?: boolean;
-            /** Format: date-time */
-            fatcaLastReviewedAt?: string;
-        };
-        PageFatcaReportableResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["FatcaReportableResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        ApiResponsePageEddPendingResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PageEddPendingResponse"];
-        };
-        EddPendingResponse: {
-            /** Format: int64 */
-            partyId?: number;
-            partyName?: string;
-            amlRiskLevelCode?: string;
-            cddLevelCode?: string;
-            kycStatusCode?: string;
-            eddNextReviewDate?: string;
-        };
-        PageEddPendingResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            last?: boolean;
-            first?: boolean;
-            /** Format: int32 */
-            numberOfElements?: number;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["EddPendingResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"][];
-            empty?: boolean;
-        };
-        ApiResponseAuthEventsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AuthEventsResponse"];
-        };
-        AuthEventsResponse: {
-            /** Format: int64 */
-            customerId?: number;
-            /** Format: int32 */
-            windowHours?: number;
-            /** Format: int64 */
-            recentCertFail?: number;
-            passwordChangedRecently?: boolean;
-        };
-        ApiResponseMyPageResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["MyPageResponse"];
-        };
-        GradeInfo: {
-            previousGradeCode?: string;
-            newGradeCode?: string;
-            changeReasonCode?: string;
-            effectiveStartDate?: string;
-        };
-        MyPageResponse: {
+        RegisterResponse: {
             /** Format: int64 */
             customerId?: number;
             loginId?: string;
-            name?: string;
-            email?: string;
-            phone?: string;
-            zipCode?: string;
+        };
+        RegisterWithdrawalAccountRequest: {
+            accountAlias?: string;
+            accountHolderName?: string;
+            accountNumber: string;
+            bankCode: string;
+            bankName: string;
+        };
+        RegisteredDeviceResponse: {
+            designatedPc?: boolean;
+            /** Format: int64 */
+            deviceId?: number;
+            /** Format: date-time */
+            deviceLastUsedAt?: string;
+            deviceName?: string;
+            deviceOsName?: string;
+            deviceOsVersion?: string;
+            deviceStatusCode?: string;
+            deviceTypeCode?: string;
+            /** Format: date-time */
+            registeredAt?: string;
+            trusted?: boolean;
+        };
+        ResetPasswordRequest: {
+            newPassword?: string;
+            /** Format: int64 */
+            verificationId?: number;
+        };
+        SanctionHitResponse: {
+            birthDate?: string;
+            /** Format: date-time */
+            detectedAt?: string;
+            hitTypeCode?: string;
+            /** Format: int32 */
+            matchRate?: number;
+            nationalityCode?: string;
+            /** Format: int64 */
+            partyId?: number;
+            partyName?: string;
+            /** Format: int64 */
+            sanctionScreeningHitId?: number;
+            screeningStatusCode?: string;
+        };
+        SanctionedPartyResponse: {
+            amlRiskLevelCode?: string;
+            birthDate?: string;
+            euSanctionedYn?: boolean;
+            krSanctionedYn?: boolean;
+            nationalityCode?: string;
+            ofacSanctionedYn?: boolean;
+            /** Format: int64 */
+            partyId?: number;
+            partyName?: string;
+            /** Format: date-time */
+            sanctionLastScreenedAt?: string;
+            unSanctionedYn?: boolean;
+        };
+        SendMobileAuthRequest: {
+            methodTypeCode: string;
+            phoneNumber: string;
+            purposeCode: string;
+            telecomCarrierCode: string;
+        };
+        SettingsResponse: {
             address?: string;
             addressDetail?: string;
-            birthDate?: string;
-            genderCode?: string;
-            customerGradeCode?: string;
-            customerStatusCode?: string;
-            creditRatingCode?: string;
-            /** Format: date-time */
-            joinedAt?: string;
-            /** Format: date-time */
-            lastLoginAt?: string;
-            latestGrade?: components["schemas"]["GradeInfo"];
-            latestStatus?: components["schemas"]["StatusInfo"];
+            email?: string;
+            emailReceiveYn?: boolean;
+            name?: string;
+            phone?: string;
+            postalReceiveYn?: boolean;
+            smsReceiveYn?: boolean;
+            zipCode?: string;
+        };
+        SortObject: {
+            ascending?: boolean;
+            direction?: string;
+            ignoreCase?: boolean;
+            nullHandling?: string;
+            property?: string;
         };
         StatusInfo: {
-            previousStatusCode?: string;
-            newStatusCode?: string;
             changeReasonCode?: string;
             /** Format: date-time */
             effectiveStartAt?: string;
+            newStatusCode?: string;
+            previousStatusCode?: string;
         };
-        ApiResponseTransferLimitResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["TransferLimitResponse"];
+        TaxResidencyResponse: {
+            foreignTin?: string;
+            residentTypeCode?: string;
+            taxCountryCode?: string;
+            taxResidencyConfirmDate?: string;
+            /** Format: int64 */
+            taxResidencyId?: number;
+            /** Format: int32 */
+            withholdingRateBps?: number;
+        };
+        TransactionApprovalIssueRequest: {
+            amount: number;
+            certSerialNumber: string;
+            fromAccountNo: string;
+            pin: string;
+            toAccountNo: string;
+        };
+        TransactionApprovalIssueResponse: {
+            approvalToken?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        TransactionApprovalVerifyRequest: {
+            amount: number;
+            approvalToken: string;
+            fromAccountNo: string;
+            toAccountNo: string;
         };
         TransferLimitResponse: {
             /** Format: int64 */
@@ -2696,165 +2791,70 @@ export interface components {
             /** Format: int64 */
             onceLimit?: number;
         };
-        ApiResponseListTaxResidencyResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["TaxResidencyResponse"][];
+        UpdateCreditRatingRequest: {
+            agencyCode: string;
+            evaluationDate: string;
+            ratingCode: string;
         };
-        ApiResponseListCustomerStatusHistory: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CustomerStatusHistory"][];
+        UpdateNotificationRequest: {
+            emailReceiveYn?: boolean;
+            postalReceiveYn?: boolean;
+            smsReceiveYn?: boolean;
         };
-        CustomerStatusHistory: {
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: int64 */
-            createdBy?: number;
-            /** Format: int64 */
-            customerStatusHistoryId?: number;
-            /** Format: int64 */
-            previousCustomerStatusHistoryId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            customerStatusCode?: string;
-            previousCustomerStatusCode?: string;
-            customerStatusChangeReasonCode?: string;
-            customerStatusChangeReasonDetail?: string;
-            /** Format: date-time */
-            customerStatusEffectiveStartAt?: string;
-            /** Format: date-time */
-            customerStatusEffectiveEndAt?: string;
-            systemAutoTriggeredYn?: boolean;
-            /** Format: int64 */
-            changedByEmployeeId?: number;
+        UpdateOrderRequest: {
+            orderedIds: number[];
         };
-        ApiResponseSettingsResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["SettingsResponse"];
+        UpdatePassportRequest: {
+            countryCode: string;
+            expiryDate: string;
+            passportNo: string;
         };
-        SettingsResponse: {
-            name?: string;
+        UpdatePersonInfoRequest: {
+            /** Format: int64 */
+            annualIncomeAmount?: number;
+            incomeProofCode?: string;
+            maritalStatusCode?: string;
+            occupationCode?: string;
+            occupationName?: string;
+            workplaceName?: string;
+        };
+        UpdateProfileRequest: {
+            address?: string;
+            addressDetail?: string;
             email?: string;
             phone?: string;
             zipCode?: string;
-            address?: string;
-            addressDetail?: string;
-            smsReceiveYn?: boolean;
-            emailReceiveYn?: boolean;
-            postalReceiveYn?: boolean;
         };
-        ApiResponseListPartyRoleResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["PartyRoleResponse"][];
+        UpdateStayRequest: {
+            stayExpiryDate: string;
+            stayQualificationCode: string;
         };
-        ApiResponseListCustomerGradeHistory: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CustomerGradeHistory"][];
+        VerifyMobileAuthRequest: {
+            code: string;
+            name?: string;
+            phoneNumber: string;
+            purposeCode: string;
+            rrn?: string;
         };
-        CustomerGradeHistory: {
-            /** Format: date-time */
-            createdAt?: string;
+        VerifyMobileAuthResponse: {
             /** Format: int64 */
-            createdBy?: number;
+            verificationId?: number;
+        };
+        WithdrawRequest: {
+            currentPassword?: string;
+        };
+        WithdrawalAccountResponse: {
+            accountAlias?: string;
+            accountHolderName?: string;
+            accountNumber?: string;
+            bankCode?: string;
+            bankName?: string;
+            /** Format: int32 */
+            priorityOrder?: number;
+            registeredAt?: string;
+            registrationType?: string;
             /** Format: int64 */
-            customerGradeHistoryId?: number;
-            /** Format: int64 */
-            previousCustomerGradeHistoryId?: number;
-            /** Format: int64 */
-            customerId?: number;
-            customerGradeCode?: string;
-            previousCustomerGradeCode?: string;
-            customerGradeChangeReasonCode?: string;
-            customerGradeChangeReasonDetail?: string;
-            customerGradeEffectiveStartDate?: string;
-            customerGradeEffectiveEndDate?: string;
-            /** Format: date-time */
-            customerGradeEvaluatedAt?: string;
-            systemAutoTriggeredYn?: boolean;
-            /** Format: int64 */
-            changedByEmployeeId?: number;
-        };
-        ApiResponseListRegisteredDeviceResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["RegisteredDeviceResponse"][];
-        };
-        ApiResponseListAuthMethodResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AuthMethodResponse"][];
-        };
-        ApiResponseListCertSummaryResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CertSummaryResponse"][];
-        };
-        CertSummaryResponse: {
-            serialNumber?: string;
-            certType?: string;
-            certTypeName?: string;
-            issuerName?: string;
-            issuedDate?: string;
-            expiryDate?: string;
-            status?: string;
-            statusName?: string;
-        };
-        ApiResponseCertDetailResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["CertDetailResponse"];
-        };
-        CertDetailResponse: {
-            serialNumber?: string;
-            certType?: string;
-            certTypeName?: string;
-            issuerName?: string;
-            subjectDn?: string;
-            issuerDn?: string;
-            issuedDate?: string;
-            expiryDate?: string;
-            status?: string;
-            statusName?: string;
-            purposeCode?: string;
-            hasPinSet?: boolean;
-        };
-        ApiResponseListWithdrawalAccountResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["WithdrawalAccountResponse"][];
-        };
-        ApiResponseQrStatusResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["QrStatusResponse"];
-        };
-        QrStatusResponse: {
-            status?: string;
-            /** Format: int64 */
-            customerId?: number;
-            accessToken?: string;
-            refreshToken?: string;
-        };
-        ApiResponseQrCertStatusResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["QrCertStatusResponse"];
-        };
-        QrCertStatusResponse: {
-            status?: string;
-            serialNumber?: string;
-            issuedDate?: string;
-            expiryDate?: string;
-        };
-        HolderInfoResponse: {
-            customerId?: string;
-            holderName?: string;
-            holderType?: string;
-            deceasedFlag?: boolean;
+            withdrawalAccountId?: number;
         };
     };
     responses: never;
@@ -2865,7 +2865,449 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    updateProfile: {
+    getHolderInfo: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Caller-Service"?: string;
+            };
+            path: {
+                customerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HolderInfoResponse"];
+                };
+            };
+        };
+    };
+    verify_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransactionApprovalVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    certLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoginResponse"];
+                };
+            };
+        };
+    };
+    issue_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertIssueRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCertIssueResponse"];
+                };
+            };
+        };
+    };
+    changePin_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertPinChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    findId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FindIdRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFindIdResponse"];
+                };
+            };
+        };
+    };
+    login_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoginResponse"];
+                };
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PinLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoginResponse"];
+                };
+            };
+        };
+    };
+    approve_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QrCertApproveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    generate_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseQrGenerateResponse"];
+                };
+            };
+        };
+    };
+    status_1: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseQrCertStatusResponse"];
+                };
+            };
+        };
+    };
+    approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QrApproveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    generate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseQrGenerateResponse"];
+                };
+            };
+        };
+    };
+    status: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseQrStatusResponse"];
+                };
+            };
+        };
+    };
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLoginResponse"];
+                };
+            };
+        };
+    };
+    register_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRegisterResponse"];
+                };
+            };
+        };
+    };
+    registerCorporate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorporateRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRegisterResponse"];
+                };
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListWithdrawalAccountResponse"];
+                };
+            };
+        };
+    };
+    register_2: {
         parameters: {
             query?: never;
             header: {
@@ -2876,7 +3318,587 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateProfileRequest"];
+                "application/json": components["schemas"]["RegisterWithdrawalAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseWithdrawalAccountResponse"];
+                };
+            };
+        };
+    };
+    updateOrder: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListCertSummaryResponse"];
+                };
+            };
+        };
+    };
+    changePin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertPinChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    detail: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                serialNumber: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseCertDetailResponse"];
+                };
+            };
+        };
+    };
+    revoke_2: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                serialNumber: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    getMyPage: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseMyPageResponse"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListAuthMethodResponse"];
+                };
+            };
+        };
+    };
+    deactivate: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                authMethodId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    updateAlias: {
+        parameters: {
+            query: {
+                alias: string;
+            };
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                authMethodId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAuthMethodResponse"];
+                };
+            };
+        };
+    };
+    setPrimary: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                authMethodId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAuthMethodResponse"];
+                };
+            };
+        };
+    };
+    listMyDevices: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListRegisteredDeviceResponse"];
+                };
+            };
+        };
+    };
+    register_1: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRegisteredDeviceResponse"];
+                };
+            };
+        };
+    };
+    revoke_1: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                deviceId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    designate: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                deviceId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRegisteredDeviceResponse"];
+                };
+            };
+        };
+    };
+    trust: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                deviceId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRegisteredDeviceResponse"];
+                };
+            };
+        };
+    };
+    untrust: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                deviceId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRegisteredDeviceResponse"];
+                };
+            };
+        };
+    };
+    getForeignerInfo: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseForeignerInfoResponse"];
+                };
+            };
+        };
+    };
+    updatePassport: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePassportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseForeignerInfoResponse"];
+                };
+            };
+        };
+    };
+    updateStay: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStayRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseForeignerInfoResponse"];
+                };
+            };
+        };
+    };
+    getGradeHistory: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListCustomerGradeHistory"];
+                };
+            };
+        };
+    };
+    cancelInternetBanking: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InternetBankingCancelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    updateNotification: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNotificationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
             };
         };
         responses: {
@@ -2939,7 +3961,7 @@ export interface operations {
             };
         };
     };
-    changePassword: {
+    register: {
         parameters: {
             query?: never;
             header: {
@@ -2950,7 +3972,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ChangePasswordRequest"];
+                "application/json": components["schemas"]["RegisterPinRequest"];
             };
         };
         responses: {
@@ -2965,240 +3987,14 @@ export interface operations {
             };
         };
     };
-    updateNotification: {
+    revoke: {
         parameters: {
-            query?: never;
+            query: {
+                deviceId: number;
+            };
             header: {
                 "X-Customer-Id": number;
             };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateNotificationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    updateStay: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateStayRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseForeignerInfoResponse"];
-                };
-            };
-        };
-    };
-    updatePassport: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdatePassportRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseForeignerInfoResponse"];
-                };
-            };
-        };
-    };
-    changePin: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CertPinChangeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    updateOrder: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateOrderRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    changePin_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CertPinChangeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    verify: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Customer-Id"?: number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VerifyMobileAuthRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVerifyMobileAuthResponse"];
-                };
-            };
-        };
-    };
-    send: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Customer-Id"?: number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SendMobileAuthRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLong"];
-                };
-            };
-        };
-    };
-    addRelation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                fromPartyId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddPartyRelationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePartyRelationResponse"];
-                };
-            };
-        };
-    };
-    listRules: {
-        parameters: {
-            query?: never;
-            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3210,73 +4006,23 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseListFdsRuleResponse"];
+                    "application/json": components["schemas"]["ApiResponseVoid"];
                 };
             };
         };
     };
-    createRule: {
+    updateProfile: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["FdsRuleRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFdsRuleResponse"];
-                };
-            };
-        };
-    };
-    openIncident: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FdsIncidentRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFdsIncidentResponse"];
-                };
-            };
-        };
-    };
-    recordAccess: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                customerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RecordAccessRequest"];
+                "application/json": components["schemas"]["UpdateProfileRequest"];
             };
         };
         responses: {
@@ -3291,7 +4037,7 @@ export interface operations {
             };
         };
     };
-    withdraw: {
+    getMyRoles: {
         parameters: {
             query?: never;
             header: {
@@ -3300,11 +4046,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WithdrawRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -3312,12 +4054,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
+                    "application/json": components["schemas"]["ApiResponseListPartyRoleResponse"];
                 };
             };
         };
     };
-    issue: {
+    getSettings: {
         parameters: {
             query?: never;
             header: {
@@ -3326,11 +4068,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TransactionApprovalIssueRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -3338,7 +4076,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseTransactionApprovalIssueResponse"];
+                    "application/json": components["schemas"]["ApiResponseSettingsResponse"];
+                };
+            };
+        };
+    };
+    getStatusHistory: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListCustomerStatusHistory"];
                 };
             };
         };
@@ -3391,7 +4151,31 @@ export interface operations {
             };
         };
     };
-    register: {
+    deleteTaxResidency: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                taxResidencyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    issue: {
         parameters: {
             query?: never;
             header: {
@@ -3402,7 +4186,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RegisterPinRequest"];
+                "application/json": components["schemas"]["TransactionApprovalIssueRequest"];
             };
         };
         responses: {
@@ -3412,1025 +4196,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    revoke: {
-        parameters: {
-            query: {
-                deviceId: number;
-            };
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    cancelInternetBanking: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["InternetBankingCancelRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    listMyDevices: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListRegisteredDeviceResponse"];
-                };
-            };
-        };
-    };
-    register_1: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterDeviceRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRegisteredDeviceResponse"];
-                };
-            };
-        };
-    };
-    list_2: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListWithdrawalAccountResponse"];
-                };
-            };
-        };
-    };
-    register_2: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterWithdrawalAccountRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseWithdrawalAccountResponse"];
-                };
-            };
-        };
-    };
-    resetPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ResetPasswordRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    register_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRegisterResponse"];
-                };
-            };
-        };
-    };
-    registerCorporate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CorporateRegisterRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRegisterResponse"];
-                };
-            };
-        };
-    };
-    refresh: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoginResponse"];
-                };
-            };
-        };
-    };
-    generate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseQrGenerateResponse"];
-                };
-            };
-        };
-    };
-    approve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["QrApproveRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    generate_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseQrGenerateResponse"];
-                };
-            };
-        };
-    };
-    approve_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["QrCertApproveRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PinLoginRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoginResponse"];
-                };
-            };
-        };
-    };
-    login_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoginResponse"];
-                };
-            };
-        };
-    };
-    findId: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FindIdRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFindIdResponse"];
-                };
-            };
-        };
-    };
-    issue_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CertIssueRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCertIssueResponse"];
-                };
-            };
-        };
-    };
-    certLogin: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CertLoginRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseLoginResponse"];
-                };
-            };
-        };
-    };
-    verify_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TransactionApprovalVerifyRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    completeKyc: {
-        parameters: {
-            query: {
-                expiryDate: string;
-                methodCode: string;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                partyId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    updateAmlRisk: {
-        parameters: {
-            query: {
-                riskLevel: string;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                partyId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    closeRole: {
-        parameters: {
-            query: {
-                endDate?: string;
-                reasonCode: string;
-            };
-            header?: never;
-            path: {
-                roleId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePartyRoleResponse"];
-                };
-            };
-        };
-    };
-    rejectReview: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                relationId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePartyRelationResponse"];
-                };
-            };
-        };
-    };
-    endRelation: {
-        parameters: {
-            query?: {
-                endDate?: string;
-                reasonCode?: string;
-            };
-            header?: never;
-            path: {
-                relationId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePartyRelationResponse"];
-                };
-            };
-        };
-    };
-    approveReview: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                relationId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePartyRelationResponse"];
-                };
-            };
-        };
-    };
-    markDuplicate: {
-        parameters: {
-            query?: {
-                comment?: string;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                caseId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    markDistinct: {
-        parameters: {
-            query?: {
-                comment?: string;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                caseId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    deactivateRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                ruleId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFdsRuleResponse"];
-                };
-            };
-        };
-    };
-    activateRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                ruleId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFdsRuleResponse"];
-                };
-            };
-        };
-    };
-    reportToFss: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                incidentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFdsIncidentResponse"];
-                };
-            };
-        };
-    };
-    closeIncident: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                incidentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFdsIncidentResponse"];
-                };
-            };
-        };
-    };
-    markFalsePositive: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                detectionId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFdsDetectionResponse"];
-                };
-            };
-        };
-    };
-    confirmDetection: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                detectionId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseFdsDetectionResponse"];
-                };
-            };
-        };
-    };
-    suspend: {
-        parameters: {
-            query?: {
-                reasonDetail?: string;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                customerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    reactivate: {
-        parameters: {
-            query?: {
-                reasonDetail?: string;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                customerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    changeGrade: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                customerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangeGradeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    makeDormant: {
-        parameters: {
-            query?: {
-                reasonDetail?: string;
-                systemTriggered?: boolean;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                customerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    updateCreditRating: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                customerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateCreditRatingRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    close: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                customerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CloseCustomerRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    confirmScreeningHit: {
-        parameters: {
-            query?: {
-                comment?: string;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                hitId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    clearScreeningHit: {
-        parameters: {
-            query?: {
-                comment?: string;
-            };
-            header?: {
-                "X-Employee-Id"?: string;
-            };
-            path: {
-                hitId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
+                    "application/json": components["schemas"]["ApiResponseTransactionApprovalIssueResponse"];
                 };
             };
         };
@@ -4483,18 +4249,20 @@ export interface operations {
             };
         };
     };
-    untrust: {
+    withdraw: {
         parameters: {
             query?: never;
             header: {
                 "X-Customer-Id": number;
             };
-            path: {
-                deviceId: number;
-            };
+            path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WithdrawRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -4502,115 +4270,19 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseRegisteredDeviceResponse"];
+                    "application/json": components["schemas"]["ApiResponseVoid"];
                 };
             };
         };
     };
-    trust: {
+    getAuthEvents: {
         parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
+            query?: {
+                windowHours?: number;
             };
-            path: {
-                deviceId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRegisteredDeviceResponse"];
-                };
-            };
-        };
-    };
-    designate: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path: {
-                deviceId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseRegisteredDeviceResponse"];
-                };
-            };
-        };
-    };
-    setPrimary: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path: {
-                authMethodId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAuthMethodResponse"];
-                };
-            };
-        };
-    };
-    updateAlias: {
-        parameters: {
-            query: {
-                alias: string;
-            };
-            header: {
-                "X-Customer-Id": number;
-            };
-            path: {
-                authMethodId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAuthMethodResponse"];
-                };
-            };
-        };
-    };
-    getRelations: {
-        parameters: {
-            query?: never;
             header?: never;
             path: {
-                partyId: number;
+                customerId: number;
             };
             cookie?: never;
         };
@@ -4622,34 +4294,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseListPartyRelationResponse"];
+                    "application/json": components["schemas"]["ApiResponseAuthEventsResponse"];
                 };
             };
         };
     };
-    getCompliance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                partyId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseComplianceInfo"];
-                };
-            };
-        };
-    };
-    listPendingAgentReviews: {
+    listEddPending: {
         parameters: {
             query: {
                 pageable: components["schemas"]["Pageable"];
@@ -4666,12 +4316,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponsePageAgentReviewResponse"];
+                    "application/json": components["schemas"]["ApiResponsePageEddPendingResponse"];
                 };
             };
         };
     };
-    listMinors: {
+    listFatcaCrsReportable: {
         parameters: {
             query: {
                 pageable: components["schemas"]["Pageable"];
@@ -4688,12 +4338,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponsePageMinorResponse"];
+                    "application/json": components["schemas"]["ApiResponsePageFatcaReportableResponse"];
                 };
             };
         };
     };
-    listPendingDuplicates: {
+    listKycExpiring: {
+        parameters: {
+            query: {
+                targetDate: string;
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePageKycExpiringResponse"];
+                };
+            };
+        };
+    };
+    listSanctioned: {
         parameters: {
             query: {
                 pageable: components["schemas"]["Pageable"];
@@ -4710,12 +4383,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponsePageDuplicateReviewResponse"];
+                    "application/json": components["schemas"]["ApiResponsePageSanctionedPartyResponse"];
                 };
             };
         };
     };
-    listOpenIncidents: {
+    listPendingScreeningHits: {
         parameters: {
             query: {
                 pageable: components["schemas"]["Pageable"];
@@ -4732,18 +4405,22 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponsePageFdsIncidentResponse"];
+                    "application/json": components["schemas"]["ApiResponsePageSanctionHitResponse"];
                 };
             };
         };
     };
-    listPendingDetections: {
+    clearScreeningHit: {
         parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
+            query?: {
+                comment?: string;
             };
-            header?: never;
-            path?: never;
+            header?: {
+                "X-Employee-Id"?: string;
+            };
+            path: {
+                hitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4754,7 +4431,33 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponsePageFdsDetectionResponse"];
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    confirmScreeningHit: {
+        parameters: {
+            query?: {
+                comment?: string;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
+            };
+            path: {
+                hitId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
                 };
             };
         };
@@ -4784,6 +4487,50 @@ export interface operations {
             };
         };
     };
+    getAccessLogs: {
+        parameters: {
+            query: {
+                keyword?: string;
+                branch?: string;
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePageAccessLogResponse"];
+                };
+            };
+        };
+    };
+    getJoinStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseJoinStatsResponse"];
+                };
+            };
+        };
+    };
     getCustomerDetail: {
         parameters: {
             query?: never;
@@ -4809,458 +4556,96 @@ export interface operations {
             };
         };
     };
-    getJoinStats: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseJoinStatsResponse"];
-                };
-            };
-        };
-    };
-    getAccessLogs: {
-        parameters: {
-            query: {
-                keyword?: string;
-                branch?: string;
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePageAccessLogResponse"];
-                };
-            };
-        };
-    };
-    listPendingScreeningHits: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePageSanctionHitResponse"];
-                };
-            };
-        };
-    };
-    listSanctioned: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePageSanctionedPartyResponse"];
-                };
-            };
-        };
-    };
-    listKycExpiring: {
-        parameters: {
-            query: {
-                targetDate: string;
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePageKycExpiringResponse"];
-                };
-            };
-        };
-    };
-    listFatcaCrsReportable: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePageFatcaReportableResponse"];
-                };
-            };
-        };
-    };
-    listEddPending: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponsePageEddPendingResponse"];
-                };
-            };
-        };
-    };
-    getAuthEvents: {
-        parameters: {
-            query?: {
-                windowHours?: number;
-            };
-            header?: never;
-            path: {
-                customerId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseAuthEventsResponse"];
-                };
-            };
-        };
-    };
-    getMyPage: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseMyPageResponse"];
-                };
-            };
-        };
-    };
-    getStatusHistory: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListCustomerStatusHistory"];
-                };
-            };
-        };
-    };
-    getSettings: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseSettingsResponse"];
-                };
-            };
-        };
-    };
-    getMyRoles: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListPartyRoleResponse"];
-                };
-            };
-        };
-    };
-    getGradeHistory: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListCustomerGradeHistory"];
-                };
-            };
-        };
-    };
-    getForeignerInfo: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseForeignerInfoResponse"];
-                };
-            };
-        };
-    };
-    list: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListAuthMethodResponse"];
-                };
-            };
-        };
-    };
-    list_1: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseListCertSummaryResponse"];
-                };
-            };
-        };
-    };
-    detail: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path: {
-                serialNumber: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseCertDetailResponse"];
-                };
-            };
-        };
-    };
-    revoke_2: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
-            };
-            path: {
-                serialNumber: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    status: {
-        parameters: {
-            query: {
-                token: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseQrStatusResponse"];
-                };
-            };
-        };
-    };
-    status_1: {
-        parameters: {
-            query: {
-                token: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseQrCertStatusResponse"];
-                };
-            };
-        };
-    };
-    getHolderInfo: {
+    recordAccess: {
         parameters: {
             query?: never;
             header?: {
-                "X-Caller-Service"?: string;
+                "X-Employee-Id"?: string;
+            };
+            path: {
+                customerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordAccessRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    close: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Employee-Id"?: string;
+            };
+            path: {
+                customerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseCustomerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    updateCreditRating: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                customerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCreditRatingRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    makeDormant: {
+        parameters: {
+            query?: {
+                reasonDetail?: string;
+                systemTriggered?: boolean;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
             };
             path: {
                 customerId: number;
@@ -5275,19 +4660,49 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HolderInfoResponse"];
+                    "application/json": components["schemas"]["ApiResponseVoid"];
                 };
             };
         };
     };
-    deleteTaxResidency: {
+    changeGrade: {
         parameters: {
             query?: never;
-            header: {
-                "X-Customer-Id": number;
+            header?: {
+                "X-Employee-Id"?: string;
             };
             path: {
-                taxResidencyId: number;
+                customerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeGradeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    reactivate: {
+        parameters: {
+            query?: {
+                reasonDetail?: string;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
+            };
+            path: {
+                customerId: number;
             };
             cookie?: never;
         };
@@ -5304,14 +4719,16 @@ export interface operations {
             };
         };
     };
-    revoke_1: {
+    suspend: {
         parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
+            query?: {
+                reasonDetail?: string;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
             };
             path: {
-                deviceId: number;
+                customerId: number;
             };
             cookie?: never;
         };
@@ -5328,14 +4745,282 @@ export interface operations {
             };
         };
     };
-    deactivate: {
+    listPendingDetections: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePageFdsDetectionResponse"];
+                };
+            };
+        };
+    };
+    confirmDetection: {
         parameters: {
             query?: never;
-            header: {
-                "X-Customer-Id": number;
+            header?: never;
+            path: {
+                detectionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFdsDetectionResponse"];
+                };
+            };
+        };
+    };
+    markFalsePositive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                detectionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFdsDetectionResponse"];
+                };
+            };
+        };
+    };
+    openIncident: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FdsIncidentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFdsIncidentResponse"];
+                };
+            };
+        };
+    };
+    listOpenIncidents: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePageFdsIncidentResponse"];
+                };
+            };
+        };
+    };
+    closeIncident: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incidentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFdsIncidentResponse"];
+                };
+            };
+        };
+    };
+    reportToFss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incidentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFdsIncidentResponse"];
+                };
+            };
+        };
+    };
+    listRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListFdsRuleResponse"];
+                };
+            };
+        };
+    };
+    createRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FdsRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFdsRuleResponse"];
+                };
+            };
+        };
+    };
+    activateRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFdsRuleResponse"];
+                };
+            };
+        };
+    };
+    deactivateRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFdsRuleResponse"];
+                };
+            };
+        };
+    };
+    listPendingDuplicates: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePageDuplicateReviewResponse"];
+                };
+            };
+        };
+    };
+    markDistinct: {
+        parameters: {
+            query?: {
+                comment?: string;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
             };
             path: {
-                authMethodId: number;
+                caseId: number;
             };
             cookie?: never;
         };
@@ -5352,14 +5037,16 @@ export interface operations {
             };
         };
     };
-    delete: {
+    markDuplicate: {
         parameters: {
-            query?: never;
-            header: {
-                "X-Customer-Id": number;
+            query?: {
+                comment?: string;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
             };
             path: {
-                id: number;
+                caseId: number;
             };
             cookie?: never;
         };
@@ -5372,6 +5059,319 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    listMinors: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePageMinorResponse"];
+                };
+            };
+        };
+    };
+    listPendingAgentReviews: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePageAgentReviewResponse"];
+                };
+            };
+        };
+    };
+    approveReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                relationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePartyRelationResponse"];
+                };
+            };
+        };
+    };
+    endRelation: {
+        parameters: {
+            query?: {
+                endDate?: string;
+                reasonCode?: string;
+            };
+            header?: never;
+            path: {
+                relationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePartyRelationResponse"];
+                };
+            };
+        };
+    };
+    rejectReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                relationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePartyRelationResponse"];
+                };
+            };
+        };
+    };
+    closeRole: {
+        parameters: {
+            query: {
+                endDate?: string;
+                reasonCode: string;
+            };
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePartyRoleResponse"];
+                };
+            };
+        };
+    };
+    addRelation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fromPartyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddPartyRelationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePartyRelationResponse"];
+                };
+            };
+        };
+    };
+    getCompliance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseComplianceInfo"];
+                };
+            };
+        };
+    };
+    updateAmlRisk: {
+        parameters: {
+            query: {
+                riskLevel: string;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
+            };
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    completeKyc: {
+        parameters: {
+            query: {
+                expiryDate: string;
+                methodCode: string;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
+            };
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    getRelations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListPartyRelationResponse"];
+                };
+            };
+        };
+    };
+    send: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Customer-Id"?: number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendMobileAuthRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseLong"];
+                };
+            };
+        };
+    };
+    verify: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Customer-Id"?: number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyMobileAuthRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVerifyMobileAuthResponse"];
                 };
             };
         };
