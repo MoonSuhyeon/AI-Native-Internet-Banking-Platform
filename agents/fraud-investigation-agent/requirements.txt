@@ -4,6 +4,8 @@ rich>=13.0
 httpx>=0.27
 fastapi>=0.110
 uvicorn>=0.29
+# 조사 성능 지표(/metrics). consultation 과 같은 라이브러리를 쓴다.
+prometheus-client>=0.20
 # Harness audit storage. Imported only when FRAUD_AUDIT_DSN is set
 # (harness_core.audit_psycopg imports it lazily); without it the audit log is a
 # no-op and the demo path still runs.

@@ -93,6 +93,16 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:8089']
 
+  # 조사 에이전트. 격리망(fraud-internal)에 있어 호스트로 포트를 열지 않는다 —
+  # 그 안에서 컨테이너 이름으로 긁는다(prometheus 를 같은 망에 붙여 두었다).
+  # 파이썬이라 Micrometer 의 application 라벨이 없어 여기서 달아준다.
+  - job_name: 'fraud-agent'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['fraud-agent:8090']
+        labels:
+          application: fraud-agent
+
   # 서류 에이전트. doc 프로필로만 뜨므로 평소에는 DOWN 이다.
   - job_name: 'doc-agent'
     metrics_path: /actuator/prometheus

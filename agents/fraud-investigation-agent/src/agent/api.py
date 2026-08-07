@@ -22,6 +22,8 @@ from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
 
 from . import hypotheses
@@ -34,6 +36,14 @@ from .graph import (
     _REQUIRED_ROLE,
 )
 from .llm import get_llm_client
+from .metrics import (
+    fraud_action_blocked_total,
+    fraud_investigation_duration_seconds,
+    fraud_investigation_failed_total,
+    fraud_investigation_total,
+    fraud_tool_calls_total,
+    observe_recommendation,
+)
 from .models import (
     ActionType,
     AgentState,
@@ -157,6 +167,7 @@ def _run_trace(case: Case) -> tuple[list[TraceStep], Recommendation, AgentState]
         reason = state.tool_log[-1].reason
 
         fn = TOOLS[tool]
+        fraud_tool_calls_total.labels(tool=str(tool)).inc()
         ident = state.alert.account if tool in ACCOUNT_TOOLS else state.alert.customer_id
         result = fn(case, ident)
         state.evidence.append(result.to_evidence())
@@ -229,7 +240,18 @@ def investigate(req: InvestigateRequest) -> InvestigateResponse:
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"케이스 없음: {req.case}")
 
-    steps, rec, state = _run_trace(case)
+    import time
+    started = time.perf_counter()
+    try:
+        steps, rec, state = _run_trace(case)
+    except Exception:
+        # 실패를 세지 않으면 "조사가 준 적 없다"와 "조사가 터졌다"가 구별되지 않는다.
+        fraud_investigation_failed_total.inc()
+        raise
+    finally:
+        fraud_investigation_duration_seconds.observe(time.perf_counter() - started)
+    fraud_investigation_total.labels(status=rec.status.value).inc()
+
     thread_id = f"inv-{case.alert.id}"
     _PENDING[thread_id] = rec  # HITL — approve 가 참조
 
@@ -322,6 +344,7 @@ def approve(
     alert_id = req.thread_id.removeprefix("inv-")
 
     if not req.approved:
+        observe_recommendation(rec.status.value, approved=False)
         refused = ["거부됨: HITL 미승인 — 권고까지만"]
         # 거부도 남긴다. 승인만 기록하면 "아무 일도 없었다"와
         # "사람이 막았다"가 구별되지 않는다.
@@ -340,9 +363,13 @@ def approve(
             executed_actions=refused,
         )
 
+    observe_recommendation(rec.status.value, approved=True)
+
     done: list[str] = []
     for a in rec.actions:
         if a.type in _GATED_ACTIONS and _REQUIRED_ROLE not in effective_roles:
+            # 승인됐는데 실행되지 않은 것. 채택률만 보면 안 보이는 구멍이다.
+            fraud_action_blocked_total.labels(action_type=a.type.value).inc()
             done.append(f"거부됨(RBAC): {a.type.value} — 필요 역할 {_REQUIRED_ROLE}")
             continue
         if a.type == ActionType.NONE:
@@ -363,6 +390,15 @@ def approve(
     return ApproveResponse(
         thread_id=req.thread_id, approved=True, executed_actions=done
     )
+
+
+@app.get("/metrics")
+def metrics() -> Response:
+    """Prometheus 스크레이프 엔드포인트.
+
+    다른 파이썬 서비스(consultation)와 같은 경로·형식을 쓴다.
+    """
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.get("/health")

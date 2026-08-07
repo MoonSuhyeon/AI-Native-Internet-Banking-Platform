@@ -541,6 +541,13 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+    # fraud-agent 는 internal 망에 격리돼 호스트로 포트를 열지 않는다(의도된 설계 —
+    # 8090 이 브라우저에 직접 닿으면 신원 헤더 위조가 가능해진다. api.py 주석 참고).
+    # 그래서 포트를 여는 대신 Prometheus 를 그 망에 함께 넣어 안에서 긁는다.
+    # 기본망 소속은 유지해야 나머지 대상을 계속 긁을 수 있다.
+    networks:
+      - default
+      - fraud-internal
 
   grafana:
     image: grafana/grafana:latest
