@@ -6,7 +6,7 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -59,26 +59,26 @@ public class DocumentSubmission {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     public void updateKeys(String rawKey, String maskedKey) {
         this.rawObjectKey = rawKey;
         this.maskedObjectKey = maskedKey;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void updateStatus(VerifyStatus status) {
         this.verifyStatus = status;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void markHoldPending() {
         this.humanReviewStatus = HumanReviewStatus.PENDING;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void applyHumanDecision(HumanReviewStatus decision, String reviewerId) {
@@ -86,24 +86,24 @@ public class DocumentSubmission {
         this.reviewerId = reviewerId;
         this.verifyStatus = (decision == HumanReviewStatus.CONFIRMED_FORGERY)
             ? VerifyStatus.LOCKED : VerifyStatus.CLEARED;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void updateRetentionUntil(LocalDate until) {
         this.retentionUntil = until;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void enableLegalHold() {
         this.legalHold = true;
         this.retentionUntil = null;   // 무기한
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void disableLegalHold(LocalDate newRetentionUntil) {
         this.legalHold = false;
         this.retentionUntil = newRetentionUntil;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public enum VerifyStatus {

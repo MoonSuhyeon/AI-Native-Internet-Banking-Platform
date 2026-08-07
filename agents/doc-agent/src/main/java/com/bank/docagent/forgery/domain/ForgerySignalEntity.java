@@ -3,7 +3,7 @@ package com.bank.docagent.forgery.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -36,5 +36,5 @@ public class ForgerySignalEntity {
 
     @Column(name = "detected_at", nullable = false)
     @Builder.Default
-    private LocalDateTime detectedAt = LocalDateTime.now();
+    private OffsetDateTime detectedAt = OffsetDateTime.now();
 }
