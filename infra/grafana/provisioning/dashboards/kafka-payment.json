@@ -99,7 +99,7 @@
       "id": 4,
       "targets": [
         {
-          "expr": "sum(increase(payment_kafka_consume_total{application=\"payment-service\"}[5m])) by (topic)",
+          "expr": "sum(increase(payment_kafka_consume_total{application=\"core-banking\"}[5m])) by (topic)",
           "legendFormat": "{{topic}}"
         }
       ],
@@ -116,11 +116,11 @@
       "id": 5,
       "targets": [
         {
-          "expr": "sum(increase(payment_outbox_publish_total{application=\"payment-service\", result=\"success\"}[5m]))",
+          "expr": "sum(increase(payment_outbox_publish_total{application=\"core-banking\", result=\"success\"}[5m]))",
           "legendFormat": "발행 성공"
         },
         {
-          "expr": "sum(increase(payment_outbox_publish_total{application=\"payment-service\", result=\"failure\"}[5m]))",
+          "expr": "sum(increase(payment_outbox_publish_total{application=\"core-banking\", result=\"failure\"}[5m]))",
           "legendFormat": "발행 실패"
         }
       ],
@@ -145,7 +145,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "payment_outbox_pending{application=\"payment-service\"}",
+          "expr": "payment_outbox_pending{application=\"core-banking\"}",
           "legendFormat": "PENDING"
         }
       ],
@@ -163,7 +163,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "payment_instruction_incomplete{application=\"payment-service\"}",
+          "expr": "payment_instruction_incomplete{application=\"core-banking\"}",
           "legendFormat": "미완료"
         }
       ],
@@ -180,11 +180,11 @@
       "id": 8,
       "targets": [
         {
-          "expr": "payment_outbox_pending{application=\"payment-service\"}",
+          "expr": "payment_outbox_pending{application=\"core-banking\"}",
           "legendFormat": "Outbox PENDING"
         },
         {
-          "expr": "payment_instruction_incomplete{application=\"payment-service\"}",
+          "expr": "payment_instruction_incomplete{application=\"core-banking\"}",
           "legendFormat": "미완료 거래"
         }
       ],
@@ -209,11 +209,11 @@
       "options": { "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "sum(increase(payment_instruction_completed_total{application=\"payment-service\"}[5m]))",
+          "expr": "sum(increase(payment_instruction_completed_total{application=\"core-banking\"}[5m]))",
           "legendFormat": "완료"
         },
         {
-          "expr": "sum(increase(payment_instruction_failed_total{application=\"payment-service\"}[5m]))",
+          "expr": "sum(increase(payment_instruction_failed_total{application=\"core-banking\"}[5m]))",
           "legendFormat": "실패"
         }
       ],
@@ -230,15 +230,15 @@
       "id": 10,
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(payment_instruction_duration_seconds_bucket{application=\"payment-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(payment_instruction_duration_seconds_bucket{application=\"core-banking\"}[5m])) by (le))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(payment_instruction_duration_seconds_bucket{application=\"payment-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(payment_instruction_duration_seconds_bucket{application=\"core-banking\"}[5m])) by (le))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(payment_instruction_duration_seconds_bucket{application=\"payment-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(payment_instruction_duration_seconds_bucket{application=\"core-banking\"}[5m])) by (le))",
           "legendFormat": "p99"
         }
       ],
@@ -255,7 +255,7 @@
       "id": 11,
       "targets": [
         {
-          "expr": "sum(increase(payment_instruction_completed_total{application=\"payment-service\"}[5m])) / (sum(increase(payment_instruction_completed_total{application=\"payment-service\"}[5m])) + sum(increase(payment_instruction_failed_total{application=\"payment-service\"}[5m])))",
+          "expr": "sum(increase(payment_instruction_completed_total{application=\"core-banking\"}[5m])) / (sum(increase(payment_instruction_completed_total{application=\"core-banking\"}[5m])) + sum(increase(payment_instruction_failed_total{application=\"core-banking\"}[5m])))",
           "legendFormat": "이체 성공률"
         }
       ],
@@ -280,7 +280,7 @@
       "options": { "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "sum(increase(payment_compensation_total{application=\"payment-service\"}[5m])) by (type)",
+          "expr": "sum(increase(payment_compensation_total{application=\"core-banking\"}[5m])) by (type)",
           "legendFormat": "{{type}}"
         }
       ],
@@ -297,7 +297,7 @@
       "id": 13,
       "targets": [
         {
-          "expr": "sum(increase(payment_kafka_dlq_total{application=\"payment-service\"}[5m])) by (cluster)",
+          "expr": "sum(increase(payment_kafka_dlq_total{application=\"core-banking\"}[5m])) by (cluster)",
           "legendFormat": "DLQ {{cluster}}"
         }
       ],
@@ -314,7 +314,7 @@
       "id": 14,
       "targets": [
         {
-          "expr": "sum(increase(payment_idempotency_duplicate_total{application=\"payment-service\"}[5m]))",
+          "expr": "sum(increase(payment_idempotency_duplicate_total{application=\"core-banking\"}[5m]))",
           "legendFormat": "중복 거래 감지"
         }
       ],
@@ -332,7 +332,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" },
       "targets": [
         {
-          "expr": "sum(increase(payment_kftc_settlement_failed_total{application=\"payment-service\"}[24h]))",
+          "expr": "sum(increase(payment_kftc_settlement_failed_total{application=\"core-banking\"}[24h]))",
           "legendFormat": "정산 실패"
         }
       ],

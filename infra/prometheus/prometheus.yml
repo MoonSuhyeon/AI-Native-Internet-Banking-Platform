@@ -73,10 +73,15 @@ scrape_configs:
         labels:
           cluster: internal
 
+  # 파이썬 서비스라 Micrometer 가 붙여주는 application 라벨이 없다.
+  # 대시보드는 JVM 서비스와 같은 방식으로 application 으로 거르므로 여기서 달아준다 —
+  # 없으면 chatbot 대시보드 패널 5종이 조용히 빈다.
   - job_name: 'consultation-service'
     metrics_path: /metrics
     static_configs:
       - targets: ['host.docker.internal:8087']
+        labels:
+          application: consultation-service
 
   - job_name: 'review-ai-gateway'
     metrics_path: /actuator/prometheus

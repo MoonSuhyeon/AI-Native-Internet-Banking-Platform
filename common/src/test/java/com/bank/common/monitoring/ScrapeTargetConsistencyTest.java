@@ -50,6 +50,15 @@ class ScrapeTargetConsistencyTest {
      */
     private static final Set<String> EXTERNAL_JOBS = Set.of("windows-exporter", "prometheus");
 
+    /**
+     * 정규식 안의 역슬래시 하나.
+     *
+     * <p>자바 문자열과 정규식이 각각 이스케이프를 먹어 {@code "\\\\?"} 처럼 겹치는데,
+     * 그러다 한 겹을 놓치면 {@code \?}(물음표 리터럴)가 되어 아무것도 매칭하지 않는다.
+     * 실제로 그렇게 써서 죽은 라벨을 못 잡는 테스트가 나왔다 — 상수로 빼 눈에 보이게 한다.
+     */
+    private static final String BACKSLASH = "\\\\";
+
     @Test
     @DisplayName("모든 스크레이프 대상이 compose 가 게시하는 포트를 가리킨다")
     void everyTargetMapsToAPublishedPort() throws IOException {
@@ -106,6 +115,89 @@ class ScrapeTargetConsistencyTest {
         assertThat(missing)
                 .as("스크레이프 잡이 없는 서비스. 잡 이름은 compose 서비스 이름과 맞춘다.")
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("대시보드·알림이 거는 application 라벨이 실제 서비스 이름이다")
+    void dashboardApplicationLabelsExist() throws IOException {
+        // Micrometer 의 application 라벨은 spring.application.name 에서 온다.
+        // 서비스 이름이 바뀌면 그 라벨을 걸던 패널은 조용히 빈다 — 쿼리는 유효하고 결과만 0건이다.
+        // 실제로 수신·결제 병합 후에도 kafka-payment 대시보드가 application="payment-service" 를
+        // 19곳에서 보고 있어 결제 패널이 전부 비어 있었다.
+        Set<String> known = applicationNames();
+        Set<String> used = new LinkedHashSet<>();
+        // JSON 안에서는 application=\"이름\" 으로 이스케이프되고, YAML 에서는 application="이름" 이다.
+        // 그래서 따옴표 앞 역슬래시를 선택적으로 둔다.
+        Pattern label = Pattern.compile("application=" + BACKSLASH + "?\"([a-z][a-z0-9-]*)" + BACKSLASH + "?\"");
+        for (Path f : monitoringFiles()) {
+            Matcher m = label.matcher(Files.readString(f));
+            while (m.find()) used.add(m.group(1));
+        }
+
+        Set<String> unknown = new LinkedHashSet<>(used);
+        unknown.removeAll(known);
+
+        assertThat(unknown)
+                .as("존재하지 않는 application 라벨. 이 라벨을 거는 패널·알림은 항상 0건이다. "
+                    + "알려진 이름: %s", known)
+                .isEmpty();
+    }
+
+    /**
+     * 지표에 실제로 붙는 application 라벨 값의 집합.
+     *
+     * <p>두 경로가 있다.
+     * <ul>
+     *   <li>JVM 서비스 — Micrometer 가 {@code spring.application.name} 을 붙인다.
+     *       yml 에서 4칸 들여쓰기 아래의 {@code name:} 이다(spring → application → name).</li>
+     *   <li>파이썬 서비스 — 그런 장치가 없어 Prometheus 잡의 {@code labels} 로 달아준다.
+     *       consultation-service 가 그렇다.</li>
+     * </ul>
+     *
+     * <p>빌드 산출물은 제외한다 — 옛 이름이 남아 있으면 죽은 라벨이 살아 있는 것처럼 보인다.
+     */
+    private Set<String> applicationNames() throws IOException {
+        Set<String> names = new LinkedHashSet<>(scrapeJobApplicationLabels());
+        Pattern p = Pattern.compile("^ {4}name: *([a-z][a-z0-9-]*) *$", Pattern.MULTILINE);
+        try (var paths = Files.walk(REPO_ROOT)) {
+            for (Path f : paths.filter(x -> x.endsWith("application.yml"))
+                    .filter(x -> {
+                        String u = x.toString().replace('\\', '/');
+                        return !u.contains("/build/") && !u.contains("/bin/");
+                    })
+                    .toList()) {
+                Matcher m = p.matcher(Files.readString(f));
+                while (m.find()) names.add(m.group(1));
+            }
+        }
+        return names;
+    }
+
+    /** Prometheus 잡이 static_configs.labels 로 직접 붙이는 application 값. */
+    private Set<String> scrapeJobApplicationLabels() throws IOException {
+        Map<String, Object> root = load(REPO_ROOT.resolve("infra/prometheus/prometheus.yml"));
+        Set<String> out = new LinkedHashSet<>();
+        for (Object o : (List<?>) root.get("scrape_configs")) {
+            List<?> statics = (List<?>) ((Map<?, ?>) o).get("static_configs");
+            if (statics == null) continue;
+            for (Object sc : statics) {
+                Map<?, ?> labels = (Map<?, ?>) ((Map<?, ?>) sc).get("labels");
+                if (labels != null && labels.get("application") != null) {
+                    out.add(String.valueOf(labels.get("application")));
+                }
+            }
+        }
+        return out;
+    }
+
+    private List<Path> monitoringFiles() throws IOException {
+        List<Path> out = new ArrayList<>();
+        out.add(REPO_ROOT.resolve("infra/prometheus/alerts.yml"));
+        Path dash = REPO_ROOT.resolve("infra/grafana/provisioning/dashboards");
+        try (var paths = Files.walk(dash)) {
+            paths.filter(f -> f.toString().endsWith(".json")).forEach(out::add);
+        }
+        return out;
     }
 
     // ── 파싱 ──────────────────────────────────────────────────────────────────

@@ -34,4 +34,6 @@ dependencies {
 tasks.named('test') {
     inputs.file(rootProject.file('docker-compose.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.file('infra/prometheus/prometheus.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.file('infra/prometheus/alerts.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.file('infra/grafana/provisioning/dashboards')).withPathSensitivity(PathSensitivity.RELATIVE)
 }

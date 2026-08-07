@@ -190,7 +190,7 @@
           "legendFormat": "대출심사 p95 ({{corpus}})"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(rag_search_duration_seconds_bucket{application=\"ai-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(advisory_rag_search_duration_seconds_bucket{application=\"loan-service\"}[5m])) by (le))",
           "legendFormat": "ai-service p95"
         }
       ],
