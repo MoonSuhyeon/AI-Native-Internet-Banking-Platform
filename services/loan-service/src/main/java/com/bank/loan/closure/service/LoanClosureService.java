@@ -1,5 +1,6 @@
 package com.bank.loan.closure.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.audit.StatusChangeEvent;
 import com.bank.common.audit.StatusHistoryPublisher;
 import com.bank.common.persistence.CurrentActorProvider;
@@ -93,7 +94,7 @@ public class LoanClosureService {
 
         OffsetDateTime now = OffsetDateTime.now();
         String closDate = req.closureDate() == null
-                ? LocalDate.now().format(DATE)
+                ? BusinessDate.today()
                 : req.closureDate();
 
         LoanClosure saved = repository.save(LoanClosure.builder()

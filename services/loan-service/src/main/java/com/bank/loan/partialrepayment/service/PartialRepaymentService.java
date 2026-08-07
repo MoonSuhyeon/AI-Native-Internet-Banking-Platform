@@ -1,5 +1,6 @@
 package com.bank.loan.partialrepayment.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.audit.StatusChangeEvent;
 import com.bank.common.audit.StatusHistoryPublisher;
 import com.bank.common.persistence.CurrentActorProvider;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -74,6 +76,9 @@ public class PartialRepaymentService {
     private final StatusHistoryPublisher statusHistoryPublisher;
     private final CurrentActorProvider currentActor;
 
+    /** 테스트에서 날짜 경계를 고정할 수 있게 주입받는다. ClockConfig 참고. */
+    private final Clock clock;
+
     @Transactional
     public PartialRepaymentResponse repay(Long cntrId, PartialRepayRequest req, String idempotencyKey) {
         // 1) 멱등성
@@ -114,7 +119,7 @@ public class PartialRepaymentService {
         }
 
         // 4) 분배 — 연체이자 → 정상이자 → 원금
-        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now(clock);
 
         long actualOverdue = computeOverdueInterest(schedule, now);
         long paidOverdueCumulative = txRepository.sumPaidOverdueInterestByRschId(schedule.getRschId());
@@ -181,7 +186,10 @@ public class PartialRepaymentService {
      *
      * 일수 = due_date+1 부터 오늘까지. overdueBase = scheduled_principal (단순화).
      */
-    private long computeOverdueInterest(RepaymentSchedule schedule, OffsetDateTime now) {
+    // package-private: 날짜 경계에서만 틀어지는 계산이라 이 메서드만 떼어 검증한다.
+    // 통합 테스트로는 KST 00:00~09:00 이라는 조건을 만들기 어렵다.
+    // PartialRepaymentKstBoundaryTest 참고.
+    long computeOverdueInterest(RepaymentSchedule schedule, OffsetDateTime now) {
         if (!schedule.isOverdue()) return 0L;
         Optional<Delinquency> activeDlq = delinquencyRepository
                 .findByCntrIdAndDlqStatusCdAndDeletedAtIsNull(
@@ -191,7 +199,7 @@ public class PartialRepaymentService {
         if (overdueRateBps <= 0) return 0L;
 
         LocalDate dueDate = LocalDate.parse(schedule.getDueDate(), DATE);
-        LocalDate today = now.toLocalDate();
+        LocalDate today = BusinessDate.dateOf(now);
         int days = (int) ChronoUnit.DAYS.between(dueDate, today);
         if (days <= 0) return 0L;
 

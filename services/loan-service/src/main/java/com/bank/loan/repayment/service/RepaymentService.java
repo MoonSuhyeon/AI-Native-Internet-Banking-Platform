@@ -1,5 +1,6 @@
 package com.bank.loan.repayment.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.audit.StatusChangeEvent;
 import com.bank.common.audit.StatusHistoryPublisher;
 import com.bank.common.persistence.CurrentActorProvider;
@@ -23,6 +24,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -75,6 +77,9 @@ public class RepaymentService {
     private final CurrentActorProvider currentActor;
     private final ApplicationEventPublisher eventPublisher;
 
+    /** 테스트에서 날짜 경계를 고정할 수 있게 주입받는다. ClockConfig 참고. */
+    private final Clock clock;
+
     @Transactional
     public RepaymentTransactionResponse repayInstallment(Long cntrId, RepayInstallmentRequest req, String idempotencyKey) {
         return repayInstallment(cntrId, req, idempotencyKey, null, null);
@@ -121,7 +126,7 @@ public class RepaymentService {
                     .currencyCd(contract.getCurrencyCd())
                     .channelCd(req.channelCd() == null ? DEFAULT_CHANNEL : req.channelCd())
                     .rtxStatusCd(RepaymentTransaction.STATUS_FAILED)
-                    .paidAt(OffsetDateTime.now())
+                    .paidAt(OffsetDateTime.now(clock))
                     .valueDate(req.valueDate())
                     .balanceAfter(null)
                     .idempotencyKey(idempotencyKey)
@@ -152,7 +157,7 @@ public class RepaymentService {
         // 분배 정산 — 회차 기간 발생이자 + (OVERDUE 시) 연체이자.
         // OVERDUE: totalAmount = scheduled_total + computed_overdue, 분배는 overdue→interest→principal
         // DUE:     totalAmount = scheduled_total, overdue=0
-        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now(clock);
         long overdueInterest = computeOverdueInterest(schedule, now);
         long scheduledInterest = computeInterestPortion(contract, schedule);
         long total = schedule.getScheduledTotal() + overdueInterest;
@@ -224,7 +229,10 @@ public class RepaymentService {
      * 일수 = due_date+1 부터 오늘까지. overdueBase = scheduled_principal (단순화).
      * 활성 Delinquency 가 없거나 days≤0 이면 0.
      */
-    private long computeOverdueInterest(RepaymentSchedule schedule, OffsetDateTime now) {
+    // package-private: 연체일수는 날짜 경계에서만 틀어지므로 이 계산만 떼어 검증한다.
+    // 상환 전체 흐름을 통합 테스트로 돌리면 KST 00:00~09:00 이라는 조건을 만들기 어렵다.
+    // RepaymentOverdueKstBoundaryTest 참고.
+    long computeOverdueInterest(RepaymentSchedule schedule, OffsetDateTime now) {
         if (!schedule.isOverdue()) return 0L;
         Optional<Delinquency> activeDlq = delinquencyRepository
                 .findByCntrIdAndDlqStatusCdAndDeletedAtIsNull(
@@ -234,7 +242,7 @@ public class RepaymentService {
         if (overdueRateBps <= 0) return 0L;
 
         LocalDate dueDate = LocalDate.parse(schedule.getDueDate(), DATE);
-        LocalDate today = now.toLocalDate();
+        LocalDate today = BusinessDate.dateOf(now);
         int days = (int) ChronoUnit.DAYS.between(dueDate, today);
         if (days <= 0) return 0L;
 

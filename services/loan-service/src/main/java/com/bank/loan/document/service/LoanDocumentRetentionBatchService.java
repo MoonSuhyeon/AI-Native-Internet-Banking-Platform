@@ -1,5 +1,6 @@
 package com.bank.loan.document.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.loan.document.domain.LoanDocument;
 import com.bank.loan.document.dto.PurgeExpiredDocumentsResponse;
 import com.bank.loan.document.repository.LoanDocumentRepository;
@@ -43,7 +44,7 @@ public class LoanDocumentRetentionBatchService {
      */
     @Transactional(readOnly = true)
     public PurgeExpiredDocumentsResponse purgeExpired(int batchSize) {
-        String today = LocalDate.now().format(YMD);
+        String today = BusinessDate.today();
         List<LoanDocument> targets =
                 repository.findPurgeTargets(today, PageRequest.of(0, batchSize));
 

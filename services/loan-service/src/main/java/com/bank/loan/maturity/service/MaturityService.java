@@ -1,5 +1,6 @@
 package com.bank.loan.maturity.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.audit.StatusChangeEvent;
 import com.bank.common.audit.StatusHistoryPublisher;
 import com.bank.common.persistence.CurrentActorProvider;
@@ -87,7 +88,7 @@ public class MaturityService {
                 .plusMonths(req.extendedPeriodMo())
                 .format(DATE);
         String adjustedNewDate = businessDayService.nextBusinessDay(rawNewDate);
-        String today = LocalDate.now().format(DATE);
+        String today = BusinessDate.today();
 
         maturity.extend(adjustedNewDate, req.extendedPeriodMo(), req.extensionTypeCd(), today);
 

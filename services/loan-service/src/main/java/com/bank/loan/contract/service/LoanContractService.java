@@ -1,5 +1,6 @@
 package com.bank.loan.contract.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.audit.StatusChangeEvent;
 import com.bank.common.audit.StatusHistoryPublisher;
 import com.bank.common.persistence.CurrentActorProvider;
@@ -128,7 +129,7 @@ public class LoanContractService {
         OffsetDateTime now = OffsetDateTime.now();
         LocalDate startDate = req.cntrStartDate() != null
                 ? LocalDate.parse(req.cntrStartDate(), DATE)
-                : now.toLocalDate();
+                : BusinessDate.dateOf(now);
         LocalDate endDate = req.cntrEndDate() != null
                 ? LocalDate.parse(req.cntrEndDate(), DATE)
                 : startDate.plusMonths(req.contractedPeriodMo());

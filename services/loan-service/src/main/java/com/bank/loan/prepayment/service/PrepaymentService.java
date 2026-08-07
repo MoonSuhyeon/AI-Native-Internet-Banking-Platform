@@ -1,5 +1,6 @@
 package com.bank.loan.prepayment.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.audit.StatusChangeEvent;
 import com.bank.common.audit.StatusHistoryPublisher;
 import com.bank.common.persistence.CurrentActorProvider;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -75,6 +77,9 @@ public class PrepaymentService {
     private final StatusHistoryPublisher statusHistoryPublisher;
     private final CurrentActorProvider currentActor;
 
+    /** 테스트에서 날짜 경계를 고정할 수 있게 주입받는다. ClockConfig 참고. */
+    private final Clock clock;
+
     @Transactional
     public PrepaymentResponse prepay(Long cntrId, PrepayRequest req, String idempotencyKey) {
         // 1) 멱등성
@@ -116,7 +121,7 @@ public class PrepaymentService {
         }
 
         long newOutstanding = outstanding - req.amount();
-        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now(clock);
 
         // 4) 분배 산정 — supersede 전에 잔여 OVERDUE 회차들의 미수 연체이자를 추가 수금.
         //   totalAmount = amount + overdueInterest + fee
@@ -199,7 +204,10 @@ public class PrepaymentService {
      *        remaining = max(0, actual - sumPaidOverdueInterestByRschId)
      * 활성 Delinquency 없거나 OVERDUE 회차 없으면 0.
      */
-    private long computeOverdueInterestSum(Long cntrId, String version, OffsetDateTime now) {
+    // package-private: 날짜 경계에서만 틀어지는 계산이라 이 메서드만 떼어 검증한다.
+    // 통합 테스트로는 KST 00:00~09:00 이라는 조건을 만들기 어렵다.
+    // PrepaymentKstBoundaryTest 참고.
+    long computeOverdueInterestSum(Long cntrId, String version, OffsetDateTime now) {
         Optional<Delinquency> activeDlq = delinquencyRepository
                 .findByCntrIdAndDlqStatusCdAndDeletedAtIsNull(cntrId, Delinquency.STATUS_ACTIVE);
         if (activeDlq.isEmpty()) return 0L;
@@ -207,7 +215,7 @@ public class PrepaymentService {
         if (overdueRateBps <= 0) return 0L;
 
         List<RepaymentSchedule> activeSchedules = scheduleRepository.findActiveByVersion(cntrId, version);
-        LocalDate today = now.toLocalDate();
+        LocalDate today = BusinessDate.dateOf(now);
         long sum = 0L;
         for (RepaymentSchedule s : activeSchedules) {
             if (!s.isOverdue()) continue;
@@ -227,9 +235,12 @@ public class PrepaymentService {
      * 잔여 개월 = max(0, contracted_period_mo - elapsed_months),
      * elapsed = ChronoUnit.MONTHS.between(cntr_start_date, today).
      */
-    private long computeEarlyRepaymentFee(LoanContract contract, long amount, OffsetDateTime now) {
+    // package-private: 날짜 경계에서만 틀어지는 계산이라 이 메서드만 떼어 검증한다.
+    // 통합 테스트로는 KST 00:00~09:00 이라는 조건을 만들기 어렵다.
+    // 경과개월이 하루 차이로 한 달 어긋나면 잔여기간이 바뀌어 수수료가 달라진다.
+    long computeEarlyRepaymentFee(LoanContract contract, long amount, OffsetDateTime now) {
         LocalDate startDate = LocalDate.parse(contract.getCntrStartDate(), DATE);
-        LocalDate today = now.toLocalDate();
+        LocalDate today = BusinessDate.dateOf(now);
         long elapsedMonths = ChronoUnit.MONTHS.between(startDate, today);
         int totalMonths = contract.getContractedPeriodMo();
         int remainingMonths = (int) Math.max(0, totalMonths - elapsedMonths);

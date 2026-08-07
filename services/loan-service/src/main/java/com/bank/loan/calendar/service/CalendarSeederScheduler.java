@@ -1,12 +1,11 @@
 package com.bank.loan.calendar.service;
 
+import com.bank.common.time.BusinessDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 
 /**
  * 영업일 캘린더 자동 시드 스케줄러.
@@ -21,13 +20,12 @@ import java.time.ZoneId;
 @RequiredArgsConstructor
 public class CalendarSeederScheduler {
 
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final CalendarSeederBatchService seederService;
 
-    @Scheduled(cron = "${loan.batch.calendar-seed-cron}")
+    @Scheduled(cron = "${loan.batch.calendar-seed-cron}", zone = "Asia/Seoul")
     public void runYearlySeed() {
-        int nextYear = LocalDate.now(KST).getYear() + 1;
+        int nextYear = BusinessDate.todayDate().getYear() + 1;
         log.info("[calendar-seeder-scheduler] year={} 시드 시작", nextYear);
         try {
             var result = seederService.run(nextYear);

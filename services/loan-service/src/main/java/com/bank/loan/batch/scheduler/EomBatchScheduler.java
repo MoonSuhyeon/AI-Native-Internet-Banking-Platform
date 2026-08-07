@@ -1,5 +1,6 @@
 package com.bank.loan.batch.scheduler;
 
+import com.bank.common.time.BusinessDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -10,8 +11,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -28,16 +27,15 @@ import java.time.format.DateTimeFormatter;
 public class EomBatchScheduler {
 
     private static final DateTimeFormatter MONTH_FMT = DateTimeFormatter.ofPattern("yyyyMM");
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final JobLauncher jobLauncher;
     @Qualifier("loanEomJob")
     private final Job loanEomJob;
 
-    @Scheduled(cron = "${loan.batch.eom-cron}")
+    @Scheduled(cron = "${loan.batch.eom-cron}", zone = "Asia/Seoul")
     public void runEom() {
         // 매월 1일 03:00 KST 실행 가정 — 어제 = 전월 말일 → 그 달이 baseMonth
-        String baseMonth = LocalDate.now(KST).minusDays(1).format(MONTH_FMT);
+        String baseMonth = BusinessDate.todayDate().minusDays(1).format(MONTH_FMT);
         log.info("[EOM-Scheduler] baseMonth={} 배치 시작", baseMonth);
         try {
             JobParameters params = new JobParametersBuilder()
