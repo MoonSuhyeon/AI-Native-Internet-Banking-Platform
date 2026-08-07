@@ -24,7 +24,7 @@
         SET publish_status   = 'SENT',
             published_at     = NOW(),
             attempt_count    = attempt_count + 1,
-            last_modified_at = NOW()
+            updated_at = NOW()
         WHERE message_id = #{messageId}
     </update>
 
@@ -36,7 +36,7 @@
             last_error       = #{lastError},
             attempt_count    = attempt_count + 1,
             available_at     = NOW() + INTERVAL '5 minutes',
-            last_modified_at = NOW()
+            updated_at = NOW()
         WHERE message_id = #{messageId}
     </update>
 
@@ -58,18 +58,18 @@
         )
         UPDATE outbox_message
         SET publish_status   = 'PUBLISHING',
-            last_modified_at = NOW()
+            updated_at = NOW()
         WHERE message_id IN (SELECT message_id FROM claimed)
         RETURNING *
     </select>
 
-    <!-- Stuck PUBLISHING 복구: last_modified_at 기준 cutoff 이전 PUBLISHING 행을 PENDING으로 재설정. -->
+    <!-- Stuck PUBLISHING 복구: updated_at 기준 cutoff 이전 PUBLISHING 행을 PENDING으로 재설정. -->
     <update id="resetStuckPublishing" parameterType="java.time.LocalDateTime">
         UPDATE outbox_message
         SET publish_status   = 'PENDING',
-            last_modified_at = NOW()
+            updated_at = NOW()
         WHERE publish_status = 'PUBLISHING'
-          AND last_modified_at &lt; #{cutoff}
+          AND updated_at &lt; #{cutoff}
     </update>
 
     <insert id="insert" parameterType="com.bank.payment.domain.OutboxMessage">
@@ -84,8 +84,8 @@
             available_at,
             last_error,
             published_at,
-            first_registrant_id,
-            last_modifier_id
+            created_by,
+            updated_by
         ) VALUES (
             #{messageId},
             #{paymentInstructionId},
@@ -97,8 +97,8 @@
             #{availableAt},
             #{lastError},
             #{publishedAt},
-            #{firstRegistrantId},
-            #{lastModifierId}
+            #{createdBy},
+            #{updatedBy}
         )
     </insert>
 

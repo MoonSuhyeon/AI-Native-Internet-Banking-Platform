@@ -31,8 +31,8 @@
             network,
             last_inquiry_at,
             inquiry_count,
-            first_registrant_id,
-            last_modifier_id
+            created_by,
+            updated_by
         ) VALUES (
             #{settlementTransactionId},
             #{ourPaymentInstructionId},
@@ -59,8 +59,8 @@
             #{network},
             #{lastInquiryAt},
             #{inquiryCount},
-            #{firstRegistrantId},
-            #{lastModifierId}
+            #{createdBy},
+            #{updatedBy}
         )
     </insert>
 
@@ -76,7 +76,7 @@
             settled_at              = #{settledAt},
             settlement_date         = #{settlementDate},
             counterparty_payment_id = NULL,
-            last_modified_at        = CURRENT_TIMESTAMP(3)
+            updated_at        = CURRENT_TIMESTAMP(3)
         WHERE our_payment_instruction_id = #{piId}
     </update>
 
@@ -85,7 +85,7 @@
         SET settlement_status = 'REJECTED',
             reject_code       = #{rejectCode},
             reject_message    = #{rejectMessage},
-            last_modified_at  = CURRENT_TIMESTAMP(3)
+            updated_at  = CURRENT_TIMESTAMP(3)
         WHERE our_payment_instruction_id = #{piId}
     </update>
 

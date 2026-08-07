@@ -15,8 +15,8 @@
             first_received_at,
             last_received_at,
             expires_at,
-            first_registrant_id,
-            last_modifier_id
+            created_by,
+            updated_by
         ) VALUES (
             #{idempotencyKey},
             #{clientId},
@@ -27,8 +27,8 @@
             #{firstReceivedAt},
             #{lastReceivedAt},
             #{expiresAt},
-            #{firstRegistrantId},
-            #{lastModifierId}
+            #{createdBy},
+            #{updatedBy}
         )
     </insert>
 
@@ -42,7 +42,7 @@
         UPDATE idempotency_key
         SET idempotency_status    = #{idempotencyStatus},
             first_response_snap   = #{firstResponseSnap}::jsonb,
-            last_modified_at      = now()
+            updated_at      = now()
         WHERE idempotency_key = #{idempotencyKey}
     </update>
 

@@ -31,8 +31,8 @@
             is_reversal,
             reversal_reason,
             posting_status,
-            first_registrant_id,
-            last_modifier_id
+            created_by,
+            updated_by
         ) VALUES (
             #{ledgerId},
             #{paymentInstructionId},
@@ -59,8 +59,8 @@
             #{isReversal},
             #{reversalReason},
             #{postingStatus},
-            #{firstRegistrantId},
-            #{lastModifierId}
+            #{createdBy},
+            #{updatedBy}
         )
     </insert>
 

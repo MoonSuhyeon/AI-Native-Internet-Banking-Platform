@@ -101,16 +101,16 @@ public class Ledger {
     private String postingStatus;
 
     // 최초등록일시
-    private OffsetDateTime firstRegisteredAt;
+    private OffsetDateTime createdAt;
 
     // 최초등록자식별번호
-    private String firstRegistrantId;
+    private String createdBy;
 
     // 최종수정일시
-    private OffsetDateTime lastModifiedAt;
+    private OffsetDateTime updatedAt;
 
     // 최종수정자식별번호
-    private String lastModifierId;
+    private String updatedBy;
 
     // ── 자행 출금 분개 [자행] ────────────────────────────
     /** 자행이체 출금 분개. 송신계좌 DEBIT TRANSFER_OUT. (P-014, 정책 v7.2 §2) */

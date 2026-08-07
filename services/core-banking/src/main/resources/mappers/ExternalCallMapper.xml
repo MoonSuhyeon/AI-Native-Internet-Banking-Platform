@@ -33,8 +33,8 @@
             responded_at,
             response_time_ms,
             timeout_ms,
-            first_registrant_id,
-            last_modifier_id
+            created_by,
+            updated_by
         ) VALUES (
             #{callId},
             #{callIdempotencyKey},
@@ -63,8 +63,8 @@
             #{respondedAt},
             #{responseTimeMs},
             #{timeoutMs},
-            #{firstRegistrantId},
-            #{lastModifierId}
+            #{createdBy},
+            #{updatedBy}
         )
     </insert>
 
@@ -78,7 +78,7 @@
             result                = #{result},
             response_time_ms      = #{responseTimeMs},
             responded_at          = #{respondedAt},
-            last_modified_at      = now()
+            updated_at      = now()
         WHERE call_id = #{callId}
     </update>
 

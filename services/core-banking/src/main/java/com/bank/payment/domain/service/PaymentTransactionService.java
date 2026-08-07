@@ -127,8 +127,8 @@ public class PaymentTransactionService {
                 .version(0)
                 .triggerSource("USER")
                 .isScheduled(false)
-                .firstRegistrantId(command.userId())
-                .lastModifierId(command.userId())
+                .createdBy(command.userId())
+                .updatedBy(command.userId())
                 .build();
         paymentInstructionMapper.insert(pi);
 
@@ -1310,8 +1310,8 @@ public class PaymentTransactionService {
                 .triggerSource("COUNTERPARTY_BANK")
                 .isScheduled(false)
                 .holderInquiryAt(now)
-                .firstRegistrantId("COUNTERPARTY_BANK")
-                .lastModifierId("COUNTERPARTY_BANK")
+                .createdBy("COUNTERPARTY_BANK")
+                .updatedBy("COUNTERPARTY_BANK")
                 .build();
         paymentInstructionMapper.insert(pi);
 

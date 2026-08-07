@@ -19,7 +19,7 @@ public interface OutboxMessageMapper {
 
     void markFailed(@Param("messageId") String messageId, @Param("lastError") String lastError);
 
-    /** cutoff 이전에 last_modified_at이 갱신된 PUBLISHING 행을 PENDING으로 재설정. */
+    /** cutoff 이전에 updated_at이 갱신된 PUBLISHING 행을 PENDING으로 재설정. */
     int resetStuckPublishing(OffsetDateTime cutoff);
 
     int countPending();

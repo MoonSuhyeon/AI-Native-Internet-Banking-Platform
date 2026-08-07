@@ -100,16 +100,16 @@ public class BokSettlementTransaction {
     private Integer inquiryCount;
 
     // 최초등록일시
-    private OffsetDateTime firstRegisteredAt;
+    private OffsetDateTime createdAt;
 
     // 최초등록자식별번호
-    private String firstRegistrantId;
+    private String createdBy;
 
     // 최종수정일시
-    private OffsetDateTime lastModifiedAt;
+    private OffsetDateTime updatedAt;
 
     // 최종수정자식별번호
-    private String lastModifierId;
+    private String updatedBy;
 
     /**
      * 거액송신 REQUESTED 정산거래 생성 (S3 송신 시 txStep4InterBok에서 호출).

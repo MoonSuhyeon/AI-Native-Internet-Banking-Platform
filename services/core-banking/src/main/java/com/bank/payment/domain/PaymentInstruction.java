@@ -121,16 +121,16 @@ public class PaymentInstruction {
     private OffsetDateTime scheduledExecutionAt;
 
     // 최초등록일시
-    private OffsetDateTime firstRegisteredAt;
+    private OffsetDateTime createdAt;
 
     // 최초등록자식별번호
-    private String firstRegistrantId;
+    private String createdBy;
 
     // 최종수정일시
-    private OffsetDateTime lastModifiedAt;
+    private OffsetDateTime updatedAt;
 
     // 최종수정자식별번호
-    private String lastModifierId;
+    private String updatedBy;
 
     // ── 상태전이 가드 (private) ──────────────────────────
     private void requireStatus(String expected) {

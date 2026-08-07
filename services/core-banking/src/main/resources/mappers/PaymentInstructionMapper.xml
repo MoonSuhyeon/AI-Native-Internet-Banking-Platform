@@ -38,8 +38,8 @@
             trigger_source,
             is_scheduled,
             scheduled_execution_at,
-            first_registrant_id,
-            last_modifier_id
+            created_by,
+            updated_by
         ) VALUES (
             #{paymentInstructionId},
             #{idempotencyKey},
@@ -73,8 +73,8 @@
             #{triggerSource},
             #{isScheduled},
             #{scheduledExecutionAt},
-            #{firstRegistrantId},
-            #{lastModifierId}
+            #{createdBy},
+            #{updatedBy}
         )
     </insert>
 
@@ -92,7 +92,7 @@
             next_retry_at     = NULL,
             next_timeout_at   = NULL,
             version           = version + 1,
-            last_modified_at  = now()
+            updated_at  = now()
         WHERE payment_instruction_id = #{paymentInstructionId}
           AND version = #{version}
     </update>
@@ -101,7 +101,7 @@
     <update id="updateNextTimeoutAt">
         UPDATE payment_instruction
         SET next_timeout_at  = #{nextTimeoutAt},
-            last_modified_at = now()
+            updated_at = now()
         WHERE payment_instruction_id = #{piId}
     </update>
 
@@ -121,7 +121,7 @@
         UPDATE payment_instruction
         SET receiver_holder_name_snap = #{receiverHolderNameSnap},
             holder_inquiry_at         = #{holderInquiryAt},
-            last_modified_at          = now()
+            updated_at          = now()
         WHERE payment_instruction_id = #{paymentInstructionId}
     </update>
 
@@ -166,10 +166,10 @@
             trigger_source,
             is_scheduled,
             scheduled_execution_at,
-            first_registered_at,
-            first_registrant_id,
-            last_modified_at,
-            last_modifier_id
+            created_at,
+            created_by,
+            updated_at,
+            updated_by
         FROM payment_instruction
         WHERE status = 'SCHEDULED'
           AND scheduled_execution_at &lt; now()
@@ -184,7 +184,7 @@
         UPDATE payment_instruction
            SET status           = 'PROCESSING',
                version          = version + 1,
-               last_modified_at = now()
+               updated_at = now()
          WHERE payment_instruction_id = #{paymentInstructionId}
            AND status               = 'SCHEDULED'
            AND version              = #{version}
@@ -196,7 +196,7 @@
         UPDATE payment_instruction
            SET status           = 'CANCELED',
                version          = version + 1,
-               last_modified_at = now()
+               updated_at = now()
          WHERE payment_instruction_id = #{paymentInstructionId}
            AND status               = 'SCHEDULED'
            AND version              = #{version}
@@ -226,7 +226,7 @@
            SET status                 = 'SCHEDULED',
                is_scheduled          = true,
                scheduled_execution_at = #{scheduledExecutionAt},
-               last_modified_at      = now(),
+               updated_at      = now(),
                version               = version + 1
          WHERE payment_instruction_id = #{paymentInstructionId}
            AND status                 = 'AUTHORIZED'

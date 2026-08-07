@@ -19,8 +19,8 @@
             operator_id,
             payload_snapshot,
             event_occurred_at,
-            first_registrant_id,
-            last_modifier_id
+            created_by,
+            updated_by
         ) VALUES (
             #{historyId},
             #{paymentInstructionId},
@@ -35,8 +35,8 @@
             #{operatorId},
             #{payloadSnapshot},
             #{eventOccurredAt},
-            #{firstRegistrantId},
-            #{lastModifierId}
+            #{createdBy},
+            #{updatedBy}
         )
     </insert>
 

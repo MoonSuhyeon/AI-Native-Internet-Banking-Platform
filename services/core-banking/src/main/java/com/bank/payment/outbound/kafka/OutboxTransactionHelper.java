@@ -42,7 +42,7 @@ public class OutboxTransactionHelper {
     }
 
     /**
-     * Stuck PUBLISHING 복구. cutoff 이전에 last_modified_at이 갱신된 PUBLISHING 행을
+     * Stuck PUBLISHING 복구. cutoff 이전에 updated_at이 갱신된 PUBLISHING 행을
      * PENDING으로 재설정해 재발행 대상으로 돌린다.
      */
     @Transactional
