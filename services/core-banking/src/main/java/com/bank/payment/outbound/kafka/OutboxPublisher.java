@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -77,7 +77,7 @@ public class OutboxPublisher {
 
     @Scheduled(fixedDelay = 60_000)
     public void recoverStuckPublishing() {
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(STUCK_PUBLISHING_MINUTES);
+        OffsetDateTime cutoff = OffsetDateTime.now().minusMinutes(STUCK_PUBLISHING_MINUTES);
         int recovered = transactionHelper.resetStuckPublishing(cutoff);
         if (recovered > 0) {
             log.warn("Outbox Stuck PUBLISHING 복구: {}건 → PENDING 재설정 (cutoff={}분)", recovered, STUCK_PUBLISHING_MINUTES);

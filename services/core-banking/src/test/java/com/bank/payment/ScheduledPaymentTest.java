@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +63,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
             String receiverHolderName,
             long transferAmount,
             String channel,
-            LocalDateTime scheduledExecutionAt) throws Exception {
+            OffsetDateTime scheduledExecutionAt) throws Exception {
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("senderAccountId",               senderAccountId);
@@ -88,7 +88,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     @Test
     @DisplayName("sX 자행 예약등록 정상 — SCHEDULED, ledger 0건, outbox 0건, AUTH_PASSED+SCHEDULED_REGISTERED 이력")
     void sX_registerScheduled_scheduled() throws Exception {
-        LocalDateTime futureTime = LocalDateTime.now().plusHours(2);
+        OffsetDateTime futureTime = OffsetDateTime.now().plusHours(2);
 
         MvcResult result = mockMvc.perform(postScheduledPayment(
                 "SCHED-001-1", "USER-001", "AUTH-001",
@@ -144,7 +144,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     @Test
     @DisplayName("f_register_pastTime_400 — 과거 시각 → 400, payment_instruction 0건")
     void f_register_pastTime_400() throws Exception {
-        LocalDateTime pastTime = LocalDateTime.now().minusMinutes(1);
+        OffsetDateTime pastTime = OffsetDateTime.now().minusMinutes(1);
 
         mockMvc.perform(postScheduledPayment(
                 "SCHED-PAST-001-1", "USER-002", "AUTH-002",
@@ -161,7 +161,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     @Test
     @DisplayName("f_register_accountClosed_failed — 수신계좌 폐쇄 → A 검증 실패 FAILED, ACCOUNT_CHECK_FAILED 이벤트")
     void f_register_accountClosed_failed() throws Exception {
-        LocalDateTime futureTime = LocalDateTime.now().plusHours(1);
+        OffsetDateTime futureTime = OffsetDateTime.now().plusHours(1);
 
         MvcResult result = mockMvc.perform(postScheduledPayment(
                 "SCHED-CLOSED-001-1", "USER-003", "AUTH-003",
@@ -206,7 +206,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
      * 헬퍼: 예약이체 등록 후 piId 반환 (SCHEDULED 상태).
      */
     private String registerScheduled(String idKey, String userId, String authId,
-                                     LocalDateTime scheduledAt) throws Exception {
+                                     OffsetDateTime scheduledAt) throws Exception {
         MvcResult result = mockMvc.perform(postScheduledPayment(
                 idKey, userId, authId,
                 SENDER_S1, BANK_CODE_A, RECEIVER_S1, "성춘향",
@@ -223,12 +223,12 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     void sched_claim_single() throws Exception {
         // 1. 예약 등록 (scheduled_execution_at = 미래)
         String piId = registerScheduled("SCHED-CLM-001-1", "USER-CLM-001", "AUTH-CLM-001",
-                LocalDateTime.now().plusHours(1));
+                OffsetDateTime.now().plusHours(1));
 
         // 2. scheduled_execution_at 을 과거로 설정 → 워커가 집을 수 있는 상태로 만듦
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? " +
                     "WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         // 3. selectDueScheduled 로 PI 읽기 (워커 폴링 대신 결정적 직접 호출)
         List<PaymentInstruction> due = paymentInstructionMapper.selectDueScheduled();
@@ -279,10 +279,10 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     void sched_claim_double_idempotent() throws Exception {
         // 1. 예약 등록 후 과거 시각으로 설정
         String piId = registerScheduled("SCHED-CLM-002-1", "USER-CLM-002", "AUTH-CLM-002",
-                LocalDateTime.now().plusHours(1));
+                OffsetDateTime.now().plusHours(1));
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? " +
                     "WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         // 2. selectDueScheduled 로 PI 획득 (version 고정)
         PaymentInstruction pi = paymentInstructionMapper.selectDueScheduled().stream()
@@ -317,7 +317,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     void sched_claim_notDue() throws Exception {
         // 1. 예약 등록 (미래 시각 — 과거로 바꾸지 않음)
         String piId = registerScheduled("SCHED-CLM-003-1", "USER-CLM-003", "AUTH-CLM-003",
-                LocalDateTime.now().plusHours(2));
+                OffsetDateTime.now().plusHours(2));
 
         // 2. selectDueScheduled 결과에 해당 PI 없음
         List<PaymentInstruction> due = paymentInstructionMapper.selectDueScheduled();
@@ -338,12 +338,12 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     void sched_execute_intra_completed() throws Exception {
         // 1. 예약 등록 (SCHEDULED)
         String piId = registerScheduled("SCHED-EXEC-001-1", "USER-EXEC-001", "AUTH-EXEC-001",
-                LocalDateTime.now().plusHours(1));
+                OffsetDateTime.now().plusHours(1));
 
         // 2. scheduled_execution_at 과거로 설정 → 워커 폴링 대상
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? " +
                     "WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         // 3. selectDueScheduled → pi 획득 (version=V, DB=V)
         PaymentInstruction pi = paymentInstructionMapper.selectDueScheduled().stream()
@@ -436,11 +436,11 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     void sched_execute_senderClosed_failed() throws Exception {
         // 1. 정상 등록 (SENDER_S1 ACTIVE)
         String piId = registerScheduled("SCHED-SCLOS-001-1", "USER-SCLOS-001", "AUTH-SCLOS-001",
-                LocalDateTime.now().plusHours(1));
+                OffsetDateTime.now().plusHours(1));
 
         // 2. scheduled_execution_at 과거 설정
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         // 3. selectDueScheduled + claim
         PaymentInstruction pi = paymentInstructionMapper.selectDueScheduled().stream()
@@ -488,7 +488,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     @DisplayName("sched_execute_insufficientBalance_failed — 잔액부족 sender → PROCESSING→FAILED, INSUFFICIENT_BALANCE, ledger 0")
     void sched_execute_insufficientBalance_failed() throws Exception {
         // SENDER_F1 잔액 500만, 이체금액 600만 → step2b 잔액부족 → INSUFFICIENT_BALANCE
-        LocalDateTime futureTime = LocalDateTime.now().plusHours(1);
+        OffsetDateTime futureTime = OffsetDateTime.now().plusHours(1);
         MvcResult result = mockMvc.perform(postScheduledPayment(
                 "SCHED-INSUF-001-1", "USER-INSUF-001", "AUTH-INSUF-001",
                 SENDER_F1, BANK_CODE_A, RECEIVER_S1, "성춘향",
@@ -502,7 +502,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
                 .get("paymentInstructionId").asText();
 
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         PaymentInstruction pi = paymentInstructionMapper.selectDueScheduled().stream()
                 .filter(p -> piId.equals(p.getPaymentInstructionId()))
@@ -535,7 +535,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     @DisplayName("sched_execute_F8_reversed — F8 receiver 입금실패 → PROCESSING→REVERSING→FAILED, version=등록후+3")
     void sched_execute_F8_reversed() throws Exception {
         // 1. F8 트리거 계좌로 예약 등록 (홍판서 — getHolder("12345678909999")="홍판서")
-        LocalDateTime futureTime = LocalDateTime.now().plusHours(1);
+        OffsetDateTime futureTime = OffsetDateTime.now().plusHours(1);
         MvcResult result = mockMvc.perform(postScheduledPayment(
                 "SCHED-F8-001-1", "USER-F8-001", "AUTH-F8-001",
                 SENDER_S1, BANK_CODE_A, RECEIVER_F8, "홍판서",
@@ -549,7 +549,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
                 .get("paymentInstructionId").asText();
 
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         // 2. selectDueScheduled — version 기록
         PaymentInstruction pi = paymentInstructionMapper.selectDueScheduled().stream()
@@ -596,7 +596,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     @DisplayName("sched_execute_F5_reversed — F5 분개실패(txStep4Scheduled 롤백) → 보상, version=등록후+3")
     void sched_execute_F5_reversed() throws Exception {
         // 1. F5 트리거 계좌로 예약 등록 (변학도 — getHolder("88880000")="변학도")
-        LocalDateTime futureTime = LocalDateTime.now().plusHours(1);
+        OffsetDateTime futureTime = OffsetDateTime.now().plusHours(1);
         MvcResult result = mockMvc.perform(postScheduledPayment(
                 "SCHED-F5-001-1", "USER-F5-001", "AUTH-F5-001",
                 SENDER_S1, BANK_CODE_A, RECEIVER_F5, "변학도",
@@ -610,7 +610,7 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
                 .get("paymentInstructionId").asText();
 
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         PaymentInstruction pi = paymentInstructionMapper.selectDueScheduled().stream()
                 .filter(p -> piId.equals(p.getPaymentInstructionId()))
@@ -652,10 +652,10 @@ class ScheduledPaymentTest extends AbstractPaymentIntegrationTest {
     void sched_worker_intra_completed() throws Exception {
         // 1. 예약 등록 후 과거 시각 설정
         String piId = registerScheduled("SCHED-WRK-001-1", "USER-WRK-001", "AUTH-WRK-001",
-                LocalDateTime.now().plusHours(1));
+                OffsetDateTime.now().plusHours(1));
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? " +
                     "WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         // 2. 워커 폴링 1회 직접 호출 (claim + executeScheduledIntraBank 배선 검증)
         scheduledPaymentWorker.triggerDueScheduled();

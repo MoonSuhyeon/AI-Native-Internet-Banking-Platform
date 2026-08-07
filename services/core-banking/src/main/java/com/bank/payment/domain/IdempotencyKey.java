@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 멱등키 (idempotency_key)
@@ -43,22 +43,22 @@ public class IdempotencyKey {
     private Integer retryCount;
 
     // 최초수신시각
-    private LocalDateTime firstReceivedAt;
+    private OffsetDateTime firstReceivedAt;
 
     // 마지막수신시각
-    private LocalDateTime lastReceivedAt;
+    private OffsetDateTime lastReceivedAt;
 
     // 만료시각
-    private LocalDateTime expiresAt;
+    private OffsetDateTime expiresAt;
 
     // 최초등록일시
-    private LocalDateTime firstRegisteredAt;
+    private OffsetDateTime firstRegisteredAt;
 
     // 최초등록자식별번호
     private String firstRegistrantId;
 
     // 최종수정일시
-    private LocalDateTime lastModifiedAt;
+    private OffsetDateTime lastModifiedAt;
 
     // 최종수정자식별번호
     private String lastModifierId;
@@ -67,8 +67,8 @@ public class IdempotencyKey {
     /** 멱등키 생성. idempotencyStatus=PROCESSING 초기 */
     public static IdempotencyKey of(
             String idempotencyKey, String clientId, String requestHash,
-            LocalDateTime firstReceivedAt, LocalDateTime lastReceivedAt,
-            LocalDateTime expiresAt) {
+            OffsetDateTime firstReceivedAt, OffsetDateTime lastReceivedAt,
+            OffsetDateTime expiresAt) {
         return IdempotencyKey.builder()
                 .idempotencyKey(idempotencyKey)
                 .clientId(clientId)

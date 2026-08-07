@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Optional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 /**
@@ -115,8 +115,8 @@ public class PaymentController {
             @RequestHeader("X-Auth-Token-Id") String authTokenId,
             @RequestBody ScheduledPaymentRequest request) {
 
-        LocalDateTime scheduledAt = request.scheduledExecutionAt();
-        if (scheduledAt == null || !scheduledAt.isAfter(LocalDateTime.now())) {
+        OffsetDateTime scheduledAt = request.scheduledExecutionAt();
+        if (scheduledAt == null || !scheduledAt.isAfter(OffsetDateTime.now())) {
             return ResponseEntity.badRequest().build();
         }
 

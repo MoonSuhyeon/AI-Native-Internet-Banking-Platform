@@ -24,7 +24,7 @@ public interface PaymentOrchestrator {
      * @param scheduledExecutionAt 예약실행시각 (미래 시각, 컨트롤러에서 검증 완료)
      * @return 처리 결과 (status=SCHEDULED)
      */
-    PaymentResult registerScheduledPayment(PaymentCommand command, java.time.LocalDateTime scheduledExecutionAt);
+    PaymentResult registerScheduledPayment(PaymentCommand command, java.time.OffsetDateTime scheduledExecutionAt);
 
     /**
      * 예약이체 실행. 워커가 claim 성공 후 호출.

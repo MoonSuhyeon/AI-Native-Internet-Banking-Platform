@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 상태이력 (status_history)
@@ -62,19 +62,19 @@ public class StatusHistory {
     private String payloadSnapshot;
 
     // 이벤트발생시각
-    private LocalDateTime eventOccurredAt;
+    private OffsetDateTime eventOccurredAt;
 
     // DB기록시각
-    private LocalDateTime dbRecordedAt;
+    private OffsetDateTime dbRecordedAt;
 
     // 최초등록일시
-    private LocalDateTime firstRegisteredAt;
+    private OffsetDateTime firstRegisteredAt;
 
     // 최초등록자식별번호
     private String firstRegistrantId;
 
     // 최종수정일시
-    private LocalDateTime lastModifiedAt;
+    private OffsetDateTime lastModifiedAt;
 
     // 최종수정자식별번호
     private String lastModifierId;
@@ -88,7 +88,7 @@ public class StatusHistory {
     public static StatusHistory of(
             String historyId, String paymentInstructionId, Integer sequenceInPayment,
             String previousStatus, String nextStatus, String eventType,
-            String triggeredBy, LocalDateTime eventOccurredAt) {
+            String triggeredBy, OffsetDateTime eventOccurredAt) {
         return StatusHistory.builder()
                 .historyId(historyId)
                 .paymentInstructionId(paymentInstructionId)
@@ -110,7 +110,7 @@ public class StatusHistory {
             String historyId, String paymentInstructionId, Integer sequenceInPayment,
             String previousStatus, String nextStatus, String eventType,
             String triggeredBy, String reasonCode, String reasonMessage,
-            LocalDateTime eventOccurredAt) {
+            OffsetDateTime eventOccurredAt) {
         return of(historyId, paymentInstructionId, sequenceInPayment,
                 previousStatus, nextStatus, eventType,
                 triggeredBy, reasonCode, reasonMessage, null, eventOccurredAt);
@@ -125,7 +125,7 @@ public class StatusHistory {
             String historyId, String paymentInstructionId, Integer sequenceInPayment,
             String previousStatus, String nextStatus, String eventType,
             String triggeredBy, String reasonCode, String reasonMessage,
-            String operatorId, LocalDateTime eventOccurredAt) {
+            String operatorId, OffsetDateTime eventOccurredAt) {
         return StatusHistory.builder()
                 .historyId(historyId)
                 .paymentInstructionId(paymentInstructionId)

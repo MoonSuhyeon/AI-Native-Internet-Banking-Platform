@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 계좌원장 (ledger)
@@ -83,7 +83,7 @@ public class Ledger {
     private String valueDate;
 
     // 기장시각
-    private LocalDateTime postedAt;
+    private OffsetDateTime postedAt;
 
     // 시스템적요
     private String systemDescription;
@@ -101,13 +101,13 @@ public class Ledger {
     private String postingStatus;
 
     // 최초등록일시
-    private LocalDateTime firstRegisteredAt;
+    private OffsetDateTime firstRegisteredAt;
 
     // 최초등록자식별번호
     private String firstRegistrantId;
 
     // 최종수정일시
-    private LocalDateTime lastModifiedAt;
+    private OffsetDateTime lastModifiedAt;
 
     // 최종수정자식별번호
     private String lastModifierId;
@@ -119,7 +119,7 @@ public class Ledger {
             String journalNo, String accountNoSnap, String holderNameSnap,
             BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -150,7 +150,7 @@ public class Ledger {
             String journalNo, String accountNoSnap, String holderNameSnap,
             BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -181,7 +181,7 @@ public class Ledger {
             String journalNo, String accountNoSnap, String holderNameSnap,
             BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription,
+            OffsetDateTime postedAt, String systemDescription,
             String counterpartySenderAccountNo, String counterpartySenderBankCode,
             String counterpartySenderHolderName) {
         return Ledger.builder()
@@ -217,7 +217,7 @@ public class Ledger {
             String journalNo, String accountNoSnap, String holderNameSnap,
             BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -250,7 +250,7 @@ public class Ledger {
             String ledgerId, String paymentInstructionId,
             String journalNo, BigDecimal amount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -283,7 +283,7 @@ public class Ledger {
             String ledgerId, String paymentInstructionId,
             String journalNo, BigDecimal amount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -317,7 +317,7 @@ public class Ledger {
             String journalNo, String accountNoSnap, String holderNameSnap,
             BigDecimal feeAmount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -350,7 +350,7 @@ public class Ledger {
             String ledgerId, String paymentInstructionId,
             String journalNo, BigDecimal feeAmount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -386,7 +386,7 @@ public class Ledger {
             String accountNoSnap, String holderNameSnap,
             BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription, String reversalReason) {
+            OffsetDateTime postedAt, String systemDescription, String reversalReason) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -423,7 +423,7 @@ public class Ledger {
             String accountId, String accountNoSnap, String holderNameSnap,
             BigDecimal amount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription, String reversalReason) {
+            OffsetDateTime postedAt, String systemDescription, String reversalReason) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -460,7 +460,7 @@ public class Ledger {
             String accountNoSnap, String holderNameSnap,
             BigDecimal amount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription, String reversalReason) {
+            OffsetDateTime postedAt, String systemDescription, String reversalReason) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -496,7 +496,7 @@ public class Ledger {
             String originalLedgerId, String journalNo,
             BigDecimal amount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription, String reversalReason) {
+            OffsetDateTime postedAt, String systemDescription, String reversalReason) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -536,7 +536,7 @@ public class Ledger {
             String accountId, String accountNoSnap, String holderNameSnap,
             String journalNo, BigDecimal amount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)
@@ -571,7 +571,7 @@ public class Ledger {
             String ledgerId, String paymentInstructionId,
             String journalNo, BigDecimal amount,
             String currency, String transactionDate, String postingDate, String valueDate,
-            LocalDateTime postedAt, String systemDescription) {
+            OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
                 .ledgerId(ledgerId)
                 .paymentInstructionId(paymentInstructionId)

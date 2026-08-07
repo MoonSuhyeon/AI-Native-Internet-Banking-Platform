@@ -241,6 +241,10 @@ services:
     ports:
       - "${CORE_BANKING_PORT_A:-8082}:8082"
     environment:
+      # 결제계 시각 컬럼이 TIMESTAMPTZ 로 바뀌면서 JVM 타임존이 저장 의미에 관여한다.
+      # (LocalDateTime ↔ timestamptz 변환이 세션 타임존을 쓴다)
+      # 기본값에 기대지 않고 못 박는다 — db-payment/V23 의 UTC 해석 전제와 한 세트다.
+      TZ: UTC
       SPRING_PROFILES_ACTIVE: docker
       CORE_BANKING_APP_PORT: 8082
       BANK_CODE: "A"

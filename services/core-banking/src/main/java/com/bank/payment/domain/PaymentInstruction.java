@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 결제지시 (payment_instruction)
@@ -61,7 +61,7 @@ public class PaymentInstruction {
     private String receiverHolderNameSnap;
 
     // 예금주조회시각
-    private LocalDateTime holderInquiryAt;
+    private OffsetDateTime holderInquiryAt;
 
     // 자행이체여부
     private Boolean isIntraBank;
@@ -94,19 +94,19 @@ public class PaymentInstruction {
     private String channel;
 
     // 요청시각
-    private LocalDateTime requestedAt;
+    private OffsetDateTime requestedAt;
 
     // 완료시각
-    private LocalDateTime completedAt;
+    private OffsetDateTime completedAt;
 
     // 영업일자
     private String businessDate;
 
     // 다음재시도시각
-    private LocalDateTime nextRetryAt;
+    private OffsetDateTime nextRetryAt;
 
     // 다음타임아웃시각
-    private LocalDateTime nextTimeoutAt;
+    private OffsetDateTime nextTimeoutAt;
 
     // 낙관적락버전
     private Integer version;
@@ -118,16 +118,16 @@ public class PaymentInstruction {
     private Boolean isScheduled;
 
     // 예약실행시각
-    private LocalDateTime scheduledExecutionAt;
+    private OffsetDateTime scheduledExecutionAt;
 
     // 최초등록일시
-    private LocalDateTime firstRegisteredAt;
+    private OffsetDateTime firstRegisteredAt;
 
     // 최초등록자식별번호
     private String firstRegistrantId;
 
     // 최종수정일시
-    private LocalDateTime lastModifiedAt;
+    private OffsetDateTime lastModifiedAt;
 
     // 최종수정자식별번호
     private String lastModifierId;
@@ -156,7 +156,7 @@ public class PaymentInstruction {
 
     // ── PROCESSING → COMPLETED [★자행전용] ──────────────
     /** 자행이체 완료. PROCESSING → COMPLETED (자행만 직행, 전이매트릭스 Y(자행)) */
-    public void completeIntra(LocalDateTime completedAt) {
+    public void completeIntra(OffsetDateTime completedAt) {
         requireStatus("PROCESSING");
         if (!Boolean.TRUE.equals(this.isIntraBank)) {
             throw new IllegalStateException("자행이체(isIntraBank=true)만 PROCESSING→COMPLETED 직행 가능");

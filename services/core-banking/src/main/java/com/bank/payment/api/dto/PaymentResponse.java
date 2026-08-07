@@ -1,6 +1,6 @@
 package com.bank.payment.api.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 결제 응답. 200 OK — COMPLETED(정상) 또는 FAILED(비즈니스 거절).
@@ -10,6 +10,6 @@ public record PaymentResponse(
         String paymentInstructionId,
         String transactionNo,
         String status,
-        LocalDateTime completedAt,
+        OffsetDateTime completedAt,
         String failureCategory
 ) {}

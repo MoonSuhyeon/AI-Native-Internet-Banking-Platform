@@ -18,7 +18,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +55,7 @@ public class KftcSettlementHelper {
     @Transactional
     public void settleKftc(KftcClearingTransaction ct) {
         String piId = ct.getOurPaymentInstructionId();
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         // PI 신선 조회 (낙관락 version + transferAmount 필요)
         PaymentInstruction pi = paymentInstructionMapper.selectById(piId);

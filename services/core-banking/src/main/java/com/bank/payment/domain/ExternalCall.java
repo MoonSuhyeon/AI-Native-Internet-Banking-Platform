@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 외부호출 (external_call)
@@ -94,10 +94,10 @@ public class ExternalCall {
     private Integer attemptNo;
 
     // 요청시각
-    private LocalDateTime requestedAt;
+    private OffsetDateTime requestedAt;
 
     // 응답시각
-    private LocalDateTime respondedAt;
+    private OffsetDateTime respondedAt;
 
     // 응답시간_ms
     private Integer responseTimeMs;
@@ -106,13 +106,13 @@ public class ExternalCall {
     private Integer timeoutMs;
 
     // 최초등록일시
-    private LocalDateTime firstRegisteredAt;
+    private OffsetDateTime firstRegisteredAt;
 
     // 최초등록자식별번호
     private String firstRegistrantId;
 
     // 최종수정일시
-    private LocalDateTime lastModifiedAt;
+    private OffsetDateTime lastModifiedAt;
 
     // 최종수정자식별번호
     private String lastModifierId;
@@ -123,7 +123,7 @@ public class ExternalCall {
             String callId, String callIdempotencyKey, String paymentInstructionId,
             String callType, String targetSystem, String endpointUrl, String httpMethod,
             String requestId, String requestHeader, String requestBody, String requestBodyHash,
-            Integer timeoutMs, LocalDateTime requestedAt) {
+            Integer timeoutMs, OffsetDateTime requestedAt) {
         return ExternalCall.builder()
                 .callId(callId)
                 .callIdempotencyKey(callIdempotencyKey)
@@ -153,7 +153,7 @@ public class ExternalCall {
             String compensationTargetCallId,
             String callType, String targetSystem, String endpointUrl, String httpMethod,
             String requestId, String requestHeader, String requestBody, String requestBodyHash,
-            Integer timeoutMs, LocalDateTime requestedAt) {
+            Integer timeoutMs, OffsetDateTime requestedAt) {
         return ExternalCall.builder()
                 .callId(callId)
                 .callIdempotencyKey(callIdempotencyKey)
@@ -179,7 +179,7 @@ public class ExternalCall {
     public void recordResponse(
             Integer responseStatusCode, String responseHeader, String responseBody,
             String businessResponseCode, String responseMessage, String result,
-            Integer responseTimeMs, LocalDateTime respondedAt) {
+            Integer responseTimeMs, OffsetDateTime respondedAt) {
         this.responseStatusCode = responseStatusCode;
         this.responseHeader = responseHeader;
         this.responseBody = responseBody;

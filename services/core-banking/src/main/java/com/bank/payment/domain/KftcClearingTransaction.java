@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * KFTC 청산거래 (kftc_clearing_transaction)
@@ -94,19 +94,19 @@ public class KftcClearingTransaction {
     private String network;
 
     // 마지막조회시각
-    private LocalDateTime lastInquiryAt;
+    private OffsetDateTime lastInquiryAt;
 
     // 조회횟수
     private Integer inquiryCount;
 
     // 최초등록일시
-    private LocalDateTime firstRegisteredAt;
+    private OffsetDateTime firstRegisteredAt;
 
     // 최초등록자식별번호
     private String firstRegistrantId;
 
     // 최종수정일시
-    private LocalDateTime lastModifiedAt;
+    private OffsetDateTime lastModifiedAt;
 
     // 최종수정자식별번호
     private String lastModifierId;

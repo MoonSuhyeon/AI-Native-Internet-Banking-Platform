@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
@@ -101,7 +101,7 @@ public class InboundPaymentOrchestratorImpl implements InboundPaymentOrchestrato
     private String recordCall(String piId, String callType, String accountRole,
                               String targetSystem, String httpMethod, String endpointUrl,
                               String responseCode, String result) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String callId = idGenerator.nextCallId();
         String callIdemKey = piId + "-" + callType + "-" + accountRole + "-1";
         ExternalCall ec = ExternalCall.of(

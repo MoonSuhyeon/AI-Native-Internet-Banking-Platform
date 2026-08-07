@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * Outbox메시지 (outbox_message)
@@ -45,22 +45,22 @@ public class OutboxMessage {
     private Integer attemptCount;
 
     // 처리가능시각
-    private LocalDateTime availableAt;
+    private OffsetDateTime availableAt;
 
     // 마지막오류
     private String lastError;
 
     // 발행시각
-    private LocalDateTime publishedAt;
+    private OffsetDateTime publishedAt;
 
     // 최초등록일시
-    private LocalDateTime firstRegisteredAt;
+    private OffsetDateTime firstRegisteredAt;
 
     // 최초등록자식별번호
     private String firstRegistrantId;
 
     // 최종수정일시
-    private LocalDateTime lastModifiedAt;
+    private OffsetDateTime lastModifiedAt;
 
     // 최종수정자식별번호
     private String lastModifierId;
@@ -69,7 +69,7 @@ public class OutboxMessage {
     /** Outbox 메시지 생성. publishStatus=PENDING 초기. eventType은 enum 시트 19개 중 하나 */
     public static OutboxMessage of(
             String messageId, String paymentInstructionId, String eventType,
-            String eventSchemaVersion, String payload, LocalDateTime availableAt) {
+            String eventSchemaVersion, String payload, OffsetDateTime availableAt) {
         return OutboxMessage.builder()
                 .messageId(messageId)
                 .paymentInstructionId(paymentInstructionId)

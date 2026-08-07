@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -92,7 +92,7 @@ public class PaymentTransactionService {
     /** TX-1: 멱등키(PROCESSING) + 결제지시(DRAFT) + 상태이력(seq1 INSTRUCTION_CREATED) INSERT */
     @Transactional
     public PaymentInstruction txStep1(PaymentCommand command, boolean isIntraBank, String routingNetworkType) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         IdempotencyKey idempotencyKey = IdempotencyKey.of(
                 command.idempotencyKey(),
@@ -148,7 +148,7 @@ public class PaymentTransactionService {
      */
     @Transactional
     public void authorize(String paymentInstructionId, Integer version) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         int updated = paymentInstructionMapper.updateStatus(
                 paymentInstructionId, "AUTHORIZED", null, null, version);
@@ -178,7 +178,7 @@ public class PaymentTransactionService {
     @Transactional
     public void updateReceiverHolderSnap(String paymentInstructionId,
                                          String receiverHolderNameSnap,
-                                         LocalDateTime holderInquiryAt) {
+                                         OffsetDateTime holderInquiryAt) {
         paymentInstructionMapper.updateReceiverHolderSnap(
                 paymentInstructionId, receiverHolderNameSnap, holderInquiryAt);
     }
@@ -196,7 +196,7 @@ public class PaymentTransactionService {
     public PaymentResult txStep4(PaymentInstruction pi, BalanceTxData withdrawResult,
                                  BalanceTxData depositResult, PaymentCommand command,
                                  String senderHolderName, String receiverHolderName) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
         BigDecimal amount = command.transferAmount();
@@ -294,7 +294,7 @@ public class PaymentTransactionService {
     public PaymentResult txStep4Scheduled(PaymentInstruction pi, BalanceTxData withdrawResult,
                                           BalanceTxData depositResult, PaymentCommand command,
                                           String senderHolderName, String receiverHolderName) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
         BigDecimal amount = command.transferAmount();
@@ -390,7 +390,7 @@ public class PaymentTransactionService {
     public PaymentResult txStep4InterBank(PaymentInstruction pi, BalanceTxData withdrawResult,
                                            PaymentCommand command, String senderHolderName,
                                            String receiverHolderName, String senderBankCode) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
         BigDecimal transferAmount = command.transferAmount();
@@ -548,7 +548,7 @@ public class PaymentTransactionService {
     public PaymentResult txStep4InterBok(PaymentInstruction pi, BalanceTxData withdrawResult,
                                           PaymentCommand command, String senderHolderName,
                                           String receiverHolderName, String senderBankCode) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
         BigDecimal transferAmount = command.transferAmount();
@@ -696,7 +696,7 @@ public class PaymentTransactionService {
                 idGenerator.nextHistoryId(), pi.getPaymentInstructionId(),
                 (maxSeq == null ? 0 : maxSeq) + 1,
                 "SCHEDULED", "PROCESSING", "SCHEDULED_TRIGGERED", "SCHEDULER",
-                LocalDateTime.now()));
+                OffsetDateTime.now()));
         return true;
     }
 
@@ -709,8 +709,8 @@ public class PaymentTransactionService {
      * @param scheduledExecutionAt 예약실행시각 (미래 시각, 컨트롤러에서 검증 완료)
      */
     @Transactional
-    public void markScheduled(String piId, Integer version, LocalDateTime scheduledExecutionAt) {
-        LocalDateTime now = LocalDateTime.now();
+    public void markScheduled(String piId, Integer version, OffsetDateTime scheduledExecutionAt) {
+        OffsetDateTime now = OffsetDateTime.now();
 
         int updated = paymentInstructionMapper.updateScheduled(piId, scheduledExecutionAt, version);
         if (updated == 0) {
@@ -733,7 +733,7 @@ public class PaymentTransactionService {
      */
     @Transactional
     public void cancelScheduled(String piId, Integer version, String reason) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         int updated = paymentInstructionMapper.cancelScheduledForUser(piId, version);
         if (updated == 0) {
@@ -752,7 +752,7 @@ public class PaymentTransactionService {
     }
 
     /** AUTHORIZED→PROCESSING 전이: updateStatus(낙관락) + PROCESSING_STARTED 이력. txStep4 3종 공용. */
-    private void markProcessing(String piId, int version, LocalDateTime now) {
+    private void markProcessing(String piId, int version, OffsetDateTime now) {
         int updated = paymentInstructionMapper.updateStatus(piId, "PROCESSING", null, null, version);
         if (updated == 0) {
             throw new OptimisticLockingFailureException("결제지시 상태 갱신 충돌(PROCESSING): " + piId);
@@ -808,7 +808,7 @@ public class PaymentTransactionService {
     @Transactional
     public void txSettlement(PaymentInstruction pi, String clearingNo,
                              String settledAt, String settlementDate) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
 
         // 1. CT REQUESTED→SETTLED (settled_at/settlement_date 기록 — 마감배치 조회 기준)
@@ -855,7 +855,7 @@ public class PaymentTransactionService {
     @Transactional
     public void txSettlementBok(PaymentInstruction pi, String bokReferenceNo,
                                 String settledAt, String settlementDate) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
 
         // 1. PI CLEARING→COMPLETED (낙관락: pi.getVersion()=3 → WHERE v=3, SET v=4)
@@ -969,7 +969,7 @@ public class PaymentTransactionService {
     public void txMarkReversingFromClearing(PaymentInstruction pi, Integer version,
                                             String rejectMessage, String triggeredBy, String reasonCode,
                                             String causeEventType, String operatorId) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
 
         int updated = paymentInstructionMapper.updateStatus(piId, "REVERSING", null, null, version);
@@ -1008,7 +1008,7 @@ public class PaymentTransactionService {
             WithdrawCancelData cancelResult,
             ReversalContext ctx) {
 
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
 
@@ -1151,7 +1151,7 @@ public class PaymentTransactionService {
      */
     @Transactional
     public void txMarkReversing(PaymentInstruction pi, Integer version, String fromStatus) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
 
         int updated = paymentInstructionMapper.updateStatus(
@@ -1180,7 +1180,7 @@ public class PaymentTransactionService {
      */
     @Transactional
     public PaymentResult txCompleteReversal(PaymentInstruction pi, String idempotencyKey, Integer version) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
 
         // ★역분개 INSERT 없음 (다2: B-4 입금 분개 자체가 없으므로 역분개도 없음, P-026)
@@ -1227,7 +1227,7 @@ public class PaymentTransactionService {
      */
     @Transactional
     public PaymentResult txStepFail(PaymentInstruction pi, String failureCategory, String failedEventType, String fromStatus) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
 
         // 1. fromStatus→FAILED (낙관락)
@@ -1278,7 +1278,7 @@ public class PaymentTransactionService {
      */
     @Transactional
     public String txInboundReceive(InboundPaymentCommand command) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         IdempotencyKey idempotencyKey = IdempotencyKey.of(
                 command.clearingNo(),
@@ -1330,7 +1330,7 @@ public class PaymentTransactionService {
      */
     @Transactional
     public void txInboundAuthorize(PaymentInstruction pi) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
 
         int updated = paymentInstructionMapper.updateStatus(piId, "AUTHORIZED", null, null, pi.getVersion());
@@ -1355,7 +1355,7 @@ public class PaymentTransactionService {
     @Transactional
     public void txInboundDeposit(PaymentInstruction pi, BalanceTxData depositTx,
                                  InboundPaymentCommand command) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String clearingNo = command.clearingNo();
         String correlationId = command.correlationId();
@@ -1470,7 +1470,7 @@ public class PaymentTransactionService {
     @Transactional
     public void txInboundReject(PaymentInstruction pi, InboundPaymentCommand command,
                                 String rejectCode, String rejectMessage) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String clearingNo = command.clearingNo();
         String correlationId = command.correlationId();

@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,7 @@ class ScheduledPaymentCancelTest extends AbstractPaymentIntegrationTest {
     // ── 헬퍼 ──────────────────────────────────────────────────────────────
 
     private MockHttpServletRequestBuilder postScheduledPayment(
-            String idKey, String userId, String authId, LocalDateTime scheduledAt) throws Exception {
+            String idKey, String userId, String authId, OffsetDateTime scheduledAt) throws Exception {
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("senderAccountId",               SENDER_S1);
@@ -60,7 +60,7 @@ class ScheduledPaymentCancelTest extends AbstractPaymentIntegrationTest {
     }
 
     private String registerScheduled(String idKey, String userId, String authId) throws Exception {
-        LocalDateTime futureTime = LocalDateTime.now().plusHours(2);
+        OffsetDateTime futureTime = OffsetDateTime.now().plusHours(2);
         MvcResult result = mockMvc.perform(postScheduledPayment(idKey, userId, authId, futureTime))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SCHEDULED"))
@@ -163,7 +163,7 @@ class ScheduledPaymentCancelTest extends AbstractPaymentIntegrationTest {
         // scheduled_execution_at 을 과거로 변경 → selectDueScheduled 폴링 대상
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? " +
                     "WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         // 워커 대신 직접 claim
         List<PaymentInstruction> due = paymentInstructionMapper.selectDueScheduled();
@@ -222,7 +222,7 @@ class ScheduledPaymentCancelTest extends AbstractPaymentIntegrationTest {
         // scheduled_execution_at 을 과거로 변경 (워커가 집을 수 있는 조건)
         jdbc.update("UPDATE payment_instruction SET scheduled_execution_at = ? " +
                     "WHERE payment_instruction_id = ?",
-                LocalDateTime.now().minusMinutes(1), piId);
+                OffsetDateTime.now().minusMinutes(1), piId);
 
         // 취소
         mockMvc.perform(postCancel(piId, "USER-C005"))

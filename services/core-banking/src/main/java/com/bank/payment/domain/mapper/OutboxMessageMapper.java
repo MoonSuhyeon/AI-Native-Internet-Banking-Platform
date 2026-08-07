@@ -3,7 +3,7 @@ package com.bank.payment.domain.mapper;
 import com.bank.payment.domain.OutboxMessage;
 import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface OutboxMessageMapper {
@@ -20,7 +20,7 @@ public interface OutboxMessageMapper {
     void markFailed(@Param("messageId") String messageId, @Param("lastError") String lastError);
 
     /** cutoff 이전에 last_modified_at이 갱신된 PUBLISHING 행을 PENDING으로 재설정. */
-    int resetStuckPublishing(LocalDateTime cutoff);
+    int resetStuckPublishing(OffsetDateTime cutoff);
 
     int countPending();
 }

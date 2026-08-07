@@ -3,7 +3,7 @@ package com.bank.payment.domain.mapper;
 import com.bank.payment.domain.ExternalCall;
 import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public interface ExternalCallMapper {
 
@@ -17,7 +17,7 @@ public interface ExternalCallMapper {
                        @Param("responseMessage") String responseMessage,
                        @Param("result") String result,
                        @Param("responseTimeMs") Integer responseTimeMs,
-                       @Param("respondedAt") LocalDateTime respondedAt);
+                       @Param("respondedAt") OffsetDateTime respondedAt);
 
     /**
      * F2용: piId + callType으로 가장 최근 외부호출 1건 조회.

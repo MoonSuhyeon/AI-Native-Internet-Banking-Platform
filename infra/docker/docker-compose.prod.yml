@@ -240,6 +240,8 @@ services:
     logging: *default-logging
     env_file: ../../.env.prod
     environment:
+      # db-payment/V23 의 UTC 해석 전제와 한 세트다. 바뀌면 저장된 시각의 의미가 어긋난다.
+      TZ: UTC
       SPRING_PROFILES_ACTIVE: prod
       CORE_BANKING_APP_PORT: 8082
       BANK_CODE: "A"

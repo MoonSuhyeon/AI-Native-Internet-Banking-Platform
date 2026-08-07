@@ -29,8 +29,6 @@ public class Account extends BaseEntity {
     private Long accountId;
 
     /** 낙관적 락 — 동시 잔액 변경 시 충돌 감지. */
-    @Version
-    private Long version;
 
     @Column(name = "account_number", length = 30, nullable = false, unique = true)
     private String accountNumber;

@@ -33,7 +33,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -202,7 +202,7 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
     }
 
     @Override
-    public PaymentResult registerScheduledPayment(PaymentCommand command, java.time.LocalDateTime scheduledExecutionAt) {
+    public PaymentResult registerScheduledPayment(PaymentCommand command, java.time.OffsetDateTime scheduledExecutionAt) {
         boolean isIntraBank = isIntraBank(command.receiverBankCode());
         String routingNetworkType = determineRoutingNetworkType(command);
 
@@ -1247,7 +1247,7 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
                               String targetSystem, String httpMethod, String endpointUrl,
                               String responseCode, String result, int attempt,
                               Object responseBody) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String callId = idGenerator.nextCallId();
         String callIdemKey = piId + "-" + callType + "-" + accountRole + "-" + attempt;
         String responseBodyJson = serializeResponseBody(responseBody, callType);
@@ -1274,7 +1274,7 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
                               String targetSystem, String httpMethod, String endpointUrl,
                               String responseCode, String result, String compensationTargetCallId,
                               Object responseBody) {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         String callId = idGenerator.nextCallId();
         String callIdemKey = piId + "-" + callType + "-" + accountRole + "-1";
         String responseBodyJson = serializeResponseBody(responseBody, callType);

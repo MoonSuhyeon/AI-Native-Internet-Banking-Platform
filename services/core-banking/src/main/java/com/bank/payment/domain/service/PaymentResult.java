@@ -1,6 +1,6 @@
 package com.bank.payment.domain.service;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 결제 처리 결과 (도메인 출력). Controller가 PaymentResponse로 매핑.
@@ -12,5 +12,5 @@ public record PaymentResult(
         String transactionNo,
         String status,
         String failureCategory,
-        LocalDateTime completedAt
+        OffsetDateTime completedAt
 ) {}

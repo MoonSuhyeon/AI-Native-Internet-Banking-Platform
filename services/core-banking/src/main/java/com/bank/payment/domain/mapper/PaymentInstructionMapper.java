@@ -3,7 +3,7 @@ package com.bank.payment.domain.mapper;
 import com.bank.payment.domain.PaymentInstruction;
 import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface PaymentInstructionMapper {
@@ -14,16 +14,16 @@ public interface PaymentInstructionMapper {
 
     int updateStatus(@Param("paymentInstructionId") String paymentInstructionId,
                      @Param("status") String status,
-                     @Param("completedAt") LocalDateTime completedAt,
+                     @Param("completedAt") OffsetDateTime completedAt,
                      @Param("failureCategory") String failureCategory,
                      @Param("version") Integer version);
 
     void updateReceiverHolderSnap(@Param("paymentInstructionId") String paymentInstructionId,
                                   @Param("receiverHolderNameSnap") String receiverHolderNameSnap,
-                                  @Param("holderInquiryAt") LocalDateTime holderInquiryAt);
+                                  @Param("holderInquiryAt") OffsetDateTime holderInquiryAt);
 
     void updateNextTimeoutAt(@Param("piId") String piId,
-                             @Param("nextTimeoutAt") LocalDateTime nextTimeoutAt);
+                             @Param("nextTimeoutAt") OffsetDateTime nextTimeoutAt);
 
     List<PaymentInstruction> selectTimedOut();
 
@@ -38,7 +38,7 @@ public interface PaymentInstructionMapper {
     int countIncomplete();
 
     int updateScheduled(@Param("paymentInstructionId") String paymentInstructionId,
-                        @Param("scheduledExecutionAt") LocalDateTime scheduledExecutionAt,
+                        @Param("scheduledExecutionAt") OffsetDateTime scheduledExecutionAt,
                         @Param("version") Integer version);
 
     List<PaymentInstruction> selectByReceiverAccountNo(@Param("receiverAccountNo") String receiverAccountNo);

@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 타임아웃 감지 전용 트랜잭션 헬퍼 (OutboxTransactionHelper 패턴).
@@ -32,7 +32,7 @@ public class TimeoutTransactionHelper {
     public void markTimeoutDetected(PaymentInstruction pi) {
         String piId = pi.getPaymentInstructionId();
         String routingNetworkType = pi.getRoutingNetworkType();
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         String eventType, reasonCode, reasonMsg;
         switch (routingNetworkType == null ? "" : routingNetworkType) {

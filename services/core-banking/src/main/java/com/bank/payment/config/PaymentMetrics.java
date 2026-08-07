@@ -7,7 +7,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
@@ -68,10 +68,10 @@ public class PaymentMetrics {
     }
 
     // 지표 10, 11: 이체 완료 + end-to-end 처리시간
-    public void paymentCompleted(LocalDateTime requestedAt) {
+    public void paymentCompleted(OffsetDateTime requestedAt) {
         registry.counter("payment.instruction.completed").increment();
         if (requestedAt != null) {
-            long millis = ChronoUnit.MILLIS.between(requestedAt, LocalDateTime.now());
+            long millis = ChronoUnit.MILLIS.between(requestedAt, OffsetDateTime.now());
             durationTimer.record(millis, TimeUnit.MILLISECONDS);
         }
     }

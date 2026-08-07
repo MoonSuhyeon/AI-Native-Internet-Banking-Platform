@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
@@ -46,7 +46,7 @@ public class OutboxTransactionHelper {
      * PENDING으로 재설정해 재발행 대상으로 돌린다.
      */
     @Transactional
-    public int resetStuckPublishing(LocalDateTime cutoff) {
+    public int resetStuckPublishing(OffsetDateTime cutoff) {
         return outboxMessageMapper.resetStuckPublishing(cutoff);
     }
 }
