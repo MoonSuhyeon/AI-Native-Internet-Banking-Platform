@@ -92,12 +92,15 @@ public enum CustomerErrorCode implements ErrorCode {
     CUST_130(HttpStatus.NOT_FOUND,  "인증수단을 찾을 수 없습니다."),
     CUST_131(HttpStatus.BAD_REQUEST,"주 인증수단은 비활성화할 수 없습니다."),
 
-    // 보안카드 (140-149)
-    CUST_140(HttpStatus.NOT_FOUND,   "활성 보안카드를 찾을 수 없습니다."),
-    CUST_141(HttpStatus.CONFLICT,    "이미 활성 보안카드가 존재합니다."),
-    CUST_142(HttpStatus.UNAUTHORIZED,"보안카드 코드가 올바르지 않습니다."),
-    CUST_143(HttpStatus.GONE,        "보안카드 챌린지가 만료되었거나 존재하지 않습니다."),
-    CUST_144(HttpStatus.BAD_REQUEST, "챌린지에 없는 위치 코드가 포함되어 있습니다."),
+    // 보안카드 (140-144) — 코드만 정의되고 구현된 적이 없다.
+    //
+    // 챌린지-응답까지 설계됐다가 멈춘 흔적이다. 던지는 코드가 어디에도 없고, 챗봇의
+    // 보안카드 화면도 렌더되지 않는 잔재만 남아 있어 함께 걷어냈다.
+    // 자금이동 승인은 인증서 PIN 으로 한다(docs/plan/transfer-step-up-auth.md).
+    //
+    // 번호를 재사용하지 않고 남겨 둔다 — 145·146(거래 승인)이 이미 나갔고, 지운 번호를
+    // 다른 뜻으로 되쓰면 예전 로그·문서의 코드가 다른 의미로 읽힌다.
+    // 보안카드를 실제로 구현하게 되면 이 자리를 그대로 쓰면 된다.
 
     // 거래 승인 토큰 (145-149) — 이체 등 자금이동 step-up 인증
     CUST_145(HttpStatus.UNAUTHORIZED,"거래 승인 정보가 올바르지 않거나 이미 사용되었습니다."),

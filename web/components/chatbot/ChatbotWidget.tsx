@@ -78,12 +78,12 @@ type TransferState = {
   memo: string
   resultMessage: string
   balanceAfter: number | null
-  verifySubStep: 'card' | 'cert-info' | 'cert-pin'
+  // 보안카드는 백엔드 구현이 없어 화면도 없앴다(에러 코드만 정의돼 있던 상태).
+  // 인증서 PIN 경로만 남는다.
+  verifySubStep: 'cert-info' | 'cert-pin'
   /** 인증서가 없어 막힌 경우 — 발급 동선을 함께 보여준다. */
   needsCertificate?: boolean
   certPin: string
-  cardFront: string
-  cardBack: string
 }
 
 type ProductSearchStep = 'period' | 'amount' | 'type' | 'rate' | 'purpose' | 'done'
@@ -96,7 +96,7 @@ type ProductSearchState = {
   minRate: string
 }
 
-type TerminateStep = 'method' | 'verify-card' | 'verify-cert-info' | 'verify-cert-pin' | 'done' | 'error'
+type TerminateStep = 'method' | 'verify-cert-info' | 'verify-cert-pin' | 'done' | 'error'
 type TerminateState = {
   step: TerminateStep
   accountId: number
@@ -109,8 +109,6 @@ type TerminateState = {
   otherBank: string
   otherAccount: string
   checkingAccounts: MyAccount[]
-  cardFront: string
-  cardBack: string
   certPin: string
 }
 
@@ -1913,8 +1911,6 @@ export default function ChatbotWidget() {
       otherBank: '',
       otherAccount: '',
       checkingAccounts,
-      cardFront: '',
-      cardBack: '',
       certPin: '',
     })
   }
@@ -1990,8 +1986,6 @@ export default function ChatbotWidget() {
       balanceAfter: null,
       verifySubStep: 'cert-info',
       certPin: '',
-      cardFront: '',
-      cardBack: '',
     })
     try {
       let allAccounts: MyAccount[] = []
