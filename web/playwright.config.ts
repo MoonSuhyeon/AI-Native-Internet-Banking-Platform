@@ -18,5 +18,21 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // 두 갈래로 나눈다.
+  //   default  — 백엔드 없이 도는 화면 검증. PR 마다 돈다.
+  //   contract — 실제 loan-service 를 상대로 응답 계약을 검증한다(*.contract.spec.ts).
+  //              infra/docker/docker-compose.e2e.yml 이 떠 있어야 하므로 별도 잡에서만 돈다.
+  //              섞으면 백엔드 없는 CI 에서 계약 테스트가 항상 실패한다.
+  projects: [
+    {
+      name: 'chromium',
+      testIgnore: /\.contract\.spec\.ts$/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'contract',
+      testMatch: /\.contract\.spec\.ts$/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
 })

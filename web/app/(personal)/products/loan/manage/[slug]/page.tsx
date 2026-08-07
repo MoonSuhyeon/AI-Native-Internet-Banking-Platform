@@ -120,7 +120,9 @@ function RateInfo({ contracts, selectedId, setSelectedId }: {
         </div>
       </div>
       <div className="flex justify-center mt-5">
-        <button onClick={handleSearch} disabled={!selectedId || loading}
+        {/* 내비게이션에도 "조회" 버튼이 있어 이름만으로는 가려낼 수 없다(E2E strict mode 위반).
+            이 화면들은 모두 "계약 선택 → 조회" 구조라 같은 훅을 쓴다 — 한 번에 하나만 렌더된다. */}
+        <button data-testid="contract-search" onClick={handleSearch} disabled={!selectedId || loading}
           className="px-14 py-2.5 text-[14px] font-bold text-kb-text bg-kb-primary text-white hover:opacity-85 disabled:opacity-50 transition-colors">
           {loading ? '조회 중...' : '조회'}
         </button>
@@ -232,7 +234,9 @@ function InterestPaymentForm({ contracts, selectedId, setSelectedId }: {
         <ContractSelect contracts={contracts} selectedId={selectedId} onChange={setSelectedId} />
       </div>
       <div className="flex justify-center mt-5">
-        <button onClick={handleSearch} disabled={!selectedId || loading}
+        {/* 내비게이션에도 "조회" 버튼이 있어 이름만으로는 가려낼 수 없다(E2E strict mode 위반).
+            이 화면들은 모두 "계약 선택 → 조회" 구조라 같은 훅을 쓴다 — 한 번에 하나만 렌더된다. */}
+        <button data-testid="contract-search" onClick={handleSearch} disabled={!selectedId || loading}
           className="px-14 py-2.5 text-[14px] font-bold text-kb-text bg-kb-primary text-white hover:opacity-85 disabled:opacity-50 transition-colors">
           {loading ? '조회 중...' : '조회'}
         </button>
@@ -653,7 +657,9 @@ function DelinquencyView({ contracts, selectedId, setSelectedId }: {
         <ContractSelect contracts={contracts} selectedId={selectedId} onChange={setSelectedId} />
       </div>
       <div className="flex justify-center mt-5">
-        <button onClick={handleSearch} disabled={!selectedId || loading}
+        {/* 내비게이션에도 "조회" 버튼이 있어 이름만으로는 가려낼 수 없다(E2E strict mode 위반).
+            이 화면들은 모두 "계약 선택 → 조회" 구조라 같은 훅을 쓴다 — 한 번에 하나만 렌더된다. */}
+        <button data-testid="contract-search" onClick={handleSearch} disabled={!selectedId || loading}
           className="px-14 py-2.5 text-[14px] font-bold text-kb-text bg-kb-primary text-white hover:opacity-85 disabled:opacity-50 transition-colors">
           {loading ? '조회 중...' : '조회'}
         </button>
@@ -734,7 +740,9 @@ function ReversalForm({ contracts, selectedId, setSelectedId }: {
         <ContractSelect contracts={contracts} selectedId={selectedId} onChange={setSelectedId} />
       </div>
       <div className="flex justify-center mt-5">
-        <button onClick={handleSearch} disabled={!selectedId || loading}
+        {/* 내비게이션에도 "조회" 버튼이 있어 이름만으로는 가려낼 수 없다(E2E strict mode 위반).
+            이 화면들은 모두 "계약 선택 → 조회" 구조라 같은 훅을 쓴다 — 한 번에 하나만 렌더된다. */}
+        <button data-testid="contract-search" onClick={handleSearch} disabled={!selectedId || loading}
           className="px-14 py-2.5 text-[14px] font-bold text-kb-text bg-kb-primary text-white hover:opacity-85 disabled:opacity-50 transition-colors">
           {loading ? '조회 중...' : '조회'}
         </button>
@@ -1031,7 +1039,9 @@ function SimpleQueryForm({ contracts, selectedId, setSelectedId, apiCall, render
         <ContractSelect contracts={contracts} selectedId={selectedId} onChange={setSelectedId} />
       </div>
       <div className="flex justify-center mt-5">
-        <button onClick={handleSearch} disabled={!selectedId || loading}
+        {/* 내비게이션에도 "조회" 버튼이 있어 이름만으로는 가려낼 수 없다(E2E strict mode 위반).
+            이 화면들은 모두 "계약 선택 → 조회" 구조라 같은 훅을 쓴다 — 한 번에 하나만 렌더된다. */}
+        <button data-testid="contract-search" onClick={handleSearch} disabled={!selectedId || loading}
           className="px-14 py-2.5 text-[14px] font-bold text-kb-text bg-kb-primary text-white hover:opacity-85 disabled:opacity-50 transition-colors">
           {loading ? '조회 중...' : '조회'}
         </button>

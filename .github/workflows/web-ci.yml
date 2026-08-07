@@ -40,3 +40,45 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+
+  # 실제 백엔드를 상대로 응답 계약을 검증한다.
+  #
+  # 위 e2e 잡은 백엔드 없이 돈다. 그 상태로는 프론트가 기대하는 응답 모양과 백엔드가
+  # 실제로 주는 모양이 어긋나도 잡히지 않는다 — 표가 `{schedules.length > 0 && ...}`
+  # 뒤에 있어 데이터가 없으면 렌더링 자체가 일어나지 않고 초록으로 통과하기 때문이다.
+  # 상환 스케줄 화면이 전 필드가 어긋난 채 3개월 넘게 방치된 것이 그래서였다.
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # loan-service + 그것이 기동에 요구하는 것들(loan-db/common-db/redis/kafka).
+      # 데이터는 Flyway 시드 마이그레이션이 넣는다 — 별도 seed 단계가 없다.
+      - name: 백엔드 기동
+        run: docker compose -f infra/docker/docker-compose.e2e.yml up -d --wait
+
+      - name: 의존성 설치
+        working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: 계약 E2E
+        working-directory: web
+        env:
+          NEXT_PUBLIC_LOAN_API_URL: http://localhost:8083
+        run: npm run test:e2e:contract
+
+      # 실패 원인이 프론트인지 백엔드인지 로그 없이는 못 가린다.
+      - name: 실패 시 백엔드 로그
+        if: failure()
+        run: docker compose -f infra/docker/docker-compose.e2e.yml logs --tail 200 loan-service
+
+      - name: 정리
+        if: always()
+        run: docker compose -f infra/docker/docker-compose.e2e.yml down -v

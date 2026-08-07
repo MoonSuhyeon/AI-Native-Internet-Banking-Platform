@@ -10,7 +10,8 @@
     "lint": "next lint",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:contract": "playwright test --project=contract"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
