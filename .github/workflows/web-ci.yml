@@ -85,12 +85,14 @@ jobs:
         working-directory: web
         env:
           NEXT_PUBLIC_LOAN_API_URL: http://localhost:8083
+          NEXT_PUBLIC_DEPOSIT_API_URL: http://localhost:8082/api
+          NEXT_PUBLIC_API_URL: http://localhost:8081
         run: npm run test:e2e:contract
 
       # 실패 원인이 프론트인지 백엔드인지 로그 없이는 못 가린다.
       - name: 실패 시 백엔드 로그
         if: failure()
-        run: docker compose -f infra/docker/docker-compose.e2e.yml logs --tail 200 loan-service
+        run: docker compose -f infra/docker/docker-compose.e2e.yml logs --tail 200 loan-service core-banking customer-service
 
       - name: 정리
         if: always()
