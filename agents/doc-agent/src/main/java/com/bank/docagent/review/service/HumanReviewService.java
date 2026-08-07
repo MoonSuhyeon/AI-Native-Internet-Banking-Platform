@@ -5,6 +5,7 @@ import com.bank.docagent.submission.domain.DocumentSubmission;
 import com.bank.docagent.submission.domain.DocumentSubmission.HumanReviewStatus;
 import com.bank.docagent.submission.domain.DocumentSubmission.VerifyStatus;
 import com.bank.docagent.submission.repository.DocumentSubmissionRepository;
+import com.bank.docagent.observability.DocAgentMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class HumanReviewService {
 
     private final DocumentSubmissionRepository submissionRepository;
     private final RetentionService             retentionService;
+    private final DocAgentMetrics              metrics;
 
     @Transactional
     public DocumentSubmission decide(UUID submissionId, HumanReviewStatus decision,
@@ -43,6 +45,10 @@ public class HumanReviewService {
 
         // 결정 후 보존 기간 재계산 (LOCKED=10년, CLEARED=5년)
         retentionService.applyRetention(submission, submission.getVerifyStatus());
+
+        // 자동 판정(HOLD)을 사람이 어떻게 결론지었는가. 이 서비스의 채택률 축이다.
+        // CONFIRMED_FORGERY = 자동 판정 확인, CLEARED = 뒤집음.
+        metrics.recordHumanDecision(decision.name());
 
         log.info("심사원 결정 완료: submissionId={} decision={} reviewerId={}",
             submissionId, decision, reviewerId);

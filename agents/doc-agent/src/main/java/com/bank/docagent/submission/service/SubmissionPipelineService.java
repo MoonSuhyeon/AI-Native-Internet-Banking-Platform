@@ -12,6 +12,8 @@ import com.bank.docagent.submission.dto.verification.VerificationBlock;
 import com.bank.docagent.submission.service.DocumentClassifyService.DocType;
 import com.bank.docagent.submission.service.OcrMaskingService.OcrResult;
 import com.bank.docagent.verify.service.DocumentVerifyService;
+import com.bank.docagent.observability.DocAgentMetrics;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,7 @@ public class SubmissionPipelineService {
     private final DocumentVerifyService    verifyService;
     private final RetentionService         retentionService;
     private final TableOcrClient           tableOcrClient;
+    private final DocAgentMetrics          metrics;
 
     @Value("${doc-agent.default-product-id:P001}")
     private String defaultProductId;
@@ -50,18 +53,39 @@ public class SubmissionPipelineService {
                                     String productId, MultipartFile file) throws IOException {
         byte[] bytes = file.getBytes();
         String submissionId;
+        Timer.Sample pipeline = metrics.startPipeline();
+        String stage = "ingest";
 
+        try {
         // L1: Ingest — 포맷 검증, MinIO 원본 저장
         DocumentSubmission submission = ingestService.ingest(applicationId, docCode, file);
         submissionId = submission.getSubmissionId().toString();
 
         // L4b: 위변조 시그널 분석 (사이드카, raw bytes 사용)
-        ForgeryResult forgeryResult = forgeryService.analyze(
-            submission.getSubmissionId(), docCode, bytes, file.getContentType());
+        stage = "forgery";
+        Timer.Sample forgerySample = metrics.startStage();
+        ForgeryResult forgeryResult;
+        try {
+            forgeryResult = forgeryService.analyze(
+                submission.getSubmissionId(), docCode, bytes, file.getContentType());
+        } catch (RuntimeException e) {
+            metrics.stopStage(forgerySample, "forgery", false);
+            throw e;
+        }
+        metrics.stopStage(forgerySample, "forgery", true);
 
         // L3: OCR + Masking (사이드카)
-        OcrResult ocrResult = ocrMaskingService.extractAndMask(
-            submission, bytes, file.getContentType(), applicationId);
+        stage = "ocr";
+        Timer.Sample ocrSample = metrics.startStage();
+        OcrResult ocrResult;
+        try {
+            ocrResult = ocrMaskingService.extractAndMask(
+                submission, bytes, file.getContentType(), applicationId);
+        } catch (RuntimeException e) {
+            metrics.stopStage(ocrSample, "ocr", false);
+            throw e;
+        }
+        metrics.stopStage(ocrSample, "ocr", true);
 
         // L2: OCR 텍스트 기반 서류 유형 분류
         DocType docType = classifyService.classify(ocrResult.rawText());
@@ -78,8 +102,16 @@ public class SubmissionPipelineService {
         }
 
         // L4: LLM 구조화 추출 (사이드카)
-        StructuredData structuredData = extractService.extract(
-            submissionId, docType, maskedTextForLlm);
+        stage = "extract";
+        Timer.Sample extractSample = metrics.startStage();
+        StructuredData structuredData;
+        try {
+            structuredData = extractService.extract(submissionId, docType, maskedTextForLlm);
+        } catch (RuntimeException e) {
+            metrics.stopStage(extractSample, "extract", false);
+            throw e;
+        }
+        metrics.stopStage(extractSample, "extract", true);
 
         // L5: 룰 검증 + 진위확인 + 위변조 점수 합산
         VerificationBlock verification = verifyService.verify(
@@ -98,6 +130,9 @@ public class SubmissionPipelineService {
         // 보존 기간 계산 (HOLD는 심사원 결정 후 재계산, 여기서는 기본 5년)
         retentionService.applyRetention(submission, finalStatus);
 
+        metrics.recordVerdict(finalStatus.name(), docType.name());
+        metrics.stopPipeline(pipeline, finalStatus.name());
+
         log.info("파이프라인 완료: submissionId={} docType={} forgeryScore={} status={}",
             submissionId, docType, forgeryResult.aggregateScore(), finalStatus);
 
@@ -106,5 +141,13 @@ public class SubmissionPipelineService {
             docType.name(), ocrResult.regions(), ocrResult.maskedText(),
             structuredData, verification, finalStatus
         );
+
+        } catch (RuntimeException | IOException e) {
+            // 실패는 판정을 만들지 못해 verdict 에 잡히지 않는다. 어느 단계에서 터졌는지와
+            // 함께 따로 세야 "서류가 안 들어왔다"와 "처리가 터졌다"가 구별된다.
+            metrics.recordPipelineFailure(stage);
+            metrics.stopPipeline(pipeline, "ERROR");
+            throw e;
+        }
     }
 }
