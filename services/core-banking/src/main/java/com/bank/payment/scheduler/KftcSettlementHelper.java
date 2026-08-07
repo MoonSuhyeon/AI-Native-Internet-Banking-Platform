@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -35,8 +34,6 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class KftcSettlementHelper {
-
-    private static final DateTimeFormatter BUSINESS_DATE_FMT = DateTimeFormatter.BASIC_ISO_DATE;
 
     private final PaymentInstructionMapper paymentInstructionMapper;
     private final StatusHistoryMapper statusHistoryMapper;

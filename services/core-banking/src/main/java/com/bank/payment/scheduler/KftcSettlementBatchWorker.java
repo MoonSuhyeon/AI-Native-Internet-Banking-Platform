@@ -1,5 +1,6 @@
 package com.bank.payment.scheduler;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.payment.config.PaymentMetrics;
 import com.bank.payment.domain.KftcClearingTransaction;
 import com.bank.payment.domain.mapper.KftcClearingTransactionMapper;
@@ -11,9 +12,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -42,9 +40,9 @@ public class KftcSettlementBatchWorker {
     private final KftcSettlementHelper settlementHelper;
     private final PaymentMetrics metrics;
 
-    @Scheduled(cron = "${payment.settlement.kftc-cutoff-cron:0 0 11 * * *}")
+    @Scheduled(cron = "${payment.settlement.kftc-cutoff-cron:0 0 11 * * *}", zone = "Asia/Seoul")
     public void runDailySettlement() {
-        String today = LocalDate.now(ZoneId.of("Asia/Seoul")).format(DateTimeFormatter.BASIC_ISO_DATE);  // yyyyMMdd (KST 고정)
+        String today = BusinessDate.today();  // yyyyMMdd (KST 고정)
         List<KftcClearingTransaction> dueList = ctMapper.selectDueForSettlement(today);
 
         if (dueList.isEmpty()) {

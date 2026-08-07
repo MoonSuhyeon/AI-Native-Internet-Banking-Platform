@@ -1,5 +1,6 @@
 package com.bank.customer.banking.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.web.BusinessException;
 import com.bank.customer.banking.domain.WithdrawalAccount;
 import com.bank.customer.banking.dto.RegisterWithdrawalAccountRequest;
@@ -94,7 +95,7 @@ public class WithdrawalAccountService {
                 a.getAccountAlias(),
                 a.getRegistrationType(),
                 a.getPriorityOrder(),
-                a.getRegisteredAt() != null ? a.getRegisteredAt().toLocalDate().toString() : ""
+                a.getRegisteredAt() != null ? BusinessDate.dateOf(a.getRegisteredAt()).toString() : ""
         );
     }
 }

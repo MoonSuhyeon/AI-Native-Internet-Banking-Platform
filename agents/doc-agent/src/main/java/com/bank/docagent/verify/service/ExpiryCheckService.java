@@ -1,5 +1,6 @@
 package com.bank.docagent.verify.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.docagent.submission.dto.verification.MissingDocument;
 import com.bank.docagent.verify.domain.LoanProductDocument;
 import com.bank.docagent.verify.domain.LoanProductDocumentRepository;
@@ -57,7 +58,7 @@ public class ExpiryCheckService {
                     LocalDate issueDate = parseDate(issueDateStr);
                     if (issueDate != null) {
                         LocalDate expiry = issueDate.plusDays(doc.getValidDays());
-                        if (expiry.isBefore(LocalDate.now())) {
+                        if (expiry.isBefore(BusinessDate.todayDate())) {
                             log.warn("서류 만료: code={} issuedAt={} expiredAt={}", code, issueDate, expiry);
                             problems.add(new MissingDocument(code, doc.getReqDocName(), "EXPIRED"));
                         }

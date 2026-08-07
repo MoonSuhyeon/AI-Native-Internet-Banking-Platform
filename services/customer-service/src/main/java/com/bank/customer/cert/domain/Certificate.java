@@ -1,5 +1,6 @@
 package com.bank.customer.cert.domain;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.persistence.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -95,7 +96,7 @@ public class Certificate extends BaseEntity {
     }
 
     public boolean isExpired() {
-        return LocalDate.now().isAfter(LocalDate.parse(
+        return BusinessDate.todayDate().isAfter(LocalDate.parse(
                 certificateExpiryDate.substring(0, 4) + "-"
                         + certificateExpiryDate.substring(4, 6) + "-"
                         + certificateExpiryDate.substring(6, 8)));

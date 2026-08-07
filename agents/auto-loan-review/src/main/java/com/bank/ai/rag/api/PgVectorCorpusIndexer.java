@@ -1,5 +1,6 @@
 package com.bank.ai.rag.api;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.ai.rag.api.dto.ChunkBatchItem;
 import com.bank.ai.rag.embedding.EmbeddingClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,7 +60,7 @@ public class PgVectorCorpusIndexer implements CorpusIndexer {
                 .param("embedding", vecLiteral)
                 .param("model", DEFAULT_MODEL)
                 .param("metadata", toJson(item.metadata()))
-                .param("effectiveDate", LocalDate.now())
+                .param("effectiveDate", BusinessDate.todayDate())
                 .update();
     }
 

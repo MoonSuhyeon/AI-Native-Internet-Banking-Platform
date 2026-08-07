@@ -1,5 +1,6 @@
 package com.bank.payment.common;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.payment.domain.mapper.IdSequenceMapper;
 import org.springframework.stereotype.Component;
 
@@ -59,7 +60,7 @@ public class IdGenerator {
 
     // ── ID 조립 ─────────────────────────────────────────
     private String build(String prefix, AtomicLong seq) {
-        String date = LocalDate.now().format(DATE_FMT);
+        String date = BusinessDate.today();
         long n = seq.incrementAndGet();
         return String.format("%s-%s-%06d", prefix, date, n);
     }

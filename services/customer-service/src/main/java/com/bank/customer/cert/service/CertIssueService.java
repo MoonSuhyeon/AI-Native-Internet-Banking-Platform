@@ -1,5 +1,6 @@
 package com.bank.customer.cert.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.web.BusinessException;
 import com.bank.customer.cert.domain.AuthMethod;
 import com.bank.customer.cert.domain.Certificate;
@@ -43,7 +44,7 @@ public class CertIssueService {
         }
 
         long customerId = credential.getCustomerId();
-        LocalDate today  = LocalDate.now();
+        LocalDate today  = BusinessDate.todayDate();
         LocalDate expiry = today.plusYears(CERT_VALIDITY_YEARS);
         String todayStr  = today.format(DATE_FMT);
         String expiryStr = expiry.format(DATE_FMT);

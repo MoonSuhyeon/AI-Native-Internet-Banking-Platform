@@ -1,5 +1,6 @@
 package com.bank.customer.party.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.web.BusinessException;
 import com.bank.customer.customer.domain.Customer;
 import com.bank.customer.customer.repository.CustomerRepository;
@@ -60,7 +61,7 @@ public class PartyManageService {
                 .partyId(partyId)
                 .roleTypeCode(roleTypeCode)
                 .roleStatusCode(PartyRole.STATUS_ACTIVE)
-                .roleStartDate(startDate != null ? startDate : LocalDate.now().format(DATE_FMT))
+                .roleStartDate(startDate != null ? startDate : BusinessDate.today())
                 .build());
         return PartyRoleResponse.from(role);
     }
@@ -70,7 +71,7 @@ public class PartyManageService {
         PartyRole role = partyRoleRepository.findById(roleId)
                 .filter(r -> r.getDeletedAt() == null)
                 .orElseThrow(() -> new BusinessException(CustomerErrorCode.CUST_111));
-        role.close(endDate != null ? endDate : LocalDate.now().format(DATE_FMT), reasonCode);
+        role.close(endDate != null ? endDate : BusinessDate.today(), reasonCode);
         return PartyRoleResponse.from(role);
     }
 
@@ -139,7 +140,7 @@ public class PartyManageService {
         PartyRelation relation = partyRelationRepository.findById(relationId)
                 .filter(r -> r.getDeletedAt() == null)
                 .orElseThrow(() -> new BusinessException(CustomerErrorCode.CUST_114));
-        relation.end(endDate != null ? endDate : LocalDate.now().format(DATE_FMT), reasonCode);
+        relation.end(endDate != null ? endDate : BusinessDate.today(), reasonCode);
         return PartyRelationResponse.from(relation);
     }
 
@@ -177,7 +178,7 @@ public class PartyManageService {
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<com.bank.customer.party.dto.MinorResponse>
             listMinors(org.springframework.data.domain.Pageable pageable) {
-        String thresholdYmd = LocalDate.now().minusYears(19).format(DATE_FMT);
+        String thresholdYmd = BusinessDate.todayDate().minusYears(19).format(DATE_FMT);
         return partyPersonRepository.searchMinors(thresholdYmd, pageable);
     }
 

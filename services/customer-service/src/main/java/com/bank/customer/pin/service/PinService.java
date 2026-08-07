@@ -1,5 +1,6 @@
 package com.bank.customer.pin.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.common.web.BusinessException;
 import com.bank.customer.cert.domain.AuthMethod;
 import com.bank.customer.cert.repository.AuthMethodRepository;
@@ -94,7 +95,7 @@ public class PinService {
                         .authMethodAliasName("간편비밀번호")
                         .authMethodStatusCode(AuthMethod.STATUS_ACTIVE)
                         .primaryAuthMethodYn("F")
-                        .authMethodRegisteredDate(LocalDate.now().format(DATE_FMT))
+                        .authMethodRegisteredDate(BusinessDate.today())
                         .build())
                         .getAuthMethodId());
     }

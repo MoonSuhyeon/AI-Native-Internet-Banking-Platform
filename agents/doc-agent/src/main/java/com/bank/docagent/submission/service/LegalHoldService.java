@@ -1,5 +1,6 @@
 package com.bank.docagent.submission.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.docagent.submission.domain.DocumentSubmission;
 import com.bank.docagent.submission.repository.DocumentSubmissionRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,8 @@ public class LegalHoldService {
     public DocumentSubmission disable(UUID submissionId) {
         DocumentSubmission submission = findOrThrow(submissionId);
         LocalDate restored = switch (submission.getVerifyStatus()) {
-            case LOCKED         -> LocalDate.now().plusYears(FORGERY_YEARS);
-            default             -> LocalDate.now().plusYears(NORMAL_YEARS);
+            case LOCKED         -> BusinessDate.todayDate().plusYears(FORGERY_YEARS);
+            default             -> BusinessDate.todayDate().plusYears(NORMAL_YEARS);
         };
         submission.disableLegalHold(restored);
         log.info("Legal Hold 해제: submissionId={} restoredRetentionUntil={}", submissionId, restored);

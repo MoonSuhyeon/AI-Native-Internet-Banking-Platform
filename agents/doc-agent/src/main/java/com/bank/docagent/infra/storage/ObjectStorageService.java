@@ -1,5 +1,6 @@
 package com.bank.docagent.infra.storage;
 
+import com.bank.common.time.BusinessDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +48,6 @@ public class ObjectStorageService {
 
     private String buildKey(String applicationId, String submissionId, String suffix) {
         return String.format("%s/%s/%s/%s",
-            LocalDate.now().format(DATE_PATH), applicationId, submissionId, suffix);
+            BusinessDate.todayDate().format(DATE_PATH), applicationId, submissionId, suffix);
     }
 }

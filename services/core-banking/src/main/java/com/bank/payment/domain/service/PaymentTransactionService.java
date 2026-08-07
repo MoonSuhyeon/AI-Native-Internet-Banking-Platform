@@ -1,5 +1,6 @@
 package com.bank.payment.domain.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.payment.common.IdGenerator;
 import com.bank.payment.common.LedgerFailureSimulator;
 import com.bank.payment.common.exception.LedgerBalanceMismatchException;
@@ -123,7 +124,7 @@ public class PaymentTransactionService {
                 .status("DRAFT")
                 .channel(command.channel())
                 .requestedAt(now)
-                .businessDate(now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE))
+                .businessDate(BusinessDate.of(now))
                 .version(0)
                 .triggerSource("USER")
                 .isScheduled(false)
@@ -198,7 +199,7 @@ public class PaymentTransactionService {
                                  String senderHolderName, String receiverHolderName) {
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
-        String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String businessDate = BusinessDate.of(now);
         BigDecimal amount = command.transferAmount();
 
         // 1. AUTHORIZED→PROCESSING (낙관락, pi.getVersion()+1 = authorize 후 버전)
@@ -296,7 +297,7 @@ public class PaymentTransactionService {
                                           String senderHolderName, String receiverHolderName) {
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
-        String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String businessDate = BusinessDate.of(now);
         BigDecimal amount = command.transferAmount();
 
         // 1. PROCESSING_STARTED 이력만 INSERT (markProcessing 없음 — claim 이 이미 PROCESSING 커밋)
@@ -392,7 +393,7 @@ public class PaymentTransactionService {
                                            String receiverHolderName, String senderBankCode) {
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
-        String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String businessDate = BusinessDate.of(now);
         BigDecimal transferAmount = command.transferAmount();
         BigDecimal feeAmount = pi.getFeeAmount();  // txStep1에서 isIntraBank=false → 500
 
@@ -550,7 +551,7 @@ public class PaymentTransactionService {
                                           String receiverHolderName, String senderBankCode) {
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
-        String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String businessDate = BusinessDate.of(now);
         BigDecimal transferAmount = command.transferAmount();
         BigDecimal feeAmount = pi.getFeeAmount();
 
@@ -1010,7 +1011,7 @@ public class PaymentTransactionService {
 
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
-        String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String businessDate = BusinessDate.of(now);
 
         String networkLabel = "KFTC".equals(ctx.networkType()) ? "타행이체" : "BOK이체";
 
@@ -1305,7 +1306,7 @@ public class PaymentTransactionService {
                 .status("DRAFT")
                 .channel("INBOUND")
                 .requestedAt(now)
-                .businessDate(now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE))
+                .businessDate(BusinessDate.of(now))
                 .version(0)
                 .triggerSource("COUNTERPARTY_BANK")
                 .isScheduled(false)
@@ -1362,7 +1363,7 @@ public class PaymentTransactionService {
         String senderBankCode = command.senderBankCode();
         String senderRealName = command.senderRealName();
         String senderAccountNo = command.senderAccountNo();
-        String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String businessDate = BusinessDate.of(now);
         String settledAt = now.format(CLEARING_AT_FMT);
 
         // 1. AUTHORIZED→PROCESSING + 상태이력(KFTC_ACK_SENT) + Outbox KFTC_ACK_SENT
@@ -1474,7 +1475,7 @@ public class PaymentTransactionService {
         String piId = pi.getPaymentInstructionId();
         String clearingNo = command.clearingNo();
         String correlationId = command.correlationId();
-        String businessDate = now.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String businessDate = BusinessDate.of(now);
         String rejectedAt = now.format(CLEARING_AT_FMT);
 
         // 1. DRAFT→FAILED (낙관락: version=0 → WHERE version=0 → DB version=1)

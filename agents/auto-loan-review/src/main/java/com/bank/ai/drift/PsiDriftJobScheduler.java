@@ -1,5 +1,6 @@
 package com.bank.ai.drift;
 
+import com.bank.common.time.BusinessDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -23,9 +24,9 @@ public class PsiDriftJobScheduler {
     private final Job psiDriftJob;
     private final DriftProperties props;
 
-    @Scheduled(cron = "${ai.drift.psi-cron:0 0 2 * * MON}")
+    @Scheduled(cron = "${ai.drift.psi-cron:0 0 2 * * MON}", zone = "Asia/Seoul")
     public void runWeekly() {
-        String calcWeek = LocalDate.now().with(DayOfWeek.MONDAY).toString();
+        String calcWeek = BusinessDate.todayDate().with(DayOfWeek.MONDAY).toString();
         JobParameters params = new JobParametersBuilder()
             .addString("calcWeek", calcWeek)
             .toJobParameters();

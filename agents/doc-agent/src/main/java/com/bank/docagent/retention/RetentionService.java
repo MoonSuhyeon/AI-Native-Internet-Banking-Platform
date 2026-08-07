@@ -1,5 +1,6 @@
 package com.bank.docagent.retention;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.docagent.submission.domain.DocumentSubmission;
 import com.bank.docagent.submission.domain.DocumentSubmission.VerifyStatus;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +31,9 @@ public class RetentionService {
         }
 
         LocalDate until = switch (status) {
-            case LOCKED                         -> LocalDate.now().plusYears(FORGERY_YEARS);
+            case LOCKED                         -> BusinessDate.todayDate().plusYears(FORGERY_YEARS);
             case AUTO_PASS, CLEARED,
-                 NEEDS_RESUBMIT, PENDING, HOLD  -> LocalDate.now().plusYears(NORMAL_YEARS);
+                 NEEDS_RESUBMIT, PENDING, HOLD  -> BusinessDate.todayDate().plusYears(NORMAL_YEARS);
         };
 
         submission.updateRetentionUntil(until);

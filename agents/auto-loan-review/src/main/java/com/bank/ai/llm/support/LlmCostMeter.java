@@ -1,5 +1,6 @@
 package com.bank.ai.llm.support;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.ai.llm.client.LlmRequest;
 import com.bank.ai.llm.config.LlmProperties;
 import io.micrometer.core.instrument.Counter;
@@ -58,7 +59,7 @@ public class LlmCostMeter {
     private final AtomicLong dailyTotalTokens = new AtomicLong(0L);
 
     /** 마지막 리셋 날짜. volatile — 단일 write, 복수 read 패턴. */
-    private volatile LocalDate currentDate = LocalDate.now();
+    private volatile LocalDate currentDate = BusinessDate.todayDate();
 
     @PostConstruct
     public void registerGauge() {
@@ -160,7 +161,7 @@ public class LlmCostMeter {
     // ────────────────────────────────────────────────────────────
 
     private void resetIfNewDay() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = BusinessDate.todayDate();
         if (!today.equals(currentDate)) {
             // double-checked locking 대신 단순 volatile write — 리셋이 1회 초과 발생해도
             // 큰 문제 없음 (보수적 토큰 계산이라 한번 리셋 되면 충분)

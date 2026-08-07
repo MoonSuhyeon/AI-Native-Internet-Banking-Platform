@@ -1,5 +1,6 @@
 package com.bank.ai.drift;
 
+import com.bank.common.time.BusinessDate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ public class PsiDriftBatchJob implements Tasklet {
             .getJobParameters().get("calcWeek");
         LocalDate calcWeek = (calcWeekParam != null)
             ? LocalDate.parse(calcWeekParam)
-            : LocalDate.now().with(DayOfWeek.MONDAY);
+            : BusinessDate.todayDate().with(DayOfWeek.MONDAY);
 
         // 지난 주 데이터 (실제: 1주치; 테스트: 2040년 전체)
         LocalDate weekStart = calcWeek.minusWeeks(1);

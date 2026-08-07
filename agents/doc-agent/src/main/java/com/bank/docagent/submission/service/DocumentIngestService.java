@@ -1,5 +1,6 @@
 package com.bank.docagent.submission.service;
 
+import com.bank.common.time.BusinessDate;
 import com.bank.docagent.infra.storage.ObjectStorageService;
 import com.bank.docagent.submission.domain.DocumentSubmission;
 import com.bank.docagent.submission.repository.DocumentSubmissionRepository;
@@ -38,7 +39,7 @@ public class DocumentIngestService {
             DocumentSubmission.builder()
                 .applicationId(applicationId)
                 .docCode(docCode)
-                .retentionUntil(LocalDate.now().plusDays(1825)) // 기본 5년, D-3에서 상품별 정책 적용
+                .retentionUntil(BusinessDate.todayDate().plusDays(1825)) // 기본 5년, D-3에서 상품별 정책 적용
                 .build()
         );
 
