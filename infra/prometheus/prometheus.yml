@@ -15,7 +15,8 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:9090']
 
-  - job_name: 'gateway-service'
+  # 잡 이름은 compose 서비스 이름과 맞춘다. 레거시 gateway-service 는 api-gateway 로 바뀌었다.
+  - job_name: 'api-gateway'
     metrics_path: /actuator/prometheus
     static_configs:
       - targets: ['host.docker.internal:8080']
@@ -26,28 +27,33 @@ scrape_configs:
       - targets: ['host.docker.internal:8081']
 
   # 수신·결제 병합 서비스. context-path 가 /api 이므로 액추에이터도 /api 아래에 있다.
-  - job_name: 'core-banking'
+  # A/B 두 은행을 같은 이미지로 띄우므로 둘 다 긁는다 — B(8180)는 타행이체 상대 은행이라
+  # 여기 지표가 없으면 타행 흐름의 절반이 보이지 않는다.
+  - job_name: 'core-banking-a'
     metrics_path: /api/actuator/prometheus
     static_configs:
       - targets: ['host.docker.internal:8082']
+
+  - job_name: 'core-banking-b'
+    metrics_path: /api/actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8180']
 
   - job_name: 'loan-service'
     metrics_path: /actuator/prometheus
     static_configs:
       - targets: ['host.docker.internal:8083']
 
-  - job_name: 'master-service'
-    metrics_path: /actuator/prometheus
-    static_configs:
-      - targets: ['host.docker.internal:8085']
+  # master-service 잡을 지웠다. compose 에도 없고 8085 를 게시하는 서비스도 없어
+  # 항상 DOWN 이었다. 늘 빨간 대상은 진짜 장애를 가린다.
 
   - job_name: 'windows-exporter'
     static_configs:
       - targets: ['host.docker.internal:9182']
 
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['node-exporter:9100']
+  # node-exporter 잡도 지웠다 — compose 에 그 서비스가 없다.
+  # (windows-exporter 는 호스트에서 따로 띄우는 것이라 남긴다. .env.sample 의
+  #  WINDOWS_EXPORTER_PORT 참고.)
 
   - job_name: 'kafka-exporter-kftc'
     static_configs:
@@ -81,6 +87,12 @@ scrape_configs:
     metrics_path: /actuator/prometheus
     static_configs:
       - targets: ['host.docker.internal:8089']
+
+  # 서류 에이전트. doc 프로필로만 뜨므로 평소에는 DOWN 이다.
+  - job_name: 'doc-agent'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8091']
 
   # --- 모니터링 스택 직접 메트릭 ---
 

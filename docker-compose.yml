@@ -395,6 +395,12 @@ services:
     build:
       context: .
       dockerfile: agents/auto-loan-review/Dockerfile
+    # 포트를 게시해야 Prometheus 가 긁는다.
+    # 이 서비스만 ports 가 없어서 AI 심사 지표(ai_agent_*)가 하나도 수집되지 않았다 —
+    # 컨테이너 안에서는 정상 노출되는데 호스트로 나오지 않아 스크레이프가 실패했고,
+    # 그 위의 Grafana 패널 13종과 알림 3종(폴백률·하드페일·불일치율)이 빈 채로 돌았다.
+    ports:
+      - "${AUTO_LOAN_REVIEW_APP_PORT:-8089}:8089"
     container_name: ib-auto-loan-review
     environment:
       AUTO_LOAN_REVIEW_APP_PORT: ${AUTO_LOAN_REVIEW_APP_PORT:-8089}
@@ -895,7 +901,9 @@ services:
       dockerfile: agents/doc-agent/Dockerfile
     container_name: ib-doc-agent
     ports:
-      - "${DOC_AGENT_APP_PORT:-8087}:8087"
+      # consultation-service 도 8087 을 쓴다. 기본값이 같아 두 서비스를 함께 띄우면
+      # 나중에 뜨는 쪽이 포트 충돌로 죽는다. doc 프로필이라 평소엔 드러나지 않았다.
+      - "${DOC_AGENT_APP_PORT:-8091}:8087"
     environment:
       DOC_AGENT_APP_PORT: 8087
       DOC_AGENT_DB_HOST: doc-agent-db
