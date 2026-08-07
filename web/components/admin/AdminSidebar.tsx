@@ -129,6 +129,18 @@ const NAV: NavSection[] = [
       { label: '긴급 접근',    href: '/admin/loan/break-glass', bankRoles: EMPLOYEE_ROLES },
     ],
   },
+
+  // ───────── 전사 공통 ─────────
+  {
+    domain: '전사 공통',
+    // 특정 계에 속하지 않는다 — 모든 서비스와 에이전트의 지표를 한자리에서 본다.
+    // 운영(장애·지연)과 리스크(에이전트 판단 품질)가 같은 화면을 다른 이유로 본다.
+    section: '모니터링', dot: 'bg-slate-400',
+    bankRoles: ['ROLE_OPS', 'ROLE_HQ_RISK'],
+    items: [
+      { label: '대시보드', href: '/admin/monitoring' },
+    ],
+  },
 ]
 
 export default function AdminSidebar() {

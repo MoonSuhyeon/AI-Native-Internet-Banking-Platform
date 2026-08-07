@@ -558,6 +558,19 @@ services:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_METRICS_ENABLED: "true"
+      # ── 어드민 화면(/admin/monitoring) 임베드용 ── 로컬 전용이다. ──────────────
+      # Grafana 는 기본으로 X-Frame-Options: deny 를 내려 iframe 을 막는다. 그것을 풀고,
+      # 익명 Viewer 를 켜서 어드민에서 별도 로그인 없이 대시보드가 보이게 한다.
+      #
+      # 이 두 줄을 prod(infra/docker/docker-compose.prod.yml)로 옮기지 말 것.
+      # iframe 은 서버가 아니라 방문자 브라우저가 직접 가져오므로, 배포 환경에서
+      # 이렇게 하려면 Grafana 를 인터넷에 공개해야 한다. 그러면 누구나 인증 없이
+      # 전체 지표를 조회할 수 있다. prod 는 api-gateway(8080) 하나만 노출하고
+      # Grafana 는 내부망에 두는 구성이며, 그 구성을 되돌리는 변경이다.
+      # 배포까지 가려면 게이트웨이가 JWT 를 검증한 뒤 넘기는 auth proxy 로 가야 한다.
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
     volumes:
       - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana-data:/var/lib/grafana
