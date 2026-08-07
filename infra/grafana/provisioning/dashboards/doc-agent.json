@@ -1,0 +1,467 @@
+{
+  "uid": "doc-agent",
+  "title": "서류 심사 에이전트",
+  "tags": [
+    "doc",
+    "agent",
+    "ai",
+    "hitl"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": null,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "자동 판정 확정률 (채택률)",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(doc_agent_human_review_total{decision=\"CONFIRMED_FORGERY\"}[30m]))\n/\n(sum(rate(doc_agent_human_review_total[30m])) > 0)",
+          "legendFormat": "확정률",
+          "refId": "A"
+        }
+      ],
+      "description": "심사원이 HOLD 를 검토해 위조로 확정한 비율(30분 이동). 이 에이전트의 핵심 성능 지표다.\n\n낮아지면 에이전트가 멀쩡한 서류를 잡아 사람 일만 늘린다는 뜻이다.\n반대로 1.0 에 붙어 있으면 기준이 보수적이라 잡아야 할 걸 놓치고 있을 수 있다 — AUTO_PASS 비율과 같이 봐야 한다.\n\n분모가 0이면(검토 없음) 0으로 나누지 않도록 `> 0` 으로 막아 둔다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.7
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "title": "검토 대기 유입 (HOLD)",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(doc_agent_verdict_total{status=\"HOLD\"}[30m])) * 3600",
+          "legendFormat": "HOLD/시간",
+          "refId": "A"
+        }
+      ],
+      "description": "시간당 사람에게 넘어가는 건수(30분 이동 환산). 심사 인력 부하를 그대로 나타낸다.\n\n확정률이 그대로인데 이 값만 오르면 유입 자체가 는 것이고, 둘이 같이 움직이면 판정 기준이 흔들린 것이다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "파이프라인 실패율",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(doc_agent_pipeline_failed_total[30m]))\n/\n(sum(rate(doc_agent_pipeline_duration_seconds_count[30m])) > 0)",
+          "legendFormat": "실패율",
+          "refId": "A"
+        }
+      ],
+      "description": "예외로 끝난 비율. 실패는 판정을 만들지 못해 verdict 에 잡히지 않으므로 따로 본다.\n\n이게 오르면 판정 품질 이전에 처리 자체가 안 되고 있는 것이다 — 먼저 봐야 한다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.02
+              },
+              {
+                "color": "red",
+                "value": 0.1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "처리 시간 p95",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(doc_agent_pipeline_duration_seconds_bucket[30m])) by (le))",
+          "legendFormat": "p95",
+          "refId": "A"
+        }
+      ],
+      "description": "서류 한 건 처리에 걸리는 시간(95분위).\n\nOCR·위조분석·LLM추출 사이드카 호출이 대부분을 차지한다. 느려지면 아래 단계별 패널에서 어느 사이드카인지 짚을 수 있다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "심사원 결정 추이",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(doc_agent_human_review_total{decision=\"CONFIRMED_FORGERY\"}[30m])) * 3600",
+          "legendFormat": "위조 확정",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(doc_agent_human_review_total{decision=\"CLEARED\"}[30m])) * 3600",
+          "legendFormat": "정상 처리 (뒤집음)",
+          "refId": "B"
+        }
+      ],
+      "description": "심사원 결정을 양쪽 다 그린다. 한쪽만 보면 '아무도 검토 안 했다'와 '사람이 뒤집었다'가 구별되지 않는다.\n\n'정상 처리'가 늘면 에이전트가 과하게 잡고 있다는 신호다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "자동 판정 분포",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (status) (rate(doc_agent_verdict_total[30m])) * 3600",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "description": "AUTO_PASS·HOLD·NEEDS_RESUBMIT 비율. 채택률만 보면 'HOLD 를 남발해 사람 일이 늘었다'와 '판정이 정확해졌다'가 구분되지 않는데, 이 분포가 그 맥락을 준다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "단계별 소요 시간 p95",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, stage) (rate(doc_agent_stage_duration_seconds_bucket[30m])))",
+          "legendFormat": "{{stage}}",
+          "refId": "A"
+        }
+      ],
+      "description": "단계별 95분위 지연. 앞 세 단계(ingest·forgery·ocr·extract)는 외부 사이드카 호출이라 합쳐 재면 느려졌을 때 어느 쪽이 문제인지 알 수 없다.\n\n특정 선만 튀면 그 사이드카를 보면 된다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "단계별 실패",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (stage) (rate(doc_agent_pipeline_failed_total[30m])) * 3600",
+          "legendFormat": "{{stage}}",
+          "refId": "A"
+        }
+      ],
+      "description": "어느 단계에서 파이프라인이 터졌는지. stage 라벨이 사이드카 장애를 바로 지목한다.\n\n예: ingest 는 저장소(MinIO) 업로드, ocr/forgery 는 사이드카 응답 실패다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "서류 유형별 HOLD 비율",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (doc_type) (rate(doc_agent_verdict_total{status=\"HOLD\"}[30m]))\n/\n(sum by (doc_type) (rate(doc_agent_verdict_total[30m])) > 0)",
+          "legendFormat": "{{doc_type}}",
+          "refId": "A"
+        }
+      ],
+      "description": "어떤 서류에서 사람 손이 많이 가는지. 특정 유형만 높으면 그 서식의 추출 규칙이나 위조 판정 기준을 손볼 대상이다.\n\n전 유형이 같이 오르면 서식 문제가 아니라 모델·사이드카 쪽을 봐야 한다.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    }
+  ]
+}

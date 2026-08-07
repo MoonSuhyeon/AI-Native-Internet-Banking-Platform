@@ -67,6 +67,12 @@ management:
     export:
       prometheus:
         enabled: true
+    # 모든 지표에 공통으로 붙는 라벨. 없으면 application 으로 묶는 대시보드 패널에서
+    # 이 서비스만 통째로 빠진다 — 그래프가 비는 게 아니라 아예 안 나온다.
+    # auto-loan-review 와 같은 형태로 맞춘다.
+    tags:
+      application: doc-agent
+      environment: ${SPRING_PROFILES_ACTIVE:local}
 
 doc-agent:
   storage:

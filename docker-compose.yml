@@ -805,7 +805,12 @@ services:
     cap_add:
       - IPC_LOCK
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8200/v1/sys/health || exit 1"]
+      # localhost 가 아니라 127.0.0.1 을 쓴다.
+      # 컨테이너의 /etc/hosts 는 localhost 를 127.0.0.1 과 ::1 둘 다에 매핑하는데,
+      # vault -dev 는 IPv4(0.0.0.0:8200)에만 붙는다. wget 이 ::1 을 먼저 잡으면
+      # "Connection refused" 가 나고 헬스체크가 영원히 실패한다.
+      # 그러면 depends_on 이 걸린 doc-agent 가 아예 뜨지 못한다(doc 프로필 전체가 막힌다).
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8200/v1/sys/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -924,6 +929,9 @@ services:
       STORAGE_ENDPOINT: http://minio:9000
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-minioadmin}
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-minioadmin}
+      # common 의 CryptoProperties 는 기본값이 없다(fail-fast). 안 넘기면 cryptoService 빈
+      # 생성이 NPE 로 터져 부팅 자체가 안 된다. 다른 서비스와 같은 개발용 기본값을 쓴다.
+      CRYPTO_KEY_BASE64: ${CRYPTO_KEY_BASE64:-aW50ZXJuZXQtYmFuay1kZXYta2V5LTMyYnl0ZXMhISE=}
       VAULT_ENABLED: "true"
       VAULT_HOST: vault
       VAULT_PORT: 8200
