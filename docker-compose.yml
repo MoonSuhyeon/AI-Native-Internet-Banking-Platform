@@ -260,7 +260,13 @@ services:
       KFTC_CONSUMER_GROUP: core-banking-kftc-a
       BOK_CONSUMER_GROUP: core-banking-bok-a
       INTERNAL_CONSUMER_GROUP: core-banking-internal-a
-      SPRING_KAFKA_LISTENER_MISSING_TOPICS_FATAL: "false"
+      # 이 자리에는 SPRING_KAFKA_LISTENER_MISSING_TOPICS_FATAL 이 있었는데 코드가 읽지 않는 키였다
+      # (정본은 payment.kafka.missing-topics-fatal — BokKafkaConfig 등의 @Value).
+      # 즉 토픽 누락 시 죽지 않게 하려던 의도가 실제로는 적용된 적이 없다.
+      #
+      # 그래서 끄는 대신 순서를 보장한다. 토픽은 payment-topic-init 이 만들고, 아래
+      # depends_on 이 그 완료를 기다린다. 없는 토픽에 붙으면 죽는 편이 낫다 —
+      # 조용히 뜬 뒤 리스너만 죽어 있으면 결제 이벤트가 유실된다.
       APP_CORS_ENABLED: "true"
       LOG_DIR: /logs
     volumes:
@@ -270,6 +276,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      payment-topic-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/actuator/health | grep -q UP"]
       interval: 10s
@@ -358,7 +366,13 @@ services:
       KFTC_CONSUMER_GROUP: core-banking-kftc-b
       BOK_CONSUMER_GROUP: core-banking-bok-b
       INTERNAL_CONSUMER_GROUP: core-banking-internal-b
-      SPRING_KAFKA_LISTENER_MISSING_TOPICS_FATAL: "false"
+      # 이 자리에는 SPRING_KAFKA_LISTENER_MISSING_TOPICS_FATAL 이 있었는데 코드가 읽지 않는 키였다
+      # (정본은 payment.kafka.missing-topics-fatal — BokKafkaConfig 등의 @Value).
+      # 즉 토픽 누락 시 죽지 않게 하려던 의도가 실제로는 적용된 적이 없다.
+      #
+      # 그래서 끄는 대신 순서를 보장한다. 토픽은 payment-topic-init 이 만들고, 아래
+      # depends_on 이 그 완료를 기다린다. 없는 토픽에 붙으면 죽는 편이 낫다 —
+      # 조용히 뜬 뒤 리스너만 죽어 있으면 결제 이벤트가 유실된다.
       APP_CORS_ENABLED: "true"
       LOG_DIR: /logs
     volumes:
@@ -368,6 +382,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      payment-topic-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/actuator/health | grep -q UP"]
       interval: 10s
