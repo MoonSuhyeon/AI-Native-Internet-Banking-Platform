@@ -166,8 +166,8 @@ class ProductServiceTest {
                 null,
                 12,
                 36,
-                BigDecimal.valueOf(100000),
-                BigDecimal.valueOf(10000000),
+                100000L,
+                10000000L,
                 null,
                 null,
                 null,
@@ -313,11 +313,11 @@ class ProductServiceTest {
         given(savingsProductRepository.save(any(SavingsProduct.class))).willAnswer(inv -> inv.getArgument(0));
 
         SavingsProduct result = productService.createSavingsProduct(
-                1L, SavingType.FREE, BigDecimal.valueOf(10_000), BigDecimal.valueOf(1_000_000));
+                1L, SavingType.FREE, 10000L, 1000000L);
 
         assertThat(result.getProductId()).isEqualTo(1L);
         assertThat(result.getSavingType()).isEqualTo(SavingType.FREE);
-        assertThat(result.getMonthlyPaymentMinAmount()).isEqualByComparingTo("10000");
+        assertThat(result.getMonthlyPaymentMinAmount()).isEqualTo(10000L);
     }
 
     @Test
@@ -326,16 +326,16 @@ class ProductServiceTest {
         SavingsProduct savingsProduct = SavingsProduct.builder()
                 .productId(1L)
                 .savingType(SavingType.FREE)
-                .monthlyPaymentMinAmount(BigDecimal.valueOf(10_000))
-                .monthlyPaymentMaxAmount(BigDecimal.valueOf(1_000_000))
+                .monthlyPaymentMinAmount(10000L)
+                .monthlyPaymentMaxAmount(1000000L)
                 .build();
         given(savingsProductRepository.findByProductId(1L)).willReturn(Optional.of(savingsProduct));
 
         SavingsProduct result = productService.updateSavingsProduct(
-                1L, SavingType.REGULAR, BigDecimal.valueOf(30_000), BigDecimal.valueOf(2_000_000));
+                1L, SavingType.REGULAR, 30000L, 2000000L);
 
         assertThat(result.getSavingType()).isEqualTo(SavingType.REGULAR);
-        assertThat(result.getMonthlyPaymentMaxAmount()).isEqualByComparingTo("2000000");
+        assertThat(result.getMonthlyPaymentMaxAmount()).isEqualTo(2000000L);
     }
 
     @Test
@@ -345,11 +345,11 @@ class ProductServiceTest {
         given(subscriptionProductRepository.save(any(SubscriptionProduct.class))).willAnswer(inv -> inv.getArgument(0));
 
         SubscriptionProduct result = productService.createSubscriptionProduct(
-                1L, BigDecimal.valueOf(100_000), BigDecimal.valueOf(20_000),
-                BigDecimal.valueOf(500_000), BigDecimal.valueOf(100_000));
+                1L, 100000L, 20000L,
+                500000L, 100000L);
 
         assertThat(result.getProductId()).isEqualTo(1L);
-        assertThat(result.getMonthlyPaymentAmount()).isEqualByComparingTo("100000");
+        assertThat(result.getMonthlyPaymentAmount()).isEqualTo(100000L);
     }
 
     @Test
@@ -357,18 +357,18 @@ class ProductServiceTest {
     void updateSubscriptionProduct() {
         SubscriptionProduct subscriptionProduct = SubscriptionProduct.builder()
                 .productId(1L)
-                .monthlyPaymentAmount(BigDecimal.valueOf(100_000))
-                .minMonthlyPayment(BigDecimal.valueOf(20_000))
-                .maxMonthlyPayment(BigDecimal.valueOf(500_000))
-                .maxRecognizedPaymentAmount(BigDecimal.valueOf(100_000))
+                .monthlyPaymentAmount(100000L)
+                .minMonthlyPayment(20000L)
+                .maxMonthlyPayment(500000L)
+                .maxRecognizedPaymentAmount(100000L)
                 .build();
         given(subscriptionProductRepository.findById(1L)).willReturn(Optional.of(subscriptionProduct));
 
         SubscriptionProduct result = productService.updateSubscriptionProduct(
-                1L, BigDecimal.valueOf(200_000), BigDecimal.valueOf(30_000), BigDecimal.valueOf(600_000));
+                1L, 200000L, 30000L, 600000L);
 
-        assertThat(result.getMonthlyPaymentAmount()).isEqualByComparingTo("200000");
-        assertThat(result.getMaxMonthlyPayment()).isEqualByComparingTo("600000");
+        assertThat(result.getMonthlyPaymentAmount()).isEqualTo(200000L);
+        assertThat(result.getMaxMonthlyPayment()).isEqualTo(600000L);
     }
 
     @Test
@@ -429,7 +429,7 @@ class ProductServiceTest {
 
         ProductInterestRate result = productService.createInterestRate(
                 1L, RateType.BASE, BigDecimal.valueOf(3.5), "20260101",
-                6, 12, BigDecimal.valueOf(100_000), BigDecimal.valueOf(10_000_000), "기본금리");
+                6, 12, 100000L, 10000000L, "기본금리");
 
         assertThat(result.getProductId()).isEqualTo(1L);
         assertThat(result.getRate()).isEqualByComparingTo("3.5");

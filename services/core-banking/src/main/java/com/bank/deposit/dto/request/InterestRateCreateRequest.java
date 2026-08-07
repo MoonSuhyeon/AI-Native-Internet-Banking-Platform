@@ -13,7 +13,7 @@ public record InterestRateCreateRequest(
         @NotBlank String effectiveStartDate,
         Integer minimumContractPeriod,
         Integer maximumContractPeriod,
-        BigDecimal minimumJoinAmount,
-        BigDecimal maximumJoinAmount,
+        Long minimumJoinAmount,
+        Long maximumJoinAmount,
         String conditionDescription
 ) {}

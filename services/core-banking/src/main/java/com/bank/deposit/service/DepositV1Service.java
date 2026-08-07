@@ -99,7 +99,7 @@ public class DepositV1Service {
         }
         Transaction tx = transactionService.withdraw(
                 a.getAccountId(),
-                BigDecimal.valueOf(req.amount()),
+                req.amount(),
                 TransactionChannel.INTERNET,
                 req.memo()
         );
@@ -118,7 +118,7 @@ public class DepositV1Service {
         String depositorName = req.counterparty() != null ? req.counterparty().holderName() : null;
         Transaction tx = transactionService.deposit(
                 a.getAccountId(),
-                BigDecimal.valueOf(req.amount()),
+                req.amount(),
                 TransactionChannel.INTERNET,
                 req.memo(),
                 null,

@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +49,7 @@ public class PaymentScheduleService {
     @Transactional
     public List<PaymentSchedule> createSchedules(Long contractId, Long accountId,
                                                   Integer contractPeriodMonth,
-                                                  BigDecimal monthlyAmount,
+                                                  Long monthlyAmount,
                                                   boolean isAutoTransfer,
                                                   Long sourceAccountId,
                                                   Integer autoTransferDay,

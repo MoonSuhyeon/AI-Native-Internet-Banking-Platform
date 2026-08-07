@@ -87,26 +87,26 @@ class InterestServiceTest {
     @DisplayName("계약별 세후 이자 합계를 조회한다")
     void sumByContract() {
         given(interestHistoryRepository.sumInterestAfterTaxByContractId(1L))
-                .willReturn(BigDecimal.valueOf(87_500));
+                .willReturn(87500L);
 
-        BigDecimal result = service.sumByContract(1L);
+        Long result = service.sumByContract(1L);
 
-        assertThat(result).isEqualByComparingTo("87500");
+        assertThat(result).isEqualTo(87500L);
     }
 
     @Test
     @DisplayName("이자를 지급하면 이자 이력과 이자 거래가 저장되고 계좌 잔액이 증가한다")
     void payInterest() {
-        Account account = account(BigDecimal.valueOf(1_000_000));
+        Account account = account(1000000L);
         given(accountRepository.findById(10L)).willReturn(Optional.of(account));
         given(interestHistoryRepository.save(any(InterestHistory.class))).willAnswer(inv -> inv.getArgument(0));
         given(transactionRepository.save(any(Transaction.class))).willAnswer(inv -> inv.getArgument(0));
 
         InterestHistory result = service.payInterest(
                 1L, 10L,
-                BigDecimal.valueOf(100_000),
-                BigDecimal.valueOf(15_000),
-                BigDecimal.valueOf(1_500),
+                100000L,
+                15000L,
+                1500L,
                 BigDecimal.valueOf(3.5),
                 TaxBenefitType.GENERAL,
                 BigDecimal.valueOf(0.154),
@@ -114,15 +114,15 @@ class InterestServiceTest {
                 "20260101",
                 "20260331");
 
-        assertThat(result.getInterestAfterTax()).isEqualByComparingTo("83500");
-        assertThat(result.getInterestAmount()).isEqualByComparingTo("83500");
-        assertThat(account.getBalance()).isEqualByComparingTo("1083500");
-        assertThat(account.getTotalInterestAmount()).isEqualByComparingTo("83500");
+        assertThat(result.getInterestAfterTax()).isEqualTo(83500L);
+        assertThat(result.getInterestAmount()).isEqualTo(83500L);
+        assertThat(account.getBalance()).isEqualTo(1083500L);
+        assertThat(account.getTotalInterestAmount()).isEqualTo(83500L);
 
         ArgumentCaptor<Transaction> txCaptor = ArgumentCaptor.forClass(Transaction.class);
         then(transactionRepository).should().save(txCaptor.capture());
         assertThat(txCaptor.getValue().getTransactionType()).isEqualTo(TransactionType.INTEREST);
-        assertThat(txCaptor.getValue().getAmount()).isEqualByComparingTo("83500");
+        assertThat(txCaptor.getValue().getAmount()).isEqualTo(83500L);
     }
 
     @Test
@@ -131,12 +131,12 @@ class InterestServiceTest {
         given(accountRepository.findById(10L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.payInterest(
-                1L, 10L, BigDecimal.valueOf(100_000), null, null,
+                1L, 10L, 100000L, null, null,
                 BigDecimal.valueOf(3.5), null, null, null, "20260101", "20260331"))
                 .isInstanceOf(BusinessException.class);
     }
 
-    private Account account(BigDecimal balance) {
+    private Account account(Long balance) {
         return Account.builder()
                 .accountNumber("ACC-001")
                 .customerId("CUST-001")
@@ -155,11 +155,11 @@ class InterestServiceTest {
                 .appliedInterestRate(BigDecimal.valueOf(3.5))
                 .taxBenefitType(TaxBenefitType.GENERAL)
                 .appliedTaxRate(BigDecimal.valueOf(0.154))
-                .interestBeforeTax(BigDecimal.valueOf(100_000))
-                .interestTaxAmount(BigDecimal.valueOf(15_000))
-                .localIncomeTaxAmount(BigDecimal.valueOf(1_500))
-                .interestAfterTax(BigDecimal.valueOf(83_500))
-                .interestAmount(BigDecimal.valueOf(83_500))
+                .interestBeforeTax(100000L)
+                .interestTaxAmount(15000L)
+                .localIncomeTaxAmount(1500L)
+                .interestAfterTax(83500L)
+                .interestAmount(83500L)
                 .interestReason(InterestReason.REGULAR_INTEREST)
                 .interestPaidAt(OffsetDateTime.parse("2026-01-01T09:00:00+09:00"))
                 .build();

@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 public record DepositRequest(
         @NotNull Long accountId,
-        @NotNull @Positive BigDecimal amount,
+        @NotNull @Positive Long amount,
         TransactionChannel channelType,
         String transactionMemo,
         String depositorCustomerId,

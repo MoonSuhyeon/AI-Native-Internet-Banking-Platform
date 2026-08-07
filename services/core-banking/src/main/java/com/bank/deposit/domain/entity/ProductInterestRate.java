@@ -36,11 +36,11 @@ public class ProductInterestRate extends BaseEntity {
     @Column(name = "maximum_contract_period")
     private Integer maximumContractPeriod;
 
-    @Column(name = "minimum_join_amount", precision = 18, scale = 2)
-    private BigDecimal minimumJoinAmount;
+    @Column(name = "minimum_join_amount")
+    private Long minimumJoinAmount;
 
-    @Column(name = "maximum_join_amount", precision = 18, scale = 2)
-    private BigDecimal maximumJoinAmount;
+    @Column(name = "maximum_join_amount")
+    private Long maximumJoinAmount;
 
     @Column(name = "rate", precision = 5, scale = 2, nullable = false)
     private BigDecimal rate;

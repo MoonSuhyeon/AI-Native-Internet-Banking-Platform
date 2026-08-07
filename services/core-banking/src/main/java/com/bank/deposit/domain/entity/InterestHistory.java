@@ -43,8 +43,8 @@ public class InterestHistory extends BaseEntity {
     @Column(name = "interest_occurred_at")
     private OffsetDateTime interestOccurredAt;
 
-    @Column(name = "interest_amount", precision = 18, scale = 2, nullable = false)
-    private BigDecimal interestAmount;
+    @Column(name = "interest_amount", nullable = false)
+    private Long interestAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tax_benefit_type", nullable = false)
@@ -53,19 +53,19 @@ public class InterestHistory extends BaseEntity {
     @Column(name = "applied_tax_rate", precision = 6, scale = 4, nullable = false)
     private BigDecimal appliedTaxRate;
 
-    @Column(name = "interest_before_tax", precision = 18, scale = 2, nullable = false)
-    private BigDecimal interestBeforeTax;
+    @Column(name = "interest_before_tax", nullable = false)
+    private Long interestBeforeTax;
 
-    @Column(name = "interest_tax_amount", precision = 18, scale = 2, nullable = false)
+    @Column(name = "interest_tax_amount", nullable = false)
     @Builder.Default
-    private BigDecimal interestTaxAmount = BigDecimal.ZERO;
+    private Long interestTaxAmount = 0L;
 
-    @Column(name = "local_income_tax_amount", precision = 18, scale = 2, nullable = false)
+    @Column(name = "local_income_tax_amount", nullable = false)
     @Builder.Default
-    private BigDecimal localIncomeTaxAmount = BigDecimal.ZERO;
+    private Long localIncomeTaxAmount = 0L;
 
-    @Column(name = "interest_after_tax", precision = 18, scale = 2, nullable = false)
-    private BigDecimal interestAfterTax;
+    @Column(name = "interest_after_tax", nullable = false)
+    private Long interestAfterTax;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "interest_reason", nullable = false)

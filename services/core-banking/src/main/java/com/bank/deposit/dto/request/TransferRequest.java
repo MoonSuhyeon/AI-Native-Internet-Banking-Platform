@@ -11,7 +11,7 @@ public record TransferRequest(
         @NotNull Long fromAccountId,
         Long toAccountId,
         String toAccountNo,
-        @NotNull @Positive BigDecimal amount,
+        @NotNull @Positive Long amount,
         TransferType transferType,
         String counterpartyBankCode,
         String counterpartyBankName,

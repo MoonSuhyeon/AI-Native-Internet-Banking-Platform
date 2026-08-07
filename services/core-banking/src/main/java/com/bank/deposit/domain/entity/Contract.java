@@ -45,8 +45,8 @@ public class Contract extends BaseEntity {
     @Column(name = "monthly_payment_day", columnDefinition = "VARCHAR(6)")
     private String monthlyPaymentDay;
 
-    @Column(name = "join_amount", precision = 18, scale = 2, nullable = false)
-    private BigDecimal joinAmount;
+    @Column(name = "join_amount", nullable = false)
+    private Long joinAmount;
 
     @Column(name = "contract_interest_rate", precision = 5, scale = 2, nullable = false)
     private BigDecimal contractInterestRate;
@@ -67,8 +67,8 @@ public class Contract extends BaseEntity {
     @Builder.Default
     private BigDecimal appliedTaxRate = new BigDecimal("15.40");
 
-    @Column(name = "expected_interest_amount", precision = 18, scale = 2)
-    private BigDecimal expectedInterestAmount;
+    @Column(name = "expected_interest_amount")
+    private Long expectedInterestAmount;
 
     @Column(name = "contract_period_month", nullable = false)
     private Integer contractPeriodMonth;

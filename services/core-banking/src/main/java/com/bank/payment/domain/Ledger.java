@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
@@ -53,16 +52,16 @@ public class Ledger {
     private String journalType;
 
     // 금액
-    private BigDecimal amount;
+    private Long amount;
 
     // 통화
     private String currency;
 
     // 분개직전잔액
-    private BigDecimal balanceBefore;
+    private Long balanceBefore;
 
     // 분개직후잔액
-    private BigDecimal balanceAfter;
+    private Long balanceAfter;
 
     // 상대계좌번호_스냅샷
     private String counterpartyAccountNoSnap;
@@ -117,7 +116,7 @@ public class Ledger {
     public static Ledger intraTransferOut(
             String ledgerId, String paymentInstructionId, String accountId,
             String journalNo, String accountNoSnap, String holderNameSnap,
-            BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
+            Long amount, Long balanceBefore, Long balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -148,7 +147,7 @@ public class Ledger {
     public static Ledger intraTransferIn(
             String ledgerId, String paymentInstructionId, String accountId,
             String journalNo, String accountNoSnap, String holderNameSnap,
-            BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
+            Long amount, Long balanceBefore, Long balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -179,7 +178,7 @@ public class Ledger {
     public static Ledger interTransferIn(
             String ledgerId, String paymentInstructionId, String accountId,
             String journalNo, String accountNoSnap, String holderNameSnap,
-            BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
+            Long amount, Long balanceBefore, Long balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription,
             String counterpartySenderAccountNo, String counterpartySenderBankCode,
@@ -215,7 +214,7 @@ public class Ledger {
     public static Ledger interTransferOut(
             String ledgerId, String paymentInstructionId, String accountId,
             String journalNo, String accountNoSnap, String holderNameSnap,
-            BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
+            Long amount, Long balanceBefore, Long balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -248,7 +247,7 @@ public class Ledger {
      */
     public static Ledger clearingPending(
             String ledgerId, String paymentInstructionId,
-            String journalNo, BigDecimal amount,
+            String journalNo, Long amount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -262,8 +261,8 @@ public class Ledger {
                 .journalType("CLEARING_PENDING")
                 .amount(amount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)
@@ -281,7 +280,7 @@ public class Ledger {
      */
     public static Ledger clearingPendingBok(
             String ledgerId, String paymentInstructionId,
-            String journalNo, BigDecimal amount,
+            String journalNo, Long amount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -295,8 +294,8 @@ public class Ledger {
                 .journalType("CLEARING_PENDING")
                 .amount(amount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)
@@ -315,7 +314,7 @@ public class Ledger {
     public static Ledger fee(
             String ledgerId, String paymentInstructionId, String accountId,
             String journalNo, String accountNoSnap, String holderNameSnap,
-            BigDecimal feeAmount,
+            Long feeAmount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -329,8 +328,8 @@ public class Ledger {
                 .journalType("FEE")
                 .amount(feeAmount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)
@@ -348,7 +347,7 @@ public class Ledger {
      */
     public static Ledger feeIncome(
             String ledgerId, String paymentInstructionId,
-            String journalNo, BigDecimal feeAmount,
+            String journalNo, Long feeAmount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -362,8 +361,8 @@ public class Ledger {
                 .journalType("FEE_INCOME")
                 .amount(feeAmount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)
@@ -384,7 +383,7 @@ public class Ledger {
             String ledgerId, String paymentInstructionId, String accountId,
             String originalLedgerId, String journalNo,
             String accountNoSnap, String holderNameSnap,
-            BigDecimal amount, BigDecimal balanceBefore, BigDecimal balanceAfter,
+            Long amount, Long balanceBefore, Long balanceAfter,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription, String reversalReason) {
         return Ledger.builder()
@@ -421,7 +420,7 @@ public class Ledger {
             String ledgerId, String paymentInstructionId,
             String originalLedgerId, String journalNo,
             String accountId, String accountNoSnap, String holderNameSnap,
-            BigDecimal amount,
+            Long amount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription, String reversalReason) {
         return Ledger.builder()
@@ -436,8 +435,8 @@ public class Ledger {
                 .journalType("REVERSAL_CLEARING_PENDING")
                 .amount(amount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)
@@ -458,7 +457,7 @@ public class Ledger {
             String ledgerId, String paymentInstructionId, String accountId,
             String originalLedgerId, String journalNo,
             String accountNoSnap, String holderNameSnap,
-            BigDecimal amount,
+            Long amount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription, String reversalReason) {
         return Ledger.builder()
@@ -473,8 +472,8 @@ public class Ledger {
                 .journalType("REVERSAL_FEE")
                 .amount(amount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)
@@ -494,7 +493,7 @@ public class Ledger {
     public static Ledger reversalFeeIncome(
             String ledgerId, String paymentInstructionId,
             String originalLedgerId, String journalNo,
-            BigDecimal amount,
+            Long amount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription, String reversalReason) {
         return Ledger.builder()
@@ -509,8 +508,8 @@ public class Ledger {
                 .journalType("REVERSAL_FEE_INCOME")
                 .amount(amount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)
@@ -534,7 +533,7 @@ public class Ledger {
     public static Ledger clearingPendingUnwind(
             String ledgerId, String paymentInstructionId,
             String accountId, String accountNoSnap, String holderNameSnap,
-            String journalNo, BigDecimal amount,
+            String journalNo, Long amount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -548,8 +547,8 @@ public class Ledger {
                 .journalType("CLEARING_PENDING_UNWIND")
                 .amount(amount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)
@@ -569,7 +568,7 @@ public class Ledger {
      */
     public static Ledger bokDda(
             String ledgerId, String paymentInstructionId,
-            String journalNo, BigDecimal amount,
+            String journalNo, Long amount,
             String currency, String transactionDate, String postingDate, String valueDate,
             OffsetDateTime postedAt, String systemDescription) {
         return Ledger.builder()
@@ -583,8 +582,8 @@ public class Ledger {
                 .journalType("INTERBANK_SETTLEMENT")
                 .amount(amount)
                 .currency(currency)
-                .balanceBefore(BigDecimal.ZERO)
-                .balanceAfter(BigDecimal.ZERO)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
                 .transactionDate(transactionDate)
                 .postingDate(postingDate)
                 .valueDate(valueDate)

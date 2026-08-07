@@ -29,7 +29,6 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -117,7 +116,7 @@ public class PaymentTransactionService {
                 .isIntraBank(isIntraBank)
                 .routingNetworkType(routingNetworkType)
                 .transferAmount(command.transferAmount())
-                .feeAmount(isIntraBank ? BigDecimal.ZERO : new BigDecimal("500"))  // 자행 0, 타행 500
+                .feeAmount(isIntraBank ? 0L : 500L)  // 자행 0, 타행 500
                 .receiverPassbookSenderDisplay(command.receiverPassbookSenderDisplay())
                 .receiverMemo(command.receiverMemo())
                 .senderMemo(command.senderMemo())
@@ -200,7 +199,7 @@ public class PaymentTransactionService {
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = BusinessDate.of(now);
-        BigDecimal amount = command.transferAmount();
+        Long amount = command.transferAmount();
 
         // 1. AUTHORIZED→PROCESSING (낙관락, pi.getVersion()+1 = authorize 후 버전)
         markProcessing(piId, pi.getVersion() + 1, now);
@@ -235,8 +234,8 @@ public class PaymentTransactionService {
         ledgerMapper.insert(in);
 
         // 5. 차변=대변 검증 (P-014)
-        BigDecimal debitSum = out.getAmount();
-        BigDecimal creditSum = in.getAmount();
+        Long debitSum = out.getAmount();
+        Long creditSum = in.getAmount();
         if (debitSum.compareTo(creditSum) != 0) {
             throw new LedgerBalanceMismatchException(
                     "차변≠대변: DEBIT " + debitSum + " ≠ CREDIT " + creditSum + " (PI " + piId + ")");
@@ -298,7 +297,7 @@ public class PaymentTransactionService {
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = BusinessDate.of(now);
-        BigDecimal amount = command.transferAmount();
+        Long amount = command.transferAmount();
 
         // 1. PROCESSING_STARTED 이력만 INSERT (markProcessing 없음 — claim 이 이미 PROCESSING 커밋)
         Integer maxSeq1 = statusHistoryMapper.selectMaxSequence(piId);
@@ -394,8 +393,8 @@ public class PaymentTransactionService {
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = BusinessDate.of(now);
-        BigDecimal transferAmount = command.transferAmount();
-        BigDecimal feeAmount = pi.getFeeAmount();  // txStep1에서 isIntraBank=false → 500
+        Long transferAmount = command.transferAmount();
+        Long feeAmount = pi.getFeeAmount();  // txStep1에서 isIntraBank=false → 500
 
         // 1. AUTHORIZED→PROCESSING (낙관락: pi.getVersion()+1=1 → DB v2)
         markProcessing(piId, pi.getVersion() + 1, now);
@@ -552,8 +551,8 @@ public class PaymentTransactionService {
         OffsetDateTime now = OffsetDateTime.now();
         String piId = pi.getPaymentInstructionId();
         String businessDate = BusinessDate.of(now);
-        BigDecimal transferAmount = command.transferAmount();
-        BigDecimal feeAmount = pi.getFeeAmount();
+        Long transferAmount = command.transferAmount();
+        Long feeAmount = pi.getFeeAmount();
 
         // 1. AUTHORIZED→PROCESSING (낙관락: pi.getVersion()+1=1 → DB v2)
         markProcessing(piId, pi.getVersion() + 1, now);
@@ -1034,9 +1033,9 @@ public class PaymentTransactionService {
                 .orElseThrow(() -> new IllegalStateException("원분개 FEE_INCOME 없음: " + piId));
 
         // R01 balance: B-5 응답잔액 박제 (null이면 0,0 fallback — chk_balance_before/after >= 0 만족)
-        // WithdrawCancelData.balanceBefore/After는 BigDecimal 직접 반환 — valueOf 래핑 불필요.
-        BigDecimal r01BalanceBefore = (cancelResult != null) ? cancelResult.balanceBefore() : BigDecimal.ZERO;
-        BigDecimal r01BalanceAfter  = (cancelResult != null) ? cancelResult.balanceAfter()  : BigDecimal.ZERO;
+        // WithdrawCancelData.balanceBefore/After는 Long 직접 반환 — valueOf 래핑 불필요.
+        Long r01BalanceBefore = (cancelResult != null) ? cancelResult.balanceBefore() : 0L;
+        Long r01BalanceAfter  = (cancelResult != null) ? cancelResult.balanceAfter()  : 0L;
 
         // R01: 송신계좌 CREDIT REVERSAL_TRANSFER_OUT (jn1)
         Ledger r01 = Ledger.reversalTransferOut(
@@ -1301,7 +1300,7 @@ public class PaymentTransactionService {
                 .isIntraBank(false)
                 .routingNetworkType("KFTC")
                 .transferAmount(command.transferAmount())
-                .feeAmount(BigDecimal.ZERO)
+                .feeAmount(0L)
                 .receiverPassbookSenderDisplay(command.receiverPassbookMemo())
                 .status("DRAFT")
                 .channel("INBOUND")

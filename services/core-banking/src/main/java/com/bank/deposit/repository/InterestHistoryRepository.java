@@ -4,7 +4,6 @@ import com.bank.deposit.domain.entity.InterestHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface InterestHistoryRepository extends JpaRepository<InterestHistory, Long> {
@@ -12,5 +11,5 @@ public interface InterestHistoryRepository extends JpaRepository<InterestHistory
     List<InterestHistory> findByAccountIdOrderByInterestPaidAtDesc(Long accountId);
 
     @Query("SELECT COALESCE(SUM(h.interestAfterTax), 0) FROM InterestHistory h WHERE h.contractId = :contractId")
-    BigDecimal sumInterestAfterTaxByContractId(Long contractId);
+    Long sumInterestAfterTaxByContractId(Long contractId);
 }

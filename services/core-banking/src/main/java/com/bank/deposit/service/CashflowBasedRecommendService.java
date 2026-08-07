@@ -93,18 +93,19 @@ public class CashflowBasedRecommendService {
             return emptyResult(customerId, periodMonth);
         }
 
-        BigDecimal totalInflow  = sumByDirection(transactions, DirectionType.IN);
-        BigDecimal totalOutflow = sumByDirection(transactions, DirectionType.OUT);
-        BigDecimal netCashFlow  = totalInflow.subtract(totalOutflow);
-        BigDecimal monthlySavings = netCashFlow.divide(
+        long totalInflow  = sumByDirection(transactions, DirectionType.IN);
+        long totalOutflow = sumByDirection(transactions, DirectionType.OUT);
+        long netCashFlow  = totalInflow - totalOutflow;
+        BigDecimal monthlySavings = BigDecimal.valueOf(netCashFlow).divide(
                 BigDecimal.valueOf(periodMonth), 0, RoundingMode.DOWN);
 
-        CashFlowSummary cashFlow = new CashFlowSummary(totalInflow, totalOutflow, netCashFlow, monthlySavings);
+        CashFlowSummary cashFlow = new CashFlowSummary(
+                totalInflow, totalOutflow, netCashFlow, monthlySavings.longValueExact());
 
-        BigDecimal currentBalance = activeAccounts.stream()
+        Long currentBalance = activeAccounts.stream()
                 .map(Account::getBalance)
                 .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(0L, Long::sum);
 
         boolean savingsGrowth = isSavingsGrowthType(currentBalance, monthlySavings);
         log.info("[추천] customerId={} periodMonth={} currentBalance={} monthlySavings={} savingsGrowthType={}",
@@ -173,11 +174,11 @@ public class CashflowBasedRecommendService {
     // helpers
     // ──────────────────────────────────────────────────────────────────────────
 
-    private BigDecimal sumByDirection(List<Transaction> transactions, DirectionType direction) {
+    private Long sumByDirection(List<Transaction> transactions, DirectionType direction) {
         return transactions.stream()
                 .filter(t -> t.getDirectionType() == direction)
                 .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(0L, Long::sum);
     }
 
     private static final String FALLBACK_REASON =
@@ -185,18 +186,18 @@ public class CashflowBasedRecommendService {
 
     private ProductRecommendResponse balanceFallbackRecommend(String customerId, int periodMonth,
                                                               CashFlowSummary cashFlow,
-                                                              BigDecimal currentBalance,
+                                                              Long currentBalance,
                                                               int transactionCount,
                                                               Integer customerAge,
                                                               Map<Long, List<TargetGroup>> targetGroupsByProductId) {
-        if (currentBalance.compareTo(BigDecimal.ZERO) <= 0) {
+        if (currentBalance <= 0) {
             return new ProductRecommendResponse(customerId, periodMonth, cashFlow, List.of(), FALLBACK_REASON);
         }
 
         List<Product> candidates = productRepository.findByProductStatus(ProductStatus.SELLING).stream()
                 .filter(p -> p.getProductType() == ProductType.DEPOSIT)
                 .filter(p -> !isSpecialTargetProduct(p))
-                .filter(p -> isJoinAmountAvailable(p, currentBalance))
+                .filter(p -> isJoinAmountAvailable(p, BigDecimal.valueOf(currentBalance)))
                 .filter(p -> isAgeEligible(p, customerAge, targetGroupsByProductId))
                 .toList();
 
@@ -234,11 +235,11 @@ public class CashflowBasedRecommendService {
         return new ProductRecommendResponse(customerId, periodMonth, cashFlow, recommendations, FALLBACK_REASON);
     }
 
-    private boolean isRecommendable(Product product, BigDecimal currentBalance, BigDecimal monthlySavings) {
+    private boolean isRecommendable(Product product, Long currentBalance, BigDecimal monthlySavings) {
         if (product.getProductType() == ProductType.SUBSCRIPTION) return false;
         if (isSpecialTargetProduct(product)) return false;
         BigDecimal availableAmount = product.getProductType() == ProductType.DEPOSIT
-                ? currentBalance : monthlySavings;
+                ? BigDecimal.valueOf(currentBalance) : monthlySavings;
         return isJoinAmountAvailable(product, availableAmount);
     }
 
@@ -314,10 +315,10 @@ public class CashflowBasedRecommendService {
     }
 
     private boolean isJoinAmountAvailable(Product product, BigDecimal amount) {
-        BigDecimal minAmount = product.getMinJoinAmount();
-        BigDecimal maxAmount = product.getMaxJoinAmount();
-        if (minAmount != null && amount.compareTo(minAmount) < 0) return false;
-        return maxAmount == null || amount.compareTo(maxAmount) <= 0;
+        Long minAmount = product.getMinJoinAmount();
+        Long maxAmount = product.getMaxJoinAmount();
+        if (minAmount != null && amount.compareTo(BigDecimal.valueOf(minAmount)) < 0) return false;
+        return maxAmount == null || amount.compareTo(BigDecimal.valueOf(maxAmount)) <= 0;
     }
 
     private Map<Long, BigDecimal> calculateBestRateMap(List<Product> products, List<ProductInterestRate> activeRates) {
@@ -346,7 +347,7 @@ public class CashflowBasedRecommendService {
     // ──────────────────────────────────────────────────────────────────────────
 
     private ScoredProduct scoreProduct(Product product,
-                                       BigDecimal currentBalance,
+                                       Long currentBalance,
                                        BigDecimal monthlySavings,
                                        int transactionCount,
                                        int periodMonth,
@@ -368,14 +369,16 @@ public class CashflowBasedRecommendService {
      * 가중치는 totalScore 단계에서 적용하므로 여기서는 순수 비율만 계산.
      */
     private BigDecimal calculateFinancialFitScore(Product product,
-                                                  BigDecimal currentBalance,
+                                                  Long currentBalance,
                                                   BigDecimal monthlySavings) {
-        BigDecimal minJoinAmount = positiveOrOne(product.getMinJoinAmount());
+        long minJoinAmount = positiveOrOne(product.getMinJoinAmount());
         BigDecimal fitRatio;
         if (product.getProductType() == ProductType.DEPOSIT) {
-            fitRatio = currentBalance.divide(minJoinAmount, 4, RoundingMode.HALF_UP);
+            fitRatio = BigDecimal.valueOf(currentBalance)
+                    .divide(BigDecimal.valueOf(minJoinAmount), 4, RoundingMode.HALF_UP);
         } else {
-            fitRatio = monthlySavings.divide(minJoinAmount.multiply(BigDecimal.valueOf(2)), 4, RoundingMode.HALF_UP);
+            fitRatio = monthlySavings
+                    .divide(BigDecimal.valueOf(minJoinAmount * 2), 4, RoundingMode.HALF_UP);
         }
         BigDecimal score = cap(fitRatio, BigDecimal.valueOf(5))
                 .divide(BigDecimal.valueOf(5), 4, RoundingMode.HALF_UP)
@@ -383,12 +386,13 @@ public class CashflowBasedRecommendService {
         return cap(score, FINANCIAL_FIT_MAX);   // 40점 cap 유지
     }
 
-    private boolean isSavingsGrowthType(BigDecimal currentBalance, BigDecimal monthlySavings) {
-        return monthlySavings.multiply(BigDecimal.valueOf(12)).compareTo(currentBalance) > 0;
+    private boolean isSavingsGrowthType(Long currentBalance, BigDecimal monthlySavings) {
+        return monthlySavings.multiply(BigDecimal.valueOf(12))
+                .compareTo(BigDecimal.valueOf(currentBalance)) > 0;
     }
 
     private BigDecimal calculateExpectedReturn(Product product,
-                                               BigDecimal currentBalance,
+                                               Long currentBalance,
                                                BigDecimal monthlySavings,
                                                int requestedPeriodMonth,
                                                BigDecimal bestRate) {
@@ -396,7 +400,7 @@ public class CashflowBasedRecommendService {
         BigDecimal yearlyRate = bestRate.divide(BigDecimal.valueOf(100), 8, RoundingMode.HALF_UP);
 
         if (product.getProductType() == ProductType.DEPOSIT) {
-            return currentBalance
+            return BigDecimal.valueOf(currentBalance)
                     .multiply(yearlyRate)
                     .multiply(BigDecimal.valueOf(period))
                     .divide(BigDecimal.valueOf(12), 0, RoundingMode.DOWN);
@@ -509,8 +513,8 @@ public class CashflowBasedRecommendService {
     // utilities
     // ──────────────────────────────────────────────────────────────────────────
 
-    private BigDecimal positiveOrOne(BigDecimal value) {
-        return (value == null || value.compareTo(BigDecimal.ZERO) <= 0) ? BigDecimal.ONE : value;
+    private long positiveOrOne(Long value) {
+        return (value == null || value <= 0) ? 1L : value;
     }
 
     private BigDecimal cap(BigDecimal value, BigDecimal max) {
@@ -522,8 +526,7 @@ public class CashflowBasedRecommendService {
     }
 
     private ProductRecommendResponse emptyResult(String customerId, int periodMonth) {
-        CashFlowSummary zero = new CashFlowSummary(
-                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        CashFlowSummary zero = new CashFlowSummary(0L, 0L, 0L, 0L);
         return new ProductRecommendResponse(customerId, periodMonth, zero, List.of());
     }
 

@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -26,5 +25,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
               AND (p.maxJoinAmount IS NULL OR p.maxJoinAmount >= :amount)
             ORDER BY p.baseInterestRate DESC
             """)
-    List<Product> findSellingProductsByJoinAmount(@Param("amount") BigDecimal amount);
+    List<Product> findSellingProductsByJoinAmount(@Param("amount") Long amount);
 }

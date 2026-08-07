@@ -3,7 +3,6 @@ package com.bank.payment.outbound.ledger.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.math.BigDecimal;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record AccountInquiryData(
@@ -19,7 +18,7 @@ public record AccountInquiryData(
         Integer version,
         // D-REQ-3/4 해소 전: deposit 별도 balance/limit API 없음 → by-number 응답 필드로 대체.
         // balance: Account 엔티티 NOT NULL (default 0). dailyWithdrawLimit/atmWithdrawLimit: nullable.
-        BigDecimal balance,
-        BigDecimal dailyWithdrawLimit,
-        BigDecimal atmWithdrawLimit
+        Long balance,
+        Long dailyWithdrawLimit,
+        Long atmWithdrawLimit
 ) {}

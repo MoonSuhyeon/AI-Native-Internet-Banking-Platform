@@ -30,13 +30,13 @@ public class SavingsProduct extends BaseEntity {
     @Column(name = "saving_type", nullable = false)
     private SavingType savingType;
 
-    @Column(name = "monthly_payment_min_amount", precision = 18, scale = 2)
-    private BigDecimal monthlyPaymentMinAmount;
+    @Column(name = "monthly_payment_min_amount")
+    private Long monthlyPaymentMinAmount;
 
-    @Column(name = "monthly_payment_max_amount", precision = 18, scale = 2)
-    private BigDecimal monthlyPaymentMaxAmount;
+    @Column(name = "monthly_payment_max_amount")
+    private Long monthlyPaymentMaxAmount;
 
-    public void update(SavingType savingType, BigDecimal monthlyPaymentMinAmount, BigDecimal monthlyPaymentMaxAmount) {
+    public void update(SavingType savingType, Long monthlyPaymentMinAmount, Long monthlyPaymentMaxAmount) {
         this.savingType = savingType;
         this.monthlyPaymentMinAmount = monthlyPaymentMinAmount;
         this.monthlyPaymentMaxAmount = monthlyPaymentMaxAmount;

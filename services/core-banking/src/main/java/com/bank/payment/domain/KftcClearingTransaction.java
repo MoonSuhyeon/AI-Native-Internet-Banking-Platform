@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
@@ -64,7 +63,7 @@ public class KftcClearingTransaction {
     private String receiverHolderNameSnap;
 
     // 청산금액
-    private BigDecimal clearingAmount;
+    private Long clearingAmount;
 
     // 통화
     private String currency;
@@ -126,7 +125,7 @@ public class KftcClearingTransaction {
             String receiverBankCode,
             String receiverAccountNoSnap,
             String receiverHolderNameSnap,
-            BigDecimal clearingAmount,
+            Long clearingAmount,
             String clearingRequestedAt) {
         return KftcClearingTransaction.builder()
                 .clearingTransactionId(clearingTransactionId)
@@ -164,7 +163,7 @@ public class KftcClearingTransaction {
             String receiverBankCode,
             String receiverAccountNoSnap,
             String receiverHolderNameSnap,
-            BigDecimal clearingAmount,
+            Long clearingAmount,
             String settledAt,
             String settlementDate) {
         return KftcClearingTransaction.builder()
@@ -206,7 +205,7 @@ public class KftcClearingTransaction {
             String receiverBankCode,
             String receiverAccountNoSnap,
             String receiverHolderNameSnap,
-            BigDecimal clearingAmount,
+            Long clearingAmount,
             String rejectCode,
             String rejectMessage,
             String rejectedAt) {

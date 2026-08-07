@@ -41,7 +41,7 @@ public class PaymentScheduleController {
             @PathVariable Long contractId,
             @RequestParam Long accountId,
             @RequestParam Integer contractPeriodMonth,
-            @RequestParam BigDecimal monthlyAmount,
+            @RequestParam Long monthlyAmount,
             @RequestParam(defaultValue = "false") boolean isAutoTransfer,
             @RequestParam(required = false) Long sourceAccountId,
             @RequestParam(required = false) Integer autoTransferDay,

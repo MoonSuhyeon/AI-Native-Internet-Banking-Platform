@@ -269,7 +269,7 @@ class AccountControllerTest {
                 .accountType(ProductType.DEPOSIT)
                 .accountPassword("1234")
                 .openedAt(java.time.LocalDate.of(2026, 1, 1))
-                .balance(BigDecimal.valueOf(1_000_000))
+                .balance(1000000L)
                 .build();
     }
 }

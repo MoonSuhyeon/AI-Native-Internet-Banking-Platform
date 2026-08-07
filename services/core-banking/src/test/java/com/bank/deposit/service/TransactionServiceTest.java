@@ -65,18 +65,18 @@ class TransactionServiceTest {
         @Test
         @DisplayName("입금하면 잔액이 증가하고 거래 내역이 저장된다")
         void deposit() {
-            Account acc = activeAccount(BigDecimal.valueOf(100_000));
+            Account acc = activeAccount(100000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(acc));
             given(transactionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-            Transaction result = transactionService.deposit(1L, BigDecimal.valueOf(50_000),
+            Transaction result = transactionService.deposit(1L, 50000L,
                     TransactionChannel.INTERNET, "테스트 입금", null, null);
 
             assertThat(result.getTransactionType()).isEqualTo(TransactionType.DEPOSIT);
             assertThat(result.getDirectionType()).isEqualTo(DirectionType.IN);
-            assertThat(result.getAmount()).isEqualByComparingTo("50000");
-            assertThat(result.getBalanceBefore()).isEqualByComparingTo("100000");
-            assertThat(result.getBalanceAfter()).isEqualByComparingTo("150000");
+            assertThat(result.getAmount()).isEqualTo(50000L);
+            assertThat(result.getBalanceBefore()).isEqualTo(100000L);
+            assertThat(result.getBalanceAfter()).isEqualTo(150000L);
             assertThat(result.getTransactionNumber()).startsWith("DEP-");
         }
 
@@ -86,7 +86,7 @@ class TransactionServiceTest {
             Account closed = closedAccount();
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(closed));
 
-            assertThatThrownBy(() -> transactionService.deposit(1L, BigDecimal.valueOf(50_000),
+            assertThatThrownBy(() -> transactionService.deposit(1L, 50000L,
                     null, null, null, null))
                     .isInstanceOf(BusinessException.class);
         }
@@ -99,24 +99,24 @@ class TransactionServiceTest {
         @Test
         @DisplayName("잔액이 충분하면 출금이 정상 처리된다")
         void withdraw() {
-            Account acc = activeAccount(BigDecimal.valueOf(500_000));
+            Account acc = activeAccount(500000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(acc));
             given(transactionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-            Transaction result = transactionService.withdraw(1L, BigDecimal.valueOf(200_000),
+            Transaction result = transactionService.withdraw(1L, 200000L,
                     TransactionChannel.ATM, "ATM 출금");
 
             assertThat(result.getDirectionType()).isEqualTo(DirectionType.OUT);
-            assertThat(result.getBalanceAfter()).isEqualByComparingTo("300000");
+            assertThat(result.getBalanceAfter()).isEqualTo(300000L);
         }
 
         @Test
         @DisplayName("잔액보다 많은 금액을 출금하면 예외가 발생한다")
         void withdrawInsufficientBalance() {
-            Account acc = activeAccount(BigDecimal.valueOf(10_000));
+            Account acc = activeAccount(10000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(acc));
 
-            assertThatThrownBy(() -> transactionService.withdraw(1L, BigDecimal.valueOf(50_000),
+            assertThatThrownBy(() -> transactionService.withdraw(1L, 50000L,
                     null, null))
                     .isInstanceOf(BusinessException.class);
         }
@@ -129,12 +129,12 @@ class TransactionServiceTest {
         @Test
         @DisplayName("내부 이체 시 출금 거래가 생성된다")
         void transfer() {
-            Account source = activeAccount(BigDecimal.valueOf(1_000_000));
+            Account source = activeAccount(1000000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
 
 
             Transaction result = transactionService.transfer(1L, null, "001-1234-5678",
-                    BigDecimal.valueOf(300_000), TransferType.EXTERNAL,
+                    300000L, TransferType.EXTERNAL,
                     "001", "국민은행", "홍길동", TransactionChannel.INTERNET, "이체", null);
 
             assertThat(result.getTransactionType()).isEqualTo(TransactionType.TRANSFER);
@@ -148,13 +148,13 @@ class TransactionServiceTest {
             assertThat(result.getChannelType()).isEqualTo(TransactionChannel.INTERNET);
             assertThat(result.getTransferRequestedAt()).isNotNull();
             assertThat(result.getTransferCompletedAt()).isNotNull();
-            assertThat(source.getBalance()).isEqualByComparingTo("700000");
+            assertThat(source.getBalance()).isEqualTo(700000L);
         }
 
         @Test
         @DisplayName("내부 계좌 이체 시 상대 계좌 입금 거래도 생성한다")
         void transferToInternalAccountCreatesInboundTransaction() {
-            Account source = activeAccount(BigDecimal.valueOf(1_000_000));
+            Account source = activeAccount(1000000L);
             Account target = Account.builder()
                     .accountNumber("ACC-002")
                     .customerId("CUST-002")
@@ -162,7 +162,7 @@ class TransactionServiceTest {
                     .accountType(ProductType.DEPOSIT)
                     .accountPassword("5678")
                     .openedAt(LocalDate.of(2026, 1, 1))
-                    .balance(BigDecimal.valueOf(200_000))
+                    .balance(200000L)
                     .build();
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
             given(accountRepository.findByIdForUpdate(2L)).willReturn(Optional.of(target));
@@ -170,7 +170,7 @@ class TransactionServiceTest {
 
 
             Transaction result = transactionService.transfer(1L, 2L, "ACC-002",
-                    BigDecimal.valueOf(300_000), TransferType.INTERNAL,
+                    300000L, TransferType.INTERNAL,
                     "001", "우리은행", "김수신", TransactionChannel.MOBILE, "내부 이체", null);
 
             // OUT 거래는 saveOrFetch, IN 거래는 transactionRepository.save
@@ -182,8 +182,8 @@ class TransactionServiceTest {
             Transaction inTx = inCaptor.getValue();
 
             assertThat(result.getDirectionType()).isEqualTo(DirectionType.OUT);
-            assertThat(source.getBalance()).isEqualByComparingTo("700000");
-            assertThat(target.getBalance()).isEqualByComparingTo("500000");
+            assertThat(source.getBalance()).isEqualTo(700000L);
+            assertThat(target.getBalance()).isEqualTo(500000L);
             assertThat(outTx.getDirectionType()).isEqualTo(DirectionType.OUT);
             assertThat(inTx.getDirectionType()).isEqualTo(DirectionType.IN);
             assertThat(inTx.getTransferType()).isEqualTo(TransferType.INTERNAL);
@@ -194,11 +194,11 @@ class TransactionServiceTest {
         @Test
         @DisplayName("잔액이 부족하면 이체 시 예외가 발생한다")
         void transferInsufficientBalance() {
-            Account source = activeAccount(BigDecimal.valueOf(100));
+            Account source = activeAccount(100L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
 
             assertThatThrownBy(() -> transactionService.transfer(1L, 2L, null,
-                    BigDecimal.valueOf(1_000_000), null, null, null, null, null, null, null))
+                    1000000L, null, null, null, null, null, null, null))
                     .isInstanceOf(BusinessException.class);
         }
 
@@ -206,7 +206,7 @@ class TransactionServiceTest {
         @DisplayName("INTERNAL 이체인데 toAccountId가 null이면 예외가 발생한다")
         void internalTransferWithNullToAccountId() {
             assertThatThrownBy(() -> transactionService.transfer(1L, null, null,
-                    BigDecimal.valueOf(100_000), TransferType.INTERNAL,
+                    100000L, TransferType.INTERNAL,
                     null, null, null, null, null, null))
                     .isInstanceOf(BusinessException.class);
         }
@@ -217,7 +217,7 @@ class TransactionServiceTest {
             given(accountRepository.findByIdForUpdate(99L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> transactionService.transfer(99L, null, "001-0000-0001",
-                    BigDecimal.valueOf(100_000), TransferType.EXTERNAL,
+                    100000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인", TransactionChannel.INTERNET, "이체", null))
                     .isInstanceOf(BusinessException.class);
         }
@@ -228,7 +228,7 @@ class TransactionServiceTest {
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(closedAccount()));
 
             assertThatThrownBy(() -> transactionService.transfer(1L, null, "001-0000-0001",
-                    BigDecimal.valueOf(100_000), TransferType.EXTERNAL,
+                    100000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인", TransactionChannel.INTERNET, "이체", null))
                     .isInstanceOf(BusinessException.class);
         }
@@ -236,7 +236,7 @@ class TransactionServiceTest {
         @Test
         @DisplayName("당행 이체 시 계좌번호가 ID와 불일치하면 예외가 발생한다")
         void internalTransferAccountNoMismatch() {
-            Account source = activeAccount(BigDecimal.valueOf(1_000_000));
+            Account source = activeAccount(1000000L);
             Account target = Account.builder()
                     .accountNumber("ACC-002")
                     .customerId("CUST-002")
@@ -244,13 +244,13 @@ class TransactionServiceTest {
                     .accountType(ProductType.DEPOSIT)
                     .accountPassword("5678")
                     .openedAt(LocalDate.of(2026, 1, 1))
-                    .balance(BigDecimal.valueOf(100_000))
+                    .balance(100000L)
                     .build();
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
             given(accountRepository.findByIdForUpdate(2L)).willReturn(Optional.of(target));
 
             assertThatThrownBy(() -> transactionService.transfer(1L, 2L, "ACC-WRONG",
-                    BigDecimal.valueOf(100_000), TransferType.INTERNAL,
+                    100000L, TransferType.INTERNAL,
                     null, null, null, TransactionChannel.INTERNET, "이체", null))
                     .isInstanceOf(BusinessException.class);
         }
@@ -258,15 +258,15 @@ class TransactionServiceTest {
         @Test
         @DisplayName("타행 이체 후 출금 계좌 잔액이 정확히 차감된다")
         void externalTransferDeductsCorrectly() {
-            Account source = activeAccount(BigDecimal.valueOf(500_000));
+            Account source = activeAccount(500000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
 
 
             transactionService.transfer(1L, null, "302-1234-5678",
-                    BigDecimal.valueOf(150_000), TransferType.EXTERNAL,
+                    150000L, TransferType.EXTERNAL,
                     "SHB", "신한은행", "이수신", TransactionChannel.INTERNET, "타행 이체", null);
 
-            assertThat(source.getBalance()).isEqualByComparingTo("350000");
+            assertThat(source.getBalance()).isEqualTo(350000L);
         }
     }
 
@@ -277,21 +277,21 @@ class TransactionServiceTest {
         @Test
         @DisplayName("적금 납입 시 잔액과 누적 납입액을 증가시킨다")
         void savingsPayment() {
-            Account acc = activeAccount(BigDecimal.valueOf(100_000));
+            Account acc = activeAccount(100000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(acc));
             given(transactionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
             Transaction result = transactionService.savingsPayment(1L, 10L,
-                    BigDecimal.valueOf(50_000), 3, TransactionChannel.MOBILE);
+                    50000L, 3, TransactionChannel.MOBILE);
 
             assertThat(result.getTransactionType()).isEqualTo(TransactionType.SAVINGS_PAYMENT);
             assertThat(result.getDirectionType()).isEqualTo(DirectionType.IN);
             assertThat(result.getContractId()).isEqualTo(10L);
             assertThat(result.getPaymentRound()).isEqualTo(3);
-            assertThat(result.getBalanceBefore()).isEqualByComparingTo("100000");
-            assertThat(result.getBalanceAfter()).isEqualByComparingTo("150000");
-            assertThat(acc.getBalance()).isEqualByComparingTo("150000");
-            assertThat(acc.getTotalPaidAmount()).isEqualByComparingTo("50000");
+            assertThat(result.getBalanceBefore()).isEqualTo(100000L);
+            assertThat(result.getBalanceAfter()).isEqualTo(150000L);
+            assertThat(acc.getBalance()).isEqualTo(150000L);
+            assertThat(acc.getTotalPaidAmount()).isEqualTo(50000L);
         }
     }
 
@@ -302,8 +302,8 @@ class TransactionServiceTest {
         @Test
         @DisplayName("입금 거래를 취소하면 잔액이 감소하고 취소 거래가 생성된다")
         void reverseDepositTx() {
-            Account acc = activeAccount(BigDecimal.valueOf(500_000));
-            Transaction original = buildTx(1L, DirectionType.OUT, BigDecimal.valueOf(100_000), TransactionStatus.SUCCESS);
+            Account acc = activeAccount(500000L);
+            Transaction original = buildTx(1L, DirectionType.OUT, 100000L, TransactionStatus.SUCCESS);
             given(transactionRepository.findById(1L)).willReturn(Optional.of(original));
             given(accountRepository.findByIdForUpdate(original.getAccountId())).willReturn(Optional.of(acc));
             given(transactionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
@@ -323,9 +323,9 @@ class TransactionServiceTest {
                     .accountId(1L)
                     .transactionType(TransactionType.DEPOSIT)
                     .directionType(DirectionType.IN)
-                    .amount(BigDecimal.valueOf(50_000))
-                    .balanceBefore(BigDecimal.valueOf(100_000))
-                    .balanceAfter(BigDecimal.valueOf(150_000))
+                    .amount(50000L)
+                    .balanceBefore(100000L)
+                    .balanceAfter(150000L)
                     .channelType(TransactionChannel.INTERNET)
                     .transactionAt(java.time.OffsetDateTime.now())
                     .build();
@@ -338,7 +338,7 @@ class TransactionServiceTest {
         @Test
         @DisplayName("이미 취소된 거래를 재취소하면 예외가 발생한다")
         void reversalAlreadyCanceled() {
-            Transaction canceled = buildTx(1L, DirectionType.IN, BigDecimal.valueOf(100_000), TransactionStatus.CANCELED);
+            Transaction canceled = buildTx(1L, DirectionType.IN, 100000L, TransactionStatus.CANCELED);
             given(transactionRepository.findById(1L)).willReturn(Optional.of(canceled));
 
             assertThatThrownBy(() -> transactionService.reversal(1L, null))
@@ -363,15 +363,15 @@ class TransactionServiceTest {
         @Test
         @DisplayName("당일 누적 금액이 한도를 초과하면 예외가 발생한다")
         void dailyAmountLimitExceeded() {
-            Account source = accountWithDailyAmountLimit(BigDecimal.valueOf(1_000_000), BigDecimal.valueOf(500_000));
+            Account source = accountWithDailyAmountLimit(1000000L, 500000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
             given(transactionRepository.sumAmountByAccountIdAndDirectionTypeAndTransactionAtBetween(
                     any(), any(), any(OffsetDateTime.class), any(OffsetDateTime.class)))
-                    .willReturn(BigDecimal.valueOf(400_000)); // 이미 40만 원 이체
+                    .willReturn(400000L); // 이미 40만 원 이체
 
             // 200,000 추가 → 총 600,000 > 한도 500,000
             assertThatThrownBy(() -> transactionService.transfer(1L, null, "ACC-EXT",
-                    BigDecimal.valueOf(200_000), TransferType.EXTERNAL,
+                    200000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인", TransactionChannel.INTERNET, "이체", null))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DAILY_TRANSFER_AMOUNT_EXCEEDED);
@@ -380,14 +380,14 @@ class TransactionServiceTest {
         @Test
         @DisplayName("당일 이체 횟수가 한도에 달하면 예외가 발생한다")
         void dailyCountLimitExceeded() {
-            Account source = accountWithDailyCountLimit(BigDecimal.valueOf(1_000_000), 3);
+            Account source = accountWithDailyCountLimit(1000000L, 3);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
             given(transactionRepository.countByAccountIdAndDirectionTypeAndTransactionAtBetween(
                     any(), any(), any(OffsetDateTime.class), any(OffsetDateTime.class)))
                     .willReturn(3L); // 이미 3건 = 한도 도달
 
             assertThatThrownBy(() -> transactionService.transfer(1L, null, "ACC-EXT",
-                    BigDecimal.valueOf(100_000), TransferType.EXTERNAL,
+                    100000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인", TransactionChannel.INTERNET, "이체", null))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DAILY_TRANSFER_COUNT_EXCEEDED);
@@ -396,14 +396,14 @@ class TransactionServiceTest {
         @Test
         @DisplayName("KST 기준 시작 시각과 종료 시각이 정확히 전달된다")
         void kstBoundaryTimes() {
-            Account source = accountWithDailyAmountLimit(BigDecimal.valueOf(1_000_000), BigDecimal.valueOf(500_000));
+            Account source = accountWithDailyAmountLimit(1000000L, 500000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
             given(transactionRepository.sumAmountByAccountIdAndDirectionTypeAndTransactionAtBetween(
                     any(), any(), any(OffsetDateTime.class), any(OffsetDateTime.class)))
-                    .willReturn(BigDecimal.ZERO);
+                    .willReturn(0L);
 
             transactionService.transfer(1L, null, "ACC-EXT",
-                    BigDecimal.valueOf(100_000), TransferType.EXTERNAL,
+                    100000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인", TransactionChannel.INTERNET, "이체", null);
 
             ArgumentCaptor<OffsetDateTime> startCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
@@ -420,11 +420,11 @@ class TransactionServiceTest {
         @Test
         @DisplayName("한도가 설정되지 않은 계좌는 검증을 건너뛴다")
         void skipValidationWhenLimitsAreNull() {
-            Account source = activeAccount(BigDecimal.valueOf(1_000_000)); // Limits are null
+            Account source = activeAccount(1000000L); // Limits are null
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
 
             Transaction result = transactionService.transfer(1L, null, "ACC-EXT",
-                    BigDecimal.valueOf(100_000), TransferType.EXTERNAL,
+                    100000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인", TransactionChannel.INTERNET, "이체", null);
 
             assertThat(result).isNotNull();
@@ -436,23 +436,23 @@ class TransactionServiceTest {
         @DisplayName("금액·횟수 모두 한도 내이면 이체가 성공한다")
         void withinBothLimits() {
             Account source = accountWithBothLimits(
-                    BigDecimal.valueOf(1_000_000), BigDecimal.valueOf(500_000), 3);
+                    1000000L, 500000L, 3);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
             given(transactionRepository.sumAmountByAccountIdAndDirectionTypeAndTransactionAtBetween(
                     any(), any(), any(OffsetDateTime.class), any(OffsetDateTime.class)))
-                    .willReturn(BigDecimal.valueOf(100_000));
+                    .willReturn(100000L);
             given(transactionRepository.countByAccountIdAndDirectionTypeAndTransactionAtBetween(
                     any(), any(), any(OffsetDateTime.class), any(OffsetDateTime.class)))
                     .willReturn(1L);
 
             Transaction result = transactionService.transfer(1L, null, "ACC-EXT",
-                    BigDecimal.valueOf(100_000), TransferType.EXTERNAL,
+                    100000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인", TransactionChannel.INTERNET, "이체", null);
 
             assertThat(result).isNotNull();
         }
 
-        private Account accountWithDailyAmountLimit(BigDecimal balance, BigDecimal amountLimit) {
+        private Account accountWithDailyAmountLimit(Long balance, Long amountLimit) {
             return Account.builder()
                     .accountId(1L)
                     .accountNumber("ACC-001")
@@ -466,7 +466,7 @@ class TransactionServiceTest {
                     .build();
         }
 
-        private Account accountWithDailyCountLimit(BigDecimal balance, int countLimit) {
+        private Account accountWithDailyCountLimit(Long balance, int countLimit) {
             return Account.builder()
                     .accountId(1L)
                     .accountNumber("ACC-001")
@@ -480,7 +480,7 @@ class TransactionServiceTest {
                     .build();
         }
 
-        private Account accountWithBothLimits(BigDecimal balance, BigDecimal amountLimit, int countLimit) {
+        private Account accountWithBothLimits(Long balance, Long amountLimit, int countLimit) {
             return Account.builder()
                     .accountId(1L)
                     .accountNumber("ACC-001")
@@ -503,57 +503,57 @@ class TransactionServiceTest {
         @Test
         @DisplayName("잔액과 정확히 같은 금액을 이체하면 성공하고 잔액이 0이 된다")
         void transferExactBalance() {
-            Account source = activeAccount(BigDecimal.valueOf(300_000));
+            Account source = activeAccount(300000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
 
 
             transactionService.transfer(1L, null, "ACC-002",
-                    BigDecimal.valueOf(300_000), TransferType.EXTERNAL,
+                    300000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인", TransactionChannel.INTERNET, "전액 이체", null);
 
-            assertThat(source.getBalance()).isEqualByComparingTo("0");
+            assertThat(source.getBalance()).isEqualTo(0L);
         }
 
         @Test
         @DisplayName("단일 스레드에서 순차 이체 두 번 후 잔액이 정확하다")
         void sequentialTransferBalance() {
-            Account source = activeAccount(BigDecimal.valueOf(1_000_000));
+            Account source = activeAccount(1000000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
 
 
             transactionService.transfer(1L, null, "ACC-A",
-                    BigDecimal.valueOf(300_000), TransferType.EXTERNAL,
+                    300000L, TransferType.EXTERNAL,
                     "001", "국민은행", "수취인A", TransactionChannel.INTERNET, "이체1", null);
             transactionService.transfer(1L, null, "ACC-B",
-                    BigDecimal.valueOf(200_000), TransferType.EXTERNAL,
+                    200000L, TransferType.EXTERNAL,
                     "002", "신한은행", "수취인B", TransactionChannel.INTERNET, "이체2", null);
 
-            assertThat(source.getBalance()).isEqualByComparingTo("500000");
+            assertThat(source.getBalance()).isEqualTo(500000L);
         }
 
         @Test
         @DisplayName("출금 후 잔액이 음수가 되지 않는다")
         void balanceNeverNegative() {
-            Account source = activeAccount(BigDecimal.valueOf(100));
+            Account source = activeAccount(100L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
 
             assertThatThrownBy(() ->
-                transactionService.withdraw(1L, BigDecimal.valueOf(101), TransactionChannel.INTERNET, "초과 출금"))
+                transactionService.withdraw(1L, 101L, TransactionChannel.INTERNET, "초과 출금"))
                     .isInstanceOf(BusinessException.class);
 
             // 실패했으므로 잔액은 그대로
-            assertThat(source.getBalance()).isEqualByComparingTo("100");
+            assertThat(source.getBalance()).isEqualTo(100L);
         }
 
         @Test
         @DisplayName("순차화된 여러 출금 서비스 호출 후 잔액과 거래 건수가 정확하다")
         void multiThreadSequentialBalance() throws Exception {
-            Account source = activeAccount(BigDecimal.valueOf(1_000_000));
+            Account source = activeAccount(1000000L);
             given(accountRepository.findByIdForUpdate(1L)).willReturn(Optional.of(source));
             given(transactionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
             int threadCount = 5;
-            BigDecimal each = BigDecimal.valueOf(50_000);
+            long each = 50000L;
             Object sequentialCallLock = new Object();
             ExecutorService executor = Executors.newFixedThreadPool(threadCount);
             CountDownLatch latch = new CountDownLatch(1);
@@ -578,14 +578,14 @@ class TransactionServiceTest {
                 executor.shutdownNow();
             }
 
-            assertThat(source.getBalance()).isEqualByComparingTo("750000");
+            assertThat(source.getBalance()).isEqualTo(750000L);
             then(transactionRepository).should(org.mockito.Mockito.times(threadCount)).save(any());
         }
     }
 
     // ── 픽스처 ──────────────────────────────────────────────────────────────
 
-    private Account activeAccount(BigDecimal balance) {
+    private Account activeAccount(Long balance) {
         return Account.builder()
                 .accountNumber("ACC-001")
                 .customerId("CUST-001")
@@ -610,15 +610,15 @@ class TransactionServiceTest {
     }
 
     private Transaction buildTx(Long accountId, DirectionType direction,
-                                 BigDecimal amount, TransactionStatus status) {
+                                 Long amount, TransactionStatus status) {
         Transaction tx = Transaction.builder()
                 .transactionNumber("DEP-20260101-ABCDEFGH")
                 .accountId(accountId)
                 .transactionType(direction == DirectionType.IN ? TransactionType.DEPOSIT : TransactionType.WITHDRAW)
                 .directionType(direction)
                 .amount(amount)
-                .balanceBefore(BigDecimal.valueOf(400_000))
-                .balanceAfter(BigDecimal.valueOf(500_000))
+                .balanceBefore(400000L)
+                .balanceAfter(500000L)
                 .channelType(TransactionChannel.INTERNET)
                 .transactionAt(java.time.OffsetDateTime.now())
                 .build();

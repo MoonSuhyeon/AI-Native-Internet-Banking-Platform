@@ -128,7 +128,7 @@ class ContractServiceTest {
             given(passwordEncoder.encode(anyString())).willReturn("encoded-pw");
 
             Contract result = contractService.createContract(
-                    "CUST-001", 1L, BigDecimal.valueOf(1_000_000), 12,
+                    "CUST-001", 1L, 1000000L, 12,
                     JoinChannel.WEB, null, null, null, false, false, null,
                     null, null, null, null, "1234");
 
@@ -149,7 +149,7 @@ class ContractServiceTest {
             given(productRepository.findById(1L)).willReturn(Optional.of(suspended));
 
             assertThatThrownBy(() -> contractService.createContract(
-                    "CUST-001", 1L, BigDecimal.valueOf(1_000_000), 12,
+                    "CUST-001", 1L, 1000000L, 12,
                     null, null, null, null, false, false, null,
                     null, null, null, null, "1234"))
                     .isInstanceOf(BusinessException.class);
@@ -161,7 +161,7 @@ class ContractServiceTest {
             given(productRepository.findById(1L)).willReturn(Optional.of(sellingProduct()));
 
             assertThatThrownBy(() -> contractService.createContract(
-                    "CUST-001", 1L, BigDecimal.valueOf(1_000_000), 12,
+                    "CUST-001", 1L, 1000000L, 12,
                     null, null, null, null, false, false, null,
                     null, null, null, null, null))
                     .isInstanceOf(BusinessException.class);
@@ -175,13 +175,13 @@ class ContractServiceTest {
                     .productName("정기예금")
                     .baseInterestRate(BigDecimal.valueOf(3.0))
                     .productStatus(ProductStatus.SELLING)
-                    .minJoinAmount(BigDecimal.valueOf(100_000))
-                    .maxJoinAmount(BigDecimal.valueOf(100_000_000))
+                    .minJoinAmount(100000L)
+                    .maxJoinAmount(100000000L)
                     .build();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             assertThatThrownBy(() -> contractService.createContract(
-                    "CUST-001", 1L, BigDecimal.valueOf(100), 12,
+                    "CUST-001", 1L, 100L, 12,
                     JoinChannel.WEB, null, null, null, false, false, null,
                     null, null, null, null, "1234"))
                     .isInstanceOf(BusinessException.class)
@@ -196,13 +196,13 @@ class ContractServiceTest {
                     .productName("정기예금")
                     .baseInterestRate(BigDecimal.valueOf(3.0))
                     .productStatus(ProductStatus.SELLING)
-                    .minJoinAmount(BigDecimal.valueOf(100_000))
-                    .maxJoinAmount(BigDecimal.valueOf(100_000_000))
+                    .minJoinAmount(100000L)
+                    .maxJoinAmount(100000000L)
                     .build();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             assertThatThrownBy(() -> contractService.createContract(
-                    "CUST-001", 1L, BigDecimal.valueOf(200_000_000), 12,
+                    "CUST-001", 1L, 200000000L, 12,
                     JoinChannel.WEB, null, null, null, false, false, null,
                     null, null, null, null, "1234"))
                     .isInstanceOf(BusinessException.class)
@@ -226,8 +226,8 @@ class ContractServiceTest {
                 .productName("정기예금")
                 .baseInterestRate(BigDecimal.valueOf(3.0))
                 .productStatus(ProductStatus.SELLING)
-                .minJoinAmount(BigDecimal.valueOf(100_000))
-                .maxJoinAmount(BigDecimal.valueOf(100_000_000))
+                .minJoinAmount(100000L)
+                .maxJoinAmount(100000000L)
                 .build();
     }
 }

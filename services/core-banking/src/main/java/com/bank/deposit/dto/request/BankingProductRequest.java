@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 
 public record BankingProductRequest(
         String bankingProductType,
-        BigDecimal minJoinAmount,
-        BigDecimal maxJoinAmount,
+        Long minJoinAmount,
+        Long maxJoinAmount,
         Integer minContractPeriodMonth,
         Integer maxContractPeriodMonth,
         Boolean autoTransferAvailableYn,

@@ -17,7 +17,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 
 @Slf4j
 @Component
@@ -90,7 +89,7 @@ public class KftcNetworkRequestConsumer {
                                                String senderBankCode, String receiverBankCode) {
         JsonNode sender = payload.path("sender");
         JsonNode receiver = payload.path("receiver");
-        BigDecimal transferAmount = new BigDecimal(payload.path("amount").asText("0"));
+        Long transferAmount = Long.parseLong(payload.path("amount").asText("0"));
 
         return new InboundPaymentCommand(
                 payload.path("clearingNo").asText(),

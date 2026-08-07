@@ -230,8 +230,8 @@ class ProductControllerTest {
                 .willReturn(SavingsProduct.builder()
                         .productId(1L)
                         .savingType(SavingType.REGULAR)
-                        .monthlyPaymentMinAmount(BigDecimal.valueOf(20_000))
-                        .monthlyPaymentMaxAmount(BigDecimal.valueOf(2_000_000))
+                        .monthlyPaymentMinAmount(20000L)
+                        .monthlyPaymentMaxAmount(2000000L)
                         .build());
 
         mockMvc.perform(put("/products/1/savings")
@@ -283,9 +283,9 @@ class ProductControllerTest {
         given(productService.updateSubscriptionProduct(eq(1L), any(), any(), any()))
                 .willReturn(SubscriptionProduct.builder()
                         .productId(1L)
-                        .monthlyPaymentAmount(BigDecimal.valueOf(200_000))
-                        .minMonthlyPayment(BigDecimal.valueOf(30_000))
-                        .maxMonthlyPayment(BigDecimal.valueOf(600_000))
+                        .monthlyPaymentAmount(200000L)
+                        .minMonthlyPayment(30000L)
+                        .maxMonthlyPayment(600000L)
                         .build());
 
         mockMvc.perform(put("/products/1/subscription")
@@ -504,18 +504,18 @@ class ProductControllerTest {
         return SavingsProduct.builder()
                 .productId(1L)
                 .savingType(SavingType.FREE)
-                .monthlyPaymentMinAmount(BigDecimal.valueOf(10_000))
-                .monthlyPaymentMaxAmount(BigDecimal.valueOf(1_000_000))
+                .monthlyPaymentMinAmount(10000L)
+                .monthlyPaymentMaxAmount(1000000L)
                 .build();
     }
 
     private SubscriptionProduct subscriptionProduct() {
         return SubscriptionProduct.builder()
                 .productId(1L)
-                .monthlyPaymentAmount(BigDecimal.valueOf(100_000))
-                .minMonthlyPayment(BigDecimal.valueOf(20_000))
-                .maxMonthlyPayment(BigDecimal.valueOf(500_000))
-                .maxRecognizedPaymentAmount(BigDecimal.valueOf(100_000))
+                .monthlyPaymentAmount(100000L)
+                .minMonthlyPayment(20000L)
+                .maxMonthlyPayment(500000L)
+                .maxRecognizedPaymentAmount(100000L)
                 .build();
     }
 

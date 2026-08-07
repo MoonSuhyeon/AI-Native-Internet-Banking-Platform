@@ -45,11 +45,11 @@ public class Product extends BaseEntity {
     @Column(name = "preferential_rate_condition", columnDefinition = "TEXT")
     private String preferentialRateCondition;
 
-    @Column(name = "min_join_amount", precision = 18, scale = 2)
-    private BigDecimal minJoinAmount;
+    @Column(name = "min_join_amount")
+    private Long minJoinAmount;
 
-    @Column(name = "max_join_amount", precision = 18, scale = 2)
-    private BigDecimal maxJoinAmount;
+    @Column(name = "max_join_amount")
+    private Long maxJoinAmount;
 
     @Column(name = "min_period_month")
     private Integer minPeriodMonth;

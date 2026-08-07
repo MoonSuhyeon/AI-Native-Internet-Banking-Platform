@@ -57,14 +57,14 @@ public class RecommendAgentService {
             return emptyResult(customerId, periodMonth);
         }
 
-        BigDecimal totalInflow = sumByDirection(transactions, DirectionType.IN);
-        BigDecimal totalOutflow = sumByDirection(transactions, DirectionType.OUT);
-        BigDecimal netCashFlow = totalInflow.subtract(totalOutflow);
-        BigDecimal estimatedSavingsAmount = netCashFlow.divide(
+        long totalInflow = sumByDirection(transactions, DirectionType.IN);
+        long totalOutflow = sumByDirection(transactions, DirectionType.OUT);
+        long netCashFlow = totalInflow - totalOutflow;
+        BigDecimal estimatedSavingsAmount = BigDecimal.valueOf(netCashFlow).divide(
                 BigDecimal.valueOf(periodMonth), 0, RoundingMode.DOWN);
 
         CashFlowSummary cashFlow = new CashFlowSummary(
-                totalInflow, totalOutflow, netCashFlow, estimatedSavingsAmount);
+                totalInflow, totalOutflow, netCashFlow, estimatedSavingsAmount.longValueExact());
 
         if (estimatedSavingsAmount.compareTo(BigDecimal.ZERO) <= 0) {
             return new ProductRecommendResponse(customerId, periodMonth, cashFlow, List.of());
@@ -81,20 +81,20 @@ public class RecommendAgentService {
         return new ProductRecommendResponse(customerId, periodMonth, cashFlow, recommendations);
     }
 
-    private BigDecimal sumByDirection(List<Transaction> transactions, DirectionType direction) {
+    private Long sumByDirection(List<Transaction> transactions, DirectionType direction) {
         return transactions.stream()
                 .filter(t -> t.getDirectionType() == direction)
                 .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(0L, Long::sum);
     }
 
     private boolean matchesAmount(Product product, BigDecimal estimatedSavingsAmount) {
         if (product.getMinJoinAmount() != null
-                && estimatedSavingsAmount.compareTo(product.getMinJoinAmount()) < 0) {
+                && estimatedSavingsAmount.compareTo(BigDecimal.valueOf(product.getMinJoinAmount())) < 0) {
             return false;
         }
         if (product.getMaxJoinAmount() != null
-                && estimatedSavingsAmount.compareTo(product.getMaxJoinAmount()) > 0) {
+                && estimatedSavingsAmount.compareTo(BigDecimal.valueOf(product.getMaxJoinAmount())) > 0) {
             return false;
         }
         return true;
@@ -127,8 +127,7 @@ public class RecommendAgentService {
     }
 
     private ProductRecommendResponse emptyResult(String customerId, int periodMonth) {
-        CashFlowSummary zero = new CashFlowSummary(
-                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        CashFlowSummary zero = new CashFlowSummary(0L, 0L, 0L, 0L);
         return new ProductRecommendResponse(customerId, periodMonth, zero, List.of());
     }
 }

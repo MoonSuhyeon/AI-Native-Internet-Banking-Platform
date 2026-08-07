@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 public record InterestPayRequest(
         @NotNull Long contractId,
         @NotNull Long accountId,
-        @NotNull @Positive BigDecimal interestBeforeTax,
-        BigDecimal interestTaxAmount,
-        BigDecimal localIncomeTaxAmount,
+        @NotNull @Positive Long interestBeforeTax,
+        Long interestTaxAmount,
+        Long localIncomeTaxAmount,
         @NotNull BigDecimal appliedInterestRate,
         TaxBenefitType taxBenefitType,
         BigDecimal appliedTaxRate,

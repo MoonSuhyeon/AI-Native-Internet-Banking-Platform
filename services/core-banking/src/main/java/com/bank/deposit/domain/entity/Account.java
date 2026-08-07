@@ -54,17 +54,17 @@ public class Account extends BaseEntity {
     @Column(name = "account_alias", length = 100)
     private String accountAlias;
 
-    @Column(name = "balance", precision = 18, scale = 2, nullable = false)
+    @Column(name = "balance", nullable = false)
     @Builder.Default
-    private BigDecimal balance = BigDecimal.ZERO;
+    private Long balance = 0L;
 
-    @Column(name = "total_paid_amount", precision = 18, scale = 2, nullable = false)
+    @Column(name = "total_paid_amount", nullable = false)
     @Builder.Default
-    private BigDecimal totalPaidAmount = BigDecimal.ZERO;
+    private Long totalPaidAmount = 0L;
 
-    @Column(name = "total_interest_amount", precision = 18, scale = 2, nullable = false)
+    @Column(name = "total_interest_amount", nullable = false)
     @Builder.Default
-    private BigDecimal totalInterestAmount = BigDecimal.ZERO;
+    private Long totalInterestAmount = 0L;
 
     @Column(name = "last_transaction_at")
     private OffsetDateTime lastTransactionAt;
@@ -80,22 +80,22 @@ public class Account extends BaseEntity {
     @Column(name = "account_password", length = 255, nullable = false)
     private String accountPassword;
 
-    @Column(name = "daily_withdraw_limit", precision = 18, scale = 2)
-    private BigDecimal dailyWithdrawLimit;
+    @Column(name = "daily_withdraw_limit")
+    private Long dailyWithdrawLimit;
 
     @Column(name = "daily_withdraw_count_limit")
     private Integer dailyWithdrawCountLimit;
 
-    @Column(name = "atm_withdraw_limit", precision = 18, scale = 2)
-    private BigDecimal atmWithdrawLimit;
+    @Column(name = "atm_withdraw_limit")
+    private Long atmWithdrawLimit;
 
     @Column(name = "fraud_flag", nullable = false)
     @Builder.Default
     private Boolean fraudFlag = false;
 
-    @Column(name = "hold_amount", precision = 18, scale = 2, nullable = false)
+    @Column(name = "hold_amount", nullable = false)
     @Builder.Default
-    private BigDecimal holdAmount = BigDecimal.ZERO;
+    private Long holdAmount = 0L;
 
     @Column(name = "is_withdrawable", nullable = false)
     @Builder.Default
@@ -149,52 +149,53 @@ public class Account extends BaseEntity {
         }
     }
 
-    public void deposit(BigDecimal amount) {
-        this.balance = this.balance.add(amount);
+    public void deposit(Long amount) {
+        this.balance += amount;
         this.lastTransactionAt = OffsetDateTime.now();
     }
 
-    public void deposit(BigDecimal amount, Clock clock) {
-        this.balance = this.balance.add(amount);
+    public void deposit(Long amount, Clock clock) {
+        this.balance += amount;
         this.lastTransactionAt = OffsetDateTime.now(clock);
     }
 
-    public void withdraw(BigDecimal amount) {
-        BigDecimal available = this.balance.subtract(this.holdAmount != null ? this.holdAmount : BigDecimal.ZERO);
-        if (available.compareTo(amount) < 0) {
-            throw new com.bank.deposit.exception.BusinessException(
-                    com.bank.deposit.exception.ErrorCode.INSUFFICIENT_BALANCE);
-        }
-        this.balance = this.balance.subtract(amount);
+    public void withdraw(Long amount) {
+        assertWithdrawable(amount);
+        this.balance -= amount;
         this.lastTransactionAt = OffsetDateTime.now();
     }
 
-    public void withdraw(BigDecimal amount, Clock clock) {
-        BigDecimal available = this.balance.subtract(this.holdAmount != null ? this.holdAmount : BigDecimal.ZERO);
-        if (available.compareTo(amount) < 0) {
-            throw new com.bank.deposit.exception.BusinessException(
-                    com.bank.deposit.exception.ErrorCode.INSUFFICIENT_BALANCE);
-        }
-        this.balance = this.balance.subtract(amount);
+    public void withdraw(Long amount, Clock clock) {
+        assertWithdrawable(amount);
+        this.balance -= amount;
         this.lastTransactionAt = OffsetDateTime.now(clock);
     }
 
-    public void addInterest(BigDecimal amount) {
-        this.balance = this.balance.add(amount);
-        this.totalInterestAmount = this.totalInterestAmount.add(amount);
+    /** 출금가능액 = 잔액 - 지급정지액. 두 withdraw 오버로드가 같은 판정을 쓰게 모은다. */
+    private void assertWithdrawable(long amount) {
+        long available = this.balance - (this.holdAmount != null ? this.holdAmount : 0L);
+        if (available < amount) {
+            throw new com.bank.deposit.exception.BusinessException(
+                    com.bank.deposit.exception.ErrorCode.INSUFFICIENT_BALANCE);
+        }
+    }
+
+    public void addInterest(Long amount) {
+        this.balance += amount;
+        this.totalInterestAmount += amount;
         this.lastInterestPaidAt = OffsetDateTime.now();
         this.lastTransactionAt = OffsetDateTime.now();
     }
 
-    public void addInterest(BigDecimal amount, Clock clock) {
-        this.balance = this.balance.add(amount);
-        this.totalInterestAmount = this.totalInterestAmount.add(amount);
+    public void addInterest(Long amount, Clock clock) {
+        this.balance += amount;
+        this.totalInterestAmount += amount;
         this.lastInterestPaidAt = OffsetDateTime.now(clock);
         this.lastTransactionAt = OffsetDateTime.now(clock);
     }
 
-    public void addPaidAmount(BigDecimal amount) {
-        this.totalPaidAmount = this.totalPaidAmount.add(amount);
+    public void addPaidAmount(Long amount) {
+        this.totalPaidAmount += amount;
     }
 
     public void changeStatus(AccountStatus status, LocalDate statusChangedAt) {
@@ -206,7 +207,7 @@ public class Account extends BaseEntity {
         this.accountAlias = alias;
     }
 
-    public void updateLimits(BigDecimal dailyWithdrawLimit, Integer dailyWithdrawCountLimit, BigDecimal atmWithdrawLimit) {
+    public void updateLimits(Long dailyWithdrawLimit, Integer dailyWithdrawCountLimit, Long atmWithdrawLimit) {
         this.dailyWithdrawLimit = dailyWithdrawLimit;
         this.dailyWithdrawCountLimit = dailyWithdrawCountLimit;
         this.atmWithdrawLimit = atmWithdrawLimit;

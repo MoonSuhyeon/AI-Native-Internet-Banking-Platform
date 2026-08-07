@@ -194,9 +194,9 @@ class AccountServiceTest {
             given(accountRepository.findById(1L)).willReturn(Optional.of(acc));
 
             Account result = accountService.updateLimits(1L,
-                    BigDecimal.valueOf(3_000_000), 5, BigDecimal.valueOf(1_000_000));
+                    3000000L, 5, 1000000L);
 
-            assertThat(result.getDailyWithdrawLimit()).isEqualByComparingTo("3000000");
+            assertThat(result.getDailyWithdrawLimit()).isEqualTo(3000000L);
         }
     }
 

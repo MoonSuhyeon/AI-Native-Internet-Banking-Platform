@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -55,10 +54,10 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction deposit(Long accountId, BigDecimal amount, TransactionChannel channelType,
+    public Transaction deposit(Long accountId, Long amount, TransactionChannel channelType,
                                String transactionMemo, String depositorCustomerId, String depositorName) {
         Account account = getActiveAccountForUpdate(accountId);
-        BigDecimal before = account.getBalance();
+        Long before = account.getBalance();
         account.deposit(amount, clock);
 
         return transactionRepository.save(Transaction.builder()
@@ -80,9 +79,9 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction withdraw(Long accountId, BigDecimal amount, TransactionChannel channelType, String transactionMemo) {
+    public Transaction withdraw(Long accountId, Long amount, TransactionChannel channelType, String transactionMemo) {
         Account account = getActiveAccountForUpdate(accountId);
-        BigDecimal before = account.getBalance();
+        Long before = account.getBalance();
         account.withdraw(amount, clock);
 
         return transactionRepository.save(Transaction.builder()
@@ -113,7 +112,7 @@ public class TransactionService {
      */
     @Transactional
     public Transaction transfer(Long fromAccountId, Long toAccountId, String toAccountNo,
-                                BigDecimal amount, TransferType transferType,
+                                Long amount, TransferType transferType,
                                 String counterpartyBankCode, String counterpartyBankName,
                                 String counterpartyName, TransactionChannel channelType, String transactionMemo,
                                 String idempotencyKey) {
@@ -152,7 +151,7 @@ public class TransactionService {
 
         validateDailyTransferLimit(source, amount);
 
-        BigDecimal before = source.getBalance();
+        Long before = source.getBalance();
         source.withdraw(amount, clock);
         OffsetDateTime now = OffsetDateTime.now(clock);
 
@@ -183,7 +182,7 @@ public class TransactionService {
         Transaction outTx = idempotentTransactionSaver.saveOrFetch(built, idempotencyKey, fromAccountId);
 
         if (resolvedType == TransferType.INTERNAL) {
-            BigDecimal targetBefore = target.getBalance();
+            Long targetBefore = target.getBalance();
             target.deposit(amount, clock);
             transactionRepository.save(Transaction.builder()
                     .transactionNumber(generateTxnNumber("TRF"))
@@ -206,10 +205,10 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction savingsPayment(Long accountId, Long contractId, BigDecimal amount,
+    public Transaction savingsPayment(Long accountId, Long contractId, Long amount,
                                       Integer paymentRound, TransactionChannel channelType) {
         Account account = getActiveAccountForUpdate(accountId);
-        BigDecimal before = account.getBalance();
+        Long before = account.getBalance();
         account.deposit(amount, clock);
         account.addPaidAmount(amount);
 
@@ -242,7 +241,7 @@ public class TransactionService {
         }
 
         Account account = getActiveAccountForUpdate(original.getAccountId());
-        BigDecimal before = account.getBalance();
+        Long before = account.getBalance();
         DirectionType reverseDirection = original.getDirectionType() == DirectionType.IN
                 ? DirectionType.OUT : DirectionType.IN;
 
@@ -274,7 +273,7 @@ public class TransactionService {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
-    private void validateDailyTransferLimit(Account source, BigDecimal amount) {
+    private void validateDailyTransferLimit(Account source, Long amount) {
         if (source.getDailyWithdrawLimit() == null && source.getDailyWithdrawCountLimit() == null) {
             return;
         }
@@ -283,9 +282,9 @@ public class TransactionService {
         OffsetDateTime endOfDay = koreaToday.plusDays(1).atStartOfDay(KST).toOffsetDateTime();
 
         if (source.getDailyWithdrawLimit() != null) {
-            BigDecimal todayTotal = transactionRepository.sumAmountByAccountIdAndDirectionTypeAndTransactionAtBetween(
+            Long todayTotal = transactionRepository.sumAmountByAccountIdAndDirectionTypeAndTransactionAtBetween(
                     source.getAccountId(), DirectionType.OUT, startOfDay, endOfDay);
-            if (todayTotal.add(amount).compareTo(source.getDailyWithdrawLimit()) > 0) {
+            if (todayTotal + amount > source.getDailyWithdrawLimit()) {
                 throw new BusinessException(ErrorCode.DAILY_TRANSFER_AMOUNT_EXCEEDED);
             }
         }

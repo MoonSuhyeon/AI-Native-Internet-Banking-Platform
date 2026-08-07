@@ -44,7 +44,7 @@ class ScheduledPaymentCancelTest extends AbstractPaymentIntegrationTest {
         body.put("receiverBankCode",              BANK_CODE_A);
         body.put("receiverAccountNo",             RECEIVER_S1);
         body.put("receiverHolderName",            "성춘향");
-        body.put("transferAmount",                BigDecimal.valueOf(100_000L));
+        body.put("transferAmount",                100000L);
         body.put("receiverMemo",                  "예약이체");
         body.put("senderMemo",                    "예약송금");
         body.put("channel",                       "MOBILE");

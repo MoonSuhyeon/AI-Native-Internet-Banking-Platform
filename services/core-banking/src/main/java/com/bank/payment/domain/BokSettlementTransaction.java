@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
@@ -64,7 +63,7 @@ public class BokSettlementTransaction {
     private String receiverHolderNameSnap;
 
     // 정산금액
-    private BigDecimal settlementAmount;
+    private Long settlementAmount;
 
     // 통화
     private String currency;
@@ -127,7 +126,7 @@ public class BokSettlementTransaction {
             String receiverBankCode,
             String receiverAccountNoSnap,
             String receiverHolderNameSnap,
-            BigDecimal settlementAmount,
+            Long settlementAmount,
             String settlementRequestedAt) {
         return BokSettlementTransaction.builder()
                 .settlementTransactionId(settlementTransactionId)

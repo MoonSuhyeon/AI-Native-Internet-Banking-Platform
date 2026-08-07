@@ -29,11 +29,11 @@ public class SubscriptionPaymentRecognitionHistory {
     @Column(name = "contract_id", nullable = false)
     private Long contractId;
 
-    @Column(name = "payment_amount", precision = 18, scale = 2, nullable = false)
-    private BigDecimal paymentAmount;
+    @Column(name = "payment_amount", nullable = false)
+    private Long paymentAmount;
 
-    @Column(name = "recognized_amount", precision = 18, scale = 2, nullable = false)
-    private BigDecimal recognizedAmount;
+    @Column(name = "recognized_amount", nullable = false)
+    private Long recognizedAmount;
 
     /** 납입 월 (YYYYMM 형식 6자리 문자열, DB: VARCHAR(6)) */
     @Column(name = "payment_month", nullable = false, length = 6)

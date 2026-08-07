@@ -38,8 +38,8 @@ public class PaymentSchedule extends BaseEntity {
     @Column(name = "scheduled_date", columnDefinition = "DATE", nullable = false)
     private LocalDate scheduledDate;
 
-    @Column(name = "scheduled_amount", precision = 18, scale = 2, nullable = false)
-    private BigDecimal scheduledAmount;
+    @Column(name = "scheduled_amount", nullable = false)
+    private Long scheduledAmount;
 
     @Column(name = "is_auto_transfer", nullable = false)
     @Builder.Default
@@ -57,8 +57,8 @@ public class PaymentSchedule extends BaseEntity {
     @Column(name = "paid_at")
     private OffsetDateTime paidAt;
 
-    @Column(name = "actual_amount", precision = 18, scale = 2)
-    private BigDecimal actualAmount;
+    @Column(name = "actual_amount")
+    private Long actualAmount;
 
     @Column(name = "transaction_id")
     private Long transactionId;
@@ -67,7 +67,7 @@ public class PaymentSchedule extends BaseEntity {
     @Column(name = "failure_reason_code", length = 50)
     private FailureReasonCode failureReasonCode;
 
-    public void markPaid(BigDecimal amount, Long txId, OffsetDateTime paidAt) {
+    public void markPaid(Long amount, Long txId, OffsetDateTime paidAt) {
         this.status = PaymentStatus.PAID;
         this.actualAmount = amount;
         this.transactionId = txId;

@@ -22,19 +22,19 @@ public class SubscriptionProduct extends BaseEntity {
     @Column(name = "banking_product_id")
     private Long productId;
 
-    @Column(name = "monthly_payment_amount", precision = 18, scale = 2, nullable = false)
-    private BigDecimal monthlyPaymentAmount;
+    @Column(name = "monthly_payment_amount", nullable = false)
+    private Long monthlyPaymentAmount;
 
-    @Column(name = "min_monthly_payment", precision = 18, scale = 2)
-    private BigDecimal minMonthlyPayment;
+    @Column(name = "min_monthly_payment")
+    private Long minMonthlyPayment;
 
-    @Column(name = "max_monthly_payment", precision = 18, scale = 2)
-    private BigDecimal maxMonthlyPayment;
+    @Column(name = "max_monthly_payment")
+    private Long maxMonthlyPayment;
 
-    @Column(name = "max_recognized_payment_amount", precision = 18, scale = 2)
-    private BigDecimal maxRecognizedPaymentAmount;
+    @Column(name = "max_recognized_payment_amount")
+    private Long maxRecognizedPaymentAmount;
 
-    public void update(BigDecimal monthlyPaymentAmount, BigDecimal minMonthlyPayment, BigDecimal maxMonthlyPayment) {
+    public void update(Long monthlyPaymentAmount, Long minMonthlyPayment, Long maxMonthlyPayment) {
         this.monthlyPaymentAmount = monthlyPaymentAmount;
         this.minMonthlyPayment = minMonthlyPayment;
         this.maxMonthlyPayment = maxMonthlyPayment;

@@ -45,21 +45,21 @@ public class Transaction extends BaseEntity {
     @Column(name = "direction_type", nullable = false)
     private DirectionType directionType;
 
-    @Column(name = "amount", precision = 18, scale = 2, nullable = false)
-    private BigDecimal amount;
+    @Column(name = "amount", nullable = false)
+    private Long amount;
 
-    @Column(name = "balance_before", precision = 18, scale = 2, nullable = false)
-    private BigDecimal balanceBefore;
+    @Column(name = "balance_before", nullable = false)
+    private Long balanceBefore;
 
-    @Column(name = "balance_after", precision = 18, scale = 2, nullable = false)
-    private BigDecimal balanceAfter;
+    @Column(name = "balance_after", nullable = false)
+    private Long balanceAfter;
 
-    @Column(name = "available_balance_after", precision = 18, scale = 2)
-    private BigDecimal availableBalanceAfter;
+    @Column(name = "available_balance_after")
+    private Long availableBalanceAfter;
 
-    @Column(name = "fee_amount", precision = 18, scale = 2, nullable = false)
+    @Column(name = "fee_amount", nullable = false)
     @Builder.Default
-    private BigDecimal feeAmount = BigDecimal.ZERO;
+    private Long feeAmount = 0L;
 
     @Column(name = "currency", length = 3, nullable = false)
     @Builder.Default

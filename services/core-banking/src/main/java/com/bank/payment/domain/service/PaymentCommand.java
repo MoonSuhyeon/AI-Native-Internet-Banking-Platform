@@ -1,6 +1,5 @@
 package com.bank.payment.domain.service;
 
-import java.math.BigDecimal;
 
 /**
  * 결제 처리 명령. api 입력(PaymentRequest + 헤더 신원/멱등키)을 도메인 입력으로 번역.
@@ -12,7 +11,7 @@ public record PaymentCommand(
         String receiverBankCode,
         String receiverAccountNo,
         String receiverHolderName,
-        BigDecimal transferAmount,
+        Long transferAmount,
         String receiverMemo,
         String senderMemo,
         String channel,

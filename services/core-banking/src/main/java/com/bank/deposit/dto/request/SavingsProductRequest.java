@@ -7,6 +7,6 @@ import java.math.BigDecimal;
 
 public record SavingsProductRequest(
         @NotNull SavingType savingType,
-        BigDecimal monthlyPaymentMinAmount,
-        BigDecimal monthlyPaymentMaxAmount
+        Long monthlyPaymentMinAmount,
+        Long monthlyPaymentMaxAmount
 ) {}

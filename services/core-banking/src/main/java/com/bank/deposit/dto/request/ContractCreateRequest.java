@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 public record ContractCreateRequest(
         @NotBlank String customerId,
         @NotNull Long productId,
-        @NotNull @Positive BigDecimal joinAmount,
+        @NotNull @Positive Long joinAmount,
         @NotNull @Positive Integer contractPeriodMonth,
         JoinChannel joinChannel,
         BigDecimal contractInterestRate,

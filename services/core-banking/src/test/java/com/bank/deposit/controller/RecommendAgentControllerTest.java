@@ -153,10 +153,10 @@ class RecommendAgentControllerTest {
     private ProductRecommendResponse response(String customerId, int periodMonth,
                                                List<RecommendedProduct> products) {
         CashFlowSummary cashFlow = new CashFlowSummary(
-                new BigDecimal("4500000"),
-                new BigDecimal("3000000"),
-                new BigDecimal("1500000"),
-                new BigDecimal("500000")
+                4500000L,
+                3000000L,
+                1500000L,
+                500000L
         );
         return new ProductRecommendResponse(customerId, periodMonth, cashFlow, products);
     }
@@ -165,7 +165,7 @@ class RecommendAgentControllerTest {
         return new RecommendedProduct(
                 id, name, type,
                 new BigDecimal("3.00"), bestRate,
-                new BigDecimal("10000"), new BigDecimal("1000000"),
+                10000L, 1000000L,
                 6, 36,
                 "월 평균 저축 가능 금액(500,000원) 기반 추천. 연 " + bestRate.toPlainString() + "% 금리 적용."
         );

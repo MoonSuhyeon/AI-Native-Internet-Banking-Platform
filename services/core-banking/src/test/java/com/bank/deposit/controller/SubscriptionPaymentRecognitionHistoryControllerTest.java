@@ -84,8 +84,8 @@ class SubscriptionPaymentRecognitionHistoryControllerTest {
     private SubscriptionPaymentRecognitionHistory history(RecognitionStatus status) {
         return SubscriptionPaymentRecognitionHistory.builder()
                 .contractId(1L)
-                .paymentAmount(BigDecimal.valueOf(100_000))
-                .recognizedAmount(BigDecimal.valueOf(100_000))
+                .paymentAmount(100000L)
+                .recognizedAmount(100000L)
                 .paymentMonth("202605")
                 .recognitionStatus(status)
                 .build();

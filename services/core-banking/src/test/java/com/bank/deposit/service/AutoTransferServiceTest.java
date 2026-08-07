@@ -74,9 +74,9 @@ class AutoTransferServiceTest {
             autoTransferService.executeAutoTransfer(schedule);
 
             assertThat(schedule.getStatus()).isEqualTo(PaymentStatus.PAID);
-            assertThat(schedule.getActualAmount()).isEqualByComparingTo("100000");
-            assertThat(source.getBalance()).isEqualByComparingTo("400000");
-            assertThat(target.getBalance()).isEqualByComparingTo("100000");
+            assertThat(schedule.getActualAmount()).isEqualTo(100000L);
+            assertThat(source.getBalance()).isEqualTo(400000L);
+            assertThat(target.getBalance()).isEqualTo(100000L);
             assertThat(contract.getConsecutiveMissCount()).isEqualTo(0);
             then(transactionRepository).should(times(2)).save(any());
         }
@@ -97,8 +97,8 @@ class AutoTransferServiceTest {
 
             assertThat(schedule.getStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(schedule.getFailureReasonCode()).isEqualTo(FailureReasonCode.INSUFFICIENT_BALANCE);
-            assertThat(source.getBalance()).isEqualByComparingTo("50000");  // 잔액 불변
-            assertThat(target.getBalance()).isEqualByComparingTo("0");      // 입금 없음
+            assertThat(source.getBalance()).isEqualTo(50000L);  // 잔액 불변
+            assertThat(target.getBalance()).isEqualTo(0L);      // 입금 없음
             assertThat(contract.getConsecutiveMissCount()).isEqualTo(1);
             then(transactionRepository).shouldHaveNoInteractions();
         }
@@ -126,7 +126,7 @@ class AutoTransferServiceTest {
             PaymentSchedule schedule = PaymentSchedule.builder()
                     .contractId(1L).accountId(2L).paymentRound(1)
                     .scheduledDate(LocalDate.of(2026, 1, 15))
-                    .scheduledAmount(BigDecimal.valueOf(100_000))
+                    .scheduledAmount(100000L)
                     .isAutoTransfer(true)
                     .sourceAccountId(null)   // 미설정
                     .build();
@@ -263,9 +263,9 @@ class AutoTransferServiceTest {
             PaymentSchedule result = autoTransferService.executeManualPayment(1L, 3L);
 
             assertThat(result.getStatus()).isEqualTo(PaymentStatus.PAID);
-            assertThat(result.getActualAmount()).isEqualByComparingTo("100000");
-            assertThat(source.getBalance()).isEqualByComparingTo("400000");
-            assertThat(target.getBalance()).isEqualByComparingTo("100000");
+            assertThat(result.getActualAmount()).isEqualTo(100000L);
+            assertThat(source.getBalance()).isEqualTo(400000L);
+            assertThat(target.getBalance()).isEqualTo(100000L);
             assertThat(contract.getConsecutiveMissCount()).isEqualTo(0);
             then(transactionRepository).should(times(2)).save(any());
         }
@@ -276,14 +276,14 @@ class AutoTransferServiceTest {
             PaymentSchedule schedule = PaymentSchedule.builder()
                     .contractId(1L).accountId(2L).paymentRound(3)
                     .scheduledDate(LocalDate.of(2026, 1, 1))
-                    .scheduledAmount(BigDecimal.valueOf(100_000))
+                    .scheduledAmount(100000L)
                     .isAutoTransfer(false)
                     .status(PaymentStatus.OVERDUE)  // 연체 상태
                     .build();
             // 3회 실패로 이미 SUSPENDED된 계약
             Contract contract = Contract.builder()
                     .contractNumber("CTR-001").customerId("CUST-001").productId(10L)
-                    .joinAmount(BigDecimal.valueOf(100_000))
+                    .joinAmount(100000L)
                     .contractInterestRate(BigDecimal.valueOf(3.5))
                     .finalInterestRate(BigDecimal.valueOf(3.5))
                     .contractPeriodMonth(12).startedAt(LocalDate.of(2025, 1, 1))
@@ -313,7 +313,7 @@ class AutoTransferServiceTest {
             PaymentSchedule paid = PaymentSchedule.builder()
                     .contractId(1L).accountId(2L).paymentRound(1)
                     .scheduledDate(LocalDate.of(2026, 1, 15))
-                    .scheduledAmount(BigDecimal.valueOf(100_000))
+                    .scheduledAmount(100000L)
                     .status(PaymentStatus.PAID)
                     .build();
 
@@ -331,7 +331,7 @@ class AutoTransferServiceTest {
             PaymentSchedule suspended = PaymentSchedule.builder()
                     .contractId(1L).accountId(2L).paymentRound(3)
                     .scheduledDate(LocalDate.of(2026, 1, 1))
-                    .scheduledAmount(BigDecimal.valueOf(100_000))
+                    .scheduledAmount(100000L)
                     .status(PaymentStatus.SUSPENDED)
                     .build();
 
@@ -441,7 +441,7 @@ class AutoTransferServiceTest {
                 .accountId(accountId)
                 .paymentRound(round)
                 .scheduledDate(LocalDate.of(2026, 1, 15))
-                .scheduledAmount(BigDecimal.valueOf(amount))
+                .scheduledAmount(amount)
                 .isAutoTransfer(true)
                 .sourceAccountId(1L)  // source = accountId 1L
                 .build();
@@ -454,7 +454,7 @@ class AutoTransferServiceTest {
                 .accountId(accountId)
                 .paymentRound(round)
                 .scheduledDate(LocalDate.of(2026, 1, 10))
-                .scheduledAmount(BigDecimal.valueOf(amount))
+                .scheduledAmount(amount)
                 .isAutoTransfer(false)
                 .build();
     }
@@ -464,7 +464,7 @@ class AutoTransferServiceTest {
                 .contractNumber("CTR-20260101-TEST001")
                 .customerId("CUST-001")
                 .productId(productId)
-                .joinAmount(BigDecimal.valueOf(1_200_000))
+                .joinAmount(1200000L)
                 .contractInterestRate(BigDecimal.valueOf(3.5))
                 .finalInterestRate(BigDecimal.valueOf(3.5))
                 .contractPeriodMonth(12)
@@ -483,7 +483,7 @@ class AutoTransferServiceTest {
                 .accountType(ProductType.SAVINGS)
                 .accountPassword("$2a$10$abcdefghijklmnopqrstuu9QwmFAnNd0x5QyZ9LhQOW7bpcE6Pj2a")
                 .openedAt(LocalDate.of(2026, 1, 1))
-                .balance(BigDecimal.valueOf(balance))
+                .balance(balance)
                 .build();
     }
 

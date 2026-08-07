@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
@@ -70,10 +69,10 @@ public class PaymentInstruction {
     private String routingNetworkType;
 
     // 이체금액
-    private BigDecimal transferAmount;
+    private Long transferAmount;
 
     // 수수료
-    private BigDecimal feeAmount;
+    private Long feeAmount;
 
     // 수신통장_송신자표시명
     private String receiverPassbookSenderDisplay;

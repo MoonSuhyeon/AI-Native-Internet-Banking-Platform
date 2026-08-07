@@ -78,8 +78,8 @@ class SubscriptionPaymentRecognitionHistoryServiceTest {
     private SubscriptionPaymentRecognitionHistory history(Long contractId, RecognitionStatus status) {
         return SubscriptionPaymentRecognitionHistory.builder()
                 .contractId(contractId)
-                .paymentAmount(BigDecimal.valueOf(300_000))
-                .recognizedAmount(BigDecimal.valueOf(300_000))
+                .paymentAmount(300000L)
+                .recognizedAmount(300000L)
                 .paymentMonth("202601")
                 .recognitionStatus(status)
                 .build();

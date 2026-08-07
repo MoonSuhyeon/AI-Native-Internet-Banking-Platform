@@ -44,24 +44,24 @@ public class InterestService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "이자 이력을 찾을 수 없습니다."));
     }
 
-    public BigDecimal sumByContract(Long contractId) {
+    public Long sumByContract(Long contractId) {
         return interestHistoryRepository.sumInterestAfterTaxByContractId(contractId);
     }
 
     @Transactional
-    public InterestHistory payInterest(Long contractId, Long accountId, BigDecimal interestBeforeTax,
-                                       BigDecimal interestTaxAmount, BigDecimal localIncomeTaxAmount,
+    public InterestHistory payInterest(Long contractId, Long accountId, Long interestBeforeTax,
+                                       Long interestTaxAmount, Long localIncomeTaxAmount,
                                        BigDecimal appliedInterestRate, TaxBenefitType taxBenefitType,
                                        BigDecimal appliedTaxRate, InterestReason interestReason,
                                        String calcStartDate, String calcEndDate) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
 
-        BigDecimal interestAfterTax = interestBeforeTax
-                .subtract(interestTaxAmount != null ? interestTaxAmount : BigDecimal.ZERO)
-                .subtract(localIncomeTaxAmount != null ? localIncomeTaxAmount : BigDecimal.ZERO);
+        long interestAfterTax = interestBeforeTax
+                - (interestTaxAmount != null ? interestTaxAmount : 0L)
+                - (localIncomeTaxAmount != null ? localIncomeTaxAmount : 0L);
 
-        BigDecimal interestAmount = interestAfterTax;
+        long interestAmount = interestAfterTax;
         account.addInterest(interestAmount, clock);
 
         OffsetDateTime now = OffsetDateTime.now(clock);
@@ -73,8 +73,8 @@ public class InterestService {
                 .appliedTaxRate(appliedTaxRate != null ? appliedTaxRate : new BigDecimal("0.154"))
                 .interestAmount(interestAmount)
                 .interestBeforeTax(interestBeforeTax)
-                .interestTaxAmount(interestTaxAmount != null ? interestTaxAmount : BigDecimal.ZERO)
-                .localIncomeTaxAmount(localIncomeTaxAmount != null ? localIncomeTaxAmount : BigDecimal.ZERO)
+                .interestTaxAmount(interestTaxAmount != null ? interestTaxAmount : 0L)
+                .localIncomeTaxAmount(localIncomeTaxAmount != null ? localIncomeTaxAmount : 0L)
                 .interestAfterTax(interestAfterTax)
                 .interestReason(interestReason != null ? interestReason : InterestReason.REGULAR_INTEREST)
                 .interestOccurredAt(now)
@@ -83,7 +83,7 @@ public class InterestService {
                 .interestCalculationEndDate(calcEndDate)
                 .build());
 
-        BigDecimal before = account.getBalance().subtract(interestAmount);
+        long before = account.getBalance() - interestAmount;
         transactionRepository.save(Transaction.builder()
                 .transactionNumber("INT-" + LocalDate.now(clock).format(DATE_FMT) + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .accountId(accountId)

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public record SavingsPaymentRequest(
         @NotNull Long accountId,
         @NotNull Long contractId,
-        @NotNull @Positive BigDecimal amount,
+        @NotNull @Positive Long amount,
         @NotNull @Positive Integer paymentRound,
         TransactionChannel channelType
 ) {}

@@ -80,7 +80,7 @@ public class ProductService {
     public Product create(ProductType productType, String productName, String description,
                           Long departmentId, BigDecimal baseInterestRate,
                           Integer minPeriodMonth, Integer maxPeriodMonth,
-                          BigDecimal minJoinAmount, BigDecimal maxJoinAmount,
+                          Long minJoinAmount, Long maxJoinAmount,
                           Boolean isEarlyTerminationAllowed, Boolean isTaxBenefitAvailable,
                           Boolean isAutoRenewalAvailable, String releasedAt) {
         return productRepository.save(Product.builder()
@@ -149,7 +149,7 @@ public class ProductService {
 
     @Transactional
     public SavingsProduct createSavingsProduct(Long productId, SavingType savingType,
-                                               BigDecimal monthlyPaymentMinAmount, BigDecimal monthlyPaymentMaxAmount) {
+                                               Long monthlyPaymentMinAmount, Long monthlyPaymentMaxAmount) {
         findById(productId);
         if (savingsProductRepository.existsByProductId(productId)) {
             throw new BusinessException(ErrorCode.DUPLICATE, "이미 적금 상품 정보가 등록되어 있습니다.");
@@ -164,7 +164,7 @@ public class ProductService {
 
     @Transactional
     public SavingsProduct updateSavingsProduct(Long productId, SavingType savingType,
-                                               BigDecimal monthlyPaymentMinAmount, BigDecimal monthlyPaymentMaxAmount) {
+                                               Long monthlyPaymentMinAmount, Long monthlyPaymentMaxAmount) {
         SavingsProduct sp = findSavingsProduct(productId);
         sp.update(savingType, monthlyPaymentMinAmount, monthlyPaymentMaxAmount);
         return sp;
@@ -177,9 +177,9 @@ public class ProductService {
     }
 
     @Transactional
-    public SubscriptionProduct createSubscriptionProduct(Long productId, BigDecimal monthlyPaymentAmount,
-                                                         BigDecimal minMonthlyPayment, BigDecimal maxMonthlyPayment,
-                                                         BigDecimal maxRecognizedPaymentAmount) {
+    public SubscriptionProduct createSubscriptionProduct(Long productId, Long monthlyPaymentAmount,
+                                                         Long minMonthlyPayment, Long maxMonthlyPayment,
+                                                         Long maxRecognizedPaymentAmount) {
         findById(productId);
         return subscriptionProductRepository.save(SubscriptionProduct.builder()
                 .productId(productId)
@@ -191,8 +191,8 @@ public class ProductService {
     }
 
     @Transactional
-    public SubscriptionProduct updateSubscriptionProduct(Long productId, BigDecimal monthlyPaymentAmount,
-                                                          BigDecimal minMonthlyPayment, BigDecimal maxMonthlyPayment) {
+    public SubscriptionProduct updateSubscriptionProduct(Long productId, Long monthlyPaymentAmount,
+                                                          Long minMonthlyPayment, Long maxMonthlyPayment) {
         SubscriptionProduct sp = findSubscriptionProduct(productId);
         sp.update(monthlyPaymentAmount, minMonthlyPayment, maxMonthlyPayment);
         return sp;
@@ -324,7 +324,7 @@ public class ProductService {
     @Transactional
     public ProductInterestRate createInterestRate(Long productId, RateType rateType, BigDecimal rate,
                                                   String effectiveStartDate, Integer minPeriod, Integer maxPeriod,
-                                                  BigDecimal minJoinAmount, BigDecimal maxJoinAmount,
+                                                  Long minJoinAmount, Long maxJoinAmount,
                                                   String conditionDescription) {
         findById(productId);
         return interestRateRepository.save(ProductInterestRate.builder()

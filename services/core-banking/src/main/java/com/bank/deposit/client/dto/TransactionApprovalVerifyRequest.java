@@ -12,5 +12,5 @@ public record TransactionApprovalVerifyRequest(
         String approvalToken,
         String fromAccountNo,
         String toAccountNo,
-        BigDecimal amount
+        Long amount
 ) {}

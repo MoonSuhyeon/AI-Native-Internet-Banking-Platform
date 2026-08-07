@@ -11,7 +11,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -50,9 +49,9 @@ public class KftcSettlementBatchWorker {
             return;
         }
 
-        BigDecimal totalAmount = dueList.stream()
+        Long totalAmount = dueList.stream()
                 .map(KftcClearingTransaction::getClearingAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(0L, Long::sum);
         log.info("[KFTC마감] 정산 시작. settlementDate={} 건수={} 총액={}", today, dueList.size(), totalAmount);
 
         int successCount = 0;

@@ -404,9 +404,9 @@ class TransactionControllerTest {
                 .accountId(1L)
                 .transactionType(type)
                 .directionType(direction)
-                .amount(BigDecimal.valueOf(50_000))
-                .balanceBefore(BigDecimal.valueOf(100_000))
-                .balanceAfter(BigDecimal.valueOf(150_000))
+                .amount(50000L)
+                .balanceBefore(100000L)
+                .balanceAfter(150000L)
                 .channelType(TransactionChannel.INTERNET)
                 .transactionAt(OffsetDateTime.now())
                 .build();

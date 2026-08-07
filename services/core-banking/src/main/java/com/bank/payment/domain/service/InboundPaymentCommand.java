@@ -1,6 +1,5 @@
 package com.bank.payment.domain.service;
 
-import java.math.BigDecimal;
 
 /**
  * KFTC kftc.network.request PAYMENT_REQUEST 수신 명령.
@@ -17,7 +16,7 @@ public record InboundPaymentCommand(
         String receiverBankCode,
         String receiverAccountNo,
         String receiverExpectedHolderName,
-        BigDecimal transferAmount,
+        Long transferAmount,
         String currency,
         String sentAt,
         String receiverPassbookMemo

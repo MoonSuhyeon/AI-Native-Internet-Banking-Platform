@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -49,7 +48,7 @@ public class AutoTransferService {
 
         Long sourceId = schedule.getSourceAccountId();
         Long targetId = schedule.getAccountId();
-        BigDecimal amount = schedule.getScheduledAmount();
+        Long amount = schedule.getScheduledAmount();
 
         if (sourceId == null) {
             log.warn("[AutoTransfer] contractId={} round={}: sourceAccountId 미설정 — FAILED 처리",
@@ -69,7 +68,7 @@ public class AutoTransferService {
                 source = getActiveAccountForUpdate(sourceId);
             }
 
-            BigDecimal srcBefore = source.getBalance();
+            Long srcBefore = source.getBalance();
             source.withdraw(amount, clock);
             OffsetDateTime now = OffsetDateTime.now(clock);
 
@@ -92,7 +91,7 @@ public class AutoTransferService {
                     .transactionSummary("자동이체 출금")
                     .build());
 
-            BigDecimal tgtBefore = target.getBalance();
+            Long tgtBefore = target.getBalance();
             target.deposit(amount, clock);
             target.addPaidAmount(amount);
 
@@ -159,7 +158,7 @@ public class AutoTransferService {
         Contract contract = contractRepository.findById(schedule.getContractId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTRACT_NOT_FOUND));
 
-        BigDecimal amount = schedule.getScheduledAmount();
+        Long amount = schedule.getScheduledAmount();
         Long targetId = schedule.getAccountId();
 
         Account source, target;
@@ -171,7 +170,7 @@ public class AutoTransferService {
             source = getActiveAccountForUpdate(sourceAccountId);
         }
 
-        BigDecimal srcBefore = source.getBalance();
+        Long srcBefore = source.getBalance();
         source.withdraw(amount, clock);
         OffsetDateTime now = OffsetDateTime.now(clock);
 
@@ -194,7 +193,7 @@ public class AutoTransferService {
                 .transactionSummary("적금 납입")
                 .build());
 
-        BigDecimal tgtBefore = target.getBalance();
+        Long tgtBefore = target.getBalance();
         target.deposit(amount, clock);
         target.addPaidAmount(amount);
 

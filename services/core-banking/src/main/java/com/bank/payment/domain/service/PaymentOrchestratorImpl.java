@@ -32,7 +32,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -397,7 +396,7 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
     private String determineRoutingNetworkType(PaymentCommand command) {
         if (isIntraBank(command.receiverBankCode())) {
             return "INTERNAL";
-        } else if (command.transferAmount().compareTo(BigDecimal.valueOf(BOK_ROUTING_THRESHOLD)) >= 0) {
+        } else if (command.transferAmount().compareTo(BOK_ROUTING_THRESHOLD) >= 0) {
             return "BOK";
         } else {
             return "KFTC";
@@ -533,7 +532,7 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
     private void step2b_executeValidation(PaymentInstruction pi, PaymentCommand command) {
         String piId = pi.getPaymentInstructionId();
         String sender = command.senderAccountId();
-        BigDecimal needed = command.transferAmount();
+        Long needed = command.transferAmount();
         String byNumberPath = "/api/accounts/by-number/" + sender;
 
         AccountInquiryData senderAcc;
@@ -547,7 +546,7 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
         }
 
         // B-1 잔액검증 — balance=availableBalance (D-REQ-3: deposit 가용잔액 별도 없음, balance로 대체).
-        BigDecimal balance = senderAcc.balance();
+        Long balance = senderAcc.balance();
         if (balance == null || balance.compareTo(needed) < 0) {
             recordCall(piId, "BALANCE_INQUIRY", "SENDER", "deposit", "GET",
                     byNumberPath, "DEP-0000", "FAIL");
@@ -557,9 +556,9 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
         recordCall(piId, "BALANCE_INQUIRY", "SENDER", "deposit", "GET",
                 byNumberPath, "DEP-0000");
 
-        // B-2 한도검증 — Account.dailyWithdrawLimit (BigDecimal nullable). null=한도 미설정 → 스킵.
+        // B-2 한도검증 — Account.dailyWithdrawLimit (Long nullable). null=한도 미설정 → 스킵.
         // D-REQ-4 미해소: perTx/daily/monthly 분리 없음. dailyWithdrawLimit 단일 한도로 단순 비교.
-        BigDecimal dailyLimit = senderAcc.dailyWithdrawLimit();
+        Long dailyLimit = senderAcc.dailyWithdrawLimit();
         if (dailyLimit != null && needed.compareTo(dailyLimit) > 0) {
             recordCall(piId, "LIMIT_CHECK", "SENDER", "deposit", "GET",
                     byNumberPath, "DEP-0000", "FAIL");

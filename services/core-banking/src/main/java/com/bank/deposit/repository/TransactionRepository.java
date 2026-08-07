@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +30,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "AND t.directionType = :directionType " +
            "AND t.transactionAt >= :start AND t.transactionAt < :end " +
            "AND t.status <> com.bank.deposit.domain.enums.TransactionStatus.CANCELED")
-    BigDecimal sumAmountByAccountIdAndDirectionTypeAndTransactionAtBetween(
+    Long sumAmountByAccountIdAndDirectionTypeAndTransactionAtBetween(
             @Param("accountId") Long accountId,
             @Param("directionType") DirectionType directionType,
             @Param("start") OffsetDateTime start,

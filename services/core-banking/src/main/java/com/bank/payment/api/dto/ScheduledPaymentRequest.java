@@ -1,6 +1,5 @@
 package com.bank.payment.api.dto;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
@@ -12,7 +11,7 @@ public record ScheduledPaymentRequest(
         String receiverBankCode,
         String receiverAccountNo,
         String receiverHolderName,
-        BigDecimal transferAmount,
+        Long transferAmount,
         String receiverMemo,
         String senderMemo,
         String channel,

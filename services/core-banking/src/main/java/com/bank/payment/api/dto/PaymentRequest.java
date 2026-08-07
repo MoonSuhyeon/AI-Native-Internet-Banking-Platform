@@ -1,6 +1,5 @@
 package com.bank.payment.api.dto;
 
-import java.math.BigDecimal;
 
 /**
  * 결제(이체) 요청 본문. 순수 이체 지시만 담음.
@@ -11,7 +10,7 @@ public record PaymentRequest(
         String receiverBankCode,
         String receiverAccountNo,
         String receiverHolderName,
-        BigDecimal transferAmount,
+        Long transferAmount,
         String receiverMemo,
         String senderMemo,
         String channel,

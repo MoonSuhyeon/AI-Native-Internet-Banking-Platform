@@ -44,7 +44,7 @@ public class TransferApprovalGate {
      * @throws BusinessException 필수인데 없거나(TRANSFER_APPROVAL_REQUIRED),
      *                           검증에 실패한 경우(TRANSFER_APPROVAL_INVALID)
      */
-    public void verify(String approvalToken, String fromAccountNo, String toAccountNo, BigDecimal amount) {
+    public void verify(String approvalToken, String fromAccountNo, String toAccountNo, Long amount) {
         if (approvalToken == null || approvalToken.isBlank()) {
             if (required) {
                 throw new BusinessException(ErrorCode.TRANSFER_APPROVAL_REQUIRED);

@@ -51,7 +51,7 @@ public class ContractService {
     }
 
     @Transactional
-    public Contract createContract(String customerId, Long productId, BigDecimal joinAmount,
+    public Contract createContract(String customerId, Long productId, Long joinAmount,
                                    Integer contractPeriodMonth, JoinChannel joinChannel,
                                    BigDecimal contractInterestRate, BigDecimal totalPreferentialRate,
                                    TaxBenefitType taxBenefitType, Boolean isAutoRenewal,
@@ -68,12 +68,12 @@ public class ContractService {
         if (product.getMinJoinAmount() != null
                 && joinAmount.compareTo(product.getMinJoinAmount()) < 0) {
             throw new BusinessException(ErrorCode.INVALID_STATUS,
-                    "가입금액이 최소 가입금액보다 작습니다. (최소: " + product.getMinJoinAmount().toPlainString() + "원)");
+                    "가입금액이 최소 가입금액보다 작습니다. (최소: " + product.getMinJoinAmount() + "원)");
         }
         if (product.getMaxJoinAmount() != null
                 && joinAmount.compareTo(product.getMaxJoinAmount()) > 0) {
             throw new BusinessException(ErrorCode.INVALID_STATUS,
-                    "가입금액이 최대 가입금액을 초과합니다. (최대: " + product.getMaxJoinAmount().toPlainString() + "원)");
+                    "가입금액이 최대 가입금액을 초과합니다. (최대: " + product.getMaxJoinAmount() + "원)");
         }
         if (accountPassword == null || accountPassword.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_STATUS, "계좌 비밀번호는 필수입니다.");
@@ -113,7 +113,7 @@ public class ContractService {
         // 비밀번호 BCrypt 해시 처리 — 평문 저장 금지
         boolean isCheckingAccount = product.getProductType() == ProductType.DEPOSIT
                 && product.getProductName() != null && product.getProductName().contains("통장");
-        BigDecimal initialBalance = isCheckingAccount ? joinAmount : BigDecimal.ZERO;
+        Long initialBalance = isCheckingAccount ? joinAmount : 0L;
 
         accountRepository.save(Account.builder()
                 .accountNumber(accountNumber)
@@ -156,11 +156,11 @@ public class ContractService {
         contract.terminate(today, reason);
 
         accountRepository.findByContractId(id).ifPresent(savingsAccount -> {
-            BigDecimal terminationAmount = savingsAccount.getBalance();
+            Long terminationAmount = savingsAccount.getBalance();
 
-            if (terminationAmount.compareTo(BigDecimal.ZERO) > 0) {
+            if (terminationAmount > 0) {
                 // 해지 잔액 출금 트랜잭션
-                BigDecimal beforeBalance = savingsAccount.getBalance();
+                Long beforeBalance = savingsAccount.getBalance();
                 savingsAccount.withdraw(terminationAmount);
                 transactionRepository.save(Transaction.builder()
                         .transactionNumber("TRM-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16))
@@ -187,7 +187,7 @@ public class ContractService {
                         .filter(a -> targetAccountId == null || a.getAccountId().equals(targetAccountId))
                         .findFirst()
                         .ifPresent(depositAccount -> {
-                            BigDecimal depositBefore = depositAccount.getBalance();
+                            Long depositBefore = depositAccount.getBalance();
                             depositAccount.deposit(terminationAmount);
                             transactionRepository.save(Transaction.builder()
                                     .transactionNumber("TRM-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16))
