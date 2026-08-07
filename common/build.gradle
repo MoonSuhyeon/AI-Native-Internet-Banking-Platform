@@ -26,3 +26,12 @@ dependencies {
     testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
     testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 }
+
+// ScrapeTargetConsistencyTest 는 레포 루트의 설정 파일 두 개를 읽는다.
+// 기본적으로 Gradle 은 그 파일을 테스트 입력으로 모르기 때문에, compose 나 prometheus.yml 만
+// 고치면 테스트를 UP-TO-DATE 로 건너뛴다 — 정작 검사해야 할 변경에서 안 도는 셈이다.
+// 입력으로 등록해 두 파일이 바뀌면 다시 돌게 한다.
+tasks.named('test') {
+    inputs.file(rootProject.file('docker-compose.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.file('infra/prometheus/prometheus.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
+}
