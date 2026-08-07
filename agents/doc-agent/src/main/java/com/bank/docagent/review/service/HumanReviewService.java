@@ -40,6 +40,12 @@ public class HumanReviewService {
         if (decision == HumanReviewStatus.NOT_REQUIRED) {
             throw new IllegalArgumentException("NOT_REQUIRED는 심사원 결정값이 아닙니다");
         }
+        // 컨트롤러에도 @NotBlank 가 있지만 여기서 한 번 더 막는다.
+        // 위조 확정은 사람이 책임지는 행위라, 심사원 없는 결정이 남으면 감사 추적이 끊긴다.
+        // HTTP 밖(배치·이벤트 소비자)에서 부르는 경로가 생기면 컨트롤러 검증은 우회된다.
+        if (reviewerId == null || reviewerId.isBlank()) {
+            throw new IllegalArgumentException("심사원 ID 없이 결정할 수 없습니다");
+        }
 
         submission.applyHumanDecision(decision, reviewerId);
 

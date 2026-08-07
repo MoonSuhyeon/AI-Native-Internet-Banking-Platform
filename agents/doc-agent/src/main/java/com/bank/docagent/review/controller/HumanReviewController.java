@@ -7,6 +7,9 @@ import com.bank.docagent.submission.repository.DocumentSubmissionRepository;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +29,18 @@ public class HumanReviewController {
     private final HumanReviewService reviewService;
     private final DocumentSubmissionRepository submissionRepo;
 
+    /**
+     * 두 필드 모두 필수다.
+     *
+     * <p>심사원 없이 결정이 남으면 위조를 누가 확정했는지 추적할 수 없다. 예전에는
+     * 검증이 없어 {@code reviewer_id} 를 빼고 부르면 결정이 먼저 반영되고 나서
+     * 응답을 만들다 NPE 로 500 이 났다 — 호출자는 실패로 보는데 상태는 바뀌어 있었다.
+     */
     public record ReviewRequest(
-        @JsonProperty("decision")   HumanReviewStatus decision,    // CLEARED | CONFIRMED_FORGERY
+        @NotNull(message = "decision 은 필수입니다 (CLEARED | CONFIRMED_FORGERY)")
+        @JsonProperty("decision")   HumanReviewStatus decision,
+
+        @NotBlank(message = "reviewer_id 는 필수입니다 — 결정 주체가 남아야 합니다")
         @JsonProperty("reviewer_id") String reviewerId
     ) {}
 
@@ -59,7 +72,7 @@ public class HumanReviewController {
     @PostMapping("/{submissionId}/review")
     public ResponseEntity<Map<String, Object>> decide(
         @PathVariable UUID submissionId,
-        @RequestBody  ReviewRequest req
+        @Valid @RequestBody ReviewRequest req
     ) {
         DocumentSubmission result = reviewService.decide(submissionId, req.decision(), req.reviewerId());
         return ResponseEntity.ok(Map.of(
