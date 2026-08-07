@@ -64,9 +64,9 @@ class TermApplicationManagementServiceTest {
     @Test
     @DisplayName("필수 여부로 조회한다")
     void findByIsRequired() {
-        given(repository.findByIsRequired("Y")).willReturn(List.of(entity("DEPOSIT")));
+        given(repository.findByIsRequired(true)).willReturn(List.of(entity("DEPOSIT")));
 
-        List<TermApplicationManagement> result = service.findByIsRequired("Y");
+        List<TermApplicationManagement> result = service.findByIsRequired(true);
 
         assertThat(result).hasSize(1);
     }
@@ -109,7 +109,7 @@ class TermApplicationManagementServiceTest {
                 .commonTermId(100L)
                 .termTargetId(200L)
                 .businessTypeCode(businessTypeCode)
-                .isRequired("N")
+                .isRequired(false)
                 .registeredAt("20260101")
                 .build();
     }

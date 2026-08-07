@@ -29,7 +29,7 @@ public class TermApplicationManagementService {
         return repository.findByCommonTermId(commonTermId);
     }
 
-    public List<TermApplicationManagement> findByIsRequired(String isRequired) {
+    public List<TermApplicationManagement> findByIsRequired(Boolean isRequired) {
         return repository.findByIsRequired(isRequired);
     }
 

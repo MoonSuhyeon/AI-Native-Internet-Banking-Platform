@@ -4,7 +4,7 @@ public record TermApplicationManagementRequest(
         Long commonTermId,
         Long termTargetId,
         String businessTypeCode,
-        String isRequired,
+        Boolean isRequired,
         String registeredAt,
         String modifiedAt
 ) {}

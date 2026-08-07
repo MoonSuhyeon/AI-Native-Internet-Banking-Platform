@@ -22,13 +22,14 @@ public class TermApplicationManagementController {
      * GET /api/term-applications
      * GET /api/term-applications?businessTypeCode=DEPOSIT
      * GET /api/term-applications?commonTermId=1
-     * GET /api/term-applications?isRequired=Y
+     * GET /api/term-applications?isRequired=true
+     * (V21 에서 is_required 가 BOOLEAN 이 되며 Y/N → true/false 로 바뀌었다)
      */
     @GetMapping
     public List<TermApplicationManagement> list(
             @RequestParam(required = false) String businessTypeCode,
             @RequestParam(required = false) Long commonTermId,
-            @RequestParam(required = false) String isRequired) {
+            @RequestParam(required = false) Boolean isRequired) {
 
         if (businessTypeCode != null) {
             return service.findByBusinessTypeCode(businessTypeCode);
@@ -63,7 +64,7 @@ public class TermApplicationManagementController {
                 .commonTermId(req.commonTermId())
                 .termTargetId(req.termTargetId())
                 .businessTypeCode(req.businessTypeCode())
-                .isRequired(req.isRequired() != null ? req.isRequired() : "N")
+                .isRequired(req.isRequired() != null ? req.isRequired() : Boolean.FALSE)
                 .registeredAt(req.registeredAt())
                 .modifiedAt(req.modifiedAt())
                 .build();

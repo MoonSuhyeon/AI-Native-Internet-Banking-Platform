@@ -38,7 +38,7 @@ class TermApplicationManagementControllerTest {
     @Test
     @DisplayName("약관 적용 목록 전체를 조회한다")
     void listAll() throws Exception {
-        given(service.findAll()).willReturn(List.of(entity("DEPOSIT", "Y")));
+        given(service.findAll()).willReturn(List.of(entity("DEPOSIT", true)));
 
         mockMvc.perform(get("/term-applications"))
                 .andExpect(status().isOk())
@@ -50,7 +50,7 @@ class TermApplicationManagementControllerTest {
     @DisplayName("업무 구분 코드로 약관 적용 목록을 필터링한다")
     void listByBusinessTypeCode() throws Exception {
         given(service.findByBusinessTypeCode("SAVINGS"))
-                .willReturn(List.of(entity("SAVINGS", "N")));
+                .willReturn(List.of(entity("SAVINGS", false)));
 
         mockMvc.perform(get("/term-applications").param("businessTypeCode", "SAVINGS"))
                 .andExpect(status().isOk())
@@ -60,7 +60,7 @@ class TermApplicationManagementControllerTest {
     @Test
     @DisplayName("공통 약관 ID로 약관 적용 목록을 필터링한다")
     void listByCommonTermId() throws Exception {
-        given(service.findByCommonTermId(100L)).willReturn(List.of(entity("DEPOSIT", "Y")));
+        given(service.findByCommonTermId(100L)).willReturn(List.of(entity("DEPOSIT", true)));
 
         mockMvc.perform(get("/term-applications").param("commonTermId", "100"))
                 .andExpect(status().isOk())
@@ -70,17 +70,17 @@ class TermApplicationManagementControllerTest {
     @Test
     @DisplayName("필수 여부로 약관 적용 목록을 필터링한다")
     void listByRequired() throws Exception {
-        given(service.findByIsRequired("Y")).willReturn(List.of(entity("DEPOSIT", "Y")));
+        given(service.findByIsRequired(true)).willReturn(List.of(entity("DEPOSIT", true)));
 
-        mockMvc.perform(get("/term-applications").param("isRequired", "Y"))
+        mockMvc.perform(get("/term-applications").param("isRequired", "true"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].isRequired").value("Y"));
+                .andExpect(jsonPath("$[0].isRequired").value(true));
     }
 
     @Test
     @DisplayName("약관 적용 단건을 조회한다")
     void getById() throws Exception {
-        given(service.findById(1L)).willReturn(entity("DEPOSIT", "Y"));
+        given(service.findById(1L)).willReturn(entity("DEPOSIT", true));
 
         mockMvc.perform(get("/term-applications/1"))
                 .andExpect(status().isOk())
@@ -100,7 +100,7 @@ class TermApplicationManagementControllerTest {
     @Test
     @DisplayName("약관 적용 정보를 등록한다")
     void create() throws Exception {
-        given(service.create(any(TermApplicationManagement.class))).willReturn(entity("DEPOSIT", "Y"));
+        given(service.create(any(TermApplicationManagement.class))).willReturn(entity("DEPOSIT", true));
 
         mockMvc.perform(post("/term-applications")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +109,7 @@ class TermApplicationManagementControllerTest {
                                   "commonTermId": 100,
                                   "termTargetId": 200,
                                   "businessTypeCode": "DEPOSIT",
-                                  "isRequired": "Y",
+                                  "isRequired": true,
                                   "registeredAt": "20260521"
                                 }
                                 """))
@@ -124,7 +124,7 @@ class TermApplicationManagementControllerTest {
                 .andExpect(status().isNoContent());
     }
 
-    private TermApplicationManagement entity(String businessTypeCode, String required) {
+    private TermApplicationManagement entity(String businessTypeCode, boolean required) {
         return TermApplicationManagement.builder()
                 .commonTermId(100L)
                 .termTargetId(200L)

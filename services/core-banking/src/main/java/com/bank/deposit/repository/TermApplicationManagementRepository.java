@@ -11,5 +11,5 @@ public interface TermApplicationManagementRepository extends JpaRepository<TermA
 
     List<TermApplicationManagement> findByCommonTermId(Long commonTermId);
 
-    List<TermApplicationManagement> findByIsRequired(String isRequired);
+    List<TermApplicationManagement> findByIsRequired(Boolean isRequired);
 }

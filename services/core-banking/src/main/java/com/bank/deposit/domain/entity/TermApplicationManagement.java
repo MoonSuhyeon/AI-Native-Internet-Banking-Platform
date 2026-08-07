@@ -40,10 +40,10 @@ public class TermApplicationManagement extends BaseEntity {
     @Column(name = "business_type_code", length = 10)
     private String businessTypeCode;
 
-    /** 필수 여부: Y = 필수 | N = 선택 */
-    @Column(name = "is_required", columnDefinition = "CHAR(1)")
+    /** 필수 여부. is_ 로 시작하는 이름은 불린을 뜻한다 — 값도 불린으로 맞췄다(V21). */
+    @Column(name = "is_required")
     @Builder.Default
-    private String isRequired = "N";
+    private Boolean isRequired = Boolean.FALSE;
 
     /** 등록일 (YYYYMMDD) */
     @Column(name = "registered_at", columnDefinition = "CHAR(8)")
