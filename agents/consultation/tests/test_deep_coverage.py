@@ -9,7 +9,6 @@
   E. _resolve_ambiguous_query     - 지시어 없음·있음·이전 대화 상품 추출
   F. _analyze_customer_cash_flow  - 직접 호출 단위 테스트
   G. _rank_products               - 100점 체계·유형별 필터·정렬
-  H. _rule_based_recommend        - 8가지 분기 전수
   I. _make_reason                 - 상품 유형별 사유 텍스트 생성
   J. ChatService.get_messages     - chatbot+agent 메시지 통합
   K. _open_chat_consultation      - 이미 존재 시 중복 생성 방지
@@ -586,89 +585,17 @@ class TestRankProducts:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# H. _rule_based_recommend — 8가지 분기 전수
+# H. _rule_based_recommend — 제거됨
+#
+# 이 메서드는 "LLM 미연결 시 룰 기반 추천 텍스트"였는데, #111 이 CASH_FLOW_RECOMMEND 를
+# UserFinanceFeatureExecutor 의 100점 채점 모델로 옮기면서 호출부가 사라졌다.
+# 그 뒤로도 테스트 15건은 계속 통과했다 — 메서드를 직접 불렀기 때문이다.
+# 아무도 실행하지 않는 코드를 지키는 테스트는 회귀를 잡지 못하므로 코드와 함께 지운다.
+#
+# 지금 이 자리를 대신하는 것:
+#   - 현금흐름 기반 추천 문구 → UserFinanceFeatureExecutor._build_recommendation_message
+#   - 예금 vs 적금 비교 설명 → services._execute_product_compare 의 _COMPARE_TEXT
 # ─────────────────────────────────────────────────────────────────────────────
-
-class TestRuleBasedRecommend:
-    """_rule_based_recommend — 모든 분기 정확한 키워드 검증."""
-
-    PRODUCTS = [
-        {"deposit_product_name": "정기예금 플러스", "deposit_product_type": "DEPOSIT", "base_interest_rate": 3.5},
-        {"deposit_product_name": "자유적금", "deposit_product_type": "SAVINGS", "base_interest_rate": 4.0},
-    ]
-
-    # ── 비교 질문 분기 ─────────────────────────────────────────────────────────
-
-    def test_comparison_no_data_mentions_both(self, service):
-        cf = {"total_balance": 0, "monthly_surplus": 0, "has_data": False}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "예금이랑 적금 차이가 뭐야")
-        assert "📌 예금이 적합한 경우" in result
-        assert "📌 적금이 적합한 경우" in result
-
-    def test_comparison_large_balance_recommends_deposit(self, service):
-        cf = {"total_balance": 15_000_000, "monthly_surplus": 500_000, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "예금 적금 중 뭐가 좋아")
-        assert "예금" in result
-        assert "15,000,000" in result
-
-    def test_comparison_surplus_300k_recommends_savings(self, service):
-        cf = {"total_balance": 500_000, "monthly_surplus": 500_000, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "예금 적금 비교해줘")
-        assert "적금" in result
-
-    def test_comparison_small_surplus_recommends_free_savings(self, service):
-        cf = {"total_balance": 100_000, "monthly_surplus": 100_000, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "예금이랑 적금 뭐가 나아")
-        assert "자유납입 적금" in result or "자유적금" in result
-
-    def test_comparison_no_surplus_recommends_small_savings(self, service):
-        cf = {"total_balance": 0, "monthly_surplus": -100_000, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "예금이나 적금 추천해줘")
-        assert "소액 자유적금" in result or "자유적금" in result
-
-    # ── 일반 추천 분기 ─────────────────────────────────────────────────────────
-
-    def test_no_data_general_recommend(self, service):
-        cf = {"total_balance": 0, "monthly_surplus": 0, "has_data": False}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "상품 추천해줘")
-        assert "거래 내역이 부족" in result
-
-    def test_large_balance_recommends_deposit(self, service):
-        cf = {"total_balance": 20_000_000, "monthly_surplus": 0, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "상품 추천해줘")
-        assert "정기예금" in result or "목돈" in result
-
-    def test_large_surplus_recommends_savings(self, service):
-        cf = {"total_balance": 1_000_000, "monthly_surplus": 600_000, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "추천해줘")
-        assert "적금" in result
-
-    def test_small_surplus_recommends_free_savings(self, service):
-        cf = {"total_balance": 200_000, "monthly_surplus": 100_000, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "상품")
-        assert "자유적금" in result or "소액" in result
-
-    def test_no_surplus_general_recommend(self, service):
-        cf = {"total_balance": 0, "monthly_surplus": 0, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "상품")
-        assert "잉여자금" in result or "자유납입" in result
-
-    def test_result_contains_product_list_when_general(self, service):
-        cf = {"total_balance": 1_000_000, "monthly_surplus": 0, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "추천해줘")
-        assert "추천 상품" in result or "정기예금" in result or "자유적금" in result
-
-    def test_comparison_result_no_product_list(self, service):
-        cf = {"total_balance": 0, "monthly_surplus": 0, "has_data": False}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "예금 적금 비교")
-        # 비교 질문 → 상품 목록 나열 없이 유형 판단만
-        assert "더 자세한 상품 안내는" in result
-
-    def test_message_ends_with_guidance(self, service):
-        cf = {"total_balance": 5_000_000, "monthly_surplus": 500_000, "has_data": True}
-        result = service._rule_based_recommend(cf, self.PRODUCTS, "상품 추천")
-        assert "상담사" in result
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # I. _make_reason — 상품 유형별 사유 텍스트
