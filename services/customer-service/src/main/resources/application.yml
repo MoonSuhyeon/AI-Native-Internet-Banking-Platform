@@ -51,6 +51,11 @@ management:
 # ---- OpenAPI / Swagger UI ----
 # 접속: http://localhost:${CUSTOMER_APP_PORT}/swagger-ui.html
 springdoc:
+  # 스펙의 키 순서를 알파벳순으로 고정한다.
+  # 기본값은 순서가 보장되지 않아 같은 코드에서도 매번 다른 순서로 나온다.
+  # 프론트 타입을 이 스펙에서 생성하고(web/scripts/generate-api-types.sh) CI 가
+  # 재생성 후 diff 로 드리프트를 잡으므로, 순서가 흔들리면 검사가 매번 실패한다.
+  writer-with-order-by-keys: true
   api-docs:
     path: /v3/api-docs
     enabled: ${SWAGGER_ENABLED:true}
