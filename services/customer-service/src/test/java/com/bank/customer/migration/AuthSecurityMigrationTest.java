@@ -29,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *     — V4의 customer_id=1 테스트 시드 FK 문제는 beforeEachMigrate.sql 콜백이 멱등 처리
  *  2) V9가 auth_method 타입 CHECK를 설계문서 집합으로 복구했다
  *     — 'PIN' 타입 insert 성공 / 제거된 'OTP' 타입 insert 거부 (PIN 등록 버그 회귀 방지)
- *  3) V9가 미사용 테이블 4개를 DROP했다
+ *  3) V9가 미사용 테이블 3개를 DROP했고, auth_token 은 V35 가 되살렸다
+ *     — step-up 인증이 쓰기 시작했는데 마이그레이션이 함께 오지 않아 이체가 막혔었다
  */
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -72,12 +73,23 @@ class AuthSecurityMigrationTest {
     }
 
     @Test
-    @DisplayName("V9가 미사용 테이블(otp_device·security_card·security_card_code·auth_token)을 제거했다")
-    void unusedTablesDropped() throws Exception {
+    @DisplayName("V9가 제거한 미사용 테이블(otp_device·security_card·security_card_code)은 그대로 없다")
+    void unusedTablesStayDropped() throws Exception {
         assertThat(tableExists("otp_device")).isFalse();
         assertThat(tableExists("security_card")).isFalse();
         assertThat(tableExists("security_card_code")).isFalse();
-        assertThat(tableExists("auth_token")).isFalse();
+    }
+
+    @Test
+    @DisplayName("auth_token 은 V35 가 되살렸다 — 자금이동 step-up 인증이 쓴다")
+    void authTokenRestoredForStepUpAuth() throws Exception {
+        // V9 가 지운 판단은 그때는 옳았다(설계문서에 없고 참조 코드 0건).
+        // 이후 step-up 인증이 이 테이블을 쓰기 시작했는데 되살리는 마이그레이션이
+        // 오지 않아, 승인 토큰 발급이 항상 500 이었고 소액을 넘는 이체가 막혔다.
+        //
+        // 이 단언을 되돌리려면 AuthToken 엔티티와 TransactionApprovalService 도
+        // 함께 걷어내야 한다 — 테이블만 다시 지우면 이체가 또 멈춘다.
+        assertThat(tableExists("auth_token")).isTrue();
     }
 
     @Test
