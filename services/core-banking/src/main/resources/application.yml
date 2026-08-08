@@ -127,6 +127,15 @@ deposit:
 
 payment:
   bank-code: ${BANK_CODE:A}
+  # 이체 수수료. 코드에 박혀 있던 값(자행 0, 타행 500)을 설정으로 뺐다 —
+  # 은행에서 가장 자주 바뀌는 값이라 바꿀 때마다 배포해야 하면 결국 아무도 못 바꾼다.
+  # 영업시간은 KST 기준이다.
+  fee:
+    intra-bank: ${PAYMENT_FEE_INTRA_BANK:0}
+    inter-bank: ${PAYMENT_FEE_INTER_BANK:500}
+    inter-bank-after-hours-surcharge: ${PAYMENT_FEE_AFTER_HOURS_SURCHARGE:0}
+    business-hour-from: ${PAYMENT_FEE_BUSINESS_HOUR_FROM:9}
+    business-hour-to: ${PAYMENT_FEE_BUSINESS_HOUR_TO:16}
   timeout:
     kftc-clearing-minutes: ${PAYMENT_TIMEOUT_KFTC_CLEARING_MINUTES:5}
     bok-clearing-seconds: ${PAYMENT_TIMEOUT_BOK_CLEARING_SECONDS:30}

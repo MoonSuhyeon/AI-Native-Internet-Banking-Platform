@@ -53,6 +53,7 @@ public class PaymentTransactionService {
     private int bokClearingTimeoutSeconds;
 
     private final PaymentInstructionMapper paymentInstructionMapper;
+    private final TransferFeePolicy transferFeePolicy;
     private final IdempotencyKeyMapper idempotencyKeyMapper;
     private final StatusHistoryMapper statusHistoryMapper;
     private final ExternalCallMapper externalCallMapper;
@@ -66,6 +67,7 @@ public class PaymentTransactionService {
 
     public PaymentTransactionService(
             PaymentInstructionMapper paymentInstructionMapper,
+            TransferFeePolicy transferFeePolicy,
             IdempotencyKeyMapper idempotencyKeyMapper,
             StatusHistoryMapper statusHistoryMapper,
             ExternalCallMapper externalCallMapper,
@@ -77,6 +79,7 @@ public class PaymentTransactionService {
             ObjectMapper objectMapper,
             LedgerFailureSimulator ledgerFailureSimulator) {
         this.paymentInstructionMapper = paymentInstructionMapper;
+        this.transferFeePolicy = transferFeePolicy;
         this.idempotencyKeyMapper = idempotencyKeyMapper;
         this.statusHistoryMapper = statusHistoryMapper;
         this.externalCallMapper = externalCallMapper;
@@ -116,7 +119,7 @@ public class PaymentTransactionService {
                 .isIntraBank(isIntraBank)
                 .routingNetworkType(routingNetworkType)
                 .transferAmount(command.transferAmount())
-                .feeAmount(isIntraBank ? 0L : 500L)  // 자행 0, 타행 500
+                .feeAmount(transferFeePolicy.feeFor(isIntraBank, now))
                 .receiverPassbookSenderDisplay(command.receiverPassbookSenderDisplay())
                 .receiverMemo(command.receiverMemo())
                 .senderMemo(command.senderMemo())
