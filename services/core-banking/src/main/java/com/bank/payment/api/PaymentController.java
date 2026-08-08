@@ -11,6 +11,7 @@ import com.bank.payment.domain.service.PaymentCommand;
 import com.bank.payment.domain.service.PaymentOrchestrator;
 import com.bank.payment.domain.service.PaymentResult;
 import org.springframework.http.ResponseEntity;
+import com.bank.deposit.security.FdsPreCheckGate;
 import com.bank.deposit.security.TransferApprovalGate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,13 +43,16 @@ public class PaymentController {
     private final PaymentInstructionMapper paymentInstructionMapper;
     /** 수신·결제가 같은 승인 체계를 쓴다. 계좌 번호로 묶이므로 양쪽에서 그대로 쓸 수 있다. */
     private final TransferApprovalGate transferApprovalGate;
+    private final FdsPreCheckGate fdsPreCheckGate;
 
     public PaymentController(PaymentOrchestrator paymentOrchestrator,
                              PaymentInstructionMapper paymentInstructionMapper,
-                             TransferApprovalGate transferApprovalGate) {
+                             TransferApprovalGate transferApprovalGate,
+                             FdsPreCheckGate fdsPreCheckGate) {
         this.paymentOrchestrator = paymentOrchestrator;
         this.paymentInstructionMapper = paymentInstructionMapper;
         this.transferApprovalGate = transferApprovalGate;
+        this.fdsPreCheckGate = fdsPreCheckGate;
     }
 
     @PostMapping
@@ -66,6 +70,13 @@ public class PaymentController {
         // 내부이체(TransactionController)와 같은 체계다.
         transferApprovalGate.verify(
                 authTokenId, request.senderAccountId(), request.receiverAccountNo(), request.transferAmount());
+
+        // 승인 확인 다음에 이상거래 점검. 순서가 중요하다 — 인증되지 않은 요청으로
+        // 탐지기를 두드리게 두면 탐지 통계가 오염되고 부하도 는다.
+        fdsPreCheckGate.evaluate(
+                userId, request.senderAccountId(), request.receiverBankCode(),
+                request.receiverAccountNo(), request.transferAmount(),
+                null, request.channel(), authTokenId != null && !authTokenId.isBlank());
 
         // api 입력 → 도메인 입력 번역 (Command 조립)
         PaymentCommand command = new PaymentCommand(
@@ -124,6 +135,13 @@ public class PaymentController {
         // 그때는 물을 수 없다 — 등록이 유일한 인증 지점이다.
         transferApprovalGate.verify(
                 authTokenId, request.senderAccountId(), request.receiverAccountNo(), request.transferAmount());
+
+        // 예약이체도 등록 시점에 점검한다. 실행은 스케줄러가 사람 없이 하므로
+        // 그때는 막아도 물어볼 상대가 없다.
+        fdsPreCheckGate.evaluate(
+                userId, request.senderAccountId(), request.receiverBankCode(),
+                request.receiverAccountNo(), request.transferAmount(),
+                null, request.channel(), authTokenId != null && !authTokenId.isBlank());
 
         PaymentCommand command = new PaymentCommand(
                 request.senderAccountId(),

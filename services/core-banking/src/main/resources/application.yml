@@ -111,6 +111,19 @@ deposit:
       # TransferApprovalGate 가 "승인 토큰 없이 처리됨" 로그를 남기므로 어느 경로가
       # 빠졌는지 바로 보인다.
       required: ${TRANSFER_APPROVAL_REQUIRED:true}
+    # 금액 구간. 임계 금액은 운영 중 바뀌지만 구간의 개수와 의미는 코드에 있다.
+    # 승인 강도와 FDS 장애 시 동작이 이 구간 하나를 공유한다 — 기준이 두 벌이면
+    # 같은 거래가 한쪽에선 고액이고 한쪽에선 아니게 된다.
+    tier:
+      normal-from: ${TRANSFER_TIER_NORMAL_FROM:100000}
+      high-from: ${TRANSFER_TIER_HIGH_FROM:5000000}
+      very-high-from: ${TRANSFER_TIER_VERY_HIGH_FROM:50000000}
+  fds:
+    # 이상거래 사전 점검. 결제 임계 경로에 새 외부 호출을 넣는 변경이라 기본은 꺼 둔다.
+    enabled: ${DEPOSIT_FDS_ENABLED:false}
+    base-url: ${DEPOSIT_FDS_BASE_URL:http://fds-detector:8092}
+    # 인라인 판정이라 예산이 밀리초 단위다. 탐지기가 느려지면 모든 이체가 느려진다.
+    timeout-ms: ${DEPOSIT_FDS_TIMEOUT_MS:400}
 
 payment:
   bank-code: ${BANK_CODE:A}

@@ -10,6 +10,7 @@ import com.bank.deposit.domain.enums.TransferType;
 import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
 import com.bank.deposit.repository.AccountRepository;
+import com.bank.deposit.security.FdsPreCheckGate;
 import com.bank.deposit.security.TransferApprovalGate;
 import com.bank.deposit.service.AccountService;
 import com.bank.deposit.repository.TransactionRepository;
@@ -63,6 +64,11 @@ class TransactionControllerTest {
     // 게이트 자체의 동작은 TransferApprovalGateTest 가 본다.
     @MockBean
     private TransferApprovalGate transferApprovalGate;
+
+    // 이상거래 사전 점검도 슬라이스에서는 mock 이다. 게이트 자체 동작은
+    // FdsPreCheckGateTest 가 본다 — 특히 탐지기 장애 시 금액 구간 분기.
+    @MockBean
+    private FdsPreCheckGate fdsPreCheckGate;
 
     // 이체 컨트롤러가 승인 토큰 대조용 계좌번호를 여기서 찾는다.
     @MockBean

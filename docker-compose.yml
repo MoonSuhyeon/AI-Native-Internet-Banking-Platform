@@ -257,6 +257,11 @@ services:
       KFTC_KAFKA_BOOTSTRAP: kafka:29092
       BOK_KAFKA_BOOTSTRAP: kafka:29092
       INTERNAL_KAFKA_BOOTSTRAP: kafka:29092
+      # 이상거래 사전 점검. 결제 임계 경로에 외부 호출을 넣는 변경이라 기본은 꺼 둔다 —
+      # 탐지기가 안정적으로 뜨는 것을 확인한 뒤 DEPOSIT_FDS_ENABLED=true 로 켠다.
+      DEPOSIT_FDS_ENABLED: ${DEPOSIT_FDS_ENABLED:-false}
+      DEPOSIT_FDS_BASE_URL: http://fds-detector:8092
+      DEPOSIT_FDS_TIMEOUT_MS: ${DEPOSIT_FDS_TIMEOUT_MS:-400}
       KFTC_CONSUMER_GROUP: core-banking-kftc-a
       BOK_CONSUMER_GROUP: core-banking-bok-a
       INTERNAL_CONSUMER_GROUP: core-banking-internal-a
@@ -363,6 +368,11 @@ services:
       KFTC_KAFKA_BOOTSTRAP: kafka:29092
       BOK_KAFKA_BOOTSTRAP: kafka:29092
       INTERNAL_KAFKA_BOOTSTRAP: kafka:29092
+      # 이상거래 사전 점검. 결제 임계 경로에 외부 호출을 넣는 변경이라 기본은 꺼 둔다 —
+      # 탐지기가 안정적으로 뜨는 것을 확인한 뒤 DEPOSIT_FDS_ENABLED=true 로 켠다.
+      DEPOSIT_FDS_ENABLED: ${DEPOSIT_FDS_ENABLED:-false}
+      DEPOSIT_FDS_BASE_URL: http://fds-detector:8092
+      DEPOSIT_FDS_TIMEOUT_MS: ${DEPOSIT_FDS_TIMEOUT_MS:-400}
       KFTC_CONSUMER_GROUP: core-banking-kftc-b
       BOK_CONSUMER_GROUP: core-banking-bok-b
       INTERNAL_CONSUMER_GROUP: core-banking-internal-b

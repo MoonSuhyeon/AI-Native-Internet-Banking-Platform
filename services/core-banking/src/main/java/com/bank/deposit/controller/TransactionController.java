@@ -3,6 +3,7 @@ package com.bank.deposit.controller;
 import com.bank.deposit.domain.entity.Transaction;
 import com.bank.deposit.dto.request.*;
 import com.bank.deposit.security.AuthenticatedCustomerValidator;
+import com.bank.deposit.security.FdsPreCheckGate;
 import com.bank.deposit.security.TransferApprovalGate;
 import com.bank.deposit.service.AccountService;
 import com.bank.deposit.service.TransactionService;
@@ -26,6 +27,7 @@ public class TransactionController {
     private final TransactionService transactionService;
     private final AuthenticatedCustomerValidator customerValidator;
     private final TransferApprovalGate transferApprovalGate;
+    private final FdsPreCheckGate fdsPreCheckGate;
     private final AccountService accountService;
 
     @GetMapping
@@ -90,6 +92,14 @@ public class TransactionController {
         // 받으므로 번호를 찾아 넘긴다.
         String fromAccountNo = accountService.findById(req.fromAccountId()).getAccountNumber();
         transferApprovalGate.verify(req.approvalToken(), fromAccountNo, req.toAccountNo(), req.amount());
+
+        // 자행이체도 점검한다. 대포통장으로 흘러가는 자금은 자행/타행을 가리지 않는다.
+        fdsPreCheckGate.evaluate(
+                authenticatedCustomerId, fromAccountNo, req.counterpartyBankCode(),
+                req.toAccountNo(), req.amount(), true,
+                req.channelType() == null ? null : req.channelType().name(),
+                req.approvalToken() != null && !req.approvalToken().isBlank());
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(transactionService.transfer(req.fromAccountId(), req.toAccountId(), req.toAccountNo(),
                         req.amount(), req.transferType(), req.counterpartyBankCode(), req.counterpartyBankName(),
