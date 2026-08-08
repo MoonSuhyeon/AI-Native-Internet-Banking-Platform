@@ -33,31 +33,41 @@ public class ResponseTierPolicy {
             return ResponseTier.PASS;
         }
 
-        // 규제 필수 신호는 점수를 우회한다. 여러 개여도 결과는 같다.
+        ResponseTier tier = bySeverity(signals);
+
+        // 규제 필수 신호는 <b>하한</b>이다. 상한이 아니다.
+        //
+        // 예전에는 MANDATORY 를 만나면 곧장 HOLD_REVIEW 를 반환했는데, 그러면 다른
+        // 신호가 BLOCK 을 가리켜도 낮춰 버렸다 — 규제 항목이 함께 걸린 더 위험한 건이
+        // 오히려 약하게 처리되는 모양이었다. 최소 사람 검토는 보장하되, 더 강한 판정은
+        // 그대로 둔다.
         if (has(signals, Severity.MANDATORY)) {
-            return adjust(ResponseTier.HOLD_REVIEW, inline);
+            tier = tier.strongerOf(ResponseTier.HOLD_REVIEW);
         }
 
+        return adjust(tier, inline);
+    }
+
+    /** 강도와 개수만으로 본 등급. */
+    private ResponseTier bySeverity(List<DetectionSignal> signals) {
         long high = count(signals, Severity.HIGH);
         long medium = count(signals, Severity.MEDIUM);
 
         // HIGH 가 겹치면 단순 의심이 아니다. 사전이면 막고, 사후면 지급정지를 권고한다.
         if (high >= 2) {
-            return adjust(ResponseTier.BLOCK, inline);
+            return ResponseTier.BLOCK;
         }
         if (high == 1) {
             // HIGH 하나 + 다른 신호가 받쳐 주면 사람이 본다.
-            return medium >= 1
-                    ? adjust(ResponseTier.HOLD_REVIEW, inline)
-                    : adjust(ResponseTier.DELAY, inline);
+            return medium >= 1 ? ResponseTier.HOLD_REVIEW : ResponseTier.DELAY;
         }
         if (medium >= 2) {
             // 중간 신호가 겹치면 인증만으로는 부족하다. 되돌릴 시간을 준다.
-            return adjust(ResponseTier.DELAY, inline);
+            return ResponseTier.DELAY;
         }
         if (medium == 1) {
             // 본인 확인을 요구한다. 막지는 않는다 — 정상 고객의 대부분이 여기 걸린다.
-            return adjust(ResponseTier.STEP_UP, inline);
+            return ResponseTier.STEP_UP;
         }
 
         // LOW 만 남았다. 단독으로는 조치하지 않는다 — 누적으로만 의미가 있다.

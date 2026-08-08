@@ -41,6 +41,15 @@ public class PostHocDetectionService {
     @Value("${fds.rule.high-amount:10000000}")
     private long highAmountThreshold;
 
+    /**
+     * 1일 누적 보고 기준.
+     *
+     * <p>규제가 요구하는 항목이라 점수와 무관하게 사람에게 간다 — "모델이 낮게 봤으니
+     * 통과" 가 성립하지 않는 종류다. 실제 기준 금액은 현행 규정으로 확인해 넣어야 한다.
+     */
+    @Value("${fds.rule.daily-cumulative-threshold:20000000}")
+    private long dailyCumulativeThreshold;
+
     /** 심야 구간 시작(포함). KST 기준. */
     @Value("${fds.rule.night-from-hour:0}")
     private int nightFromHour;
@@ -86,6 +95,14 @@ public class PostHocDetectionService {
             signals.add(DetectionSignal.of("CROSS_BANK_HIGH_AMOUNT", Severity.HIGH,
                     "타행 고액 이체 — 회수 곤란"));
         }
+
+        // 하루 누적. 완료된 거래만 더한다 — 사전에서 더하면 승인되지 않은 시도까지
+        // 누적돼 실제로 나가지 않은 돈이 보고 기준을 넘긴다.
+        riskStateStore.addDailyAmount(detail.senderUserId(), detail.amount())
+                .filter(total -> total >= dailyCumulativeThreshold)
+                .ifPresent(total -> signals.add(DetectionSignal.of(
+                        "DAILY_CUMULATIVE_THRESHOLD", Severity.MANDATORY,
+                        "1일 누적 " + total + "원 — 보고 기준 초과")));
 
         // 끝난 거래는 막을 수 없다. inline=false 로 판정해 BLOCK 이 지급정지 권고로 올라간다.
         ResponseTier tier = tierPolicy.decide(signals, false);

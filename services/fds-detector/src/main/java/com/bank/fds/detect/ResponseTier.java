@@ -67,6 +67,16 @@ public enum ResponseTier {
      */
     FREEZE_RECOMMEND;
 
+    /**
+     * 둘 중 강한 쪽.
+     *
+     * <p>선언 순서가 곧 강도다(PASS &rarr; FREEZE_RECOMMEND). 순서를 바꾸면 이 비교가
+     * 조용히 틀리므로, 상수를 끼워 넣을 때는 위치를 지켜야 한다.
+     */
+    public ResponseTier strongerOf(ResponseTier other) {
+        return this.compareTo(other) >= 0 ? this : other;
+    }
+
     /** 사람 손이 필요한 등급인가. 조사 투입 여부를 가른다. */
     public boolean requiresHumanReview() {
         return this == HOLD_REVIEW || this == BLOCK || this == FREEZE_RECOMMEND;

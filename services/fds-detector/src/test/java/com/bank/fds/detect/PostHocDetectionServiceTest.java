@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,6 +51,9 @@ class PostHocDetectionServiceTest {
         ReflectionTestUtils.setField(service, "nightToHour", 6);
 
         when(riskStateStore.isFirstTimeReceiver(anyString(), anyString())).thenReturn(false);
+        // 기본은 누적 임계 미달
+        when(riskStateStore.addDailyAmount(anyString(), any())).thenReturn(Optional.of(100_000L));
+        ReflectionTestUtils.setField(service, "dailyCumulativeThreshold", 20_000_000L);
     }
 
     private PaymentDetail detail(long amount, String completedAt, boolean intraBank) {
@@ -120,6 +124,22 @@ class PostHocDetectionServiceTest {
                 .as("타행 고액 + 신규 수취인 + 심야면 사람이 봐야 한다")
                 .isTrue();
         verify(dispatcher).dispatch(any(), any(), anyDouble());
+    }
+
+    @Test
+    @DisplayName("1일 누적이 보고 기준을 넘으면 다른 신호가 없어도 사람에게 간다")
+    void dailyCumulativeThresholdIsMandatory() {
+        // 규제가 요구하는 항목이라 점수와 무관하다. 이 신호를 만드는 곳이 없으면
+        // 정책의 MANDATORY 분기는 영원히 실행되지 않는 죽은 코드가 된다.
+        when(riskStateStore.addDailyAmount(anyString(), any()))
+                .thenReturn(Optional.of(25_000_000L));
+
+        // 소액·자행·아는 수취인 — 누적 말고는 아무 신호도 없다.
+        var outcome = service.detect(detail(50_000L, "2026-08-08T06:00:00Z", true));
+
+        assertThat(outcome.signals()).extracting(DetectionSignal::code)
+                .contains("DAILY_CUMULATIVE_THRESHOLD");
+        assertThat(outcome.tier().requiresHumanReview()).isTrue();
     }
 
     @Test

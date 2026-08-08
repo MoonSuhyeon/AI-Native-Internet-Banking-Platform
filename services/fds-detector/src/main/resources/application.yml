@@ -48,6 +48,10 @@ fds:
     # 300만원이 훨씬 강한 신호다.
     high-amount: ${FDS_HIGH_AMOUNT:10000000}
     velocity-threshold: ${FDS_VELOCITY_THRESHOLD:5}
+    # 1일 누적 보고 기준. 규제가 요구하는 항목이라 점수와 무관하게 사람에게 간다 —
+    # "모델이 낮게 봤으니 통과" 가 성립하지 않는 종류다.
+    # 실제 기준 금액은 현행 규정으로 확인해 넣을 것. 아래는 데모용 값이다.
+    daily-cumulative-threshold: ${FDS_DAILY_CUMULATIVE_THRESHOLD:20000000}
     # 심야 구간(KST). 업무 기준 시각은 한국 시간이라 UTC 로 재면 9시간이 밀려
     # 한국의 아침이 심야로 잡힌다.
     night-from-hour: ${FDS_NIGHT_FROM_HOUR:0}

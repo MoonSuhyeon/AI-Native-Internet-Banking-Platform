@@ -1,5 +1,6 @@
 package com.bank.fds.detect;
 
+import com.bank.common.time.BusinessDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ public class RiskStateStore {
     private static final String RISK_PREFIX = "fds:risk:";
     private static final String VELOCITY_PREFIX = "fds:vel:";
     private static final String RECEIVER_PREFIX = "fds:rcv:";
+    private static final String DAILY_PREFIX = "fds:daily:";
 
     private final StringRedisTemplate redis;
 
@@ -119,6 +121,52 @@ public class RiskStateStore {
             log.warn("수취인 이력 확인 실패 customerId={} reason={}", customerId, e.toString());
             return false;
         }
+    }
+
+    /**
+     * 오늘(KST) 이 고객의 누적 이체 금액을 더하고 합계를 준다.
+     *
+     * <p><b>완료된 거래만 더한다.</b> 사후 탐지가 호출한다. 사전 점검에서 더하면
+     * 승인되지 않은 시도까지 누적돼 실제로 나가지 않은 돈이 보고 기준을 넘긴다.
+     *
+     * @return 실패하면 empty — 없는 값을 0으로 돌려주면 "오늘 거래가 없다" 와
+     *         "확인하지 못했다" 가 구별되지 않는다.
+     */
+    public Optional<Long> addDailyAmount(String customerId, Long amount) {
+        if (customerId == null || amount == null) {
+            return Optional.empty();
+        }
+        try {
+            String key = dailyKey(customerId);
+            Long total = redis.opsForValue().increment(key, amount);
+            if (total != null && total.equals(amount)) {
+                // 첫 증가에만 TTL. 매번 걸면 창이 계속 밀려 하루가 안 닫힌다.
+                redis.expire(key, Duration.ofDays(2));
+            }
+            return Optional.ofNullable(total);
+        } catch (Exception e) {
+            log.warn("일 누적 금액 갱신 실패 customerId={} reason={}", customerId, e.toString());
+            return Optional.empty();
+        }
+    }
+
+    /** 오늘(KST) 누적 금액. 사전 점검이 읽기만 한다. */
+    public Optional<Long> dailyAmount(String customerId) {
+        if (customerId == null) {
+            return Optional.empty();
+        }
+        try {
+            String raw = redis.opsForValue().get(dailyKey(customerId));
+            return raw == null ? Optional.of(0L) : Optional.of(Long.parseLong(raw));
+        } catch (Exception e) {
+            log.warn("일 누적 금액 조회 실패 customerId={} reason={}", customerId, e.toString());
+            return Optional.empty();
+        }
+    }
+
+    /** 영업일 경계는 KST 다. UTC 로 끊으면 하루가 9시간 밀린다. */
+    private String dailyKey(String customerId) {
+        return DAILY_PREFIX + BusinessDate.today() + ":" + customerId;
     }
 
     /** Redis 가 응답하는가. 축소 판정 여부를 가리는 데 쓴다. */

@@ -56,6 +56,19 @@ class ResponseTierPolicyTest {
         }
 
         @Test
+        @DisplayName("더 강한 신호가 있으면 그쪽을 따른다 — 규제 신호는 하한이지 상한이 아니다")
+        void mandatoryIsAFloorNotACeiling() {
+            // 예전에는 MANDATORY 를 만나면 곧장 HOLD_REVIEW 를 반환해, BLOCK 이
+            // 나왔어야 할 건을 오히려 낮췄다. 규제 항목이 함께 걸린 더 위험한 건이
+            // 약하게 처리되는 모양이었다.
+            ResponseTier tier = policy.decide(
+                    List.of(signal(Severity.MANDATORY), signal(Severity.HIGH), signal(Severity.HIGH)),
+                    true);
+
+            assertThat(tier).isEqualTo(ResponseTier.BLOCK);
+        }
+
+        @Test
         @DisplayName("약한 신호와 함께 와도 약한 쪽으로 끌려가지 않는다")
         void mandatoryIsNotDilutedByWeakSignals() {
             // 점수를 합산하는 구조였다면 LOW 가 평균을 끌어내려 통과했을 수 있다.
