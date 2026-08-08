@@ -753,7 +753,10 @@ public class PaymentTransactionService {
         int seq = (maxSeq == null ? 0 : maxSeq) + 1;
         StatusHistory history = StatusHistory.of(
                 idGenerator.nextHistoryId(), piId, seq,
-                "AUTHORIZED", "SCHEDULED", "SCHEDULED_REGISTERED", triggerSource, now);
+                // triggered_by 는 "누가 이 전이를 일으켰나" 이고 허용값이 따로 정해져 있다.
+                // 지연 여부는 PI 의 trigger_source 에 남으므로 여기에 또 넣지 않는다 —
+                // 넣으면 CHECK 제약에 걸려 지연 이체가 통째로 실패한다.
+                "AUTHORIZED", "SCHEDULED", "SCHEDULED_REGISTERED", TRIGGER_USER, now);
         statusHistoryMapper.insert(history);
 
         if (TRIGGER_FDS_DELAY.equals(triggerSource)) {
