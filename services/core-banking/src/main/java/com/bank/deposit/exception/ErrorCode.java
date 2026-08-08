@@ -23,6 +23,12 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     TRANSFER_APPROVAL_REQUIRED(HttpStatus.UNAUTHORIZED, "이체 승인 인증이 필요합니다."),
     TRANSFER_APPROVAL_INVALID(HttpStatus.UNAUTHORIZED, "이체 승인 정보가 올바르지 않거나 만료되었습니다."),
+    TRANSFER_AMOUNT_REQUIRES_BRANCH(HttpStatus.BAD_REQUEST,
+            "이 금액은 비대면 이체 한도를 초과합니다. 영업점에서 처리해 주세요."),
+    TRANSFER_RISK_CHECK_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE,
+            "이상거래 점검을 할 수 없어 고액 이체를 진행하지 않았습니다. 잠시 후 다시 시도해 주세요."),
+    TRANSFER_BLOCKED_BY_RISK(HttpStatus.FORBIDDEN,
+            "이상거래로 판단되어 이체가 제한되었습니다. 고객센터로 문의해 주세요."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;

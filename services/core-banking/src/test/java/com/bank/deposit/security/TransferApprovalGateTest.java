@@ -6,6 +6,7 @@ import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -42,8 +44,61 @@ class TransferApprovalGateTest {
 
     @BeforeEach
     void setUp() {
-        gate = new TransferApprovalGate(customerServiceClient);
+        AmountTierPolicy tierPolicy = new AmountTierPolicy();
+        ReflectionTestUtils.setField(tierPolicy, "normalFrom", 100_000L);
+        ReflectionTestUtils.setField(tierPolicy, "highFrom", 5_000_000L);
+        ReflectionTestUtils.setField(tierPolicy, "veryHighFrom", 50_000_000L);
+
+        gate = new TransferApprovalGate(customerServiceClient, tierPolicy);
         ReflectionTestUtils.setField(gate, "required", false);
+    }
+
+    @Nested
+    @DisplayName("금액 구간")
+    class AmountTiering {
+
+        @Test
+        @DisplayName("소액은 토큰 없이 통과한다")
+        void smallAmountNeedsNoToken() {
+            ReflectionTestUtils.setField(gate, "required", true);
+
+            // 소액까지 매번 본인 확인을 요구하면 아무도 쓰지 않고,
+            // 결국 통제 자체를 끄게 된다.
+            gate.verify(null, FROM, TO, 50_000L);
+
+            verifyNoInteractions(customerServiceClient);
+        }
+
+        @Test
+        @DisplayName("소액을 넘으면 토큰을 요구한다")
+        void aboveSmallRequiresToken() {
+            ReflectionTestUtils.setField(gate, "required", true);
+
+            assertThatThrownBy(() -> gate.verify(null, FROM, TO, 100_000L))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.TRANSFER_APPROVAL_REQUIRED));
+        }
+
+        @Test
+        @DisplayName("초거액은 토큰이 있어도 비대면으로 처리하지 않는다")
+        void veryHighGoesToBranchEvenWithToken() {
+            // 사고 시 되돌릴 수 없는 금액을 자동화된 경로에 두지 않는다.
+            assertThatThrownBy(() -> gate.verify("token-1", FROM, TO, 50_000_000L))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.TRANSFER_AMOUNT_REQUIRES_BRANCH));
+
+            verifyNoInteractions(customerServiceClient);
+        }
+
+        @Test
+        @DisplayName("금액을 모르면 가장 강한 구간으로 본다")
+        void unknownAmountIsTreatedAsStrongest() {
+            // null 을 소액으로 취급하면 금액을 빼는 것이 통제를 우회하는 길이 된다.
+            assertThatThrownBy(() -> gate.verify("token-1", FROM, TO, null))
+                    .isInstanceOf(BusinessException.class);
+        }
     }
 
     @Test

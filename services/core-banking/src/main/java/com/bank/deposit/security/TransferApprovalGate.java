@@ -32,6 +32,7 @@ import java.math.BigDecimal;
 public class TransferApprovalGate {
 
     private final CustomerServiceClient customerServiceClient;
+    private final AmountTierPolicy amountTierPolicy;
 
     @Value("${deposit.transfer.approval.required:false}")
     private boolean required;
@@ -45,7 +46,21 @@ public class TransferApprovalGate {
      *                           검증에 실패한 경우(TRANSFER_APPROVAL_INVALID)
      */
     public void verify(String approvalToken, String fromAccountNo, String toAccountNo, Long amount) {
+        AmountTier tier = amountTierPolicy.of(amount);
+
+        // 초거액은 비대면에서 처리하지 않는다. 토큰이 있어도 마찬가지다 —
+        // 사고 시 되돌릴 수 없는 금액을 자동화된 경로에 두지 않는다.
+        if (tier == AmountTier.VERY_HIGH) {
+            log.info("초거액 이체 차단 fromAccountNo={} amount={}", fromAccountNo, amount);
+            throw new BusinessException(ErrorCode.TRANSFER_AMOUNT_REQUIRES_BRANCH);
+        }
+
         if (approvalToken == null || approvalToken.isBlank()) {
+            // 소액은 본인 확인 없이 통과시킨다. 여기까지 매번 인증을 요구하면
+            // 아무도 쓰지 않고, 결국 통제 자체를 끄게 된다.
+            if (!tier.requiresApprovalToken()) {
+                return;
+            }
             if (required) {
                 throw new BusinessException(ErrorCode.TRANSFER_APPROVAL_REQUIRED);
             }
