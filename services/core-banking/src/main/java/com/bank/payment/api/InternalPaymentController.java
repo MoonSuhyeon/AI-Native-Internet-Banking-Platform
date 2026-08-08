@@ -27,7 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
  * 지급정지 같은 조치는 권고까지만 하고 사람이 실행한다(HITL).
  */
 @RestController
-@RequestMapping("/api/v1/internal/payments")
+// context-path 가 이미 /api 다. 여기에 또 /api 를 쓰면 외부 URL 이
+// /api/api/... 가 되어 호출부가 404 를 받는다. 결제 컨트롤러가 /v1/payments 로
+// 두는 것과 같은 이유다.
+@RequestMapping("/v1/internal/payments")
 @RequiredArgsConstructor
 public class InternalPaymentController {
 
