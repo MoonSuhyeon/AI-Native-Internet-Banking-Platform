@@ -250,6 +250,8 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       CORE_BANKING_APP_PORT: 8082
       BANK_CODE: "A"
+      # 검증용: 자행 수수료를 일시적으로 켜 수수료 차감 경로를 실물로 확인한다.
+      PAYMENT_FEE_INTRA_BANK: ${PAYMENT_FEE_INTRA_BANK:-0}
       CORE_BANKING_DB_HOST: core-banking-db-a
       CORE_BANKING_DB_PORT: 5432
       CORE_BANKING_DB_NAME: ${CORE_BANKING_DB_NAME:-core_banking}
