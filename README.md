@@ -975,7 +975,11 @@ python -m pytest tests/ -q
 | Prometheus | `http://localhost:9090` | 메트릭 수집 |
 | Grafana | `http://localhost:3000` | 대시보드 |
 
-- loan-service 메트릭: [`docs/loan-service-metrics.md`](docs/loan-service-metrics.md)
+대시보드는 어드민 콘솔 `/admin/monitoring` 에서도 볼 수 있다 (운영·리스크 권한).
+
+- 어드민 임베드: [`docs/monitoring/ADMIN_MONITORING_EMBED.md`](docs/monitoring/ADMIN_MONITORING_EMBED.md)
+- 여신 AI 메트릭: [`docs/monitoring/loan-service-metrics.md`](docs/monitoring/loan-service-metrics.md)
+- 서류 심사(doc-agent) 메트릭: [`docs/monitoring/doc-agent-metrics.md`](docs/monitoring/doc-agent-metrics.md)
 - 챗봇 모니터링: [`docs/monitoring/CHATBOT_GUIDE.md`](docs/monitoring/CHATBOT_GUIDE.md)
 - LLM/RAG 모니터링: [`docs/monitoring/LLM_RAG_MONITORING_GUIDE.md`](docs/monitoring/LLM_RAG_MONITORING_GUIDE.md)
 

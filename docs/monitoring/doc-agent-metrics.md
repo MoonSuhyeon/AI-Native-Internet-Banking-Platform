@@ -1,368 +1,186 @@
 # doc-agent 메트릭 & 모니터링 가이드
 
-> 대상 독자: Grafana 대시보드 구성 담당자, SRE  
-> 목적: doc-agent(포트 8087)가 노출하는 Prometheus 메트릭 전체 목록, 권장 패널 구성, 알림 PromQL 제공  
-> Prometheus scrape 엔드포인트: `http://doc-agent:8087/actuator/prometheus`
+> 대상 독자: Grafana 대시보드 구성 담당자, SRE
+> 지표 노출: `GET /actuator/prometheus` (컨테이너 내부 8087, 호스트 8091)
+> 대시보드: `infra/grafana/provisioning/dashboards/doc-agent.json` (uid `doc-agent`, "서류 심사 에이전트")
+> 구현: `agents/doc-agent/.../observability/DocAgentMetrics.java`
+
+이 문서는 **실제로 나오는 것만** 적는다. 구현되지 않은 것은 §6 에 따로 모았다.
+없는 지표를 표로 적어 두면 그것을 보고 대시보드와 알림을 만들었다가 조용히 빈다 —
+지표는 틀려도 아무도 에러를 내지 않기 때문에 한참 뒤에야 드러난다.
 
 ---
 
-## 1. 메트릭 전체 목록
+## 1. 무엇을 재는가
 
-### 1-1. 파이프라인 처리 (커스텀)
+이 에이전트의 성능은 처리량이 아니라 **자동 판정을 사람이 뒤집는 비율**로 드러난다.
 
-doc-agent는 아래 커스텀 메트릭을 `MeterRegistry`로 기록한다.  
-각 단계 타이머는 `Timer` 타입이며, `_seconds_count / _seconds_sum / _seconds_max` 3개 시계열로 분기된다.
+파이프라인이 `HOLD` 를 내면 심사원이 둘 중 하나로 결정한다.
 
-| 메트릭명 | 타입 | 레이블 | 설명 |
-|---------|------|--------|------|
-| `doc_agent_pipeline_seconds` | Timer | `doc_type`, `status` | L1→L5 전체 파이프라인 처리 시간 |
-| `doc_agent_ingest_seconds` | Timer | `doc_code` | L1 Ingest (포맷 검증 + MinIO 업로드) |
-| `doc_agent_ocr_seconds` | Timer | `engine` | L3 OCR 사이드카 응답 시간 |
-| `doc_agent_table_ocr_seconds` | Timer | — | L3b PP-StructureV2 테이블 파싱 시간 |
-| `doc_agent_llm_extract_seconds` | Timer | `doc_type` | L4 Ollama LLM 추출 시간 |
-| `doc_agent_forgery_analyze_seconds` | Timer | `doc_code` | L4b 위변조 분석 사이드카 응답 시간 |
-| `doc_agent_verify_seconds` | Timer | `product_id` | L5 룰+진위확인+합산 처리 시간 |
+| 심사원 결정 | 의미 |
+|---|---|
+| `CONFIRMED_FORGERY` | 자동 판정이 맞았다 (위조 확정) |
+| `CLEARED` | 자동 판정을 뒤집었다 (정상 서류였다) |
 
-| 메트릭명 | 타입 | 레이블 | 설명 |
-|---------|------|--------|------|
-| `doc_agent_submission_total` | Counter | `doc_type`, `status` | 제출 건수 (status: AUTO_PASS / NEEDS_RESUBMIT / HOLD / LOCKED / CLEARED) |
-| `doc_agent_forgery_score` | Histogram | `doc_code` | 위변조 집계 점수 분포 (0.0 ~ 1.0+) |
-| `doc_agent_forgery_signal_total` | Counter | `category`, `signal_type` | 탐지된 위변조 시그널 누적 (META / VISUAL / SEMANTIC / EXTERNAL) |
-| `doc_agent_human_review_pending` | Gauge | — | 현재 HOLD(PENDING) 상태 미결 건수 |
-| `doc_agent_human_review_duration_hours` | Histogram | — | HOLD → 심사원 결정까지 소요 시간 |
-| `doc_agent_legal_hold_total` | Gauge | — | legal_hold=true 활성 건수 |
-| `doc_agent_fraud_audit_published_total` | Counter | — | 감사팀 이관(fraud-audit) 이벤트 발행 수 |
+**확정률 = CONFIRMED_FORGERY / 전체 결정** 이 핵심 지표다.
 
-### 1-2. 사이드카 CircuitBreaker (Resilience4j 자동)
-
-Resilience4j가 아래 메트릭을 자동 생성한다.
-
-| 메트릭명 | 레이블 | 설명 |
-|---------|--------|------|
-| `resilience4j_circuitbreaker_state` | `name` | 0=CLOSED, 1=OPEN, 2=HALF_OPEN |
-| `resilience4j_circuitbreaker_calls_total` | `name`, `kind` | kind: successful / failed / not_permitted |
-| `resilience4j_circuitbreaker_failure_rate` | `name` | 최근 슬라이딩 윈도우 실패율 (%) |
-
-`name` 레이블 값: `ocr`, `llm`, `forgery`, `identityVerify`
-
-### 1-3. HTTP 요청 (Spring Actuator 기본)
-
-| 메트릭명 | 레이블 | 설명 |
-|---------|--------|------|
-| `http_server_requests_seconds` | `uri`, `method`, `status` | 엔드포인트별 응답 시간 |
-| `http_client_requests_seconds` | `uri`, `method`, `status` | RestClient(사이드카·외부 API) 요청 시간 |
-
-주요 URI:
-- `POST /api/documents/submit` — 파이프라인 트리거
-- `POST /api/documents/{id}/review` — 심사원 결정
-- `PATCH /api/documents/{id}/legal-hold/enable·disable`
-
-### 1-4. JVM / 시스템 (Spring Actuator 기본)
-
-| 메트릭명 | 설명 |
-|---------|------|
-| `jvm_memory_used_bytes{area="heap"}` | Heap 사용량 |
-| `jvm_gc_pause_seconds` | GC 정지 시간 |
-| `jvm_threads_live_threads` | 활성 스레드 수 |
-| `process_cpu_usage` | 프로세스 CPU 사용률 |
-| `hikaricp_connections_active` | DB 커넥션 풀 사용 중 |
-
-### 1-5. Kafka 발행 (Spring Kafka Micrometer 자동)
-
-| 메트릭명 | 레이블 | 설명 |
-|---------|--------|------|
-| `spring_kafka_template_seconds` | `result` (success/failure) | 발행 응답 시간 |
-| `kafka_producer_record_send_total` | `topic` | 토픽별 발행 건수 |
-| `kafka_producer_record_error_total` | `topic` | 토픽별 발행 실패 수 |
-
-주요 토픽: `doc-agent.extracted` / `doc-agent.routed` / `doc-agent.fraud.audit`
+레포의 다른 에이전트도 같은 축을 쓴다 — auto-loan-review 의 `ai_agent_disagreement_total`,
+fraud-agent 의 `fraud_recommendation_reviewed_total`.
 
 ---
 
-## 2. 커스텀 메트릭 등록 위치
+## 2. 구현된 지표
 
-> 대시보드 담당자는 아래 클래스에서 MeterRegistry 주입 방식을 확인한다.
+`DocAgentMetrics` 가 기록한다. Micrometer 는 **처음 기록될 때** 미터를 등록하므로,
+기동 직후 스크레이프에는 아직 안 보이는 것이 정상이다.
 
-```
-agents/doc-agent/src/main/java/com/bank/docagent/
-├── submission/service/SubmissionPipelineService.java  ← doc_agent_pipeline_seconds
-├── forgery/service/ForgeryAnalysisService.java        ← doc_agent_forgery_*
-├── review/service/HumanReviewService.java             ← doc_agent_human_review_*
-└── submission/service/LegalHoldService.java           ← doc_agent_legal_hold_total
-```
+| 지표 | 타입 | 라벨 | 설명 |
+|---|---|---|---|
+| `doc_agent_human_review_total` | Counter | `decision` | 심사원 결정 수. **채택률의 분자·분모** |
+| `doc_agent_verdict_total` | Counter | `status`, `doc_type` | 파이프라인 자동 판정 수 |
+| `doc_agent_pipeline_duration_seconds` | Timer | `status` | 서류 한 건 전체 처리 시간 |
+| `doc_agent_stage_duration_seconds` | Timer | `stage`, `outcome` | 단계별 소요 시간 |
+| `doc_agent_pipeline_failed_total` | Counter | `stage` | 예외로 끝난 수 |
 
-메트릭 등록 패턴 (예시):
+라벨 값:
 
-```java
-// Timer
-Timer.builder("doc_agent_pipeline_seconds")
-     .tag("doc_type", docType.name())
-     .tag("status", finalStatus.name())
-     .register(meterRegistry)
-     .record(() -> runPipeline(...));
+- `decision` — `CONFIRMED_FORGERY` / `CLEARED`
+- `status` — `AUTO_PASS` / `HOLD` / `NEEDS_RESUBMIT` 등 `VerifyStatus`, 파이프라인 실패 시 `ERROR`
+- `stage` — `ingest` / `forgery` / `ocr` / `extract`
+- `outcome` — `ok` / `error`
 
-// Counter
-Metrics.counter("doc_agent_submission_total",
-    "doc_type", docType.name(), "status", finalStatus.name()).increment();
+**왜 자동 판정 분포를 같이 두는가.** 채택률만 보면 "HOLD 를 남발해서 사람 일이 늘었다"와
+"판정이 정확해졌다"가 구분되지 않는다. `doc_agent_verdict_total` 의 status 비율이 그 맥락을 준다.
 
-// Gauge
-Metrics.gauge("doc_agent_human_review_pending", submissionRepo,
-    r -> r.countByHumanReviewStatus(HumanReviewStatus.PENDING));
-```
+**왜 단계를 나누는가.** 앞 단계들이 외부 사이드카 호출(OCR·위조분석·LLM추출)이다.
+합쳐 재면 느려졌을 때 어느 사이드카가 문제인지 알 수 없다.
+
+**왜 실패를 따로 세는가.** 실패는 판정을 만들지 못해 `verdict` 에 잡히지 않는다.
+따로 세지 않으면 "서류가 안 들어왔다"와 "처리가 터졌다"가 구별되지 않는다.
+
+라벨에 제출 ID·심사원 ID 는 넣지 않는다 — 카디널리티가 터지고, 개인 단위 추적은
+지표가 아니라 감사로그가 할 일이다.
+
+### 공통 라벨
+
+모든 지표에 `application=doc-agent`, `environment=<프로필>` 이 붙는다
+(`management.metrics.tags`). 이게 없으면 `application` 으로 묶는 대시보드 패널에서
+이 서비스만 통째로 빠진다 — 그래프가 비는 게 아니라 아예 안 나온다.
 
 ---
 
-## 3. Prometheus 스크레이프 설정
+## 3. 기본 제공 지표
 
-`prometheus.yml`에 추가:
+Spring Boot Actuator + Micrometer 가 자동 등록한다 (총 110여 계열).
+
+| 계열 | 내용 |
+|---|---|
+| `http_server_requests_seconds` | HTTP 요청 수·지연 (`uri`, `status`, `method`) |
+| `jvm_*`, `process_*`, `system_*` | 힙·GC·스레드·CPU |
+| `hikaricp_connections_*` | DB 커넥션 풀 |
+| `spring_data_repository_invocations_*` | 리포지토리 호출 |
+
+**Resilience4j 서킷브레이커 지표는 확인되지 않았다.** 코드에는 서킷브레이커가
+네 곳(OCR·테이블OCR·LLM추출·위조분석)에 있지만, 확인 시점의 스크레이프에는
+`resilience4j_*` 가 없었다. 다만 그때 파이프라인이 `ingest` 에서 실패해
+사이드카 호출 전에 끝났으므로, 브레이커가 아직 생성되지 않았을 수 있다.
+대시보드에 넣기 전에 사이드카를 띄운 상태에서 다시 확인할 것.
+
+---
+
+## 4. 수집 설정
+
+`infra/prometheus/prometheus.yml`:
 
 ```yaml
-scrape_configs:
-  - job_name: doc-agent
-    static_configs:
-      - targets: ['doc-agent:8087']
+  - job_name: 'doc-agent'
     metrics_path: /actuator/prometheus
-    scrape_interval: 15s
+    static_configs:
+      - targets: ['host.docker.internal:8091']
 ```
 
-Docker Compose 환경에서는 `doc-agent` 컨테이너명으로 자동 DNS 해석된다.
+컨테이너명(`doc-agent:8087`)이 아니라 **호스트 포트**를 쓴다. doc-agent 는 `doc` 프로필이라
+평소에 떠 있지 않고, Prometheus 와 같은 네트워크에 없을 수 있다.
+
+포트가 compose 에 안 열려 있으면 지표가 아무리 정확해도 하나도 수집되지 않는다.
+이 레포에서 실제로 있었던 일이라(auto-loan-review, 두 달간) `common` 모듈의
+`ScrapeTargetConsistencyTest` 가 스크레이프 대상과 compose 포트가 어긋나면 실패시킨다.
 
 ---
 
-## 4. Grafana 대시보드 패널 구성 가이드
+## 5. 대시보드
 
-대시보드 이름: **doc-agent — 서류 검증 파이프라인**  
-권장 행(Row) 구성:
+`doc-agent.json` (uid `doc-agent`) — 9패널.
+
+| 행 | 패널 |
+|---|---|
+| 1 | 자동 판정 확정률 · 검토 대기 유입(HOLD) · 파이프라인 실패율 · 처리 시간 p95 |
+| 2 | 심사원 결정 추이 · 자동 판정 분포 |
+| 3 | 단계별 소요 시간 p95 · 단계별 실패 |
+| 4 | 서류 유형별 HOLD 비율 |
+
+확정률 쿼리는 분모가 0일 때를 막아 둔다.
+
+```promql
+sum(rate(doc_agent_human_review_total{decision="CONFIRMED_FORGERY"}[30m]))
+/
+(sum(rate(doc_agent_human_review_total[30m])) > 0)
+```
+
+**해석 주의.** 확정률이 낮으면 에이전트가 멀쩡한 서류를 잡아 사람 일만 늘린다는 뜻이다.
+반대로 1.0 에 붙어 있으면 기준이 보수적이라 잡아야 할 것을 놓치고 있을 수 있다 —
+`doc_agent_verdict_total` 의 AUTO_PASS 비율과 같이 봐야 한다.
+
+**표본이 적을 때.** `rate()` 는 창 안의 첫 샘플을 증가분으로 세지 않는다.
+결정이 몇 건뿐이면 확정률이 1.0 으로 보일 수 있는데 결함이 아니다.
 
 ---
 
-### Row 1: 처리량 & 상태
+## 6. 아직 구현되지 않은 것
 
-**패널 1 — 분당 제출 건수 (stat)**
-```promql
-rate(doc_agent_submission_total[1m]) * 60
-```
-- Threshold: Green < 100 / Yellow ≥ 100 / Red ≥ 500
+아래는 이전 설계 문서에 있던 항목이다. **코드에 없다.** 대시보드나 알림에 넣으면
+데이터 없이 빈 패널이 된다. 쓸모가 있어 남겨 두되, 구현 전에는 쓰지 말 것.
 
-**패널 2 — 상태별 비율 (pie chart)**
-```promql
-sum by(status) (increase(doc_agent_submission_total[1h]))
-```
-- 색상 매핑: AUTO_PASS=green, NEEDS_RESUBMIT=yellow, HOLD=orange, LOCKED=red
+| 지표(안) | 타입 | 왜 있으면 좋은가 |
+|---|---|---|
+| `doc_agent_human_review_pending` | Gauge | 미결 HOLD 적체. 지금은 유입(rate)만 보여 밀린 양을 모른다 |
+| `doc_agent_human_review_duration_hours` | Histogram | HOLD → 결정까지 걸린 시간. 심사 SLA |
+| `doc_agent_forgery_score` | Histogram | 위조 점수 분포. 임계값 조정 근거 |
+| `doc_agent_forgery_signal_total` | Counter | 어떤 시그널이 실제로 잡히는지 |
+| `doc_agent_legal_hold_total` | Gauge | 법적 보존 대상 건수 |
+| `doc_agent_fraud_audit_published_total` | Counter | 감사팀 이관 이벤트 발행 수 |
 
-**패널 3 — 심사원 대기 건수 (stat)**
-```promql
-doc_agent_human_review_pending
-```
-- Threshold: Green=0 / Yellow ≥ 5 / Red ≥ 20
+앞의 둘(적체·소요 시간)이 운영에 가장 아쉽다. 지금 지표로는 "사람에게 얼마나 넘어가는지"는
+알아도 "그게 처리되고 있는지"는 모른다.
 
----
+### 지표 추가 시
 
-### Row 2: 파이프라인 레이턴시
+`DocAgentMetrics` 에 메서드를 더하고 호출부를 연결한다. **호출부 연결까지 테스트할 것** —
+지표 클래스만 검증하는 테스트는 서비스가 그 클래스를 부르지 않게 되어도 통과한다.
+실제로 이 레포에서 그런 테스트를 만들었다가 계측 호출을 지워도 전부 초록이어서
+`HumanReviewMetricsWiringTest` 를 따로 뒀다.
 
-**패널 4 — 전체 파이프라인 P50/P95/P99 (time series)**
-```promql
-histogram_quantile(0.50, rate(doc_agent_pipeline_seconds_bucket[5m]))
-histogram_quantile(0.95, rate(doc_agent_pipeline_seconds_bucket[5m]))
-histogram_quantile(0.99, rate(doc_agent_pipeline_seconds_bucket[5m]))
-```
-
-**패널 5 — 단계별 평균 처리 시간 (bar gauge)**
-```promql
-rate(doc_agent_ingest_seconds_sum[5m])         / rate(doc_agent_ingest_seconds_count[5m])
-rate(doc_agent_ocr_seconds_sum[5m])            / rate(doc_agent_ocr_seconds_count[5m])
-rate(doc_agent_forgery_analyze_seconds_sum[5m])/ rate(doc_agent_forgery_analyze_seconds_count[5m])
-rate(doc_agent_llm_extract_seconds_sum[5m])    / rate(doc_agent_llm_extract_seconds_count[5m])
-rate(doc_agent_verify_seconds_sum[5m])         / rate(doc_agent_verify_seconds_count[5m])
-```
-레전드: `Ingest / OCR / Forgery / LLM / Verify`
+노출까지 보는 테스트(`MetricsExposureTest`)에는 `@AutoConfigureObservability` 가 필요하다.
+Boot 는 테스트 컨텍스트에서 지표 내보내기를 기본으로 꺼서, 없으면 운영에서 멀쩡한 설정도
+404 로 보인다 — 없는 문제를 쫓게 된다.
 
 ---
 
-### Row 3: 위변조 탐지
+## 7. 로컬에서 띄우기
 
-**패널 6 — 위변조 점수 분포 (heatmap)**
-```promql
-rate(doc_agent_forgery_score_bucket[5m])
+```bash
+docker compose --profile doc up -d doc-agent
+curl -s http://localhost:8091/actuator/prometheus | grep '^doc_agent'
 ```
 
-**패널 7 — 시그널 유형별 탐지 속도 (time series)**
-```promql
-rate(doc_agent_forgery_signal_total[5m])
-```
-레전드: `{{category}}-{{signal_type}}`
+기동 직후에는 결과가 비어 있다(§2 의 지연 등록). 한 건 태우면 나온다.
 
-**패널 8 — 감사팀 이관 누적 (stat)**
-```promql
-doc_agent_fraud_audit_published_total
+```bash
+curl -X POST http://localhost:8091/api/documents/submit \
+  -F applicationId=APP-1 -F docCode=INCOME -F file=@sample.pdf
 ```
 
----
+사이드카(OCR·위조분석)가 없으면 파이프라인은 실패하지만,
+`doc_agent_pipeline_failed_total{stage="ingest"}` 로 어디서 멈췄는지는 그대로 보인다.
 
-### Row 4: 사이드카 안정성
-
-**패널 9 — CircuitBreaker 상태 (stat × 4)**
-```promql
-resilience4j_circuitbreaker_state{name="ocr"}
-resilience4j_circuitbreaker_state{name="llm"}
-resilience4j_circuitbreaker_state{name="forgery"}
-resilience4j_circuitbreaker_state{name="identityVerify"}
-```
-- Value mapping: 0=CLOSED(green) / 1=OPEN(red) / 2=HALF_OPEN(yellow)
-
-**패널 10 — 사이드카 실패율 (time series)**
-```promql
-resilience4j_circuitbreaker_failure_rate
-```
-레전드: `{{name}}`
-
-**패널 11 — Kafka 발행 에러 (time series)**
-```promql
-rate(kafka_producer_record_error_total[5m])
-```
-레전드: `{{topic}}`
-
----
-
-### Row 5: JVM & DB
-
-**패널 12 — Heap 사용량 (time series)**
-```promql
-jvm_memory_used_bytes{area="heap", application="doc-agent"}
-```
-
-**패널 13 — GC 정지 시간 (time series)**
-```promql
-rate(jvm_gc_pause_seconds_sum[1m])
-```
-
-**패널 14 — DB 커넥션 (time series)**
-```promql
-hikaricp_connections_active{pool="HikariPool-1"}
-hikaricp_connections_pending{pool="HikariPool-1"}
-```
-
----
-
-## 5. 알림 규칙 (Alerting Rules)
-
-`prometheus/alerts/doc-agent.yml` 파일로 관리:
-
-```yaml
-groups:
-  - name: doc-agent
-    rules:
-
-      # 사이드카 CircuitBreaker OPEN
-      - alert: DocAgentCircuitBreakerOpen
-        expr: resilience4j_circuitbreaker_state{job="doc-agent"} == 1
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "doc-agent CircuitBreaker OPEN: {{ $labels.name }}"
-          description: "{{ $labels.name }} 사이드카 회로가 열렸습니다. 1분 이상 지속 중."
-
-      # 파이프라인 P95 > 30초
-      - alert: DocAgentPipelineSlowP95
-        expr: |
-          histogram_quantile(0.95,
-            rate(doc_agent_pipeline_seconds_bucket{job="doc-agent"}[5m])
-          ) > 30
-        for: 3m
-        labels:
-          severity: warning
-        annotations:
-          summary: "doc-agent 파이프라인 P95 지연 > 30s"
-          description: "P95 응답시간 {{ $value | humanizeDuration }} — LLM/OCR 부하 확인"
-
-      # 위변조 점수 > 0.7 비율 급증 (5분 내 HOLD 건이 전체의 30% 초과)
-      - alert: DocAgentHighForgeryRate
-        expr: |
-          rate(doc_agent_submission_total{status="HOLD"}[5m])
-          /
-          rate(doc_agent_submission_total[5m])
-          > 0.3
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "HOLD 비율 30% 초과 — 위변조 급증 또는 임계치 오류 가능성"
-
-      # 심사원 미결 건 20건 초과
-      - alert: DocAgentHumanReviewBacklog
-        expr: doc_agent_human_review_pending > 20
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "심사원 검토 대기 {{ $value }}건 — 20건 초과"
-
-      # Kafka fraud-audit 발행 실패
-      - alert: DocAgentFraudAuditPublishFail
-        expr: rate(kafka_producer_record_error_total{topic="doc-agent.fraud.audit"}[5m]) > 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "감사팀 이관 이벤트 발행 실패"
-          description: "doc-agent.fraud.audit 토픽 발행 오류. 위변조 확정 건 유실 위험."
-
-      # JVM Heap > 85%
-      - alert: DocAgentHeapHigh
-        expr: |
-          jvm_memory_used_bytes{job="doc-agent", area="heap"}
-          /
-          jvm_memory_max_bytes{job="doc-agent", area="heap"}
-          > 0.85
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "doc-agent Heap 사용률 {{ $value | humanizePercentage }}"
-```
-
----
-
-## 6. 임계치 조정 기준 (로드맵)
-
-| 임계치 | 현재 잠정값 | 조정 시점 | 방법 |
-|--------|------------|-----------|------|
-| 위변조 HOLD 기준 (`THRESHOLD_HOLD`) | 0.7 | 골든셋 2,000건 축적 후 | ROC 곡선 → Youden 지수 최적점 |
-| 위변조 RESUBMIT 기준 (`THRESHOLD_RESUBMIT`) | 0.3 | 동일 | FPR 5% 이하 조건으로 조정 |
-| CircuitBreaker 실패율 임계치 | 50% (기본값) | 사이드카 안정화 후 | Resilience4j `failureRateThreshold` |
-| P95 알림 기준 | 30s | LLM 평균 레이턴시 측정 후 | avg × 3 배수로 재설정 |
-
----
-
-## 7. 로그 연계 (Loki / Grafana Explore)
-
-doc-agent는 JSON 구조화 로그를 출력한다. `submissionId` 필드로 파이프라인 추적이 가능하다.
-
-```logql
-# 특정 제출 건 전체 흐름 추적
-{job="doc-agent"} | json | submissionId = "<UUID>"
-
-# HOLD 결정 로그만 필터
-{job="doc-agent"} |= "심사원 결정 완료" | json | decision = "CONFIRMED_FORGERY"
-
-# CircuitBreaker fallback 발생
-{job="doc-agent"} |= "sidecar 장애"
-```
-
-Grafana 패널에서 **Data Links** → `Explore` 연결 시:  
-`/explore?orgId=1&left={"datasource":"Loki","queries":[{"expr":"{job=\"doc-agent\"} | json | submissionId = \"${__data.fields.submissionId}\""}]}`
-
----
-
-## 8. 메트릭 미구현 안내
-
-> 아래 메트릭은 코드 구조가 준비되어 있으나 `MeterRegistry` 주입이 아직 추가되지 않았다.  
-> 대시보드 구성 전 각 서비스 클래스에 `MeterRegistry` 의존성을 주입하고 위 4절 패턴으로 등록해야 한다.
-
-- `doc_agent_pipeline_seconds` — `SubmissionPipelineService`에 Timer wrap 추가
-- `doc_agent_forgery_score` — `ForgeryAnalysisService`에 `DistributionSummary` 추가
-- `doc_agent_human_review_pending` — `HumanReviewService` 또는 스케줄러에서 Gauge 갱신
-- `doc_agent_legal_hold_total` — `LegalHoldService`에 Counter 추가
-
-JVM / HTTP / Kafka / Resilience4j 메트릭은 의존성 추가만으로 자동 등록된다 (`spring-boot-actuator` + `micrometer-registry-prometheus`).
+> `doc_code` 는 varchar(10) 이다. `INCOME_CERT`(11자)처럼 긴 값을 넣으면 DB 에서 잘린다.

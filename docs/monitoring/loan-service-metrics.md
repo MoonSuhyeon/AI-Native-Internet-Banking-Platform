@@ -1,7 +1,10 @@
-# doc-agent 메트릭 명세 및 Observability 가이드
+# 여신 AI 메트릭 명세 및 Observability 가이드
 
 > **대상 독자**: 인프라·모니터링 담당자  
 > **범위**: auto-loan-review, advisory-service, ai-service(RAG)  
+> **주의**: 서류 심사(doc-agent)는 이 문서가 아니라
+> [`doc-agent-metrics.md`](doc-agent-metrics.md) 를 본다. 예전 제목이 "doc-agent" 로
+> 잘못 달려 있어 혼동의 원인이었다.  
 > **메트릭 노출**: `GET /actuator/prometheus` (Spring Boot Actuator + Micrometer)  
 > **구현 파일**: Micrometer 코드는 각 서비스 `observability/` 패키지 참고
 
