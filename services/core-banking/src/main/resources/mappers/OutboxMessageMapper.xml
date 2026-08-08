@@ -64,7 +64,16 @@
     </select>
 
     <!-- Stuck PUBLISHING 복구: updated_at 기준 cutoff 이전 PUBLISHING 행을 PENDING으로 재설정. -->
-    <update id="resetStuckPublishing" parameterType="java.time.LocalDateTime">
+    <!--
+      parameterType 은 인터페이스와 같아야 한다(OffsetDateTime).
+      LocalDateTime 으로 두면 MyBatis 가 LocalDateTimeTypeHandler 를 골라
+      ClassCastException 이 나고, 이 UPDATE 는 매 주기 실패한다.
+
+      그러면 PUBLISHING 에 갇힌 메시지를 아무도 되살리지 못한다 — 발행 도중
+      프로세스가 죽어 멈춘 이벤트가 영영 나가지 않는다. 스케줄러 안에서 터지므로
+      요청은 멀쩡하고 로그만 조용히 쌓인다.
+    -->
+    <update id="resetStuckPublishing" parameterType="java.time.OffsetDateTime">
         UPDATE outbox_message
         SET publish_status   = 'PENDING',
             updated_at = NOW()
