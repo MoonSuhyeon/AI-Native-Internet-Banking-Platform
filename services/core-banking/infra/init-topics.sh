@@ -120,6 +120,9 @@ echo "[ 3. 내부 이벤트 ]"
 create_topic "payment.completed"          3 1 "$NORMAL_RETENTION_MS"
 create_topic "payment.failed"             3 1 "$NORMAL_RETENTION_MS"
 create_topic "payment.reversed"           3 1 "$NORMAL_RETENTION_MS"
+# 이상거래 점검이 지연시킨 이체. 고객계가 소비해 알림을 만든다.
+# 토픽이 없으면 소비자는 UNKNOWN_TOPIC_OR_PARTITION 을 계속 찍고 알림은 영영 안 간다.
+create_topic "payment.delayed"            3 1 "$NORMAL_RETENTION_MS"
 create_topic "payment.completed.dlq"      1 1 "$DLQ_RETENTION_MS"
 create_topic "payment.failed.dlq"         1 1 "$DLQ_RETENTION_MS"
 create_topic "payment.reversed.dlq"       1 1 "$DLQ_RETENTION_MS"

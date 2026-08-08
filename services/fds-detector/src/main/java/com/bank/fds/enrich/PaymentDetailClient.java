@@ -1,6 +1,7 @@
 package com.bank.fds.enrich;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,9 @@ public class PaymentDetailClient {
 
     private final RestClient restClient;
 
+    // 생성자가 둘이라(테스트 seam) 스프링이 어느 것을 쓸지 모른다.
+    // 표시하지 않으면 부팅이 NoSuchMethodException 으로 죽는다.
+    @Autowired
     public PaymentDetailClient(
             RestClient.Builder builder,
             @Value("${fds.core-banking.base-url:http://core-banking:8082}") String baseUrl,
