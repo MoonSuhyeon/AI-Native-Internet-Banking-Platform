@@ -759,10 +759,19 @@ public class PaymentTransactionService {
         if (TRIGGER_FDS_DELAY.equals(triggerSource)) {
             // 발송은 결제계가 하지 않는다. 이벤트만 내고 알림 모듈이 소비한다 —
             // 결제 트랜잭션이 외부 발송 성공에 묶이면 알림 장애가 이체 장애가 된다.
+            // 누구에게 보낼지가 없으면 고객계는 알림을 만들 수 없다. 이벤트만 나가고
+            // 아무 일도 일어나지 않는 상태가 되므로 송신 고객번호를 함께 싣는다.
+            PaymentInstruction pi = paymentInstructionMapper.selectById(piId);
+            String senderUserId = pi == null ? null : pi.getSenderUserId();
+            if (senderUserId == null) {
+                throw new IllegalStateException("지연 알림 대상 고객을 찾을 수 없음: " + piId);
+            }
+
             String payload;
             try {
                 payload = objectMapper.writeValueAsString(Map.of(
                         "paymentInstructionId", piId,
+                        "customerId", senderUserId,
                         "scheduledExecutionAt", scheduledExecutionAt.toString(),
                         "reason", "FDS_DELAY"));
             } catch (JsonProcessingException e) {

@@ -87,3 +87,17 @@ logging:
     name: ${LOG_DIR:C:/logs/internet-banking}/customer-service.log
   pattern:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 결제계가 내는 이벤트를 받는다. 지금은 payment.delayed(이상거래 지연) 하나다 —
+# 결제 트랜잭션이 알림 발송에 묶이면 알림 장애가 이체 장애가 되므로 이벤트로 잇는다.
+spring.kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  consumer:
+    group-id: ${CUSTOMER_KAFKA_GROUP:customer-notification}
+    auto-offset-reset: latest
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+customer.kafka:
+  payment-delayed-topic: ${CUSTOMER_PAYMENT_DELAYED_TOPIC:payment.delayed}
+  consumer-group: ${CUSTOMER_KAFKA_GROUP:customer-notification}

@@ -206,6 +206,8 @@ services:
     ports:
       - "${CUSTOMER_APP_PORT:-8081}:8081"
     environment:
+      # 결제계 payment.delayed 를 소비해 고객 알림을 만든다.
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CUSTOMER_APP_PORT: 8081
       CUSTOMER_DB_HOST: customer-db
       CUSTOMER_DB_PORT: 5432

@@ -58,6 +58,8 @@ class DelayedTransferMarkerTest {
         IdGenerator idGenerator = mock(IdGenerator.class);
 
         when(paymentInstructionMapper.updateScheduled(anyString(), any(), anyInt())).thenReturn(1);
+        when(paymentInstructionMapper.selectById(anyString())).thenReturn(
+                com.bank.payment.domain.PaymentInstruction.builder().senderUserId("9001").build());
         when(statusHistoryMapper.selectMaxSequence(anyString())).thenReturn(1);
         when(idGenerator.nextHistoryId()).thenReturn("HIST-1");
         when(idGenerator.nextMessageId()).thenReturn("MSG-1");
@@ -95,6 +97,9 @@ class DelayedTransferMarkerTest {
                 .as("언제 실행되는지 알려야 고객이 취소를 판단할 수 있다")
                 .contains("PI-1")
                 .contains("2026-08-08T05:30");
+        assertThat(msg.getPayload())
+                .as("누구에게 보낼지가 없으면 고객계는 알림을 만들 수 없다")
+                .contains("9001");
     }
 
     @Test
