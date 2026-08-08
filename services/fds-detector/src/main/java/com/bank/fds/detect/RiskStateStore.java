@@ -30,6 +30,7 @@ public class RiskStateStore {
 
     private static final String RISK_PREFIX = "fds:risk:";
     private static final String VELOCITY_PREFIX = "fds:vel:";
+    private static final String RECEIVER_PREFIX = "fds:rcv:";
 
     private final StringRedisTemplate redis;
 
@@ -38,6 +39,10 @@ public class RiskStateStore {
 
     @Value("${fds.velocity.window-minutes:10}")
     private long velocityWindowMinutes;
+
+    /** 수취인 이력 보관 기간. 너무 짧으면 단골 수취인도 매번 신규로 잡힌다. */
+    @Value("${fds.receiver.history-days:180}")
+    private long receiverHistoryDays;
 
     /**
      * 사후 탐지가 올려 둔 위험 상태. 없으면 empty.
@@ -88,6 +93,31 @@ public class RiskStateStore {
         } catch (Exception e) {
             log.warn("속도 카운터 갱신 실패 customerId={} reason={}", customerId, e.toString());
             return Optional.empty();
+        }
+    }
+
+    /**
+     * 이 고객이 이 수취인에게 처음 보내는가. 확인과 동시에 기록한다.
+     *
+     * <p>대포통장으로 흘러가는 자금은 대개 처음 보는 계좌로 간다. 다만 신규 수취인
+     * 자체는 지극히 정상이라(이사, 첫 거래처) 단독으로는 약한 신호다 —
+     * 금액이나 시간대와 겹칠 때 의미가 생긴다.
+     *
+     * <p>기록에 실패하면 "처음이 아니다" 로 본다. 판정 근거를 만들지 못한 것을
+     * 신호로 바꾸면, Redis 장애가 곧 오탐 폭증이 된다.
+     */
+    public boolean isFirstTimeReceiver(String customerId, String receiverKey) {
+        if (customerId == null || receiverKey == null || receiverKey.isBlank()) {
+            return false;
+        }
+        try {
+            String key = RECEIVER_PREFIX + customerId;
+            Long added = redis.opsForSet().add(key, receiverKey);
+            redis.expire(key, Duration.ofDays(receiverHistoryDays));
+            return added != null && added == 1L;
+        } catch (Exception e) {
+            log.warn("수취인 이력 확인 실패 customerId={} reason={}", customerId, e.toString());
+            return false;
         }
     }
 

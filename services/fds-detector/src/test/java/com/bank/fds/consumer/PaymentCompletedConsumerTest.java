@@ -1,5 +1,6 @@
 package com.bank.fds.consumer;
 
+import com.bank.fds.detect.PostHocDetectionService;
 import com.bank.fds.enrich.PaymentDetail;
 import com.bank.fds.enrich.PaymentDetailClient;
 import com.bank.fds.observability.FdsMetrics;
@@ -51,7 +52,8 @@ class PaymentCompletedConsumerTest {
         registry = new SimpleMeterRegistry();
         ack = mock(Acknowledgment.class);
         consumer = new PaymentCompletedConsumer(
-                new ObjectMapper(), detailClient, guard, new FdsMetrics(registry));
+                new ObjectMapper(), detailClient, guard,
+                mock(PostHocDetectionService.class), new FdsMetrics(registry));
 
         // 기본은 "처음 보는 거래"
         when(guard.markIfFirstSeen(anyString())).thenReturn(true);

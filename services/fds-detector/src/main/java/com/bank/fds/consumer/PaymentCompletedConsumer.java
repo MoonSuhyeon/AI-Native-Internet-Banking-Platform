@@ -1,5 +1,6 @@
 package com.bank.fds.consumer;
 
+import com.bank.fds.detect.PostHocDetectionService;
 import com.bank.fds.enrich.PaymentDetail;
 import com.bank.fds.enrich.PaymentDetailClient;
 import com.bank.fds.observability.FdsMetrics;
@@ -36,6 +37,7 @@ public class PaymentCompletedConsumer {
     private final ObjectMapper objectMapper;
     private final PaymentDetailClient detailClient;
     private final ProcessedEventGuard processedEventGuard;
+    private final PostHocDetectionService detectionService;
     private final FdsMetrics metrics;
 
     @KafkaListener(
@@ -85,8 +87,8 @@ public class PaymentCompletedConsumer {
             return;
         }
 
-        // 탐지 판정(룰 8종 + 이상탐지)은 다음 단계에서 이 자리에 붙는다.
+        detectionService.detect(detail.get());
+
         metrics.eventConsumed("processed");
-        log.debug("탐지 대상 수신 piId={} amount={}", piId, detail.get().amount());
     }
 }
