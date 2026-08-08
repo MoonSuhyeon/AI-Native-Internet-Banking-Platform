@@ -202,12 +202,19 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
 
     @Override
     public PaymentResult registerScheduledPayment(PaymentCommand command, java.time.OffsetDateTime scheduledExecutionAt) {
+        return registerScheduledPayment(command, scheduledExecutionAt, PaymentTransactionService.TRIGGER_USER);
+    }
+
+    @Override
+    public PaymentResult registerScheduledPayment(PaymentCommand command,
+                                                  java.time.OffsetDateTime scheduledExecutionAt,
+                                                  String triggerSource) {
         boolean isIntraBank = isIntraBank(command.receiverBankCode());
         String routingNetworkType = determineRoutingNetworkType(command);
 
         PaymentInstruction pi;
         try {
-            pi = txService.txStep1(command, isIntraBank, routingNetworkType);
+            pi = txService.txStep1(command, isIntraBank, routingNetworkType, triggerSource);
         } catch (DuplicateKeyException e) {
             metrics.idempotencyDuplicate();
             log.warn("[SCHED] 중복 멱등키 감지: idempotencyKey={}", command.idempotencyKey());
@@ -222,7 +229,8 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
             txService.authorize(pi.getPaymentInstructionId(), pi.getVersion());
 
             // AUTHORIZED→SCHEDULED (authorize 후 DB version=1 → version 인자=pi.getVersion()+1=1)
-            txService.markScheduled(pi.getPaymentInstructionId(), pi.getVersion() + 1, scheduledExecutionAt);
+            txService.markScheduled(pi.getPaymentInstructionId(), pi.getVersion() + 1,
+                    scheduledExecutionAt, triggerSource);
 
             return new PaymentResult(pi.getPaymentInstructionId(), pi.getTransactionNo(), "SCHEDULED", null, null);
 
@@ -1100,6 +1108,13 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
         }
 
         txService.cancelScheduled(piId, freshPi.getVersion(), reason);
+
+        // 이상거래 점검이 지연시킨 건이 실행 전에 취소됐다. 지연 장치의 성능은
+        // 얼마나 지연시켰는가가 아니라 이 비율로 드러난다 — 취소가 전혀 없으면
+        // 정상 거래만 불편하게 만든 것이고, 잦으면 실제로 사고를 막고 있는 것이다.
+        if (PaymentTransactionService.TRIGGER_FDS_DELAY.equals(freshPi.getTriggerSource())) {
+            metrics.delayedTransferCancelled();
+        }
 
         return new PaymentResult(piId, freshPi.getTransactionNo(), "CANCELED", null, null);
     }

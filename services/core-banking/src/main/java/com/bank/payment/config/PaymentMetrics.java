@@ -62,6 +62,17 @@ public class PaymentMetrics {
         registry.counter("payment.kafka.consume", "topic", topic).increment();
     }
 
+    /**
+     * 이상거래 점검이 지연시킨 건이 실행 전에 취소됐다.
+     *
+     * <p>게이트가 세는 {@code payment.fds.precheck.outcome{outcome="delayed"}} 와 짝이다.
+     * 두 값의 비율이 지연 장치가 실제로 사고를 막고 있는지를 보여준다.
+     * 지연 건수만 보면 "많이 지연시켰다" 는 것 외에는 아무것도 알 수 없다.
+     */
+    public void delayedTransferCancelled() {
+        registry.counter("payment.fds.delayed.cancelled.total").increment();
+    }
+
     // 지표 9: 보상 트랜잭션 발생 (type = F2_KFTC | F3_BOK | F4_KFTC | F4_BOK | F7_KFTC | F7_BOK)
     public void compensation(String type) {
         registry.counter("payment.compensation", "type", type).increment();

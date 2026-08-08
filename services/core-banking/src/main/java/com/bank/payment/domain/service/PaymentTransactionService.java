@@ -43,6 +43,12 @@ import java.util.Map;
 @Service
 public class PaymentTransactionService {
 
+    /** 사용자가 직접 일으킨 거래. */
+    public static final String TRIGGER_USER = "USER";
+
+    /** 이상거래 점검이 지연시켜 예약으로 접수한 거래. */
+    public static final String TRIGGER_FDS_DELAY = "FDS_DELAY";
+
     private static final DateTimeFormatter CLEARING_AT_FMT =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -95,6 +101,17 @@ public class PaymentTransactionService {
     /** TX-1: 멱등키(PROCESSING) + 결제지시(DRAFT) + 상태이력(seq1 INSTRUCTION_CREATED) INSERT */
     @Transactional
     public PaymentInstruction txStep1(PaymentCommand command, boolean isIntraBank, String routingNetworkType) {
+        return txStep1(command, isIntraBank, routingNetworkType, TRIGGER_USER);
+    }
+
+    /**
+     * @param triggerSource 이 거래를 만든 주체. 보통 사용자지만, 이상거래 점검이 지연시켜
+     *                      예약으로 접수한 건은 {@link #TRIGGER_FDS_DELAY} 다.
+     *                      지연 건이 실행 전에 취소됐는지 세려면 이 표시가 남아 있어야 한다 —
+     *                      취소 비율이 곧 지연 장치가 사고를 막았는지를 보여준다.
+     */
+    public PaymentInstruction txStep1(PaymentCommand command, boolean isIntraBank,
+                                      String routingNetworkType, String triggerSource) {
         OffsetDateTime now = OffsetDateTime.now();
 
         IdempotencyKey idempotencyKey = IdempotencyKey.of(
@@ -128,7 +145,7 @@ public class PaymentTransactionService {
                 .requestedAt(now)
                 .businessDate(BusinessDate.of(now))
                 .version(0)
-                .triggerSource("USER")
+                .triggerSource(triggerSource)
                 .isScheduled(false)
                 .createdBy(command.userId())
                 .updatedBy(command.userId())
@@ -713,6 +730,17 @@ public class PaymentTransactionService {
      */
     @Transactional
     public void markScheduled(String piId, Integer version, OffsetDateTime scheduledExecutionAt) {
+        markScheduled(piId, version, scheduledExecutionAt, TRIGGER_USER);
+    }
+
+    /**
+     * @param triggerSource 이상거래 점검이 지연시킨 건이면 {@link #TRIGGER_FDS_DELAY}.
+     *                      그 경우 고객에게 알릴 이벤트를 함께 남긴다 — 지연시켜 놓고
+     *                      아무도 모르면 시간만 지나고 그대로 나간다. 알림이 있어야
+     *                      고객이 알아채고 취소할 수 있고, 그때 비로소 이 장치가 뜻을 갖는다.
+     */
+    public void markScheduled(String piId, Integer version,
+                              OffsetDateTime scheduledExecutionAt, String triggerSource) {
         OffsetDateTime now = OffsetDateTime.now();
 
         int updated = paymentInstructionMapper.updateScheduled(piId, scheduledExecutionAt, version);
@@ -725,8 +753,24 @@ public class PaymentTransactionService {
         int seq = (maxSeq == null ? 0 : maxSeq) + 1;
         StatusHistory history = StatusHistory.of(
                 idGenerator.nextHistoryId(), piId, seq,
-                "AUTHORIZED", "SCHEDULED", "SCHEDULED_REGISTERED", "USER", now);
+                "AUTHORIZED", "SCHEDULED", "SCHEDULED_REGISTERED", triggerSource, now);
         statusHistoryMapper.insert(history);
+
+        if (TRIGGER_FDS_DELAY.equals(triggerSource)) {
+            // 발송은 결제계가 하지 않는다. 이벤트만 내고 알림 모듈이 소비한다 —
+            // 결제 트랜잭션이 외부 발송 성공에 묶이면 알림 장애가 이체 장애가 된다.
+            String payload;
+            try {
+                payload = objectMapper.writeValueAsString(Map.of(
+                        "paymentInstructionId", piId,
+                        "scheduledExecutionAt", scheduledExecutionAt.toString(),
+                        "reason", "FDS_DELAY"));
+            } catch (JsonProcessingException e) {
+                throw new IllegalStateException("지연 알림 payload 직렬화 실패: " + piId, e);
+            }
+            outboxMessageMapper.insert(OutboxMessage.of(
+                    idGenerator.nextMessageId(), piId, "PAYMENT_DELAYED", "v1", payload, now));
+        }
     }
 
     /**

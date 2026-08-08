@@ -170,6 +170,9 @@ public class OutboxPublisher {
             case "PAYMENT_COMPLETED" -> "payment.completed";
             case "PAYMENT_FAILED"    -> "payment.failed";
             case "PAYMENT_REVERSED"  -> "payment.reversed";
+            // 이상거래 점검이 지연시킨 건. 알림 모듈이 소비해 고객에게 알린다 —
+            // 지연시켜 놓고 아무도 모르면 시간만 지나고 그대로 나간다.
+            case "PAYMENT_DELAYED"   -> "payment.delayed";
             case "KFTC_SETTLED"      -> "payment.completed"; // 회계계 P-001 unwind 트리거. 수신측이 eventType으로 분기
             case "BOK_CONFIRMED"     -> "payment.completed"; // KFTC_SETTLED 대칭. 수신측이 eventType으로 분기
             case "KFTC_REQUEST_SENT"      -> "kftc.network.request";

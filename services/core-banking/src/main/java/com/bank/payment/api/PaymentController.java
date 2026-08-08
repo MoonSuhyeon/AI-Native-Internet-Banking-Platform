@@ -8,6 +8,7 @@ import com.bank.payment.api.dto.PaymentResponse;
 import com.bank.payment.api.dto.ScheduledPaymentRequest;
 import com.bank.payment.domain.mapper.PaymentInstructionMapper;
 import com.bank.payment.domain.service.PaymentCommand;
+import com.bank.payment.domain.service.PaymentTransactionService;
 import com.bank.payment.domain.service.PaymentOrchestrator;
 import com.bank.payment.domain.service.PaymentResult;
 import org.springframework.http.ResponseEntity;
@@ -100,7 +101,10 @@ public class PaymentController {
         // (ScheduledPaymentWorker, cancelScheduledPayment)를 그대로 탄다.
         if (decision.isDelayed()) {
             OffsetDateTime executeAt = OffsetDateTime.now().plus(decision.delay());
-            PaymentResult delayed = paymentOrchestrator.registerScheduledPayment(command, executeAt);
+            // 표시를 남긴다. 이게 없으면 나중에 "지연된 건이 취소됐는가" 를 셀 수 없고,
+            // 지연 장치가 사고를 막았는지 알 수 없다.
+            PaymentResult delayed = paymentOrchestrator.registerScheduledPayment(
+                    command, executeAt, PaymentTransactionService.TRIGGER_FDS_DELAY);
             return ResponseEntity.ok(PaymentResponse.delayed(
                     delayed.paymentInstructionId(), delayed.transactionNo(),
                     executeAt, decision.reasons()));

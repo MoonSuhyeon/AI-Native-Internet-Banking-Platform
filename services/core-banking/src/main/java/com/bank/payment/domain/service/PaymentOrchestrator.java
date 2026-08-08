@@ -27,6 +27,14 @@ public interface PaymentOrchestrator {
     PaymentResult registerScheduledPayment(PaymentCommand command, java.time.OffsetDateTime scheduledExecutionAt);
 
     /**
+     * 지연 등 특정 주체가 만든 예약이체. triggerSource 가 PI 에 남아
+     * 나중에 "지연된 건이 취소됐는가" 를 셀 수 있다.
+     */
+    PaymentResult registerScheduledPayment(PaymentCommand command,
+                                           java.time.OffsetDateTime scheduledExecutionAt,
+                                           String triggerSource);
+
+    /**
      * 예약이체 실행. 워커가 claim 성공 후 호출.
      * step2a(A 재검증) → step2b(잔액/한도) → B-3 출금 → B-4 입금 → txStep4Scheduled(분개+COMPLETED).
      * 자행만 구현. 타행/BOK는 UnsupportedOperationException (후속 단계).
