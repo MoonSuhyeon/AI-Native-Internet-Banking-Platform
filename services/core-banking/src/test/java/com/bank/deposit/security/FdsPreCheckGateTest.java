@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
+import java.time.Duration;
 import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,7 +54,9 @@ class FdsPreCheckGateTest {
         ReflectionTestUtils.setField(tierPolicy, "highFrom", 5_000_000L);
         ReflectionTestUtils.setField(tierPolicy, "veryHighFrom", 50_000_000L);
 
-        gate = new FdsPreCheckGate(builder.baseUrl("http://fds").build(), tierPolicy);
+        gate = new FdsPreCheckGate(builder.baseUrl("http://fds").build(), tierPolicy,
+                new SimpleMeterRegistry());
+        ReflectionTestUtils.setField(gate, "delayMinutes", 30L);
         ReflectionTestUtils.setField(gate, "enabled", true);
     }
 
@@ -60,8 +65,8 @@ class FdsPreCheckGateTest {
                 .andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
     }
 
-    private void evaluate(long amount, boolean hasToken) {
-        gate.evaluate(SENDER, FROM, "004", TO, amount, false, "MOBILE", hasToken);
+    private PreCheckDecision evaluate(long amount, boolean hasToken) {
+        return gate.evaluate(SENDER, FROM, "004", TO, amount, false, "MOBILE", hasToken);
     }
 
     @Nested
@@ -106,6 +111,32 @@ class FdsPreCheckGateTest {
 
             // 이미 본인 확인을 마친 고객을 다시 막으면 인증을 두 번 요구하는 셈이다.
             assertThatCode(() -> evaluate(SMALL, true)).doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("DELAY 는 막지 않는다 — 접수하고 실행을 미룬다")
+        void delayDoesNotRejectTheTransfer() {
+            respond("""
+                    {"tier":"DELAY","signals":["HIGH_AMOUNT"],"degraded":false}""");
+
+            PreCheckDecision decision = evaluate(SMALL, true);
+
+            // 예외로 끊으면 호출부가 실패로 다루고 고객에게도 실패로 보인다.
+            // 실제로는 취소할 기회를 준 것인데 그 의미가 사라진다.
+            assertThat(decision.isDelayed()).isTrue();
+            assertThat(decision.delay()).isEqualTo(Duration.ofMinutes(30));
+            assertThat(decision.reasons()).contains("HIGH_AMOUNT");
+        }
+
+        @Test
+        @DisplayName("DELAY 는 인증 여부와 무관하다 — 인증했다고 지연이 풀리지 않는다")
+        void delayIsNotWaivedByAuthentication() {
+            respond("""
+                    {"tier":"DELAY","signals":[],"degraded":false}""");
+
+            // 지연은 본인 확인으로 해소되는 종류가 아니다. 본인이 속아서 보내는
+            // 경우(보이스피싱)가 바로 이 장치가 노리는 상황이다.
+            assertThat(evaluate(SMALL, false).isDelayed()).isTrue();
         }
 
         @Test

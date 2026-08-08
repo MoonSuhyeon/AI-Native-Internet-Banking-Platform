@@ -12,6 +12,7 @@ import com.bank.payment.domain.service.PaymentOrchestrator;
 import com.bank.payment.domain.service.PaymentResult;
 import org.springframework.http.ResponseEntity;
 import com.bank.deposit.security.FdsPreCheckGate;
+import com.bank.deposit.security.PreCheckDecision;
 import com.bank.deposit.security.TransferApprovalGate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -73,7 +74,7 @@ public class PaymentController {
 
         // 승인 확인 다음에 이상거래 점검. 순서가 중요하다 — 인증되지 않은 요청으로
         // 탐지기를 두드리게 두면 탐지 통계가 오염되고 부하도 는다.
-        fdsPreCheckGate.evaluate(
+        PreCheckDecision decision = fdsPreCheckGate.evaluate(
                 userId, request.senderAccountId(), request.receiverBankCode(),
                 request.receiverAccountNo(), request.transferAmount(),
                 null, request.channel(), authTokenId != null && !authTokenId.isBlank());
@@ -94,11 +95,22 @@ public class PaymentController {
                 idempotencyKey
         );
 
+        // 지연 지시면 즉시 실행하지 않고 예약으로 접수한다. 거절이 아니라 고객이
+        // 알아채고 취소할 시간을 주는 것이다. 실행·취소는 이미 검증된 예약이체 경로
+        // (ScheduledPaymentWorker, cancelScheduledPayment)를 그대로 탄다.
+        if (decision.isDelayed()) {
+            OffsetDateTime executeAt = OffsetDateTime.now().plus(decision.delay());
+            PaymentResult delayed = paymentOrchestrator.registerScheduledPayment(command, executeAt);
+            return ResponseEntity.ok(PaymentResponse.delayed(
+                    delayed.paymentInstructionId(), delayed.transactionNo(),
+                    executeAt, decision.reasons()));
+        }
+
         // 오케스트레이션
         PaymentResult result = paymentOrchestrator.processPayment(command);
 
         // 도메인 출력 → api 출력 매핑 (COMPLETED=null, FAILED=원인코드)
-        PaymentResponse response = new PaymentResponse(
+        PaymentResponse response = PaymentResponse.of(
                 result.paymentInstructionId(),
                 result.transactionNo(),
                 result.status(),
@@ -160,7 +172,7 @@ public class PaymentController {
 
         PaymentResult result = paymentOrchestrator.registerScheduledPayment(command, scheduledAt);
 
-        return ResponseEntity.ok(new PaymentResponse(
+        return ResponseEntity.ok(PaymentResponse.of(
                 result.paymentInstructionId(),
                 result.transactionNo(),
                 result.status(),
@@ -185,7 +197,7 @@ public class PaymentController {
 
         PaymentResult result = paymentOrchestrator.cancelScheduledPayment(piId, userId, reason);
 
-        return ResponseEntity.ok(new PaymentResponse(
+        return ResponseEntity.ok(PaymentResponse.of(
                 result.paymentInstructionId(),
                 result.transactionNo(),
                 result.status(),
@@ -213,7 +225,7 @@ public class PaymentController {
         PaymentResult result = paymentOrchestrator.processOperatorCancel(
                 piId, request.operatorId(), request.reason());
 
-        return ResponseEntity.ok(new PaymentResponse(
+        return ResponseEntity.ok(PaymentResponse.of(
                 result.paymentInstructionId(),
                 result.transactionNo(),
                 result.status(),

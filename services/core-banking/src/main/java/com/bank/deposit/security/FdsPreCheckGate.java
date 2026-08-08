@@ -3,6 +3,7 @@ package com.bank.deposit.security;
 import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ public class FdsPreCheckGate {
 
     private final RestClient restClient;
     private final AmountTierPolicy amountTierPolicy;
+    private final MeterRegistry meterRegistry;
 
     /**
      * 단계적 도입. 기본은 꺼 둔다.
@@ -47,14 +49,25 @@ public class FdsPreCheckGate {
     @Value("${deposit.fds.enabled:false}")
     private boolean enabled;
 
+    /**
+     * 지연 시간(분).
+     *
+     * <p>짧으면 고객이 알아챌 시간이 없고, 길면 정상 거래가 불편해진다.
+     * 실제 은행의 지연이체 제도도 이 절충 위에 있다.
+     */
+    @Value("${deposit.fds.delay-minutes:30}")
+    private long delayMinutes;
+
     @Autowired
     public FdsPreCheckGate(
             RestClient.Builder builder,
             AmountTierPolicy amountTierPolicy,
+            MeterRegistry meterRegistry,
             @Value("${deposit.fds.base-url:http://fds-detector:8092}") String baseUrl,
             @Value("${deposit.fds.timeout-ms:400}") int timeoutMs) {
 
         this.amountTierPolicy = amountTierPolicy;
+        this.meterRegistry = meterRegistry;
 
         // 인라인 판정이라 예산이 밀리초 단위다. 기본 타임아웃은 무제한이어서
         // 걸지 않으면 탐지기가 응답만 안 해도 이체 스레드가 그대로 묶인다.
@@ -71,21 +84,37 @@ public class FdsPreCheckGate {
      * <p>운영 생성자는 타임아웃을 걸려고 {@code requestFactory} 를 직접 지정하는데,
      * 그러면 목 서버가 심어 둔 팩토리를 덮어써 실제 호출이 나가 버린다.
      */
-    FdsPreCheckGate(RestClient restClient, AmountTierPolicy amountTierPolicy) {
+    FdsPreCheckGate(RestClient restClient, AmountTierPolicy amountTierPolicy,
+                    MeterRegistry meterRegistry) {
         this.restClient = restClient;
         this.amountTierPolicy = amountTierPolicy;
+        this.meterRegistry = meterRegistry;
+    }
+
+    /**
+     * 사전 점검이 거래를 어떻게 처리했는가.
+     *
+     * <p>게이트에서 센다. 호출부(즉시이체·예약이체·자행이체) 세 곳을 한 번에 덮고,
+     * 어느 경로로 들어와도 같은 기준으로 집계된다.
+     *
+     * <p><b>지연 장치의 성능은 이 값만으로는 안 나온다.</b> 얼마나 지연시켰는가가
+     * 아니라 지연된 건 중 실제로 취소된 비율이 핵심인데, 그러려면 예약 건에
+     * "FDS 가 지연시킨 것" 표시가 남아야 한다. 아직 없다 — 다음 작업이다.
+     */
+    private void countOutcome(String outcome) {
+        meterRegistry.counter("payment.fds.precheck.outcome", "outcome", outcome).increment();
     }
 
     /**
      * @param hasApprovalToken 승인 토큰을 이미 제시했는가. 탐지기가 추가 인증을 요구했을 때
      *                         이미 인증했으면 다시 막지 않기 위해 필요하다.
      */
-    public void evaluate(String senderUserId, String senderAccountNo, String receiverBankCode,
-                         String receiverAccountNo, Long amount, Boolean intraBank,
-                         String channel, boolean hasApprovalToken) {
+    public PreCheckDecision evaluate(String senderUserId, String senderAccountNo, String receiverBankCode,
+                                     String receiverAccountNo, Long amount, Boolean intraBank,
+                                     String channel, boolean hasApprovalToken) {
 
         if (!enabled) {
-            return;
+            return PreCheckDecision.proceed();
         }
 
         AmountTier tier = amountTierPolicy.of(amount);
@@ -107,13 +136,13 @@ public class FdsPreCheckGate {
         } catch (Exception e) {
             log.warn("이상거래 점검 실패 amountTier={} reason={}", tier, e.toString());
             applyOutagePolicy(tier);
-            return;
+            return PreCheckDecision.proceed();
         }
 
         if (result == null || result.tier() == null) {
             log.warn("이상거래 점검 응답이 비었다 amountTier={}", tier);
             applyOutagePolicy(tier);
-            return;
+            return PreCheckDecision.proceed();
         }
 
         // 탐지기가 축소 판정했다고 알려 온 경우도 장애와 같이 다룬다.
@@ -122,37 +151,55 @@ public class FdsPreCheckGate {
         if (result.degraded()) {
             log.warn("이상거래 점검 축소 판정 amountTier={} signals={}", tier, result.signals());
             applyOutagePolicy(tier);
-            return;
+            return PreCheckDecision.proceed();
         }
 
-        applyTier(result, hasApprovalToken);
+        return applyTier(result, hasApprovalToken);
     }
 
     /** 판정 결과대로 조치한다. */
-    private void applyTier(PreCheckResult result, boolean hasApprovalToken) {
+    private PreCheckDecision applyTier(PreCheckResult result, boolean hasApprovalToken) {
         switch (result.tier()) {
             case "PASS", "MONITOR" -> {
                 // 통과. MONITOR 는 표시만 하는 등급이라 거래를 막지 않는다.
+                countOutcome("proceed");
+                return PreCheckDecision.proceed();
             }
-            case "STEP_UP", "DELAY" -> {
+            case "STEP_UP" -> {
                 // 본인 확인을 요구한다. 이미 승인 토큰을 제시했으면 다시 막지 않는다.
-                //
-                // DELAY 를 STEP_UP 과 같이 처리한다. 진짜 지연이체는 보류 후 재개하는
-                // 장치가 필요한데 아직 없다 — 그때까지 더 약한 쪽이 아니라
-                // 인증 요구로 처리한다. 지표에는 DELAY 로 남으므로 얼마나 필요한지 보인다.
                 if (!hasApprovalToken) {
-                    log.info("이상거래 점검이 추가 인증을 요구함 tier={} signals={}",
-                            result.tier(), result.signals());
+                    log.info("이상거래 점검이 추가 인증을 요구함 signals={}", result.signals());
+                    countOutcome("step_up_required");
                     throw new BusinessException(ErrorCode.TRANSFER_APPROVAL_REQUIRED);
                 }
+                countOutcome("proceed");
+                return PreCheckDecision.proceed();
+            }
+            case "DELAY" -> {
+                // 거절이 아니다. 접수는 하되 실행을 미뤄, 고객이 알아채고 취소할
+                // 시간을 준다 — 보이스피싱 대응의 지연이체와 같은 성격이다.
+                log.info("이상거래 점검이 지연을 지시함 delayMinutes={} signals={}",
+                        delayMinutes, result.signals());
+                countOutcome("delayed");
+                return PreCheckDecision.delay(
+                        Duration.ofMinutes(delayMinutes), toReasons(result.signals()));
             }
             default -> {
                 // BLOCK / HOLD_REVIEW / FREEZE_RECOMMEND — 사람이 봐야 하는 등급이다.
-                // 인라인에서는 보류할 수단이 없으므로 진행하지 않는다.
+                // 지연으로도 부족하다. 진행하지 않는다.
                 log.warn("이상거래로 이체 차단 tier={} signals={}", result.tier(), result.signals());
+                countOutcome("blocked");
                 throw new BusinessException(ErrorCode.TRANSFER_BLOCKED_BY_RISK);
             }
         }
+    }
+
+    /** 신호를 사람이 읽을 사유로 옮긴다. 고객 안내와 감사 기록에 쓴다. */
+    private List<String> toReasons(List<Object> signals) {
+        if (signals == null) {
+            return List.of();
+        }
+        return signals.stream().map(String::valueOf).toList();
     }
 
     /**

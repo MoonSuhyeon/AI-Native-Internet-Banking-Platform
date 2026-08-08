@@ -124,6 +124,9 @@ deposit:
     base-url: ${DEPOSIT_FDS_BASE_URL:http://fds-detector:8092}
     # 인라인 판정이라 예산이 밀리초 단위다. 탐지기가 느려지면 모든 이체가 느려진다.
     timeout-ms: ${DEPOSIT_FDS_TIMEOUT_MS:400}
+    # 지연 시간(분). 짧으면 고객이 알아챌 시간이 없고, 길면 정상 거래가 불편해진다.
+    # 실제 은행의 지연이체 제도도 이 절충 위에 있다.
+    delay-minutes: ${DEPOSIT_FDS_DELAY_MINUTES:30}
 
 payment:
   bank-code: ${BANK_CODE:A}
