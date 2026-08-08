@@ -945,6 +945,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       CORE_BANKING_URL: http://core-banking-a:8082
+      FRAUD_AGENT_URL: http://fraud-agent:8090
       FDS_CONSUMER_GROUP: ${FDS_CONSUMER_GROUP:-fds-detector}
     depends_on:
       kafka:

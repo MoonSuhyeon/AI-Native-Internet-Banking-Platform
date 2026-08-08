@@ -18,6 +18,7 @@ CLI(run_investigation.py)와 **동일한 빌딩블록**(hypotheses·planner·too
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
@@ -47,8 +48,10 @@ from .metrics import (
 from .models import (
     ActionType,
     AgentState,
+    Alert,
     Case,
     Recommendation,
+    TxContext,
 )
 from .planner import plan_next_tool
 from .recommend import build_recommendation
@@ -113,8 +116,57 @@ class InvestigateResponse(BaseModel):
     hitl_pending: bool
 
 
+class TransactionInput(BaseModel):
+    """실거래 조사 입력. 탐지기(fds-detector)가 사건화한 건을 그대로 넘긴다."""
+
+    alert_id: str
+    customer_id: str
+    account: str
+    amount: int
+    payee: str | None = None
+    time: datetime | None = None
+    channel: str | None = None
+    anomaly_score: float = 0.0
+    # 탐지기가 왜 걸었는지. 조사 근거의 출발점이 된다.
+    signals: list[str] = []
+
+
 class InvestigateRequest(BaseModel):
-    case: str
+    """조사 입력. 목 케이스 또는 실거래 중 하나.
+
+    ``case`` 는 data/cases/*.json 을 읽는 기존 경로다. 데모와 eval 워크플로가
+    이 경로로 돌기 때문에 그대로 둔다 — 실거래를 붙이면서 목을 끊으면 CI 가 죽는다.
+
+    ``transaction`` 은 탐지기가 넘기는 실거래다. 파일이 없으므로 도구 응답도 없고,
+    조회 도구는 실연결(TRIAGE_REAL_TOOLS)이 켜진 것만 값을 준다. 켜지지 않은 도구는
+    빈 응답이 되어 그 축의 가설이 오르지 않는다 — 조사가 틀리는 게 아니라
+    **덜 아는 상태**이며, 예산 소진 후 PROVISIONAL/HOLD 로 끝난다.
+    """
+
+    case: str | None = None
+    transaction: TransactionInput | None = None
+
+    def to_case(self) -> Case:
+        """실거래를 조사 루프가 받는 Case 형태로 옮긴다."""
+        tx = self.transaction
+        return Case(
+            name=f"txn-{tx.alert_id}",
+            description="탐지 신호: " + (", ".join(tx.signals) if tx.signals else "없음"),
+            alert=Alert(
+                id=tx.alert_id,
+                account=tx.account,
+                customer_id=tx.customer_id,
+                tx_context=TxContext(
+                    amount=tx.amount,
+                    payee=tx.payee,
+                    time=tx.time,
+                    channel=tx.channel,
+                ),
+                anomaly_score=tx.anomaly_score,
+            ),
+            # 목 응답 없음. 도구는 실연결이 켜진 것만 값을 준다.
+            tool_responses={},
+        )
 
 
 class ApproveRequest(BaseModel):
@@ -235,10 +287,15 @@ def list_cases() -> list[CaseSummary]:
 @app.post("/api/investigate", response_model=InvestigateResponse)
 def investigate(req: InvestigateRequest) -> InvestigateResponse:
     """한 사건을 조사 루프에 태워 단계별 트레이스 + 권고를 반환. 동작은 HITL 대기."""
-    try:
-        case = load_case(req.case)
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"케이스 없음: {req.case}")
+    if req.transaction is not None:
+        case = req.to_case()
+    elif req.case:
+        try:
+            case = load_case(req.case)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail=f"케이스 없음: {req.case}")
+    else:
+        raise HTTPException(status_code=400, detail="case 또는 transaction 중 하나가 필요합니다")
 
     import time
     started = time.perf_counter()

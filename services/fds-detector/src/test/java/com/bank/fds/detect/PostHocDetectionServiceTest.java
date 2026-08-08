@@ -1,5 +1,6 @@
 package com.bank.fds.detect;
 
+import com.bank.fds.dispatch.InvestigationDispatcher;
 import com.bank.fds.enrich.PaymentDetail;
 import com.bank.fds.observability.FdsMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -12,6 +13,7 @@ import java.time.OffsetDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -33,13 +35,16 @@ import static org.mockito.Mockito.when;
 class PostHocDetectionServiceTest {
 
     private RiskStateStore riskStateStore;
+    private InvestigationDispatcher dispatcher;
     private PostHocDetectionService service;
 
     @BeforeEach
     void setUp() {
         riskStateStore = mock(RiskStateStore.class);
+        dispatcher = mock(InvestigationDispatcher.class);
         service = new PostHocDetectionService(
-                riskStateStore, new ResponseTierPolicy(), new FdsMetrics(new SimpleMeterRegistry()));
+                riskStateStore, new ResponseTierPolicy(), dispatcher,
+                new FdsMetrics(new SimpleMeterRegistry()));
         ReflectionTestUtils.setField(service, "highAmountThreshold", 10_000_000L);
         ReflectionTestUtils.setField(service, "nightFromHour", 0);
         ReflectionTestUtils.setField(service, "nightToHour", 6);
@@ -99,6 +104,22 @@ class PostHocDetectionServiceTest {
                 .contains("CROSS_BANK_HIGH_AMOUNT");
         assertThat(intraBank.signals()).extracting(DetectionSignal::code)
                 .doesNotContain("CROSS_BANK_HIGH_AMOUNT");
+    }
+
+    @Test
+    @DisplayName("사건이 되면 조사에 넘긴다 — 넘기지 않으면 큐가 비어 있게 된다")
+    void caseIsDispatchedToInvestigation() {
+        when(riskStateStore.isFirstTimeReceiver(eq("9001"), anyString())).thenReturn(true);
+
+        var outcome = service.detect(detail(20_000_000L, "2026-08-07T20:00:00Z", false));
+
+        // if 로 감싸면 사건화가 아예 안 일어나게 되어도 조용히 통과한다.
+        // 실제로 그 상태였다 — 사후 경로에 HIGH 신호가 없어 사람 검토 등급에
+        // 도달할 수 없었고, 조사 큐는 영원히 비어 있었을 것이다.
+        assertThat(outcome.tier().requiresHumanReview())
+                .as("타행 고액 + 신규 수취인 + 심야면 사람이 봐야 한다")
+                .isTrue();
+        verify(dispatcher).dispatch(any(), any(), anyDouble());
     }
 
     @Test

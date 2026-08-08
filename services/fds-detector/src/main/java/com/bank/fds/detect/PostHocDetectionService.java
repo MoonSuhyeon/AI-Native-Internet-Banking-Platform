@@ -2,6 +2,7 @@ package com.bank.fds.detect;
 
 import com.bank.common.time.BusinessDate;
 import com.bank.fds.detect.DetectionSignal.Severity;
+import com.bank.fds.dispatch.InvestigationDispatcher;
 import com.bank.fds.enrich.PaymentDetail;
 import com.bank.fds.observability.FdsMetrics;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class PostHocDetectionService {
 
     private final RiskStateStore riskStateStore;
     private final ResponseTierPolicy tierPolicy;
+    private final InvestigationDispatcher investigationDispatcher;
     private final FdsMetrics metrics;
 
     @Value("${fds.rule.high-amount:10000000}")
@@ -76,8 +78,13 @@ public class PostHocDetectionService {
                 && detail.amount() != null && detail.amount() >= highAmountThreshold) {
             // 타행 고액은 되돌리기 어렵다. 자행이면 우리 안에서 정지시킬 수 있지만
             // 타행은 상대 은행 협조가 필요해 시간이 훨씬 오래 걸린다.
-            signals.add(DetectionSignal.of("CROSS_BANK_HIGH_AMOUNT", Severity.MEDIUM,
-                    "타행 고액 이체"));
+            // HIGH 로 둔다. 자행 고액은 우리 안에서 정지시킬 수 있지만 타행은 상대 은행
+            // 협조가 필요해 회수가 훨씬 어렵다 — 되돌리기 어려운 만큼 강하게 본다.
+            //
+            // 이 신호가 MEDIUM 이면 사후 경로에 HIGH 가 하나도 없어 사건화가
+            // 영원히 일어나지 않는다(MEDIUM 둘은 DELAY 까지만 간다).
+            signals.add(DetectionSignal.of("CROSS_BANK_HIGH_AMOUNT", Severity.HIGH,
+                    "타행 고액 이체 — 회수 곤란"));
         }
 
         // 끝난 거래는 막을 수 없다. inline=false 로 판정해 BLOCK 이 지급정지 권고로 올라간다.
@@ -100,6 +107,11 @@ public class PostHocDetectionService {
             metrics.caseCreated("rule");
             log.info("사건화 piId={} tier={} signals={}",
                     detail.paymentInstructionId(), tier, signals.size());
+
+            // 조사에 넘기고 결과를 기다리지 않는다. 조사는 건당 수 초~수십 초라
+            // 여기서 기다리면 스트림이 밀린다.
+            boolean dispatched = investigationDispatcher.dispatch(detail, signals, anomalyScore(signals));
+            metrics.investigationDispatched(dispatched ? "dispatched" : "failed");
         }
 
         return new DetectionOutcome(tier, signals);
@@ -120,6 +132,25 @@ public class PostHocDetectionService {
         String bank = detail.receiverBankCode() == null ? "" : detail.receiverBankCode();
         String acc = detail.receiverAccountNo() == null ? "" : detail.receiverAccountNo();
         return bank + ":" + acc;
+    }
+
+    /**
+     * 신호 강도를 0~1 점수로 옮긴다. 조사 에이전트가 가설 초기값으로 쓴다.
+     *
+     * <p>이상탐지 모델이 붙기 전까지의 임시 값이다 — 룰 강도를 점수처럼 다루는 것이라
+     * 진짜 이상도는 아니다. 모델이 들어오면 그 점수로 대체한다.
+     */
+    private double anomalyScore(List<DetectionSignal> signals) {
+        double score = 0.0;
+        for (DetectionSignal s : signals) {
+            score += switch (s.severity()) {
+                case MANDATORY -> 0.5;
+                case HIGH -> 0.35;
+                case MEDIUM -> 0.2;
+                case LOW -> 0.05;
+            };
+        }
+        return Math.min(score, 1.0);
     }
 
     /** 판정 결과. 조사 투입 여부는 {@link ResponseTier#requiresHumanReview()} 로 판단한다. */

@@ -85,6 +85,20 @@ public class FdsMetrics {
                 .increment();
     }
 
+    /**
+     * 조사 인계 결과. outcome = dispatched | failed
+     *
+     * <p>넘기지 못한 사건은 아무도 보지 않는다. 세지 않으면
+     * "탐지는 도는데 큐가 비어 있다" 가 된다.
+     */
+    public void investigationDispatched(String outcome) {
+        Counter.builder("fds_investigation_dispatch_total")
+                .description("조사 에이전트 인계 수")
+                .tag("outcome", outcome)
+                .register(registry)
+                .increment();
+    }
+
     /** 보강 실패 — 룰이 조용히 못 잡게 되는 경로라 반드시 눈에 보여야 한다. */
     public void enrichFailed() {
         Counter.builder("fds_enrich_failed_total")

@@ -52,6 +52,12 @@ fds:
     # 한국의 아침이 심야로 잡힌다.
     night-from-hour: ${FDS_NIGHT_FROM_HOUR:0}
     night-to-hour: ${FDS_NIGHT_TO_HOUR:6}
+  investigation:
+    # 조사 에이전트(FastAPI 사이드카). 사건을 넘기고 결과는 기다리지 않는다 —
+    # 조사는 건당 수 초~수십 초라 기다리면 스트림이 밀린다.
+    enabled: ${FDS_INVESTIGATION_ENABLED:true}
+    base-url: ${FRAUD_AGENT_URL:http://fraud-agent:8090}
+    timeout-ms: ${FDS_INVESTIGATION_TIMEOUT_MS:5000}
   receiver:
     # 수취인 이력 보관 기간. 너무 짧으면 단골 수취인도 매번 신규로 잡혀 오탐이 는다.
     history-days: ${FDS_RECEIVER_HISTORY_DAYS:180}
