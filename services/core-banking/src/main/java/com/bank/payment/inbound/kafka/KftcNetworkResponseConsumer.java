@@ -109,7 +109,14 @@ public class KftcNetworkResponseConsumer {
                     String settlementDate = settledAt.length() >= 8 ? settledAt.substring(0, 8) : null;
                     txService.txSettlement(pi, clearingNo, settledAt, settlementDate);
                     metrics.paymentCompleted(pi.getRequestedAt());
-                    log.info("[KFTC] SETTLEMENT_NOTIFY 처리완료. piId={} CLEARING→COMPLETED", piId);
+                    // 상태는 CLEARING 을 유지한다. 청산(KFTC)이 끝났을 뿐이고
+                    // COMPLETED 는 한은 결제(마감 배치)가 만든다 — txSettlementBok 참조.
+                    //
+                    // 예전에는 이 줄이 "CLEARING→COMPLETED" 라고 찍었다. 실제로는 상태가
+                    // 그대로인데 로그만 완료라고 해서, 이체가 왜 CLEARING 에 머무는지
+                    // 쫓는 사람이 로그를 믿고 엉뚱한 곳을 보게 된다.
+                    log.info("[KFTC] SETTLEMENT_NOTIFY 처리완료(청산). piId={} status=CLEARING 유지, "
+                            + "COMPLETED 는 한은 결제 마감에서", piId);
                 } else {
                     // F7: 정산실패 통보 — 상태 가드(COMPLETED skip / !CLEARING skip) 통과(=CLEARING) 후 진입
                     String rejectMessage = payload.path("rejectMessage").asText();
