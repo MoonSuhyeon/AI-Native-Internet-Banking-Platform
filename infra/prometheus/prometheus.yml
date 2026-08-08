@@ -104,6 +104,11 @@ scrape_configs:
           application: fraud-agent
 
   # 서류 에이전트. doc 프로필로만 뜨므로 평소에는 DOWN 이다.
+  - job_name: 'fds-detector'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8092']
+
   - job_name: 'doc-agent'
     metrics_path: /actuator/prometheus
     static_configs:

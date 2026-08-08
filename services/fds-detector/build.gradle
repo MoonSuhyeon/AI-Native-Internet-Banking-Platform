@@ -1,0 +1,22 @@
+// fds-detector: 이상거래 탐지 (FDS 탐지 단계)
+//
+// 결제계가 내는 payment.completed 를 별도 컨슈머 그룹으로 구독해 룰·이상탐지를 돌리고,
+// 걸린 건만 조사 에이전트로 넘긴다. 설계는 docs/plan/fds-realtime-detection.md 참조.
+//
+// 결제계와 분리한 이유: 탐지가 결제를 막으면 안 된다. 컨슈머 그룹이 다르므로
+// 탐지기가 죽어도 결제와 회계계 소비는 그대로 돈다.
+//
+// 조사 에이전트(Python/LangGraph)와도 분리했다. 조사는 건당 수 초~수십 초가 걸려
+// 실시간 스트림과 한 프로세스에 두면 조사가 밀릴 때 탐지까지 멈춘다.
+
+bootJar { enabled = true }
+jar { enabled = false }   // plain JAR 제거 → Dockerfile COPY build/libs/*.jar 단일 매칭
+
+dependencies {
+    // 중복 처리 방지와 시간창 집계에 Redis 를 쓴다. 자체 DB 를 두지 않는 이유:
+    // 두 용도 모두 TTL 이 있는 휘발성 데이터라 마이그레이션·백업 대상이 아니다.
+    // 속도·분할·fan-out 룰의 "최근 N분" 은 Redis TTL 과 그대로 맞아떨어진다.
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+}

@@ -919,6 +919,35 @@ services:
       timeout: 10s
       retries: 10
 
+  # ── 이상거래 탐지 (FDS 탐지 단계) ─────────────────────────────────────────
+  # payment.completed 를 별도 컨슈머 그룹으로 구독한다. 결제계·회계계가 쓰는 그룹과
+  # 겹치면 서로 이벤트를 나눠 갖게 되어 양쪽 다 일부만 보게 된다.
+  fds-detector:
+    build:
+      context: .
+      dockerfile: services/fds-detector/Dockerfile
+    container_name: ib-fds-detector
+    ports:
+      - "${FDS_DETECTOR_PORT:-8092}:8092"
+    environment:
+      FDS_DETECTOR_PORT: 8092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CORE_BANKING_URL: http://core-banking-a:8082
+      FDS_CONSUMER_GROUP: ${FDS_CONSUMER_GROUP:-fds-detector}
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8092/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
   doc-agent:
     profiles: ["doc"]
     build:

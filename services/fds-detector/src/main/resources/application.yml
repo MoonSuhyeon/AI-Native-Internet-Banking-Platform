@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: fds-detector
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      # 별도 컨슈머 그룹. 결제계·회계계가 쓰는 그룹과 겹치면 서로 이벤트를 나눠 갖게 되어
+      # 양쪽 다 일부만 보게 된다.
+      group-id: ${FDS_CONSUMER_GROUP:fds-detector}
+      auto-offset-reset: latest
+      # 수동 커밋. 처리 결과와 무관하게 한 번만 ack 한다(PaymentCompletedConsumer 참조).
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: manual
+
+server:
+  port: ${FDS_DETECTOR_PORT:8092}
+
+fds:
+  kafka:
+    topic: ${FDS_TOPIC:payment.completed}
+    consumer-group: ${FDS_CONSUMER_GROUP:fds-detector}
+  core-banking:
+    base-url: ${CORE_BANKING_URL:http://core-banking:8082}
+    # 타임아웃을 반드시 건다. 결제계가 응답만 안 하고 연결은 살아 있으면
+    # 컨슈머 스레드가 묶여 탐지가 통째로 멈춘다.
+    timeout-ms: ${FDS_ENRICH_TIMEOUT_MS:3000}
+  dedupe:
+    # 중복 방지 보관 기간. 속도·분할 룰이 보는 시간창보다 넉넉해야 한다.
+    ttl-minutes: ${FDS_DEDUPE_TTL_MINUTES:180}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    # application 라벨이 없으면 application 으로 묶는 대시보드 패널에서 이 서비스만
+    # 통째로 빠진다 — 그래프가 비는 게 아니라 아예 안 나온다.
+    tags:
+      application: fds-detector
+      environment: ${SPRING_PROFILES_ACTIVE:local}

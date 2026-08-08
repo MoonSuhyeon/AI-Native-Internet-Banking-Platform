@@ -5,6 +5,10 @@ include 'services:api-gateway'
 include 'services:customer-service'
 include 'services:core-banking'
 include 'services:loan-service'
+// 이상거래 탐지 — 결제 이벤트 스트림을 소비해 룰·이상탐지를 돌린다.
+// 조사(LangGraph 에이전트)와 분리한다: 조사는 건당 수 초~수십 초라
+// 한 프로세스에 묶으면 조사가 밀릴 때 컨슈머 랙이 쌓여 탐지까지 멈춘다.
+include 'services:fds-detector'
 include 'agents:harness-core'
 include 'agents:auto-loan-review'
 include 'agents:review-ai-gateway'
