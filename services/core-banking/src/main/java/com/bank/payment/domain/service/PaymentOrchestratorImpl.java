@@ -532,7 +532,9 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
     private void step2b_executeValidation(PaymentInstruction pi, PaymentCommand command) {
         String piId = pi.getPaymentInstructionId();
         String sender = command.senderAccountId();
-        Long needed = command.transferAmount();
+        // 검증 금액에 수수료를 포함한다. 이체금액만 보면 잔액이 딱 맞는 고객이 통과한 뒤
+        // 수수료를 낼 돈이 없어진다 — 출금은 둘을 합쳐 한 번에 나가기 때문이다.
+        Long needed = totalDebit(pi, command);
         String byNumberPath = "/api/accounts/by-number/" + sender;
 
         AccountInquiryData senderAcc;
@@ -571,6 +573,18 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
 
     // ── Step 3: 출금 (B-3, 트랜잭션 밖) ─────────────────────────────────────
     // WithdrawStepResult: BalanceTxData + callId (B-4 실패 시 B-5 compensation_target_call_id 참조용)
+    /**
+     * 송신계좌에서 실제로 빠지는 총액 = 이체금액 + 수수료.
+     *
+     * <p>검증과 출금이 <b>같은 값</b>을 써야 한다. 한쪽만 수수료를 포함하면
+     * 잔액이 빠듯한 고객에게서 검증 통과 후 출금 실패가 난다.
+     */
+    // 테스트가 직접 검증할 수 있도록 package-private 로 둔다.
+    Long totalDebit(PaymentInstruction pi, PaymentCommand command) {
+        Long fee = pi.getFeeAmount();
+        return command.transferAmount() + (fee == null ? 0L : fee);
+    }
+
     private WithdrawStepResult step3_withdraw(PaymentInstruction pi, PaymentCommand command) {
         String piId = pi.getPaymentInstructionId();
         String callIdemKey = piId + "-BALANCE_WITHDRAW-SENDER-1";
@@ -584,9 +598,19 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
                 ? piId + "|" + senderMemo
                 : piId;
 
+        // 이체금액 + 수수료를 한 번에 출금한다.
+        //
+        // 예전에는 이체금액만 출금하면서 원장에는 송신계좌 DEBIT FEE 를 기록했다.
+        // 차변=대변은 맞아 검증을 통과했지만, 실제 잔액에서 수수료가 빠지지 않아
+        // 원장 합계와 예금 잔액 합계가 어긋났다. 고객은 수수료를 내지 않았는데
+        // 은행은 수수료수익을 인식하는 상태였다.
+        //
+        // 두 번 나눠 출금하지 않는 이유: 두 번째가 실패하면 이체는 나갔는데 수수료만
+        // 못 걷은 상태가 되고, 되돌리려면 이미 상대에게 간 돈을 회수해야 한다.
+        // 한 번에 빼면 그 창이 없다.
         WithdrawRequest request = new WithdrawRequest(
                 senderAccountId,
-                command.transferAmount(),
+                totalDebit(pi, command),
                 "MOBILE",
                 transactionMemo);
 

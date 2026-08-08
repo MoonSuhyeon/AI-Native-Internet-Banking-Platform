@@ -309,7 +309,15 @@ public class Ledger {
     // ── 타행 수수료 분개 [타행 JN-02 차변] ───────────────
     /**
      * 타행이체 수수료 분개. 송신계좌 DEBIT FEE. (P-014 시트2 JN-02)
-     * 수수료는 별도 deposit API 호출 없이 분개만 기록 → balance=0,0 처리.
+     *
+     * <p><b>잔액은 0,0 으로 둔다.</b> 수수료를 안 받아서가 아니라, 이체금액과 함께
+     * <b>한 번의 출금</b>으로 빠지기 때문이다. 실제 잔액 변동은 TRANSFER_OUT 분개에
+     * 박제돼 있고, 이 분개는 그 출금액 중 수수료 몫을 회계적으로 분리한 것이다.
+     * 여기에 또 잔액을 적으면 한 번의 변동이 두 번 기록된 것처럼 보인다.
+     *
+     * <p>예전에는 정말로 걷지 않았다 — 이체금액만 출금하면서 이 분개만 기록해
+     * 원장 합계와 예금 잔액 합계가 어긋났다. 지금은 PaymentOrchestratorImpl 의
+     * totalDebit() 이 이체금액 + 수수료를 함께 출금한다.
      */
     public static Ledger fee(
             String ledgerId, String paymentInstructionId, String accountId,
