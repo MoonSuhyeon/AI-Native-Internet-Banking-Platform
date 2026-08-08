@@ -69,6 +69,22 @@ public class FdsMetrics {
                 .increment();
     }
 
+    /**
+     * 대응 등급 판정. layer = inline(사전) | posthoc(사후)
+     *
+     * <p><b>두 계층을 같은 지표로 세는 이유.</b> 사전이 통과시킨 거래를 사후가 잡았다면
+     * 인라인 룰이 부족하다는 뜻이다. 등급 이름을 계층별로 다르게 뒀다면
+     * 그 비교를 할 수 없다.
+     */
+    public void tierDecided(String tier, String layer) {
+        Counter.builder("fds_tier_decided_total")
+                .description("대응 등급 판정 수")
+                .tag("tier", tier)
+                .tag("layer", layer)
+                .register(registry)
+                .increment();
+    }
+
     /** 보강 실패 — 룰이 조용히 못 잡게 되는 경로라 반드시 눈에 보여야 한다. */
     public void enrichFailed() {
         Counter.builder("fds_enrich_failed_total")
