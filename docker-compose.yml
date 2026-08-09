@@ -485,8 +485,15 @@ services:
       context: agents
       dockerfile: consultation/Dockerfile
     container_name: ib-consultation-service
-    ports:
-      - "${CONSULTATION_APP_PORT:-8087}:8087"
+    # 호스트에 포트를 열지 않는다.
+    #
+    # 이 서비스의 인가는 "게이트웨이가 주입한 신원 헤더"에 기대는데, 8087 이 밖에서
+    # 닿으면 게이트웨이를 건너뛰고 부르면 그만이다. 공유 시크릿은 그때를 위한 최소
+    # 방어선일 뿐이고, 근본 해법은 포트를 닫는 것이다.
+    #
+    # 게이트웨이는 컨테이너 이름(consultation-service:8087)으로 부르므로 영향 없다.
+    # 로컬에서 게이트웨이를 호스트에 띄우거나 직접 호출로 시험하려면
+    # docker-compose.override.sample.yml 의 안내를 따른다.
     environment:
       # 수신 데이터는 core_banking DB 의 deposit 스키마로 옮겨졌다.
       CONSULTATION_DATABASE_URL: postgresql+psycopg://${CORE_BANKING_DB_USER:-core}:${CORE_BANKING_DB_PASSWORD:-core}@core-banking-db-a:5432/${CORE_BANKING_DB_NAME:-core_banking}?options=-csearch_path%3Ddeposit
@@ -770,9 +777,18 @@ services:
       AI_SERVICE_PORT: ${AUTO_LOAN_REVIEW_APP_PORT:-8089}
       FRAUD_AGENT_HOST: fraud-agent
       FRAUD_AGENT_PORT: 8090
+      CONSULTATION_SERVICE_HOST: consultation-service
+      CONSULTATION_SERVICE_PORT: 8087
+      DOC_AGENT_HOST: doc-agent
+      DOC_AGENT_PORT: 8087
       # 게이트웨이를 거쳤음을 사이드카에 증명하는 값. 비어 있으면 사이드카는
       # 신원 헤더를 전혀 믿지 않는다(fail-closed) — 감사에 actor_id 가 NULL 로 남는다.
+      #
+      # 각 사이드카의 같은 이름 변수와 값이 맞아야 한다. 한쪽만 넣으면 조용히
+      # 거절되고 원인이 안 보인다.
       FRAUD_GATEWAY_SHARED_SECRET: ${FRAUD_GATEWAY_SHARED_SECRET:-}
+      CONSULTATION_GATEWAY_SHARED_SECRET: ${CONSULTATION_GATEWAY_SHARED_SECRET:-}
+      DOC_AGENT_GATEWAY_SHARED_SECRET: ${DOC_AGENT_GATEWAY_SHARED_SECRET:-}
     # 기본 네트워크에 더해 fraud 전용 내부망에도 붙는다.
     # default 를 명시하지 않으면 이 서비스만 기본망에서 빠져 다른 서비스와 끊긴다.
     networks:
@@ -986,10 +1002,13 @@ services:
       context: .
       dockerfile: agents/doc-agent/Dockerfile
     container_name: ib-doc-agent
-    ports:
-      # consultation-service 도 8087 을 쓴다. 기본값이 같아 두 서비스를 함께 띄우면
-      # 나중에 뜨는 쪽이 포트 충돌로 죽는다. doc 프로필이라 평소엔 드러나지 않았다.
-      - "${DOC_AGENT_APP_PORT:-8091}:8087"
+    # 호스트에 포트를 열지 않는다 — 상담 서비스와 같은 이유다.
+    #
+    # 심사 결정(누가 위조를 확정했는가)과 법적보존 해제가 이 서비스에 있다. 밖에서
+    # 닿으면 게이트웨이를 건너뛸 수 있고, 그러면 채택률 지표의 근거가 자칭이 된다.
+    #
+    # 부수 효과로 포트 충돌도 사라졌다. consultation-service 와 둘 다 8087 을 쓰는데,
+    # 컨테이너 안에서는 서로 다른 네트워크 이름이라 겹치지 않는다.
     environment:
       DOC_AGENT_APP_PORT: 8087
       # 게이트웨이와 나눠 갖는 시크릿. 비면 신원 헤더를 믿지 않아 심사 결정·법적보존이

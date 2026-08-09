@@ -1,0 +1,104 @@
+package com.bank.gateway.config;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.yaml.snakeyaml.Yaml;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * 사이드카가 호스트에 직접 노출되지 않는지 검증한다.
+ *
+ * <p><b>왜 코드가 아니라 compose 를 본다.</b> 사이드카의 인가는 "게이트웨이가 주입한
+ * 신원 헤더" 위에 서 있다. 그 코드가 아무리 정확해도 포트가 밖에서 닿으면
+ * 게이트웨이를 건너뛰고 부르면 그만이라, <b>보호 여부가 배포 설정에 달려 있다</b>.
+ *
+ * <p>공유 시크릿({@code X-Gateway-Auth})은 그때를 위한 최소 방어선이지 대체재가
+ * 아니다. 시크릿이 유출되거나 로컬 편의로 override 에 넣어 둔 값이 그대로 넘어가면
+ * 방어선은 사라진다. 근본은 포트를 닫는 것이다.
+ *
+ * <p>포트를 여는 것은 한 줄이고, 열어도 기능은 멀쩡히 돌기 때문에 되돌아가기 쉽다.
+ * 그래서 여기서 못 박는다.
+ *
+ * <p><b>이 테스트가 보장하지 않는 것.</b> 같은 compose 망 안의 다른 컨테이너는 여전히
+ * 사이드카에 닿는다. 그것까지 막으려면 서비스별 내부망 분리가 필요한데,
+ * {@code fraud-agent} 만 그렇게 돼 있다({@code fraud-internal}, {@code internal: true}).
+ * 나머지는 DB·Kafka·core-banking 과 같은 망을 써야 해서 아직 나누지 못했다 —
+ * OPEN_ITEMS 참조.
+ */
+class SidecarExposureTest {
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> service(String name) {
+        try {
+            // 게이트웨이 모듈에서 레포 루트로 올라간다.
+            Path compose = Path.of("..", "..", "docker-compose.yml").toAbsolutePath().normalize();
+            assertThat(Files.exists(compose))
+                    .as("docker-compose.yml 을 찾지 못했다: %s", compose)
+                    .isTrue();
+
+            Map<String, Object> root;
+            try (var in = Files.newInputStream(compose)) {
+                root = new Yaml().load(in);
+            }
+            Map<String, Object> services = (Map<String, Object>) root.get("services");
+            Map<String, Object> svc = (Map<String, Object>) services.get(name);
+
+            assertThat(svc).as("compose 에 서비스 '%s' 가 없다", name).isNotNull();
+            return svc;
+
+        } catch (IOException e) {
+            throw new IllegalStateException("docker-compose.yml 을 읽지 못했다", e);
+        }
+    }
+
+    @ParameterizedTest(name = "{0} 은 호스트 포트를 열지 않는다")
+    @ValueSource(strings = {
+            "consultation-service",   // 고객 개인정보·챗봇 이체
+            "doc-agent",              // 심사 결정·법적보존 해제
+            "fraud-agent"})           // 조사 큐·조사 실행·승인
+    @DisplayName("사이드카는 호스트에 노출되지 않는다 — 열리면 게이트웨이를 건너뛸 수 있다")
+    void sidecarDoesNotPublishHostPort(String name) {
+        assertThat(service(name).get("ports"))
+                .as("'%s' 에 ports 가 생겼다. 포트가 밖에서 닿으면 신원 헤더 기반 인가가 "
+                    + "통째로 무의미해진다 — 게이트웨이를 건너뛰고 부르면 그만이다. "
+                    + "로컬에서 임시로 열어야 한다면 docker-compose.override.sample.yml 을 쓴다", name)
+                .isNull();
+    }
+
+    @Test
+    @DisplayName("게이트웨이는 사이드카를 컨테이너 이름으로 부른다 — 포트를 닫아도 닿는다")
+    @SuppressWarnings("unchecked")
+    void gatewayReachesSidecarsByServiceName() {
+        Map<String, Object> env =
+                (Map<String, Object>) service("api-gateway").get("environment");
+
+        assertThat(env)
+                .as("게이트웨이가 사이드카 호스트를 모르면, 포트를 닫는 순간 라우트가 502 가 된다")
+                .containsEntry("CONSULTATION_SERVICE_HOST", "consultation-service")
+                .containsEntry("DOC_AGENT_HOST", "doc-agent")
+                .containsEntry("FRAUD_AGENT_HOST", "fraud-agent");
+    }
+
+    @Test
+    @DisplayName("사이드카마다 공유 시크릿이 게이트웨이와 짝지어져 있다")
+    @SuppressWarnings("unchecked")
+    void gatewayCarriesEachSidecarSecret() {
+        Map<String, Object> env =
+                (Map<String, Object>) service("api-gateway").get("environment");
+
+        // 한쪽만 설정되면 사이드카가 조용히 전부 거절한다. 기능이 죽은 것처럼 보이는데
+        // 로그에는 "권한 없음" 만 남아 원인을 찾기 어렵다.
+        assertThat(env.keySet())
+                .contains("CONSULTATION_GATEWAY_SHARED_SECRET",
+                          "DOC_AGENT_GATEWAY_SHARED_SECRET",
+                          "FRAUD_GATEWAY_SHARED_SECRET");
+    }
+}

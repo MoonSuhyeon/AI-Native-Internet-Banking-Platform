@@ -256,11 +256,68 @@ def _run_trace(case: Case) -> tuple[list[TraceStep], Recommendation, AgentState]
 
 
 # --------------------------------------------------------------------------- #
+# 신뢰 경계 — 헤더를 믿어도 되는가
+# --------------------------------------------------------------------------- #
+#: 게이트웨이와 나눠 갖는 시크릿. **설정되지 않으면 신원 헤더를 전혀 믿지 않는다**
+#: (fail-closed). 로컬 데모는 이 상태가 정상이고, 그때 감사의 actor_id 는 NULL 이다.
+_GATEWAY_SECRET_ENV = "FRAUD_GATEWAY_SHARED_SECRET"
+
+
+def _gateway_verified(presented: str | None) -> bool:
+    """이 요청이 게이트웨이를 거쳐 왔는지."""
+    import hmac
+    import os
+
+    expected = os.getenv(_GATEWAY_SECRET_ENV, "").strip()
+    if not expected or not presented:
+        return False
+    # 타이밍 공격 회피 — 시크릿 비교에 == 를 쓰지 않는다.
+    return hmac.compare_digest(expected, presented)
+
+
+def _split_roles(raw: str | None) -> list[str]:
+    """게이트웨이가 주입한 X-User-Role 을 목록으로. 다른 서비스와 같은 규약(콤마 구분)."""
+    if not raw:
+        return []
+    return [r.strip() for r in raw.split(",") if r.strip()]
+
+
+def _require_employee(x_gateway_auth: str | None, x_employee_id: str | None) -> str:
+    """직원 전용 동작의 문지기.
+
+    <p>조사 큐와 조사 실행은 고객 개인정보를 다루고 비용도 든다. 승인(/approve)만
+    막고 이 둘을 열어 두면, 승인 없이도 **누가 어떤 고객을 조사 대상으로 삼았는지**가
+    자유롭게 정해진다 — 조사 자체가 사찰이 될 수 있다.
+
+    :raises HTTPException: 403. 401 이 아닌 이유는 자격 증명을 다시 보내라는 뜻이
+        아니기 때문이다. 게이트웨이를 거치지 않은 요청은 무엇을 붙여도 통과할 수 없다.
+    """
+    if not _gateway_verified(x_gateway_auth):
+        raise HTTPException(
+            status_code=403,
+            detail="직원 권한이 필요합니다. 게이트웨이를 통해 요청해주세요.",
+        )
+    eid = (x_employee_id or "").strip()
+    if not eid:
+        # 게이트웨이는 고객 토큰에도 헤더를 붙이되 빈 문자열을 넣는다.
+        raise HTTPException(status_code=403, detail="직원 권한이 필요합니다.")
+    return eid
+
+
+# --------------------------------------------------------------------------- #
 # 엔드포인트
 # --------------------------------------------------------------------------- #
 @app.get("/api/cases", response_model=list[CaseSummary])
-def list_cases() -> list[CaseSummary]:
-    """data/cases/*.json 을 알림 요약으로 나열 (트리아지 큐 대용 — 조사 입력 선택)."""
+def list_cases(
+    x_employee_id: str | None = Header(default=None, alias="X-Employee-Id"),
+    x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+) -> list[CaseSummary]:
+    """data/cases/*.json 을 알림 요약으로 나열 (트리아지 큐 대용 — 조사 입력 선택).
+
+    <b>직원만 볼 수 있다.</b> 응답에 고객 ID·계좌·금액·수취인이 그대로 담긴다.
+    """
+    _require_employee(x_gateway_auth, x_employee_id)
+
     out: list[CaseSummary] = []
     for path in sorted(Path(CASES_DIR).glob("*.json")):
         try:
@@ -285,8 +342,23 @@ def list_cases() -> list[CaseSummary]:
 
 
 @app.post("/api/investigate", response_model=InvestigateResponse)
-def investigate(req: InvestigateRequest) -> InvestigateResponse:
-    """한 사건을 조사 루프에 태워 단계별 트레이스 + 권고를 반환. 동작은 HITL 대기."""
+def investigate(
+    req: InvestigateRequest,
+    x_employee_id: str | None = Header(default=None, alias="X-Employee-Id"),
+    x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+) -> InvestigateResponse:
+    """한 사건을 조사 루프에 태워 단계별 트레이스 + 권고를 반환. 동작은 HITL 대기.
+
+    <b>직원만 실행할 수 있다.</b> 이유가 둘이다.
+
+    첫째, 조사는 고객의 인증 이력·거래 내역을 끌어와 본다. 승인(/approve)만 막고
+    여기를 열어 두면 동작은 못 해도 <b>열람은 자유롭다</b> — 조사가 사찰이 된다.
+
+    둘째, 한 번 부를 때마다 LLM 호출과 도구 조회가 일어난다. 열려 있으면 비용과
+    처리량을 아무나 소진시킬 수 있고, 그 사이 진짜 알림이 밀린다.
+    """
+    _require_employee(x_gateway_auth, x_employee_id)
+
     if req.transaction is not None:
         case = req.to_case()
     elif req.case:
@@ -325,33 +397,6 @@ def investigate(req: InvestigateRequest) -> InvestigateResponse:
         thread_id=thread_id,
         hitl_pending=True,
     )
-
-
-# --------------------------------------------------------------------------- #
-# 신뢰 경계 — 헤더를 믿어도 되는가
-# --------------------------------------------------------------------------- #
-#: 게이트웨이와 나눠 갖는 시크릿. **설정되지 않으면 신원 헤더를 전혀 믿지 않는다**
-#: (fail-closed). 로컬 데모는 이 상태가 정상이고, 그때 감사의 actor_id 는 NULL 이다.
-_GATEWAY_SECRET_ENV = "FRAUD_GATEWAY_SHARED_SECRET"
-
-
-def _gateway_verified(presented: str | None) -> bool:
-    """이 요청이 게이트웨이를 거쳐 왔는지."""
-    import hmac
-    import os
-
-    expected = os.getenv(_GATEWAY_SECRET_ENV, "").strip()
-    if not expected or not presented:
-        return False
-    # 타이밍 공격 회피 — 시크릿 비교에 == 를 쓰지 않는다.
-    return hmac.compare_digest(expected, presented)
-
-
-def _split_roles(raw: str | None) -> list[str]:
-    """게이트웨이가 주입한 X-User-Role 을 목록으로. 다른 서비스와 같은 규약(콤마 구분)."""
-    if not raw:
-        return []
-    return [r.strip() for r in raw.split(",") if r.strip()]
 
 
 @app.post("/api/approve", response_model=ApproveResponse)

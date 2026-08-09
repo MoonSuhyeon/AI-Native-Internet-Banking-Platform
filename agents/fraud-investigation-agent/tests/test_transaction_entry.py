@@ -10,6 +10,8 @@
 
 from fastapi.testclient import TestClient
 
+from conftest import GATEWAY_HEADERS
+
 from agent.api import app
 
 
@@ -30,7 +32,7 @@ def _transaction(**overrides) -> dict:
 
 def test_real_transaction_is_investigated():
     """탐지기가 넘긴 실거래가 조사 루프를 통과한다."""
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
 
     res = client.post("/api/investigate", json={"transaction": _transaction()})
 
@@ -47,7 +49,7 @@ def test_real_transaction_is_investigated():
 
 def test_detection_signals_are_carried_into_the_case():
     """탐지 신호가 조사 입력에 남는다 — 심사원이 왜 걸렸는지 알아야 한다."""
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
 
     res = client.post("/api/investigate", json={"transaction": _transaction()})
 
@@ -56,7 +58,7 @@ def test_detection_signals_are_carried_into_the_case():
 
 def test_mock_case_path_still_works():
     """기존 목 경로는 그대로다 — 데모와 eval 워크플로가 이 경로로 돈다."""
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
 
     res = client.post("/api/investigate", json={"case": "case_h1"})
 
@@ -66,7 +68,7 @@ def test_mock_case_path_still_works():
 
 def test_missing_input_is_rejected():
     """둘 다 없으면 400. 조용히 빈 조사를 돌리지 않는다."""
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
 
     res = client.post("/api/investigate", json={})
 
@@ -75,7 +77,7 @@ def test_missing_input_is_rejected():
 
 def test_unknown_case_still_404():
     """없는 케이스 이름은 여전히 404 — 400 으로 뭉뚱그리지 않는다."""
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
 
     res = client.post("/api/investigate", json={"case": "no_such_case"})
 

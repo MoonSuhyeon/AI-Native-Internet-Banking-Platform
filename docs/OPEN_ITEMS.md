@@ -28,7 +28,8 @@
 | ~~사망 플래그 미연동~~ | **해결.** `party_person.death_date` 를 읽는다. 컬럼은 원래 있었고 배선만 빠져 있었다 | `InternalHolderController` |
 | ~~비밀번호 변경 이력 미연동~~ | **해결.** `password_history.countChangesSince` 를 읽는다. 리포지토리 메서드도 이미 있었다 | `InternalAuthEventsController` |
 | ~~관리자 화면 직원 ID 임시 입력~~ | **해결.** 입력칸을 없애고 게이트웨이가 JWT 에서 주입한 `X-Employee-Id` 만 신뢰한다 | `test_staff_identity_trust.py` |
-| **상담 서비스 네트워크 격리** | 8087 이 열려 있으면 게이트웨이를 우회할 수 있다. 공유 시크릿은 최소 방어선일 뿐 | 배포 설정 |
+| ~~사이드카 호스트 포트 노출~~ | **해결.** 상담·서류심사의 호스트 포트를 닫았다(조사는 원래 닫혀 있었다). 되돌리면 `SidecarExposureTest` 가 잡는다 | `docker-compose.yml` |
+| **같은 망 컨테이너 간 접근** | 포트는 닫았지만 같은 compose 망의 다른 컨테이너는 여전히 사이드카에 닿는다. `fraud-agent` 만 전용 내부망(`internal: true`)으로 분리돼 있고, 나머지는 DB·Kafka·core-banking 과 같은 망을 써야 해서 못 나눴다 | 배포 설정 |
 | ~~상담 서비스 인증 미들웨어~~ | **해결.** 신원을 `app/identity.py` 한 곳에서만 읽고, 게이트웨이가 검증한 헤더만 믿는다 | `test_endpoint_authorization.py` |
 | **P-029 self-listening** | 자기가 보낸 메시지를 자기가 받는 것을 sender 은행코드로만 막는다 | `KftcNetworkResponseConsumer` |
 | **역분개 미구현** | `reversal_yn` 스키마만 있고 코드가 없다 | 결제 원장 |
@@ -111,7 +112,7 @@
 |---|---|
 | 상담 서비스 | ✅ 24개 전수 |
 | doc-agent | ✅ 6개 전수 — 심사 결정·법적보존·대기목록에 직원 확인을 붙였다 |
-| 조사 에이전트(fraud) | 부분 — `/approve` 만 확인. `/investigate`·`/cases` 는 안 봤다 |
+| 조사 에이전트(fraud) | ✅ 5개 전수 — `/cases`·`/investigate` 에도 직원 확인을 붙였다 |
 | auto-loan-review · review-ai-gateway | ❌ 안 봤다. 서비스 간 호출이라 성격이 다르다 |
 | advisory | ✅ loan-service 로 병합. 권한 22곳을 게이트웨이 검증 헤더로 바꿨다 |
 

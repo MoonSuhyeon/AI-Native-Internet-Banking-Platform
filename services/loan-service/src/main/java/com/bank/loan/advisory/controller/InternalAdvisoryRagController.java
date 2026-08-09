@@ -5,6 +5,7 @@ import com.bank.common.web.ApiResponse;
 import com.bank.loan.advisory.dto.DocumentRegisterRequest;
 import com.bank.loan.advisory.dto.DocumentRegisterResponse;
 import com.bank.loan.advisory.rag.CaseIndexBackfillService;
+import com.bank.loan.advisory.service.AdvisoryRoleGuard;
 import com.bank.loan.advisory.rag.CaseIndexingService;
 import com.bank.loan.advisory.rag.DocumentIngestionService;
 import com.bank.loan.advisory.repository.AdvisoryDocumentChunkRepository;
@@ -32,11 +33,16 @@ import java.util.List;
 /**
  * RAG 내부 관리 API (plan §11.5 — Task 6-8).
  *
- * 권한: 컨트롤러 레벨 검증이 없다. 레포 규약상 v1 없는 /api/internal/... 은 서비스 간
- * 호출이라 게이트웨이 라우트를 두지 않고 네트워크 정책으로 보호한다.
+ * 권한: 조회는 auditor 이상, 변경은 admin.
  *
- * 다만 이 컨트롤러는 문서 인입·인덱스 재구축 같은 관리 동작을 담고 있어 성격이
- * 도구 조회와 다르다. 네트워크가 열리면 그대로 노출되므로 OPEN_ITEMS 에 남겼다.
+ * 경로는 /api/internal/... 이지만 여기는 기계가 부르는 자리가 아니다. 사람이 쓰는
+ * 관리 API 이고, 등록한 문서가 곧 자문 의견의 인용 근거가 된다 — 열려 있으면
+ * 가짜 "정책" 을 심어 AI 가 그것을 권위로 인용하게 만들 수 있고, 반대로 진짜 문서를
+ * 비활성화해 근거를 조용히 없앨 수도 있다.
+ *
+ * 그래서 규약(v1 없는 internal 은 네트워크 정책으로 보호)에 기대지 않고 역할을
+ * 확인한다. 도구 조회(InternalAdvisoryToolController)는 review-ai-gateway 가 부르는
+ * 진짜 서비스 간 호출이라 규약대로 둔다.
  */
 @Tag(name = "어드바이저리 RAG 관리", description = "Advisory - 정책문서 인입 / 사례 인덱싱 (internal admin)")
 @RestController
@@ -51,10 +57,12 @@ public class InternalAdvisoryRagController {
     private final CurrentActorProvider               currentActor;
     private final AdvisoryDocumentRepository         documentRepository;
     private final AdvisoryDocumentChunkRepository    chunkRepository;
+    private final AdvisoryRoleGuard                  roleGuard;
 
     @Operation(summary = "정책문서 적재 통계", description = "전체/활성 문서 수와 embedding_model_cd 별 청크 건수를 반환.")
     @GetMapping("/documents/stats")
     public ApiResponse<DocumentStatsResponse> documentStats() {
+        roleGuard.requireAuditorOrAdmin();
         long total  = documentRepository.countByDeletedAtIsNull();
         long active = documentRepository.countByActiveYnAndDeletedAtIsNull(true);
         List<DocumentStatsResponse.ModelChunkCount> chunks = chunkRepository.countByEmbeddingModelCd()
@@ -74,6 +82,7 @@ public class InternalAdvisoryRagController {
     @Operation(summary = "정책문서 목록 조회", description = "삭제되지 않은 전체 정책문서를 최신순으로 반환.")
     @GetMapping("/documents")
     public ApiResponse<List<DocumentSummaryResponse>> listDocuments() {
+        roleGuard.requireAuditorOrAdmin();
         List<DocumentSummaryResponse> items = documentRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc()
                 .stream().map(DocumentSummaryResponse::of).toList();
         return ApiResponse.ok(items);
@@ -95,6 +104,9 @@ public class InternalAdvisoryRagController {
     @PostMapping("/documents")
     public ResponseEntity<ApiResponse<DocumentRegisterResponse>> registerDocument(
             @Valid @RequestBody DocumentRegisterRequest req) {
+        // 여기 들어온 문서가 곧 자문 의견의 인용 근거가 된다. 열려 있으면 가짜 "정책"
+        // 을 심어 AI 가 그것을 권위로 인용하게 만들 수 있다.
+        roleGuard.requireAdmin();
         Long actorId = currentActor.currentActorId();
         DocumentRegisterResponse res = ingestionService.register(req, actorId);
         return ResponseEntity.status(201).body(ApiResponse.ok(res));
@@ -106,6 +118,9 @@ public class InternalAdvisoryRagController {
     public ApiResponse<Void> toggleActivate(
             @PathVariable Long docId,
             @RequestParam(defaultValue = "true") boolean active) {
+        // 비활성화가 특히 위험하다. 진짜 정책 문서를 검색 대상에서 빼면 근거가
+        // 조용히 사라지고, 자문은 "해당 규정 없음" 으로 흘러간다.
+        roleGuard.requireAdmin();
         Long actorId = currentActor.currentActorId();
         if (active) {
             ingestionService.activate(docId, actorId);
@@ -122,6 +137,7 @@ public class InternalAdvisoryRagController {
     public ApiResponse<IndexCasesResult> indexCases(
             @RequestParam(required = false) Long revId,
             @RequestParam(defaultValue = "false") Boolean overturnYn) {
+        roleGuard.requireAdmin();
         Long actorId = currentActor.currentActorId();
         if (revId != null) {
             Long caseIdxId = caseIndexingService.index(revId, overturnYn, actorId);

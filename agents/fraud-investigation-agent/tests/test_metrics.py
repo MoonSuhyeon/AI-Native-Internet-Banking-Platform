@@ -12,6 +12,8 @@
 
 from fastapi.testclient import TestClient
 
+from conftest import GATEWAY_HEADERS
+
 from agent import metrics
 from agent.api import app
 
@@ -31,7 +33,7 @@ def _investigate(client: TestClient, case: str) -> tuple[str, str]:
 
 def test_metrics_endpoint_exposes_fraud_metrics():
     """/metrics 가 프로메테우스 형식으로 조사 지표를 낸다."""
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
     body = client.get("/metrics").text
 
     assert "fraud_investigation_total" in body
@@ -41,7 +43,7 @@ def test_metrics_endpoint_exposes_fraud_metrics():
 
 def test_investigation_counts_by_status():
     """조사를 돌리면 종료 유형별로 세어진다."""
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
     _, status = _investigate(client, "case_h1")
 
     before = _value(metrics.fraud_investigation_total, status=status)
@@ -56,7 +58,7 @@ def test_adoption_records_both_decisions():
 
     한쪽만 세면 "아무도 안 봤다"와 "사람이 막았다"가 구별되지 않는다.
     """
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
 
     thread, status = _investigate(client, "case_h1")
     approved_before = _value(
@@ -81,7 +83,7 @@ def test_adoption_records_both_decisions():
 
 def test_tool_calls_are_counted():
     """도구 호출이 도구별로 세어진다."""
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
     before = client.get("/metrics").text
     _investigate(client, "case_h1")
     after = client.get("/metrics").text
