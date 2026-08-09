@@ -55,8 +55,21 @@ ai:
     enabled: ${AI_RAG_ENABLED:false}              # kill switch — false 시 인라인 policy fallback
     backend: ${AI_RAG_BACKEND:inline}             # inline / es (Phase E)
     embedding:
-      provider: ${AI_RAG_EMB_PROVIDER:stub}       # stub / vertex
-      dimensions: 768                             # text-embedding-005 기본 출력 (Phase E: 1024→768)
+      # stub   — SHA-256 해시. 의미를 모른다. 벡터 검색이 잡음이 되므로 품질 측정에 쓰면 안 된다
+      # ollama — 로컬 모델. 키·비용 없이 진짜 임베딩. 기본 bge-m3(다국어, 1024차원)
+      # vertex — Vertex AI text-embedding-005(768차원). GCP 인증 필요
+      provider: ${AI_RAG_EMB_PROVIDER:stub}
+      # 제공자·모델을 바꾸면 여기와 ES 매핑(es/mappings/*.json 의 dims)을 함께 바꿔야 한다.
+      # 색인된 벡터와 질의 벡터의 차원이 다르면 검색이 실패한다.
+      #   text-embedding-005 = 768 · bge-m3 = 1024 · nomic-embed-text = 768
+      dimensions: ${AI_RAG_EMB_DIMENSIONS:768}
+      ollama:
+        base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+        # 한국어 정책 문서를 다루므로 다국어 모델이어야 한다. 측정해 보니
+        # nomic-embed-text 는 정답과 오답이 0.663 대 0.662 로 사실상 구분하지 못했고,
+        # bge-m3 는 0.608 대 0.566 으로 벌어졌다.
+        model: ${AI_RAG_EMB_OLLAMA_MODEL:bge-m3}
+        timeout-ms: ${AI_RAG_EMB_OLLAMA_TIMEOUT_MS:60000}
     es:
       uris: ${ES_URIS:http://localhost:9200}
       api-key: ${ES_API_KEY:}
