@@ -113,14 +113,26 @@
 | doc-agent | ✅ 6개 전수 — 심사 결정·법적보존·대기목록에 직원 확인을 붙였다 |
 | 조사 에이전트(fraud) | 부분 — `/approve` 만 확인. `/investigate`·`/cases` 는 안 봤다 |
 | auto-loan-review · review-ai-gateway | ❌ 안 봤다. 서비스 간 호출이라 성격이 다르다 |
-| advisory-service | ⚠ **점검 불가 — 빌드되지 않는다**(아래 참조) |
+| advisory | ✅ loan-service 로 병합. 권한 22곳을 게이트웨이 검증 헤더로 바꿨다 |
 
-### advisory-service 는 실행되지 않는다
+### advisory 병합에서 드러난 것
 
-권한 검사(`X-Actor-Role`, 22곳)가 있지만 **그 코드는 돌지 않는다.**
+별도 서비스로 보였지만 **빌드에 포함된 적이 없었다** — settings.gradle·build.gradle·
+Dockerfile·compose 정의가 전부 없었고 메인 클래스도 없었다. 그런데 패키지는
+`com.bank.loan.advisory.*` 였고 loan-service 내부를 직접 import 했으며, loan-service 의
+`AdvisoryFlywayConfig` 가 그 마이그레이션을 돌리려 하고 있었다(파일이 클래스패스에
+없어 아무것도 실행되지 않았다). 별도 서비스가 아니라 **떼어 놓은 loan-service 코드**였다.
 
-| 확인 | 결과 |
-|---|---|
+그 결과 조용히 죽어 있던 것들:
+
+- `AdvisoryClient` 의 HTTP 호출은 늘 실패했고 빈 목록으로 삼켜졌다. 주석의
+  "장애 시 fail-open" 은 장애가 아니라 상시 상태였다.
+- 응답 타입도 어긋나 있었다(배열 기대 vs 감싼 객체). 서비스가 떠 있었어도 결과는 같다.
+- 테스트 하네스의 advisory 스텁이 늘 빈 배열을 돌려줘 **CRITICAL 미확인 약정 차단
+  (LOAN_201)이 한 번도 발화하지 않았다.** 전 테스트가 초록이었다.
+- `review-ai-gateway` 의 `ADVISORY_BASE_URL` 도 존재한 적 없는 호스트를 가리켰다.
+
+---
 | `settings.gradle` 포함 | ❌ |
 | 빌드 파일(`build.gradle`/`pom.xml`) | ❌ |
 | Dockerfile · compose 서비스 정의 | ❌ |

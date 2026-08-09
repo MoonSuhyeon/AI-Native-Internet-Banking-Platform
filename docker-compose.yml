@@ -1047,7 +1047,8 @@ services:
       LOG_DIR: /logs
       LOAN_SERVICE_URL: http://loan-service:8083
       AI_SERVICE_BASE_URL: http://auto-loan-review:8089
-      ADVISORY_BASE_URL: http://advisory-service:8080
+      # advisory 는 loan-service 안에 있다 (별도 서비스로 존재한 적 없음).
+      ADVISORY_BASE_URL: http://loan-service:8083
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
       CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-4-7}

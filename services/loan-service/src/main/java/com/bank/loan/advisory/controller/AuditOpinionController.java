@@ -31,9 +31,8 @@ public class AuditOpinionController {
             description = "advrId 에 연결된 AI 감사 의견 전체 반환 (BIAS/COMPLIANCE 각 1건). auditor/admin 권한.")
     @GetMapping("/opinions/by-report/{advrId}")
     public ApiResponse<List<AiAuditOpinionResponse>> opinionsByReport(
-            @PathVariable Long advrId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+            @PathVariable Long advrId) {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(queryService.opinionsByAdvr(advrId));
     }
 
@@ -41,9 +40,8 @@ public class AuditOpinionController {
             description = "reviewerId 의 전체 감사 의견을 최신순 반환. auditor/admin 권한.")
     @GetMapping("/opinions/by-reviewer/{reviewerId}")
     public ApiResponse<List<AiAuditOpinionResponse>> opinionsByReviewer(
-            @PathVariable Long reviewerId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+            @PathVariable Long reviewerId) {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(queryService.opinionsByReviewer(reviewerId));
     }
 
@@ -51,9 +49,8 @@ public class AuditOpinionController {
             description = "reviewerId 의 bias_score / compliance_score 반환. auditor/admin 권한.")
     @GetMapping("/risk-scores/{reviewerId}")
     public ApiResponse<ReviewerRiskScoreResponse> riskScore(
-            @PathVariable Long reviewerId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+            @PathVariable Long reviewerId) {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(queryService.riskScore(reviewerId));
     }
 
@@ -61,9 +58,8 @@ public class AuditOpinionController {
             description = "생성 시각 최신순. limit 기본 20, 최대 100. auditor/admin 권한.")
     @GetMapping("/opinions/recent")
     public ApiResponse<List<AiAuditOpinionResponse>> recentOpinions(
-            @RequestParam(defaultValue = "20") int limit,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+            @RequestParam(defaultValue = "20") int limit) {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(queryService.recentOpinions(limit));
     }
 
@@ -71,9 +67,8 @@ public class AuditOpinionController {
             description = "bias_score 내림차순. limit 기본 20, 최대 100. auditor/admin 권한.")
     @GetMapping("/risk-scores/top/bias")
     public ApiResponse<List<ReviewerRiskScoreResponse>> topBias(
-            @RequestParam(defaultValue = "20") int limit,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+            @RequestParam(defaultValue = "20") int limit) {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(queryService.topByBias(limit));
     }
 
@@ -81,18 +76,16 @@ public class AuditOpinionController {
             description = "compliance_score 내림차순. limit 기본 20, 최대 100. auditor/admin 권한.")
     @GetMapping("/risk-scores/top/compliance")
     public ApiResponse<List<ReviewerRiskScoreResponse>> topCompliance(
-            @RequestParam(defaultValue = "20") int limit,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+            @RequestParam(defaultValue = "20") int limit) {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(queryService.topByCompliance(limit));
     }
 
     @Operation(summary = "격리(Quarantine) 리포트 목록",
             description = "AI 감사 결론이 BIAS_SUSPECTED 또는 VIOLATION_SUSPECTED 인 리포트. quarantined_at 최신순. auditor/admin 권한.")
     @GetMapping("/quarantine")
-    public ApiResponse<List<QuarantineReportResponse>> quarantinedReports(
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+    public ApiResponse<List<QuarantineReportResponse>> quarantinedReports() {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(queryService.quarantinedReports());
     }
 }

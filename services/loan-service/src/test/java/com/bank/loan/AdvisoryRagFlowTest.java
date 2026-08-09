@@ -135,7 +135,7 @@ class AdvisoryRagFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(12)
     void 적재_통계_엔드포인트_문서수와_청크수_반환() throws Exception {
         mockMvc.perform(get("/api/internal/advisory/documents/stats")
-                        .header("X-Actor-Role", "ADMIN"))
+                        .header("X-User-Role", "ROLE_ADMIN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalDocuments").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
                 .andExpect(jsonPath("$.data.activeDocuments").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
@@ -200,7 +200,7 @@ class AdvisoryRagFlowTest extends AbstractLoanIntegrationTest {
 
         // 유사 사례 검색 API
         MvcResult simResult = mockMvc.perform(get("/api/advisory/reports/{advrId}/similar-cases", advrId)
-                        .header("X-Actor-Role", "ADMIN")
+                        .header("X-User-Role", "ROLE_ADMIN")
                         .param("topK", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.advrId").value(advrId))
@@ -253,7 +253,7 @@ class AdvisoryRagFlowTest extends AbstractLoanIntegrationTest {
     void 정책_인용_검색_API() throws Exception {
         // 동일 내용을 쿼리로 사용하면 StubEmbeddingClient 특성상 유사도 1.0
         MvcResult result = mockMvc.perform(get("/api/advisory/reports/{advrId}/citations", advrId)
-                        .header("X-Actor-Role", "ADMIN"))
+                        .header("X-User-Role", "ROLE_ADMIN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.advrId").value(advrId))
                 .andReturn();
@@ -289,7 +289,7 @@ class AdvisoryRagFlowTest extends AbstractLoanIntegrationTest {
 
         // citations API 조회 — advr_payload 에 citations 없으므로 빈 목록 (자동 훅은 evaluator 경유 시 작동)
         mockMvc.perform(get("/api/advisory/reports/{advrId}/citations", report2.getAdvrId())
-                        .header("X-Actor-Role", "ADMIN"))
+                        .header("X-User-Role", "ROLE_ADMIN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.citations").isArray());
 

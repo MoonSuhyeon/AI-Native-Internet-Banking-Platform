@@ -62,7 +62,6 @@ public abstract class AbstractLoanIntegrationTest {
     static final KafkaContainer KAFKA;
     protected static final WireMockServer DOC_AGENT_MOCK;
     protected static final WireMockServer AUTO_REVIEW_MOCK;
-    protected static final WireMockServer ADVISORY_MOCK;
     protected static final WireMockServer PAYMENT_MOCK;
 
     static {
@@ -90,12 +89,12 @@ public abstract class AbstractLoanIntegrationTest {
                                 + "{\"track\":\"TRACK_3\",\"pd\":0.120000,"
                                 + "\"rationale\":\"통합테스트 기본 stub\"}}")));
 
-        ADVISORY_MOCK = new WireMockServer(WireMockConfiguration.options().dynamicPort());
-        ADVISORY_MOCK.start();
-        ADVISORY_MOCK.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/advisory/reports"))
-                .willReturn(WireMock.aResponse().withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("[]")));
+        // advisory 스텁을 없앴다. 어드바이저리는 별도 프로세스가 아니라 이 서비스
+        // 안에 있으므로 HTTP 로 부르지 않는다.
+        //
+        // 이 기본 스텁이 오래 해를 끼쳤다. 늘 빈 배열을 돌려주는 바람에 CRITICAL
+        // 미확인 약정 차단(LOAN_201)이 한 번도 발화하지 않았고, 그런데도 전 테스트가
+        // 초록이었다. 통제가 없는 것과 통제가 통과하는 것이 구별되지 않았다.
 
         // 기본 stub: POST /api/v1/payments → COMPLETED
         // 개별 테스트에서 priority=1 스텁으로 특정 X-Idempotency-Key 에 대해 FAILED 등을 오버라이드 가능
@@ -140,7 +139,6 @@ public abstract class AbstractLoanIntegrationTest {
         r.add("loan.auto-trigger.enabled", () -> "false");
         r.add("doc-agent.base-url", () -> "http://localhost:" + DOC_AGENT_MOCK.port());
         r.add("auto-review.base-url", () -> "http://localhost:" + AUTO_REVIEW_MOCK.port());
-        r.add("advisory.service.base-url", () -> "http://localhost:" + ADVISORY_MOCK.port());
         r.add("payment.url", () -> "http://localhost:" + PAYMENT_MOCK.port());
     }
 

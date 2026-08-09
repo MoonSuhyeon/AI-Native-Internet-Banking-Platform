@@ -66,7 +66,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(10)
     void REVIEWER_본인_대상_리포트만_노출() throws Exception {
-        mockMvc.perform(get("/api/advisory/reports").header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
+        mockMvc.perform(get("/api/advisory/reports").header("X-User-Role", "ROLE_HQ_REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.items[?(@.advrId == " + advrIdA + ")]").exists())
                 .andExpect(jsonPath("$.data.items[?(@.advrId == " + advrIdB + ")]").doesNotExist());
@@ -76,7 +76,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     void AUDITOR_타인_리포트도_노출() throws Exception {
         // AUDITOR 는 REVIEWER 필터 우회 — DB 공유 환경에서 본 클래스의 두 리포트 모두 결과에 포함되어야 함
         mockMvc.perform(get("/api/advisory/reports")
-                        .header("X-Actor-Role", "AUDITOR")
+                        .header("X-User-Role", "ROLE_COMPLIANCE")
                         .param("targetReviewerId", String.valueOf(REVIEWER_B)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.items[?(@.advrId == " + advrIdB + ")]").exists());
@@ -88,7 +88,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(20)
     void REVIEWER_본인_리포트_상세_OK() throws Exception {
-        mockMvc.perform(get("/api/advisory/reports/{id}", advrIdA).header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
+        mockMvc.perform(get("/api/advisory/reports/{id}", advrIdA).header("X-User-Role", "ROLE_HQ_REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.advrId").value(advrIdA))
                 .andExpect(jsonPath("$.data.severityCd").value("CRITICAL"));
@@ -97,7 +97,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(21)
     void REVIEWER_타인_리포트_접근_404_LOAN_190() throws Exception {
         // REVIEWER A 가 B 의 리포트 상세 시도 → 존재 자체를 숨김
-        mockMvc.perform(get("/api/advisory/reports/{id}", advrIdB).header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
+        mockMvc.perform(get("/api/advisory/reports/{id}", advrIdB).header("X-User-Role", "ROLE_HQ_REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("LOAN_190"));
     }
@@ -108,7 +108,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(30)
     void 본인_리포트_조회_마킹_OPEN_VIEWED() throws Exception {
-        mockMvc.perform(post("/api/advisory/reports/{id}/view", advrIdA).header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
+        mockMvc.perform(post("/api/advisory/reports/{id}/view", advrIdA).header("X-User-Role", "ROLE_HQ_REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.advrStatusCd").value("VIEWED"));
     }
@@ -126,7 +126,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
                 }
                 """;
         mockMvc.perform(post("/api/advisory/reports/{id}/ack", advrIdA)
-                        .header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A))
+                        .header("X-User-Role", "ROLE_HQ_REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A))
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.ackResponseCd").value("MAINTAIN"));
@@ -141,7 +141,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
                 { "ackResponseCd":"MAINTAIN", "decisionChangeYn":false }
                 """;
         mockMvc.perform(post("/api/advisory/reports/{id}/ack", advrIdB)
-                        .header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A))
+                        .header("X-User-Role", "ROLE_HQ_REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A))
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("LOAN_190"));
@@ -153,14 +153,14 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
 
     @Test @Order(40)
     void REVIEWER_가_rules_목록_접근_403_COMMON_403() throws Exception {
-        mockMvc.perform(get("/api/advisory/rules").header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
+        mockMvc.perform(get("/api/advisory/rules").header("X-User-Role", "ROLE_HQ_REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("COMMON_403"));
     }
 
     @Test @Order(41)
     void AUDITOR_rules_목록_OK() throws Exception {
-        mockMvc.perform(get("/api/advisory/rules").header("X-Actor-Role", "AUDITOR"))
+        mockMvc.perform(get("/api/advisory/rules").header("X-User-Role", "ROLE_COMPLIANCE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalCount").value(5))
                 .andExpect(jsonPath("$.data.items[?(@.ruleCd == 'DSR_THRESHOLD_OVERRIDE')]").exists());
@@ -172,7 +172,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
                 { "activeYn":false, "changeReasonCd":"OPS_TEST", "changeRemark":"감사자 시도" }
                 """;
         mockMvc.perform(put("/api/advisory/rules/{id}", sampleRuleId)
-                        .header("X-Actor-Role", "AUDITOR")
+                        .header("X-User-Role", "ROLE_COMPLIANCE")
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("COMMON_403"));
@@ -184,7 +184,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
                 { "activeYn":false, "changeReasonCd":"OPS_TEST", "changeRemark":"임시 비활성" }
                 """;
         mockMvc.perform(put("/api/advisory/rules/{id}", sampleRuleId)
-                        .header("X-Actor-Role", "ADMIN")
+                        .header("X-User-Role", "ROLE_ADMIN")
                         .contentType(MediaType.APPLICATION_JSON).content(off))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.activeYn").value(false));
@@ -193,7 +193,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
                 { "activeYn":true, "changeReasonCd":"OPS_TEST", "changeRemark":"재활성" }
                 """;
         mockMvc.perform(put("/api/advisory/rules/{id}", sampleRuleId)
-                        .header("X-Actor-Role", "ADMIN")
+                        .header("X-User-Role", "ROLE_ADMIN")
                         .contentType(MediaType.APPLICATION_JSON).content(on))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.activeYn").value(true));
@@ -206,7 +206,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(50)
     void REVIEWER_가_stats_접근_403() throws Exception {
         mockMvc.perform(get("/api/advisory/stats/reviewers/{id}", REVIEWER_A)
-                        .header("X-Actor-Role", "REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
+                        .header("X-User-Role", "ROLE_HQ_REVIEWER").header("X-User-Id", String.valueOf(REVIEWER_A)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("COMMON_403"));
     }
@@ -214,7 +214,7 @@ class AdvisoryExternalApiFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(51)
     void AUDITOR_stats_OK() throws Exception {
         mockMvc.perform(get("/api/advisory/stats/reviewers/{id}", REVIEWER_A)
-                        .header("X-Actor-Role", "AUDITOR"))
+                        .header("X-User-Role", "ROLE_COMPLIANCE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.reviewerId").value(REVIEWER_A))
                 .andExpect(jsonPath("$.data.totalReports").exists())

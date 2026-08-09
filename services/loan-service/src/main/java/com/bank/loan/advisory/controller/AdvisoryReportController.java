@@ -48,17 +48,16 @@ public class AdvisoryReportController {
 
     @Operation(summary = "리포트 목록",
             description = "필터: targetReviewerId/revId/advisoryTypeCd/severityCd/advrStatusCd. " +
-                          "reviewer 는 X-Actor-Role=REVIEWER 헤더로 호출 — 본인 대상 리포트만 노출.")
+                          "reviewer 권한이면 본인 대상 리포트만 노출 — 역할은 게이트웨이가 검증한 JWT 에서 온다.")
     @GetMapping
     public ApiResponse<AdvisoryReportListResponse> list(
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader,
             @RequestParam(required = false) Long targetReviewerId,
             @RequestParam(required = false) Long revId,
             @RequestParam(required = false) String advisoryTypeCd,
             @RequestParam(required = false) String severityCd,
             @RequestParam(required = false) String advrStatusCd) {
         Long actorId = currentActor.currentActorId();
-        AdvisoryViewerRole role = roleGuard.requireAnyRole(roleHeader);
+        AdvisoryViewerRole role = roleGuard.requireAnyRole();
         var filter = new AdvisoryReportListFilter(targetReviewerId, revId,
                 advisoryTypeCd, severityCd, advrStatusCd);
         return ApiResponse.ok(AdvisoryReportListResponse.of(
@@ -68,10 +67,9 @@ public class AdvisoryReportController {
     @Operation(summary = "리포트 상세", description = "signal + ack 이력 포함.")
     @GetMapping("/{advrId}")
     public ApiResponse<AdvisoryReportDetailResponse> get(
-            @PathVariable Long advrId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
+            @PathVariable Long advrId) {
         Long actorId = currentActor.currentActorId();
-        AdvisoryViewerRole role = roleGuard.requireAnyRole(roleHeader);
+        AdvisoryViewerRole role = roleGuard.requireAnyRole();
         return ApiResponse.ok(queryService.getDetail(advrId, actorId, role));
     }
 
@@ -79,10 +77,9 @@ public class AdvisoryReportController {
             description = "OPEN → VIEWED 전이. first_viewed_at 최초 1회만 채워진다.")
     @PostMapping("/{advrId}/view")
     public ApiResponse<AdvisoryReportSummaryResponse> view(
-            @PathVariable Long advrId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
+            @PathVariable Long advrId) {
         Long actorId = currentActor.currentActorId();
-        AdvisoryViewerRole role = roleGuard.requireAnyRole(roleHeader);
+        AdvisoryViewerRole role = roleGuard.requireAnyRole();
         return ApiResponse.ok(queryService.markViewed(advrId, actorId, role));
     }
 
@@ -91,10 +88,9 @@ public class AdvisoryReportController {
     @PostMapping("/{advrId}/ack")
     public ResponseEntity<ApiResponse<AdvisoryAckResponse>> ack(
             @PathVariable Long advrId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader,
             HttpServletRequest req,
             @Valid @RequestBody AdvisoryAckRequest body) {
-        AdvisoryViewerRole role = roleGuard.requireAnyRole(roleHeader);
+        AdvisoryViewerRole role = roleGuard.requireAnyRole();
         Long actorId = currentActor.currentActorId();
 
         // 권한 게이트 — reviewer 는 본인 대상 리포트만 ack 가능

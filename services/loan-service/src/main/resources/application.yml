@@ -170,10 +170,9 @@ springdoc:
 
 # ---- Advisory / AI Gateway ----
 advisory:
-  service:
-    base-url: ${ADVISORY_BASE_URL:http://advisory-service:8085}
-    timeout-ms: ${ADVISORY_TIMEOUT_MS:5000}
-    connect-timeout-ms: ${ADVISORY_CONNECT_TIMEOUT_MS:3000}
+  # advisory.service.* 를 걷어냈다. 별도 프로세스로 부르던 설정인데, 그 프로세스는
+  # 빌드에 포함된 적이 없어 호출이 언제나 실패했다(실패는 빈 목록으로 삼켜졌다).
+  # 지금은 같은 프로세스라 주소가 필요 없다.
   ai-gateway:
     base-url: ${AIGATEWAY_BASE_URL:http://localhost:8088}
     timeout-ms: ${AIGATEWAY_TIMEOUT_MS:35000}

@@ -80,10 +80,20 @@ spring:
             - Path=/api/v1/accounts/**,/api/products/**,/api/accounts/**,/api/contracts/**,/api/transactions/**,/api/interests/**,/api/join-targets/**,/api/payment-schedules/**,/api/departments/**
 
         # 대출 도메인 (JWT 필요)
+        #
+        # /api/advisory/** 가 포함된 이유: 어드바이저리는 별도 서비스가 아니라
+        # loan-service 안에 있다. 예전에는 이 경로가 라우트에 없어 브라우저가 직접
+        # 부를 수 있었고, 권한 검사가 22곳 있었는데도 전부 호출자가 스스로 적은
+        # X-Actor-Role 헤더를 읽고 있었다. 지금은 게이트웨이가 지우고 덮어쓰는
+        # X-User-Role 로 판정한다.
+        #
+        # /api/internal/advisory/** 는 넣지 않는다 — 레포 규약상 v1 없는 internal 은
+        # 서비스 간 호출이고(review-ai-gateway 가 도구 API 로 쓴다), 네트워크 정책으로
+        # 보호한다.
         - id: loan
           uri: http://${LOAN_SERVICE_HOST:localhost}:${LOAN_SERVICE_PORT:8083}
           predicates:
-            - Path=/api/loan-applications/**,/api/loan-products/**,/api/loan-contracts/**,/api/collaterals/**,/api/credit-info-reports/**,/api/credit-score/**,/api/loan-certificates/**,/api/loan-documents/**,/api/loan-reviews/**,/api/loans/**,/api/business-calendar/**,/api/notifications/**,/api/status-history/**,/api/admin/loan-contracts/**,/api/audit/**,/api/break-glass/**
+            - Path=/api/loan-applications/**,/api/loan-products/**,/api/loan-contracts/**,/api/collaterals/**,/api/credit-info-reports/**,/api/credit-score/**,/api/loan-certificates/**,/api/loan-documents/**,/api/loan-reviews/**,/api/loans/**,/api/business-calendar/**,/api/notifications/**,/api/status-history/**,/api/admin/loan-contracts/**,/api/audit/**,/api/break-glass/**,/api/advisory/**
 
         # 지급·이체 도메인 (JWT 필요)
         - id: payment

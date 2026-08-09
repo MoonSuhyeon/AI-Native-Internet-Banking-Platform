@@ -81,21 +81,12 @@ class AdvisoryFlowIntegrationTest extends AbstractLoanIntegrationTest {
                 .build());
         Long advrId = report.getAdvrId();
 
-        // 게이트는 DB 를 직접 보지 않고 AdvisoryClient 로 advisory-service 를 HTTP 조회한다
-        // (LoanContractService·LoanReviewApproverService 동일). 베이스 하네스의 기본 스텁은
-        // 빈 배열을 돌려주므로, 이 revId 에 한해 CRITICAL 리포트를 반환하도록 덮어쓴다.
-        // 덮어쓰지 않으면 게이트가 볼 리포트가 없어 통제가 검증되지 않는다.
-        ADVISORY_MOCK.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/advisory/reports"))
-                .withQueryParam("revId", WireMock.equalTo(String.valueOf(revId)))
-                .atPriority(1)
-                .willReturn(WireMock.aResponse().withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                [{"advrId":%d,"revId":%d,"advisoryTypeCd":"REREVIEW_RECOMMEND",
-                                  "severityCd":"CRITICAL","advrStatusCd":"OPEN",
-                                  "advrTitle":"DSR 한도 초과 승인","advrSummary":"통합 테스트",
-                                  "targetReviewerId":"99201"}]
-                                """.formatted(advrId, revId))));
+        // 게이트는 위에서 저장한 리포트를 그대로 읽는다.
+        //
+        // 예전에는 이 자리에 WireMock 스텁이 있었다. 게이트가 별도 프로세스인
+        // advisory-service 를 HTTP 로 조회한다고 보고, DB 에 넣은 리포트를 응답으로
+        // 한 번 더 흉내 냈던 것이다. 그 서비스는 존재한 적이 없어서, 실제로는
+        // 스텁이 만든 상상 속 응답만 검증되고 있었다.
 
         // 3. 약정 → 422 LOAN_201 (CRITICAL 미확인)
         mockMvc.perform(post("/api/loan-contracts")
@@ -125,19 +116,11 @@ class AdvisoryFlowIntegrationTest extends AbstractLoanIntegrationTest {
         assertThat(acks).hasSize(1);
         assertThat(acks.get(0).getAckResponseCd()).isEqualTo(ReviewAdvisoryAck.RESPONSE_MAINTAIN);
 
-        // ack 결과를 advisory 조회에도 반영한다(운영에서는 advisory-service 가 상태를
-        // ACKED 로 갱신해 반환). 그래야 게이트가 열리는 것까지 검증된다.
-        ADVISORY_MOCK.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/advisory/reports"))
-                .withQueryParam("revId", WireMock.equalTo(String.valueOf(revId)))
-                .atPriority(0)
-                .willReturn(WireMock.aResponse().withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                [{"advrId":%d,"revId":%d,"advisoryTypeCd":"REREVIEW_RECOMMEND",
-                                  "severityCd":"CRITICAL","advrStatusCd":"ACKED",
-                                  "advrTitle":"DSR 한도 초과 승인","advrSummary":"통합 테스트",
-                                  "targetReviewerId":"99201"}]
-                                """.formatted(advrId, revId))));
+        // ack 이 리포트 상태를 실제로 ACKED 로 바꾸는지까지 여기서 검증된다.
+        //
+        // 예전에는 스텁을 ACKED 응답으로 갈아끼웠다. 즉 "ack 하면 상태가 바뀐다" 는
+        // 것을 코드가 아니라 테스트가 손으로 만들어 주고 있었다 — 상태 갱신이
+        // 빠져 있어도 게이트는 열렸을 것이다.
 
         // 5. 약정 재시도 → 201
         MvcResult contractResult = mockMvc.perform(post("/api/loan-contracts")

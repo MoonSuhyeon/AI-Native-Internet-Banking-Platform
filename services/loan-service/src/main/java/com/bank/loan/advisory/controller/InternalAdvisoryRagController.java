@@ -32,8 +32,11 @@ import java.util.List;
 /**
  * RAG 내부 관리 API (plan §11.5 — Task 6-8).
  *
- * 권한: admin/system (X-Actor-Role=ADMIN 헤더로 보호 — 현 단계 컨트롤러 레벨 미검증,
- * 운영 환경에서는 API Gateway/서비스 메시 네트워크 정책으로 보호).
+ * 권한: 컨트롤러 레벨 검증이 없다. 레포 규약상 v1 없는 /api/internal/... 은 서비스 간
+ * 호출이라 게이트웨이 라우트를 두지 않고 네트워크 정책으로 보호한다.
+ *
+ * 다만 이 컨트롤러는 문서 인입·인덱스 재구축 같은 관리 동작을 담고 있어 성격이
+ * 도구 조회와 다르다. 네트워크가 열리면 그대로 노출되므로 OPEN_ITEMS 에 남겼다.
  */
 @Tag(name = "어드바이저리 RAG 관리", description = "Advisory - 정책문서 인입 / 사례 인덱싱 (internal admin)")
 @RestController

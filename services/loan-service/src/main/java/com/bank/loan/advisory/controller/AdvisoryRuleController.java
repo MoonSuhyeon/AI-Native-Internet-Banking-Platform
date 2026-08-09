@@ -29,9 +29,8 @@ public class AdvisoryRuleController {
 
     @Operation(summary = "룰 카탈로그 조회", description = "활성/비활성 룰 전체. admin/auditor 권한.")
     @GetMapping
-    public ApiResponse<AdvisoryRuleListResponse> list(
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+    public ApiResponse<AdvisoryRuleListResponse> list() {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(AdvisoryRuleListResponse.of(adminService.listAll()));
     }
 
@@ -41,9 +40,8 @@ public class AdvisoryRuleController {
     @PutMapping("/{ruleId}")
     public ApiResponse<AdvisoryRuleResponse> update(
             @PathVariable Long ruleId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader,
             @Valid @RequestBody UpdateAdvisoryRuleRequest body) {
-        roleGuard.requireAdmin(roleHeader);
+        roleGuard.requireAdmin();
         return ApiResponse.ok(adminService.update(ruleId, body));
     }
 }

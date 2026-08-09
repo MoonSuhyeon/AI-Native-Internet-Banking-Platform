@@ -49,7 +49,10 @@ springdoc:
   default-produces-media-type: application/json
 
 advisory:
-  base-url: ${ADVISORY_BASE_URL:http://advisory-service:8080}
+  # advisory 는 별도 서비스가 아니라 loan-service 안에 있다. 예전 기본값
+  # (http://advisory-service:8080)은 존재한 적 없는 호스트라, 도구 호출이 늘 실패하고
+  # 그 실패가 조용히 삼켜졌다.
+  base-url: ${ADVISORY_BASE_URL:http://loan-service:8083}
 
 ai-service:
   base-url: ${AI_SERVICE_BASE_URL:http://localhost:8089}

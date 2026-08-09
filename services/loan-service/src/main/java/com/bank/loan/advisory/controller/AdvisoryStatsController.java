@@ -26,9 +26,8 @@ public class AdvisoryStatsController {
             description = "리포트 총수 + 미해결 수 + ack 응답코드별 카운트 + 룰별 트리거 빈도. auditor/admin 권한.")
     @GetMapping("/reviewers/{reviewerId}")
     public ApiResponse<ReviewerAckStatsResponse> reviewerStats(
-            @PathVariable Long reviewerId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAuditorOrAdmin(roleHeader);
+            @PathVariable Long reviewerId) {
+        roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(statsService.statsForReviewer(reviewerId));
     }
 }

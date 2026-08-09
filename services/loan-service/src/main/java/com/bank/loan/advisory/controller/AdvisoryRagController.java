@@ -39,13 +39,12 @@ public class AdvisoryRagController {
 
     @Operation(summary = "유사 과거 사례 검색",
             description = "본 리포트와 유사 프로파일의 종결된 과거 심사 top-5 반환. " +
-                          "reviewer 는 X-Actor-Role=REVIEWER 헤더 필수 — 본인 대상 리포트만 허용.")
+                          "reviewer 권한이면 본인 대상 리포트만 허용 — 역할은 게이트웨이가 검증한 JWT 에서 온다.")
     @GetMapping("/{advrId}/similar-cases")
     public ApiResponse<SimilarCaseResponse> similarCases(
             @PathVariable Long advrId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader,
             @RequestParam(defaultValue = "5") int topK) {
-        roleGuard.requireAnyRole(roleHeader);
+        roleGuard.requireAnyRole();
         Long actorId = currentActor.currentActorId();
         return ApiResponse.ok(similarCaseRetriever.retrieve(advrId, topK, actorId));
     }
@@ -55,9 +54,8 @@ public class AdvisoryRagController {
                           "인용이 없으면 citations=[] 반환.")
     @GetMapping("/{advrId}/citations")
     public ApiResponse<PolicyCitationResponse> citations(
-            @PathVariable Long advrId,
-            @RequestHeader(value = "X-Actor-Role", required = false) String roleHeader) {
-        roleGuard.requireAnyRole(roleHeader);
+            @PathVariable Long advrId) {
+        roleGuard.requireAnyRole();
         return ApiResponse.ok(ragQueryService.getCitations(advrId));
     }
 }

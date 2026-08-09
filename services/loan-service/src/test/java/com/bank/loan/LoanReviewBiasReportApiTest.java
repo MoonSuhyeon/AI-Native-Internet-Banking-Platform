@@ -1,7 +1,8 @@
 package com.bank.loan;
 
 import com.bank.loan.support.AbstractLoanIntegrationTest;
-import com.github.tomakehurst.wiremock.client.WireMock;
+import com.bank.loan.advisory.domain.ReviewAdvisoryReport;
+import com.bank.loan.advisory.repository.ReviewAdvisoryReportRepository;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -34,6 +35,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestPropertySource(properties = "loan.review.bias-check.enabled=true")
 class LoanReviewBiasReportApiTest extends AbstractLoanIntegrationTest {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private ReviewAdvisoryReportRepository advisoryReportRepository;
 
     private static Long prodId;
     private static Long applId;
@@ -133,32 +137,37 @@ class LoanReviewBiasReportApiTest extends AbstractLoanIntegrationTest {
                 .andExpect(jsonPath("$.data.length()").value(0));
     }
 
+    /**
+     * 저장된 리포트가 화면 응답까지 나오는지.
+     *
+     * <p>예전에는 WireMock 으로 별도 프로세스인 advisory-service 의 응답을 흉내 냈다.
+     * 그 서비스는 빌드에 포함된 적이 없어 흉내 내던 대상이 존재하지 않았다 —
+     * 테스트는 실제 조회가 아니라 상상 속 JSON 을 검증하고 있었다.
+     *
+     * <p>지금은 같은 프로세스라 실제로 저장하고 읽는다. 그래야 revId 매칭과 응답
+     * 매핑까지 함께 검증된다.
+     *
+     * <p>"장애 시 fail-open" 시험은 없앴다. 네트워크 호출이 사라져 그 상태 자체가
+     * 성립하지 않는다 — 조회가 실패하면 장애가 아니라 결함이다.
+     */
     @Test @Order(51)
     void advisory_리포트_목록_항목_반환() throws Exception {
-        ADVISORY_MOCK.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/advisory/reports"))
-                .willReturn(WireMock.aResponse().withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                [{"advrId":1,"revId":%d,"advisoryTypeCd":"RISK","severityCd":"HIGH",
-                                  "advrStatusCd":"OPEN","advrTitle":"고위험 감지","advrSummary":"요약","targetReviewerId":null}]
-                                """.formatted(revId))));
+        advisoryReportRepository.save(ReviewAdvisoryReport.builder()
+                .revId(revId)
+                .ruleId(1L)
+                .advisoryTypeCd("RISK")
+                .severityCd("HIGH")
+                .advrStatusCd("OPEN")
+                .advrTitle("고위험 감지")
+                .advrSummary("요약")
+                .generatedAt(java.time.OffsetDateTime.now())
+                .build());
 
         mockMvc.perform(get("/api/loan-reviews/{revId}/advisory-reports", revId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].severityCd").value("HIGH"))
                 .andExpect(jsonPath("$.data[0].advrTitle").value("고위험 감지"));
-    }
-
-    @Test @Order(52)
-    void advisory_서비스_장애_시_빈_목록_반환_fail_open() throws Exception {
-        ADVISORY_MOCK.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/advisory/reports"))
-                .willReturn(WireMock.aResponse().withStatus(500)));
-
-        mockMvc.perform(get("/api/loan-reviews/{revId}/advisory-reports", revId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(0));
     }
 
     @Test @Order(40)
