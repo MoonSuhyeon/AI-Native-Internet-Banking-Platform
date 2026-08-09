@@ -1,5 +1,6 @@
 package com.bank.docagent.review.controller;
 
+import com.bank.docagent.config.GatewayIdentity;
 import com.bank.docagent.review.service.HumanReviewService;
 import com.bank.docagent.submission.domain.DocumentSubmission;
 import com.bank.docagent.submission.domain.DocumentSubmission.HumanReviewStatus;
@@ -7,8 +8,8 @@ import com.bank.docagent.submission.repository.DocumentSubmissionRepository;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -28,26 +29,32 @@ public class HumanReviewController {
 
     private final HumanReviewService reviewService;
     private final DocumentSubmissionRepository submissionRepo;
+    private final GatewayIdentity gatewayIdentity;
 
     /**
-     * 두 필드 모두 필수다.
+     * 결정만 받는다. <b>심사원은 body 로 받지 않는다.</b>
      *
-     * <p>심사원 없이 결정이 남으면 위조를 누가 확정했는지 추적할 수 없다. 예전에는
-     * 검증이 없어 {@code reviewer_id} 를 빼고 부르면 결정이 먼저 반영되고 나서
-     * 응답을 만들다 NPE 로 500 이 났다 — 호출자는 실패로 보는데 상태는 바뀌어 있었다.
+     * <p>예전에는 {@code reviewer_id} 를 여기서 받았다. 필수 검증을 붙여 두긴 했지만
+     * 그것은 <b>값이 있는지</b>만 보고 <b>누구인지</b>는 보지 않는다 — 아무 이름이나
+     * 적으면 그대로 기록됐다.
+     *
+     * <p>이 값이 특히 중요한 이유는 AI 채택률 지표의 근거이기 때문이다. 지표는
+     * "자동 판정을 사람이 이만큼 뒤집었다" 고 말하는데, 그 사람이 자칭이면 숫자의
+     * 출처가 검증되지 않는다. 성능을 재는 축이 위조 가능한 입력 위에 서 있었다.
+     *
+     * <p>이제 심사원은 게이트웨이가 JWT 에서 주입한 {@code X-Employee-Id} 로만 정해진다.
      */
     public record ReviewRequest(
         @NotNull(message = "decision 은 필수입니다 (CLEARED | CONFIRMED_FORGERY)")
-        @JsonProperty("decision")   HumanReviewStatus decision,
-
-        @NotBlank(message = "reviewer_id 는 필수입니다 — 결정 주체가 남아야 합니다")
-        @JsonProperty("reviewer_id") String reviewerId
+        @JsonProperty("decision")   HumanReviewStatus decision
     ) {}
 
     @Operation(summary = "휴먼리뷰 대기 목록",
                description = "humanReviewStatus=PENDING 인 제출 건 목록. 운영자 검토 큐.")
     @GetMapping("/queue")
-    public ResponseEntity<List<Map<String, Object>>> queue() {
+    public ResponseEntity<List<Map<String, Object>>> queue(HttpServletRequest request) {
+        // 고객이 제출한 서류와 위조 점수가 그대로 나온다. 직원만 볼 수 있어야 한다.
+        gatewayIdentity.requireEmployee(request);
         // TODO: PENDING 전체를 한 번에 반환한다. 데모 단계라 무방하나
         //       운영에서 건수가 늘면 Pageable 을 받아 페이지 단위로 반환하도록 전환 필요.
         List<Map<String, Object>> items = submissionRepo
@@ -72,9 +79,11 @@ public class HumanReviewController {
     @PostMapping("/{submissionId}/review")
     public ResponseEntity<Map<String, Object>> decide(
         @PathVariable UUID submissionId,
-        @Valid @RequestBody ReviewRequest req
+        @Valid @RequestBody ReviewRequest req,
+        HttpServletRequest request
     ) {
-        DocumentSubmission result = reviewService.decide(submissionId, req.decision(), req.reviewerId());
+        String reviewerId = gatewayIdentity.requireEmployee(request);
+        DocumentSubmission result = reviewService.decide(submissionId, req.decision(), reviewerId);
         return ResponseEntity.ok(Map.of(
             "submission_id",       result.getSubmissionId(),
             "verify_status",       result.getVerifyStatus(),

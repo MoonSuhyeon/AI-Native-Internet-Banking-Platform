@@ -91,6 +91,23 @@ spring:
           predicates:
             - Path=/api/v1/payments/**
 
+        # 서류 심사 에이전트 (JWT 필요)
+        #
+        # 심사 결정(/review)은 자동 판정을 사람이 뒤집는 지점이고, 그 기록이 곧
+        # AI 채택률 지표의 근거다. 그런데 reviewer_id 를 요청 body 로 받고 있어서
+        # 아무 이름이나 적을 수 있었다 — 지표는 "사람이 이만큼 뒤집었다" 고 말하는데
+        # 그 사람이 누구인지는 아무도 확인하지 않는 상태였다.
+        #
+        # 법적보존(legal-hold)도 같다. 삭제를 막는 규제 통제인데 아무나 끌 수 있었다.
+        #
+        # 경로 재작성이 없는 이유: 이 서비스는 이미 /api/documents 로 받는다.
+        - id: doc-agent
+          uri: http://${DOC_AGENT_HOST:localhost}:${DOC_AGENT_PORT:8087}
+          predicates:
+            - Path=/api/documents/**
+          filters:
+            - AddRequestHeader=X-Gateway-Auth, ${DOC_AGENT_GATEWAY_SHARED_SECRET:}
+
         # 고객용 상담·챗봇 (JWT 필요)
         #
         # 이 라우트가 없으면 브라우저가 상담 서비스를 직접 부르고, 그러면 고객 신원이

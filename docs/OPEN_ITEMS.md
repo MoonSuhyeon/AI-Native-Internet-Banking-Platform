@@ -110,6 +110,28 @@
 | 대상 | 확인했는가 |
 |---|---|
 | 상담 서비스 | ✅ 24개 전수 |
-| 조사 에이전트(fraud) | 부분 — `/approve` 만 확인. 나머지 엔드포인트는 안 봤다 |
-| doc-agent | ❌ 안 봤다 |
-| advisory·auto-loan-review | ❌ 안 봤다 |
+| doc-agent | ✅ 6개 전수 — 심사 결정·법적보존·대기목록에 직원 확인을 붙였다 |
+| 조사 에이전트(fraud) | 부분 — `/approve` 만 확인. `/investigate`·`/cases` 는 안 봤다 |
+| auto-loan-review · review-ai-gateway | ❌ 안 봤다. 서비스 간 호출이라 성격이 다르다 |
+| advisory-service | ⚠ **점검 불가 — 빌드되지 않는다**(아래 참조) |
+
+### advisory-service 는 실행되지 않는다
+
+권한 검사(`X-Actor-Role`, 22곳)가 있지만 **그 코드는 돌지 않는다.**
+
+| 확인 | 결과 |
+|---|---|
+| `settings.gradle` 포함 | ❌ |
+| 빌드 파일(`build.gradle`/`pom.xml`) | ❌ |
+| Dockerfile · compose 서비스 정의 | ❌ |
+
+그런데 **부르는 쪽은 있다.** `loan-service` 의 `AdvisoryClient` 가 `/api/advisory/reports`
+를 호출하고, `review-ai-gateway` 도 `ADVISORY_BASE_URL` 을 본다. 주소도 서로 다르다
+(`:8085` 대 `:8080`).
+
+`AdvisoryClient` 주석은 "advisory-service 장애 시 빈 목록 반환(fail-open)" 이라고
+말하지만, 이건 장애가 아니라 **상시 상태**다. 자문 리포트는 늘 비어 있고 심사는
+그대로 진행된다. 조용히.
+
+**먼저 정할 것**: 이 서비스를 빌드에 넣을 것인가, 아니면 호출부를 걷어낼 것인가.
+정하기 전에는 권한 수정이 의미가 없다 — 돌지 않는 코드를 고치는 것이다.

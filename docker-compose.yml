@@ -992,6 +992,10 @@ services:
       - "${DOC_AGENT_APP_PORT:-8091}:8087"
     environment:
       DOC_AGENT_APP_PORT: 8087
+      # 게이트웨이와 나눠 갖는 시크릿. 비면 신원 헤더를 믿지 않아 심사 결정·법적보존이
+      # 거절된다 — 누가 결정했는지 확인할 수 없는데 통과시키면 채택률 지표의 근거가
+      # 자칭이 된다(fail-closed).
+      DOC_AGENT_GATEWAY_SHARED_SECRET: ${DOC_AGENT_GATEWAY_SHARED_SECRET:-}
       DOC_AGENT_DB_HOST: doc-agent-db
       DOC_AGENT_DB_PORT: 5432
       DOC_AGENT_DB_NAME: ${DOC_AGENT_DB_NAME:-doc_agent_db}

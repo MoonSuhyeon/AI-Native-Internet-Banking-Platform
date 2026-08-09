@@ -80,6 +80,7 @@ class InternalRouteConfigTest {
     @CsvSource({
             "consultation-staff,    /api/v1/internal/consultation/**",
             "consultation-customer, /api/v1/consultation/**",
+            "doc-agent,             /api/documents/**",
             "fraud-agent,           /api/v1/internal/fraud/**",
     })
     @DisplayName("사이드카는 게이트웨이 경로로 노출된다 — 없으면 브라우저가 직접 부른다")
@@ -93,6 +94,7 @@ class InternalRouteConfigTest {
     @CsvSource({
             "consultation-staff,    CONSULTATION_GATEWAY_SHARED_SECRET",
             "consultation-customer, CONSULTATION_GATEWAY_SHARED_SECRET",
+            "doc-agent,             DOC_AGENT_GATEWAY_SHARED_SECRET",
             "fraud-agent,           FRAUD_GATEWAY_SHARED_SECRET",
     })
     @DisplayName("게이트웨이를 거쳤다는 증거를 붙인다 — 사이드카는 이 값이 맞을 때만 신원을 믿는다")
@@ -134,6 +136,7 @@ class InternalRouteConfigTest {
         assertThat(List.of(
                 "/api/v1/internal/consultation/chatbot/features/STAFF_CUSTOMER/execute",
                 "/api/v1/consultation/chatbot/transfer",
+                "/api/documents/queue",
                 "/api/v1/internal/fraud/investigate"))
                 .allSatisfy(path -> assertThat(path)
                         .doesNotStartWith("/api/v1/auth/")

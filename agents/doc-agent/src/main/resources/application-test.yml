@@ -20,6 +20,11 @@ crypto:
   key-base64: bG9hbi1zZXJ2aWNlLWRldi1hZXMta2V5LTMyYnl0ZXM=
 
 doc-agent:
+  # 게이트웨이와 나눠 갖는 시크릿. 테스트에서는 고정값을 둬서 "게이트웨이를 거친 요청"
+  # 을 만들 수 있게 한다. 비워 두면 신원 헤더를 전혀 믿지 않아 전 요청이 403 이 된다 —
+  # 그것이 운영 기본값이고, 여기서는 인가가 통과하는 경우도 함께 봐야 한다.
+  gateway:
+    shared-secret: test-gateway-secret
   storage:
     endpoint: http://localhost:9000
     access-key: minioadmin
