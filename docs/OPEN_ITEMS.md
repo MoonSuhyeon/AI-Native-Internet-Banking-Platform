@@ -25,8 +25,8 @@
 
 | 항목 | 왜 문제인가 | 어디 |
 |---|---|---|
-| **사망 플래그 미연동** | `deceasedFlag` 가 `false` 고정. Party 에 사망 컬럼이 없다 — 조사 에이전트의 fail-closed 판단 근거 하나가 늘 꺼져 있다 | `InternalHolderController` |
-| **비밀번호 변경 이력 미연동** | `passwordChangedRecently` 가 `false` 고정. 계정탈취 신호 하나가 죽어 있다 | `InternalAuthEventsController` |
+| ~~사망 플래그 미연동~~ | **해결.** `party_person.death_date` 를 읽는다. 컬럼은 원래 있었고 배선만 빠져 있었다 | `InternalHolderController` |
+| ~~비밀번호 변경 이력 미연동~~ | **해결.** `password_history.countChangesSince` 를 읽는다. 리포지토리 메서드도 이미 있었다 | `InternalAuthEventsController` |
 | **관리자 화면 직원 ID 임시 입력** | JWT·게이트웨이 역할 연동 전이라 화면에서 직접 입력받는다 — 행위자를 위조할 수 있다 | `admin/consultation/customer` |
 | **상담 서비스 인증 미들웨어** | JWT 기반 인증이 없다 | `agents/consultation/app/main.py` |
 | **P-029 self-listening** | 자기가 보낸 메시지를 자기가 받는 것을 sender 은행코드로만 막는다 | `KftcNetworkResponseConsumer` |
@@ -77,8 +77,8 @@
 
 이 목록을 다 하자는 게 아니다. **막고 있는 것부터** 본다.
 
-1. **사망 플래그·비밀번호 변경 이력 연동** — 조사 에이전트의 판단 근거가 두 개 꺼져 있다.
-   에이전트를 아무리 다듬어도 입력이 없으면 소용없다.
+1. ~~사망 플래그·비밀번호 변경 이력 연동~~ — **해결.** 둘 다 데이터와 조회 메서드가
+   이미 있었고 컨트롤러에서 하드코딩된 `false` 만 남아 있었다.
 2. **API 스펙의 병합 반영** — 지금 스펙을 보고 붙이면 없는 서비스를 부르게 된다.
 3. **검색 품질 정기 측정** — 평가셋이 준비됐으므로 실행 자리만 만들면 된다.
 4. **관리자 화면 직원 ID** — 행위자 위조가 가능한 상태로 감사 로그가 쌓인다.

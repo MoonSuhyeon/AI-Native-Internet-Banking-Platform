@@ -3,6 +3,7 @@ package com.bank.customer.cert;
 import com.bank.common.web.ApiResponse;
 import com.bank.customer.cert.dto.AuthEventsResponse;
 import com.bank.customer.history.repository.CertificateUseRepository;
+import com.bank.customer.history.repository.PasswordHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import java.time.OffsetDateTime;
 public class InternalAuthEventsController {
 
     private final CertificateUseRepository certificateUseRepository;
+    private final PasswordHistoryRepository passwordHistoryRepository;
 
     /** 최근 windowHours 시간 내 인증서 실패 횟수 등 인증 이벤트 요약(읽기 전용). */
     @GetMapping("/{customerId}/events")
@@ -34,8 +36,15 @@ public class InternalAuthEventsController {
         OffsetDateTime since = OffsetDateTime.now().minusHours(windowHours);
         long fails = certificateUseRepository.countCertFailuresByCustomerSince(customerId, since);
 
-        // passwordChangedRecently 는 PIN 변경 이력 노출 전까지 false (추후 wiring)
+        // 같은 창에서 비밀번호가 바뀌었는가. 계정탈취의 전형적인 순서가
+        // "탈취 → 비밀번호 변경 → 이체" 라, 인증 실패와 함께 보면 신호가 훨씬 강해진다.
+        //
+        // 조사 에이전트가 계정탈취(H2) 가설의 근거로 쓴다. 늘 false 로 두면
+        // 그 축의 가설이 오르지 않아, 조사가 틀리는 게 아니라 덜 아는 상태가 된다.
+        boolean passwordChangedRecently =
+                passwordHistoryRepository.countChangesSince(customerId, since) > 0;
+
         return ResponseEntity.ok(ApiResponse.ok(
-                new AuthEventsResponse(customerId, windowHours, fails, false)));
+                new AuthEventsResponse(customerId, windowHours, fails, passwordChangedRecently)));
     }
 }

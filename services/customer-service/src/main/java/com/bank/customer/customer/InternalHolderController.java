@@ -6,6 +6,7 @@ import com.bank.customer.customer.domain.Customer;
 import com.bank.customer.customer.dto.HolderInfoResponse;
 import com.bank.customer.customer.repository.CustomerRepository;
 import com.bank.customer.party.domain.Party;
+import com.bank.customer.party.repository.PartyPersonRepository;
 import com.bank.customer.party.repository.PartyRepository;
 import com.bank.customer.support.CustomerErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class InternalHolderController {
 
     private final CustomerRepository customerRepository;
     private final PartyRepository partyRepository;
+    private final PartyPersonRepository partyPersonRepository;
 
     @GetMapping("/{customerId}/holder-info")
     public ResponseEntity<HolderInfoResponse> getHolderInfo(
@@ -51,11 +53,17 @@ public class InternalHolderController {
         Party party = partyRepository.findByPartyIdAndDeletedAtIsNull(customer.getPartyId())
                 .orElseThrow(() -> new BusinessException(CustomerErrorCode.CUST_002));
 
-        // TODO(deceasedFlag): Party 에 사망 컬럼이 없어 현재 false 고정이다. 다운스트림
-        //  payment-service 는 이 값을 "확정 생존"으로 해석하면 안 되고, 사망 차단은
-        //  사망 정보 소스(party 사망 컬럼/외부 연계) 연결 전까지 미검증으로 취급해야 한다.
-        //  사망 컬럼 wiring 후 false 하드코딩을 실제 값으로 교체할 것.
-        boolean deceasedFlag = false;
+        // 사망 여부. party_person.death_date 가 채워져 있으면 사망으로 본다.
+        //
+        // 개인이 아닌 명의자(법인 등)는 party_person 행이 없다. 그 경우 false 다 —
+        // "확인했는데 살아 있다" 가 아니라 "개인이 아니라 해당 없음" 이라는 뜻이다.
+        //
+        // 조사 에이전트는 이 값을 결정적 사실로 쓴다(fail-closed). 그래서 값이 틀리는 것보다
+        // 조회에 실패하는 것이 낫고, 조회 자체가 안 되면 위에서 이미 404 로 끊긴다.
+        boolean deceasedFlag = partyPersonRepository
+                .findByPartyIdAndDeletedAtIsNull(party.getPartyId())
+                .map(person -> person.getDeathDate() != null && !person.getDeathDate().isBlank())
+                .orElse(false);
         return ResponseEntity.ok(new HolderInfoResponse(
                 String.valueOf(customerId),
                 party.getPartyName(),
