@@ -11,13 +11,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app, get_chatbot_service
+from conftest import GATEWAY_HEADERS
 
 
 # ── 헬퍼 ────────────────────────────────────────────────────────────────────
 
 def _client(service) -> TestClient:
     app.dependency_overrides[get_chatbot_service] = lambda: service
-    return TestClient(app)
+    return TestClient(app, headers=GATEWAY_HEADERS)
 
 
 CUST = "CUST001"
@@ -353,6 +354,10 @@ class TestExecuteStaffSupport:
             resp = client.post(
                 f"/chatbot/features/{feature_code}/execute",
                 json={"customer_no": CUST},
+                # 이 클래스의 기본 헤더에는 직원 ID 가 들어 있다. 여기서 보려는 것은
+                # "직원 신원이 없는 요청" 이므로 명시적으로 벗긴다. 빈 값은 신원이
+                # 아니다 — 게이트웨이도 고객 토큰에 빈 문자열을 넣는다.
+                headers={"X-Employee-Id": ""},
             )
             assert resp.status_code == 200
             body = resp.json()

@@ -146,6 +146,47 @@ def staff_headers(monkeypatch):
     return headers
 
 
+#: 기존 흐름 테스트가 쓰는 기본 헤더 — 게이트웨이를 거친 직원 토큰을 흉내 낸다.
+#:
+#: 직원 토큰은 실제로 두 헤더를 다 갖는다. JwtProvider 가 sub 에 customerId 를,
+#: empId 에 employeeId 를 넣기 때문이다(직원도 개인 계좌가 있다). 그래서 이 조합은
+#: 억지가 아니라 실제로 존재하는 상태다.
+#:
+#: 이 파일들의 목적은 상담 흐름이 끝까지 도는지 보는 것이고, 누가 무엇을 열 수
+#: 있는지는 test_endpoint_authorization.py 가 따로 본다.
+GATEWAY_HEADERS = {
+    "X-Gateway-Auth": GATEWAY_SECRET,
+    "X-Customer-Id": "CUST001",
+    "X-Employee-Id": "EMP001",
+}
+
+
+@pytest.fixture(autouse=True)
+def _gateway_secret_for_flow_tests(monkeypatch):
+    """흐름 테스트가 게이트웨이 뒤에 있는 것처럼 만든다.
+
+    autouse 인 이유: 인증을 붙이기 전에 쓰인 테스트가 수십 개라, 빠뜨리면 그 파일만
+    조용히 403 으로 실패한다. 인가 자체는 전용 테스트가 시크릿을 직접 다루며 본다.
+    """
+    monkeypatch.setenv("CONSULTATION_GATEWAY_SHARED_SECRET", GATEWAY_SECRET)
+
+
+@pytest.fixture()
+def customer_headers(monkeypatch):
+    """게이트웨이가 고객 토큰을 검증해 통과시킨 상태.
+
+    고객 식별자도 더 이상 요청 body 에서 오지 않는다. 예전 테스트들이 body 의
+    customer_no 로 통과하던 것은 **사칭이 가능하던 상태를 검증하고 있던 것**이라,
+    이 픽스처로 옮기면서 함께 고쳤다.
+    """
+    monkeypatch.setenv("CONSULTATION_GATEWAY_SHARED_SECRET", GATEWAY_SECRET)
+
+    def headers(customer_no: str = "CUST001") -> dict[str, str]:
+        return {"X-Gateway-Auth": GATEWAY_SECRET, "X-Customer-Id": customer_no}
+
+    return headers
+
+
 @pytest.fixture()
 def db() -> Session:
     engine = create_engine(

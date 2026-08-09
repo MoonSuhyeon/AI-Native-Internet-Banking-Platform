@@ -44,9 +44,29 @@ export type ChatbotFeatureExecuteResponse = {
   requires_staff_auth: boolean
 }
 
+// 상담 서비스는 게이트웨이를 거쳐 부른다.
+//
+// 예전에는 Next 프록시(/api/consultation)로 곧장 갔는데, 그 프록시가 Content-Type 외
+// 모든 헤더를 버려서 신원을 실어 보낼 방법이 아예 없었다. 그래서 고객이 누구인지가
+// 요청 body 의 customer_no 로만 정해졌고, 남의 번호를 적으면 그 사람의 상품·계약이
+// 조회되고 이체까지 나갔다.
+//
+// 게이트웨이가 JWT 를 검증해 X-Customer-Id 를 주입하므로, 이제 화면은 신원을 보낼
+// 필요도 보낼 수단도 없다.
+//
+// NEXT_PUBLIC_CONSULTATION_API_URL 오버라이드는 없앴다. 상담 서비스를 직접 가리킬 수
+// 있으면 게이트웨이를 건너뛰게 되고, 그러면 신원 헤더가 붙지 않아 위의 보호가 통째로
+// 사라진다. 실제로 로컬 .env.local 이 그 값을 갖고 있었다 — 고쳐도 그 환경에서는
+// 예전 경로로 나가고, 아무 경고 없이 뚫린 상태로 돌아간다.
 const consultationApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_CONSULTATION_API_URL || '/api/consultation',
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088'}/api/v1/consultation`,
   headers: { 'Content-Type': 'application/json' },
+})
+
+consultationApi.interceptors.request.use(config => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
 })
 
 export async function startChatbotConsultation(customerNo: string) {
@@ -82,14 +102,10 @@ export async function executeChatbotFeature(
 
 // ── 직원용 조회 (STAFF_*) ────────────────────────────────────────────────────
 //
-// 고객용 기능과 경로를 나눈 이유는 신원 때문이다. 직원용 5종은 고객 개인정보·계좌·
-// 거래·상담이력을 열기 때문에 "누가 열람했는가"가 남아야 하는데, 위 consultationApi
-// 는 Next 프록시(/api/consultation)를 그대로 지나가고 그 프록시는 Content-Type 외
-// 모든 헤더를 버린다. 즉 저 경로로는 신원을 실어 보낼 방법이 없다.
-//
-// 그래서 직원용만 **게이트웨이**로 나간다. 게이트웨이가 JWT 를 검증해
-// X-Employee-Id 를 주입하므로, 화면이 직원 ID 를 보낼 필요도 보낼 수단도 없다.
-// (고객 챗봇 경로는 건드리지 않았다 — 신원 요구가 다르고 담당도 다르다.)
+// 고객용과 경로를 나눈 이유는 게이트웨이가 주입하는 신원이 다르기 때문이다.
+// 직원용은 X-Employee-Id, 고객용은 X-Customer-Id 로 판정한다. 한 경로로 합치면
+// 상담 서비스가 "이 요청을 직원으로 볼지 고객으로 볼지" 를 스스로 정해야 하고,
+// 그 판단이 들어가는 순간 잘못 갈리는 경우가 생긴다.
 const staffConsultationApi = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088'}/api/v1/internal/consultation`,
   headers: { 'Content-Type': 'application/json' },

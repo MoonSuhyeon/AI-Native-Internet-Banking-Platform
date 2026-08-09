@@ -14,6 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app, get_chat_service, get_chatbot_service
+from conftest import GATEWAY_HEADERS
 from app.services import ChatService
 
 
@@ -22,7 +23,7 @@ from app.services import ChatService
 def _make_client(service, chat_svc):
     app.dependency_overrides[get_chatbot_service] = lambda: service
     app.dependency_overrides[get_chat_service] = lambda: chat_svc
-    return TestClient(app)
+    return TestClient(app, headers=GATEWAY_HEADERS)
 
 
 def _trigger_transfer(client: TestClient) -> int:

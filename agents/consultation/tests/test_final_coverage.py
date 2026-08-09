@@ -37,6 +37,7 @@ from sqlalchemy import select
 
 from app.llm import FeatureAnswerFormatter, IntentClassifier, LlmAdapter, LlmHandoffAdapter
 from app.main import app, get_chat_service, get_chatbot_service
+from conftest import GATEWAY_HEADERS
 from app.models import ChatMessageHistory, ChatbotConsultation, ChatbotNode
 from app.schemas import ChatbotFeatureExecuteRequest
 from app.services import ChatbotService, ChatService, _chat_status
@@ -54,7 +55,7 @@ def _api_client(service, chat_service=None):
     app.dependency_overrides[get_chatbot_service] = lambda: service
     if chat_service:
         app.dependency_overrides[get_chat_service] = lambda: chat_service
-    return TestClient(app)
+    return TestClient(app, headers=GATEWAY_HEADERS)
 
 
 def _start(service, customer_no=CUST):

@@ -78,8 +78,9 @@ class InternalRouteConfigTest {
 
     @ParameterizedTest(name = "{0} 는 {1} 로 들어온다")
     @CsvSource({
-            "consultation-staff, /api/v1/internal/consultation/**",
-            "fraud-agent,        /api/v1/internal/fraud/**",
+            "consultation-staff,    /api/v1/internal/consultation/**",
+            "consultation-customer, /api/v1/consultation/**",
+            "fraud-agent,           /api/v1/internal/fraud/**",
     })
     @DisplayName("사이드카는 게이트웨이 경로로 노출된다 — 없으면 브라우저가 직접 부른다")
     void sidecarRouteIsExposedThroughGateway(String id, String expectedPath) {
@@ -90,8 +91,9 @@ class InternalRouteConfigTest {
 
     @ParameterizedTest(name = "{0} 는 X-Gateway-Auth 를 붙인다")
     @CsvSource({
-            "consultation-staff, CONSULTATION_GATEWAY_SHARED_SECRET",
-            "fraud-agent,        FRAUD_GATEWAY_SHARED_SECRET",
+            "consultation-staff,    CONSULTATION_GATEWAY_SHARED_SECRET",
+            "consultation-customer, CONSULTATION_GATEWAY_SHARED_SECRET",
+            "fraud-agent,           FRAUD_GATEWAY_SHARED_SECRET",
     })
     @DisplayName("게이트웨이를 거쳤다는 증거를 붙인다 — 사이드카는 이 값이 맞을 때만 신원을 믿는다")
     void sidecarRouteAttachesGatewayProof(String id, String secretEnv) {
@@ -102,13 +104,26 @@ class InternalRouteConfigTest {
                             && f.contains(secretEnv));
     }
 
-    @Test
+    @ParameterizedTest(name = "{0} 는 접두어를 떼고 전달한다")
+    @CsvSource({
+            "consultation-staff,    /api/v1/internal/consultation/",
+            "consultation-customer, /api/v1/consultation/",
+    })
     @DisplayName("상담 경로는 접두어를 떼고 전달된다 — 상담 서비스는 /chatbot/... 로 받는다")
-    void consultationRouteRewritesPrefix() {
-        assertThat(strings(route("consultation-staff"), "filters"))
-                .as("재작성이 없으면 상담 서비스가 /api/v1/internal/consultation/chatbot/... "
-                    + "을 받아 404 를 준다")
-                .anyMatch(f -> f.startsWith("RewritePath=/api/v1/internal/consultation/"));
+    void consultationRouteRewritesPrefix(String id, String prefix) {
+        assertThat(strings(route(id), "filters"))
+                .as("재작성이 없으면 상담 서비스가 접두어까지 붙은 경로를 받아 404 를 준다")
+                .anyMatch(f -> f.startsWith("RewritePath=" + prefix));
+    }
+
+    @Test
+    @DisplayName("고객 경로와 직원 경로는 따로 있다 — 합치면 어느 신원으로 볼지 서비스가 정해야 한다")
+    void customerAndStaffRoutesAreSeparate() {
+        // 게이트웨이가 주입하는 신원이 다르다(X-Customer-Id 대 X-Employee-Id).
+        // 한 경로로 합치면 상담 서비스가 스스로 갈라야 하고, 그 판단이 들어가는
+        // 순간 잘못 갈리는 경우가 생긴다.
+        assertThat(route("consultation-customer").get("id"))
+                .isNotEqualTo(route("consultation-staff").get("id"));
     }
 
     @Test
@@ -118,6 +133,7 @@ class InternalRouteConfigTest {
         // X-Employee-Id 가 지워지지도 덮어씌워지지도 않는다.
         assertThat(List.of(
                 "/api/v1/internal/consultation/chatbot/features/STAFF_CUSTOMER/execute",
+                "/api/v1/consultation/chatbot/transfer",
                 "/api/v1/internal/fraud/investigate"))
                 .allSatisfy(path -> assertThat(path)
                         .doesNotStartWith("/api/v1/auth/")

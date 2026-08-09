@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app, get_chatbot_service
+from conftest import GATEWAY_HEADERS
 
 CUST = "CUST001"
 STAFF = "EMP001"
@@ -17,7 +18,7 @@ def test_app_importable():
 
 def test_openapi_json_200():
     with patch("app.database.Base.metadata.create_all"):
-        with TestClient(app) as client:
+        with TestClient(app, headers=GATEWAY_HEADERS) as client:
             response = client.get("/openapi.json")
     assert response.status_code == 200
 
@@ -26,7 +27,7 @@ def test_openapi_json_200():
 
 def _client(service) -> TestClient:
     app.dependency_overrides[get_chatbot_service] = lambda: service
-    return TestClient(app)
+    return TestClient(app, headers=GATEWAY_HEADERS)
 
 
 def test_상품_목록_조회(service):

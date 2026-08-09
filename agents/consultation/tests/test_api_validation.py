@@ -1,12 +1,13 @@
 from fastapi.testclient import TestClient
 
 from app.main import app, get_chat_service, get_chatbot_service
+from conftest import GATEWAY_HEADERS
 
 
 def _client(service, chat_service):
     app.dependency_overrides[get_chatbot_service] = lambda: service
     app.dependency_overrides[get_chat_service] = lambda: chat_service
-    return TestClient(app)
+    return TestClient(app, headers=GATEWAY_HEADERS)
 
 
 def _waiting_chat_id(client: TestClient) -> int:
@@ -20,7 +21,7 @@ def _waiting_chat_id(client: TestClient) -> int:
 
 
 def test_chat_page_returns_static_html():
-    client = TestClient(app)
+    client = TestClient(app, headers=GATEWAY_HEADERS)
 
     response = client.get("/chat")
 

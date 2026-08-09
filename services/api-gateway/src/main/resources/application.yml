@@ -91,6 +91,23 @@ spring:
           predicates:
             - Path=/api/v1/payments/**
 
+        # 고객용 상담·챗봇 (JWT 필요)
+        #
+        # 이 라우트가 없으면 브라우저가 상담 서비스를 직접 부르고, 그러면 고객 신원이
+        # 요청 body 의 customer_no 로만 정해진다. 남의 번호를 적으면 그 사람의
+        # 상품·계약·현금흐름이 나오고, /chatbot/transfer 로는 **그 사람 계좌에서
+        # 돈이 나간다** — 소유권 검사가 있었지만 공격자가 적은 값과 대조하고 있었다.
+        #
+        # 게이트웨이를 거치면 JwtAuthenticationFilter 가 클라이언트발 X-Customer-Id 를
+        # 지우고 검증된 클레임으로 덮어쓴다. 상담 서비스는 그 헤더만 믿는다.
+        - id: consultation-customer
+          uri: http://${CONSULTATION_SERVICE_HOST:localhost}:${CONSULTATION_SERVICE_PORT:8087}
+          predicates:
+            - Path=/api/v1/consultation/**
+          filters:
+            - RewritePath=/api/v1/consultation/(?<segment>.*), /$\{segment}
+            - AddRequestHeader=X-Gateway-Auth, ${CONSULTATION_GATEWAY_SHARED_SECRET:}
+
         # 직원용 상담 조회 (JWT 필요)
         #
         # 조회 대상이 고객 개인정보·계좌·거래·상담이력이라 "누가 열람했는가"가 감사의
