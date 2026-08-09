@@ -3,7 +3,6 @@ package com.bank.payment.domain.service;
 import com.bank.common.time.BusinessDate;
 import com.bank.payment.common.IdGenerator;
 import com.bank.payment.common.LedgerFailureSimulator;
-import com.bank.payment.common.exception.LedgerBalanceMismatchException;
 import com.bank.payment.domain.ExternalCall;
 import com.bank.payment.domain.IdempotencyKey;
 import com.bank.payment.domain.Ledger;
@@ -253,13 +252,8 @@ public class PaymentTransactionService {
                 now, "자행이체 입금");
         ledgerMapper.insert(in);
 
-        // 5. 차변=대변 검증 (P-014)
-        Long debitSum = out.getAmount();
-        Long creditSum = in.getAmount();
-        if (debitSum.compareTo(creditSum) != 0) {
-            throw new LedgerBalanceMismatchException(
-                    "차변≠대변: DEBIT " + debitSum + " ≠ CREDIT " + creditSum + " (PI " + piId + ")");
-        }
+        // 5. 차변=대변 검증 (P-014) — 저장된 행을 다시 읽어 확인한다
+        verifyDoubleEntry(piId);
 
         // 6. PROCESSING→COMPLETED (낙관락, pi.getVersion()+2)
         int updated2 = paymentInstructionMapper.updateStatus(
@@ -354,11 +348,8 @@ public class PaymentTransactionService {
                 now, "자행이체 입금");
         ledgerMapper.insert(in);
 
-        // 5. 차변=대변 검증 (P-014)
-        if (out.getAmount().compareTo(in.getAmount()) != 0) {
-            throw new LedgerBalanceMismatchException(
-                    "차변≠대변: DEBIT " + out.getAmount() + " ≠ CREDIT " + in.getAmount() + " (PI " + piId + ")");
-        }
+        // 5. 차변=대변 검증 (P-014) — 저장된 행을 다시 읽어 확인한다
+        verifyDoubleEntry(piId);
 
         // 6. PROCESSING→COMPLETED (낙관락: pi.getVersion()+1 — claim 이 +1, markProcessing 없으므로 +2 아님)
         int updated = paymentInstructionMapper.updateStatus(
@@ -442,12 +433,8 @@ public class PaymentTransactionService {
                 now, "타행이체 청산대기");
         ledgerMapper.insert(clearing);
 
-        // 5. JN-01 차변=대변 검증 (P-014 묶음별)
-        if (out.getAmount().compareTo(clearing.getAmount()) != 0) {
-            throw new LedgerBalanceMismatchException(
-                    "JN-01 차변≠대변: DEBIT " + out.getAmount()
-                            + " ≠ CREDIT " + clearing.getAmount() + " (PI " + piId + ")");
-        }
+        // JN-01 검증은 JN-02 까지 넣은 뒤 묶음별로 한 번에 한다(아래 8번).
+        // 여기서 미리 보면 뒤에 들어올 수수료 분개의 누락은 못 잡는다.
 
         // 6. JN-02 차변: 송신계좌 DEBIT FEE (별도 deposit 호출 없음 → balance=0,0)
         Ledger fee = Ledger.fee(
@@ -466,12 +453,8 @@ public class PaymentTransactionService {
                 now, "타행이체 수수료수익");
         ledgerMapper.insert(feeInc);
 
-        // 8. JN-02 차변=대변 검증 (P-014 묶음별)
-        if (fee.getAmount().compareTo(feeInc.getAmount()) != 0) {
-            throw new LedgerBalanceMismatchException(
-                    "JN-02 차변≠대변: DEBIT " + fee.getAmount()
-                            + " ≠ CREDIT " + feeInc.getAmount() + " (PI " + piId + ")");
-        }
+        // 8. 차변=대변 검증 (P-014) — JN-01·JN-02 를 묶음별로 확인한다
+        verifyDoubleEntry(piId);
 
         // 9. PROCESSING→CLEARING (낙관락: pi.getVersion()+2=2 → DB v3)
         int updated2 = paymentInstructionMapper.updateStatus(
@@ -600,12 +583,7 @@ public class PaymentTransactionService {
                 now, "BOK이체 청산대기");
         ledgerMapper.insert(clearingBok);
 
-        // 5. JN-01 차대변 검증 (P-014)
-        if (out.getAmount().compareTo(clearingBok.getAmount()) != 0) {
-            throw new LedgerBalanceMismatchException(
-                    "JN-01 차변≠대변: DEBIT " + out.getAmount()
-                            + " ≠ CREDIT " + clearingBok.getAmount() + " (PI " + piId + ")");
-        }
+        // JN-01 검증은 JN-02 까지 넣은 뒤 묶음별로 한 번에 한다(아래 8번).
 
         // 6. JN-02 차변: 송신계좌 DEBIT FEE (balance=0,0)
         Ledger fee = Ledger.fee(
@@ -624,12 +602,8 @@ public class PaymentTransactionService {
                 now, "BOK이체 수수료수익");
         ledgerMapper.insert(feeInc);
 
-        // 8. JN-02 차대변 검증 (P-014)
-        if (fee.getAmount().compareTo(feeInc.getAmount()) != 0) {
-            throw new LedgerBalanceMismatchException(
-                    "JN-02 차변≠대변: DEBIT " + fee.getAmount()
-                            + " ≠ CREDIT " + feeInc.getAmount() + " (PI " + piId + ")");
-        }
+        // 8. 차변=대변 검증 (P-014) — JN-01·JN-02 를 묶음별로 확인한다
+        verifyDoubleEntry(piId);
 
         // 9. PROCESSING→CLEARING (낙관락: pi.getVersion()+2=2 → DB v3)
         int updated2 = paymentInstructionMapper.updateStatus(
@@ -808,6 +782,23 @@ public class PaymentTransactionService {
                 null, reason,
                 now);
         statusHistoryMapper.insert(history);
+    }
+
+    /**
+     * 복식부기 검증 — 이 결제의 분개를 <b>DB 에서 다시 읽어</b> 묶음별 차변=대변을 본다.
+     *
+     * <p>예전에는 방금 만든 두 객체의 금액을 견주었다. 둘 다 같은 지역변수로 만들어졌으니
+     * 그 비교는 참이 될 수 없었고, 그래서 INSERT 누락·차대구분 오류·매퍼 컬럼 어긋남을
+     * 하나도 잡지 못했다. 판단 근거를 메모리가 아니라 저장된 결과로 옮긴다.
+     *
+     * <p>같은 트랜잭션 안이라 아직 커밋 전이지만, 같은 커넥션이므로 방금 넣은 행이 보인다.
+     * 여기서 예외가 나면 트랜잭션 전체가 롤백되어 <b>불균형 상태가 커밋되지 않는다</b> —
+     * 사후에 발견하는 것과 애초에 남지 않게 하는 것은 다르다.
+     *
+     * @see DoubleEntryVerifier
+     */
+    private void verifyDoubleEntry(String piId) {
+        DoubleEntryVerifier.verify(ledgerMapper.selectByPaymentId(piId), "PI " + piId);
     }
 
     /** AUTHORIZED→PROCESSING 전이: updateStatus(낙관락) + PROCESSING_STARTED 이력. txStep4 3종 공용. */
@@ -1116,12 +1107,9 @@ public class PaymentTransactionService {
                 now, networkLabel + " 청산대기 역분개", ctx.reversalReason());
         ledgerMapper.insert(r03);
 
-        // ★ JN-1역 차대변 검증 (P-014): R03(DEBIT) == R01(CREDIT)
-        if (r03.getAmount().compareTo(r01.getAmount()) != 0) {
-            throw new LedgerBalanceMismatchException(
-                    "JN-1역 차변≠대변: DEBIT " + r03.getAmount()
-                            + " ≠ CREDIT " + r01.getAmount() + " (PI " + piId + ")");
-        }
+        // 역분개 검증은 R04 까지 넣은 뒤 묶음별로 한 번에 한다(아래).
+        // 역분개는 원분개와 같은 journal_no 를 쓰므로, 묶음 합계로 보면
+        // 원분개까지 함께 검증된다 — 원 차변+역 차변 = 원 대변+역 대변.
 
         // R02: 송신계좌 CREDIT REVERSAL_FEE (jn2)
         Ledger r02 = Ledger.reversalFee(
@@ -1142,12 +1130,8 @@ public class PaymentTransactionService {
                 now, networkLabel + " 수수료수익 역분개", ctx.reversalReason());
         ledgerMapper.insert(r04);
 
-        // ★ JN-2역 차대변 검증 (P-014): R04(DEBIT) == R02(CREDIT)
-        if (r04.getAmount().compareTo(r02.getAmount()) != 0) {
-            throw new LedgerBalanceMismatchException(
-                    "JN-2역 차변≠대변: DEBIT " + r04.getAmount()
-                            + " ≠ CREDIT " + r02.getAmount() + " (PI " + piId + ")");
-        }
+        // ★ 차변=대변 검증 (P-014) — 원분개·역분개를 묶음별로 확인한다
+        verifyDoubleEntry(piId);
 
         // PI REVERSING → FAILED (낙관락, failure_category — V1 CHECK 기존값)
         int updated = paymentInstructionMapper.updateStatus(
