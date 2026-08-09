@@ -21,3 +21,13 @@ services:
     # 그것이 기본값이고, 그 상태가 정상이다.
     # environment:
     #   FRAUD_GATEWAY_SHARED_SECRET: local-dev-secret
+
+  # 직원용 상담 조회(STAFF_*)를 로컬에서 돌리려면 게이트웨이와 같은 시크릿이 필요하다.
+  # 비워 두면 상담 서비스가 X-Employee-Id 를 믿지 않아 "직원 권한이 필요합니다" 로
+  # 거절한다 — 그것이 기본값이고, 신원을 확인할 수 없으니 그 상태가 맞다.
+  #
+  # 이 값을 넣을 때는 api-gateway 쪽 CONSULTATION_GATEWAY_SHARED_SECRET 도
+  # 같은 값으로 맞춰야 한다. 한쪽만 넣으면 조용히 거절되고 원인이 안 보인다.
+  # consultation-service:
+  #   environment:
+  #     CONSULTATION_GATEWAY_SHARED_SECRET: local-dev-secret

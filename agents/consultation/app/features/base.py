@@ -365,8 +365,12 @@ class FeatureExecutorBase:
     def _validate_staff(self, staff_id: str) -> bool:
         """staff_id 가 employees 테이블에 실제로 존재하는 유효한 직원인지 확인한다.
 
-        staff_id 는 execute_chatbot_feature 엔드포인트에서 JWT 토큰 클레임으로 교체된 후
-        이 메서드에 전달되므로, 클라이언트가 body로 보낸 값은 무시된다.
+        여기까지 오는 staff_id 는 execute_chatbot_feature 에서 **게이트웨이가 검증해
+        주입한 X-Employee-Id 로 덮어쓴 값**이다. 클라이언트가 body 로 보낸 값은 그 지점에서
+        버려지므로 이 메서드에 도달하지 않는다.
+
+        그러니 이 조회는 "사칭 방지"가 아니라 **유효성 확인**이다 — 퇴사자·정지 계정의
+        토큰이 남아 있을 수 있으므로 employees 에 ACTIVE 로 존재하는지 본다.
         """
         rows = self._rows(
             "SELECT employee_id FROM employees WHERE employee_id = :sid AND status = 'ACTIVE'",

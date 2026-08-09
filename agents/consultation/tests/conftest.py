@@ -122,6 +122,30 @@ def audit_spy(monkeypatch) -> RecordingAuditLog:
     return spy
 
 
+# ── 직원 신원 (게이트웨이 주입 헤더) ─────────────────────────────────────────
+#
+# 직원용 기능(STAFF_*)의 직원 ID 는 더 이상 요청 body 에서 오지 않는다. 게이트웨이가
+# JWT 를 검증해 X-Employee-Id 를 주입하고, 상담 서비스는 그 헤더만 믿는다.
+#
+# 그래서 테스트도 body 가 아니라 헤더로 신원을 준다. 예전 테스트들이 body 로
+# staff_id 를 보내 통과하던 것은 **위조가 가능하던 상태를 검증하고 있던 것**이라,
+# 이 픽스처로 옮기면서 함께 고쳤다.
+
+#: 게이트웨이를 거쳤다는 증거. 실제 값은 배포 시 주입한다.
+GATEWAY_SECRET = "test-gateway-secret"
+
+
+@pytest.fixture()
+def staff_headers(monkeypatch):
+    """게이트웨이가 직원 토큰을 검증해 통과시킨 상태를 만든다."""
+    monkeypatch.setenv("CONSULTATION_GATEWAY_SHARED_SECRET", GATEWAY_SECRET)
+
+    def headers(employee_id: str = "EMP001") -> dict[str, str]:
+        return {"X-Gateway-Auth": GATEWAY_SECRET, "X-Employee-Id": employee_id}
+
+    return headers
+
+
 @pytest.fixture()
 def db() -> Session:
     engine = create_engine(

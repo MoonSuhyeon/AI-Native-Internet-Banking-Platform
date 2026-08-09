@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import AdminSidebar from '@/components/admin/AdminSidebar'
-import { executeChatbotFeature } from '@/lib/consultation-api'
+import { executeStaffFeature } from '@/lib/consultation-api'
 import StaffFeatureTable, { StaffColumn } from '@/components/admin/StaffFeatureTable'
 
 const won = (v: unknown) => (v == null || v === '' ? '-' : `${Number(v).toLocaleString('ko-KR')}원`)
@@ -64,24 +64,25 @@ type TabState = { rows: Record<string, unknown>[]; notice: string | null }
 
 export default function ConsultationCustomerPage() {
   const [customerNo, setCustomerNo] = useState('CUST001')
-  // TODO(auth): 직원 ID는 임시 입력. JWT/게이트웨이 역할 연동 시 토큰에서 주입하도록 교체.
-  const [staffId, setStaffId] = useState('1')
   const [activeTab, setActiveTab] = useState(TABS[0].id)
   const [searched, setSearched] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [cache, setCache] = useState<Record<string, TabState>>({})
 
-  const fetchTab = useCallback(async (tabId: string, cNo: string, sId: string) => {
+  // 직원 ID 를 인자로 받지 않는다. 신원은 게이트웨이가 JWT 에서 주입하므로
+  // 화면이 보낼 것이 없다 — 예전에는 입력칸의 값을 그대로 실어 보냈다.
+  const fetchTab = useCallback(async (tabId: string, cNo: string) => {
     const tab = TABS.find(t => t.id === tabId)!
     setLoading(true)
     setError('')
     try {
-      const res = await executeChatbotFeature(tab.code, { customer_no: cNo.trim(), staff_id: sId.trim() })
+      const res = await executeStaffFeature(tab.code, { customer_no: cNo.trim() })
       const notice = res.status === 'OK' ? null : res.message
       setCache(prev => ({ ...prev, [tabId]: { rows: res.data ?? [], notice } }))
     } catch {
-      setError('조회에 실패했습니다. 상담 서비스 연결과 직원 권한을 확인해주세요.')
+      // 401/403 도 여기로 온다 — 직원 클레임이 없는 토큰으로는 열람할 수 없다.
+      setError('조회에 실패했습니다. 직원 계정으로 로그인했는지, 상담 서비스 연결을 확인해주세요.')
       setCache(prev => ({ ...prev, [tabId]: { rows: [], notice: null } }))
     } finally {
       setLoading(false)
@@ -89,19 +90,19 @@ export default function ConsultationCustomerPage() {
   }, [])
 
   function onSearch() {
-    if (!customerNo.trim() || !staffId.trim()) {
-      setError('고객번호와 직원 ID를 입력해주세요.')
+    if (!customerNo.trim()) {
+      setError('고객번호를 입력해주세요.')
       return
     }
     setSearched(true)
     setCache({})
-    fetchTab(activeTab, customerNo, staffId)
+    fetchTab(activeTab, customerNo)
   }
 
   function onTabChange(tabId: string) {
     setActiveTab(tabId)
     setError('')
-    if (searched && !cache[tabId]) fetchTab(tabId, customerNo, staffId)
+    if (searched && !cache[tabId]) fetchTab(tabId, customerNo)
   }
 
   const tab = TABS.find(t => t.id === activeTab)!
@@ -128,12 +129,6 @@ export default function ConsultationCustomerPage() {
                   onKeyDown={e => { if (e.key === 'Enter') onSearch() }}
                   className="mt-1 block h-9 w-48 rounded border border-gray-300 px-3 text-[13px] text-gray-800 focus:outline-none focus:border-[#1B3A6B]" />
               </label>
-              <label className="text-xs font-medium text-gray-500">
-                직원 ID
-                <input value={staffId} onChange={e => setStaffId(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') onSearch() }}
-                  className="mt-1 block h-9 w-28 rounded border border-gray-300 px-3 text-[13px] text-gray-800 focus:outline-none focus:border-[#1B3A6B]" />
-              </label>
               <button onClick={onSearch} disabled={loading}
                 className="h-9 px-6 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                 {loading ? '조회 중...' : '조회'}
@@ -141,7 +136,7 @@ export default function ConsultationCustomerPage() {
             </div>
             {error && <p className="mt-3 text-[13px] text-red-500">{error}</p>}
             <p className="mt-2 text-[11px] text-gray-400">
-              ※ 직원 ID 인증은 임시입니다. 추후 로그인/권한(JWT) 연동 시 자동 적용됩니다.
+              ※ 열람 기록은 로그인한 직원 계정으로 남습니다.
             </p>
           </div>
 
@@ -160,7 +155,7 @@ export default function ConsultationCustomerPage() {
 
           {/* 본문 */}
           {!searched ? (
-            <p className="py-10 text-center text-sm text-gray-400">고객번호와 직원 ID를 입력하고 조회하세요.</p>
+            <p className="py-10 text-center text-sm text-gray-400">고객번호를 입력하고 조회하세요.</p>
           ) : (
             <StaffFeatureTable
               columns={tab.columns}

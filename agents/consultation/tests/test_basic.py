@@ -77,13 +77,14 @@ def test_계좌_조회(service):
         app.dependency_overrides.clear()
 
 
-def test_거래내역_조회(service):
+def test_거래내역_조회(service, staff_headers):
     """POST /chatbot/features/STAFF_TRANSFER_FLOW/execute — 거래내역"""
     client = _client(service)
     try:
         resp = client.post(
             "/chatbot/features/STAFF_TRANSFER_FLOW/execute",
-            json={"customer_no": CUST, "staff_id": STAFF},
+            json={"customer_no": CUST},
+            headers=staff_headers(STAFF),
         )
         assert resp.status_code == 200
         body = resp.json()

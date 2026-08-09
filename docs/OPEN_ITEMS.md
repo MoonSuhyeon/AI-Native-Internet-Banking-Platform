@@ -27,8 +27,9 @@
 |---|---|---|
 | ~~사망 플래그 미연동~~ | **해결.** `party_person.death_date` 를 읽는다. 컬럼은 원래 있었고 배선만 빠져 있었다 | `InternalHolderController` |
 | ~~비밀번호 변경 이력 미연동~~ | **해결.** `password_history.countChangesSince` 를 읽는다. 리포지토리 메서드도 이미 있었다 | `InternalAuthEventsController` |
-| **관리자 화면 직원 ID 임시 입력** | JWT·게이트웨이 역할 연동 전이라 화면에서 직접 입력받는다 — 행위자를 위조할 수 있다 | `admin/consultation/customer` |
-| **상담 서비스 인증 미들웨어** | JWT 기반 인증이 없다 | `agents/consultation/app/main.py` |
+| ~~관리자 화면 직원 ID 임시 입력~~ | **해결.** 입력칸을 없애고 게이트웨이가 JWT 에서 주입한 `X-Employee-Id` 만 신뢰한다 | `test_staff_identity_trust.py` |
+| **상담 서비스 네트워크 격리** | 8087 이 열려 있으면 게이트웨이를 우회할 수 있다. 공유 시크릿은 최소 방어선일 뿐 | 배포 설정 |
+| **상담 서비스 인증 미들웨어** | 직원 기능은 게이트웨이 헤더로 막았으나, 고객 챗봇 경로는 여전히 body 의 `customer_no` 를 그대로 믿는다(IDOR) | `agents/consultation/app/main.py` |
 | **P-029 self-listening** | 자기가 보낸 메시지를 자기가 받는 것을 sender 은행코드로만 막는다 | `KftcNetworkResponseConsumer` |
 | **역분개 미구현** | `reversal_yn` 스키마만 있고 코드가 없다 | 결제 원장 |
 
@@ -83,6 +84,10 @@
    이미 있었고 컨트롤러에서 하드코딩된 `false` 만 남아 있었다.
 2. **API 스펙의 병합 반영** — 지금 스펙을 보고 붙이면 없는 서비스를 부르게 된다.
 3. ~~검색 품질 측정~~ — **해결.** 남은 것은 주기 실행과 ES 하이브리드 실측이다.
-4. **관리자 화면 직원 ID** — 행위자 위조가 가능한 상태로 감사 로그가 쌓인다.
+4. ~~관리자 화면 직원 ID~~ — **해결.** 끊긴 곳이 다섯 군데였다. 화면 입력칸, 토큰
+   미첨부, 프록시의 헤더 제거, 토큰 없을 때의 body 폴백, 그리고 틀린 클레임 이름
+   (`empId` 를 안 찾아 고객 ID 인 `sub` 로 떨어지던 것).
+5. **고객 챗봇 IDOR** — 이제 남은 같은 계열의 구멍이다. 남의 `customer_no` 를 적으면
+   그대로 조회된다.
 
 나머지는 "후속" 으로 적힌 대로 두어도 지금 무언가를 막지 않는다.

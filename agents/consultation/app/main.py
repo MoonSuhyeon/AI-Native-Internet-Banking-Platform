@@ -420,33 +420,50 @@ def chatbot_feature_detail(
     return feature
 
 
-def _extract_staff_id_from_token(authorization: str | None) -> str | None:
-    """Authorization: Bearer 헤더에서 staff_id(employee_id)를 추출한다.
+# ── 신뢰 경계 — 직원 신원을 어디서 받는가 ────────────────────────────────────
+#
+# 직원용 기능 5종(STAFF_*)은 고객 개인정보·계좌·거래·상담이력을 연다. 그래서
+# "누가 열람했는가"가 이 서비스에서 가장 중요한 기록인데, 오랫동안 그 값이
+# **화면의 자유 입력값**이었다. 아무 직원 번호나 적으면 그 사람 앞으로 기록이 쌓였다.
+#
+# 이전 구현은 Authorization 헤더를 직접 base64 디코딩했다. 세 가지가 잘못돼 있었다.
+#   1) 서명을 확인하지 않았다 — 페이로드를 손으로 만들어 붙이면 그대로 통과한다.
+#   2) 클레임 이름이 틀렸다. 발급하는 쪽(JwtProvider)은 ``empId`` 로 넣는데
+#      찾는 목록에 그 이름이 없어 마지막 ``sub`` 로 떨어졌고, ``sub`` 는 고객 ID 다.
+#      즉 토큰이 와도 **고객 ID 를 직원 ID 로 기록**할 참이었다.
+#   3) 토큰이 없으면 body 값으로 되돌아갔다(fail-open). 프론트가 애초에
+#      Authorization 을 붙이지 않았으므로, 실제로 쓰인 경로는 이것뿐이었다.
+#
+# 지금은 게이트웨이가 유일한 신원 출처다. JwtAuthenticationFilter 가 클라이언트발
+# X-Employee-Id 를 지우고 검증된 empId 클레임으로 덮어쓴다. 여기서는 그 헤더만 믿고,
+# body 의 staff_id 로는 **절대 되돌아가지 않는다**.
+#
+#: 게이트웨이와 나눠 갖는 시크릿. 설정되지 않으면 신원 헤더를 믿지 않는다(fail-closed).
+#: 그 상태에서 직원 기능은 "직원 권한이 필요합니다" 로 거절된다 — 조용히 통과시키면
+#: 위조 가능한 상태가 그대로인데 기록만 믿음직해 보인다.
+_GATEWAY_SECRET_ENV = "CONSULTATION_GATEWAY_SHARED_SECRET"
 
-    서명 검증은 API Gateway(Java)에서 담당하므로 여기서는 페이로드 디코딩만 수행.
-    클라이언트가 body로 전달한 staff_id 대신 이 값을 사용해 사칭을 방지한다.
-    """
-    import base64
-    import json
 
-    if not authorization or not authorization.startswith("Bearer "):
+def _gateway_verified(presented: str | None) -> bool:
+    """이 요청이 게이트웨이를 거쳐 왔는지. fraud-investigation-agent 와 같은 규약."""
+    import hmac
+    import os
+
+    expected = os.getenv(_GATEWAY_SECRET_ENV, "").strip()
+    if not expected or not presented:
+        return False
+    # 타이밍 공격 회피 — 시크릿 비교에 == 를 쓰지 않는다.
+    return hmac.compare_digest(expected, presented)
+
+
+def _verified_staff_id(http_request: Request) -> str | None:
+    """게이트웨이가 검증해 주입한 직원 ID. 확인되지 않으면 None."""
+    if not _gateway_verified(http_request.headers.get("X-Gateway-Auth")):
         return None
-    parts = authorization[7:].split(".")
-    if len(parts) < 2:
-        return None
-    try:
-        padding = "=" * (-len(parts[1]) % 4)
-        payload = json.loads(base64.b64decode(parts[1] + padding).decode())
-        sid = (
-            payload.get("staff_id")
-            or payload.get("staffId")
-            or payload.get("employee_id")
-            or payload.get("employeeId")
-            or payload.get("sub")
-        )
-        return str(sid) if sid is not None else None
-    except Exception:
-        return None
+    # 게이트웨이는 고객 토큰에도 헤더를 붙이되 빈 문자열을 넣는다.
+    # 빈 값을 직원 ID 로 넘기면 employees 조회가 아무것도 못 찾아
+    # "권한 없음" 이 아니라 "직원 없음" 으로 흐려진다.
+    return (http_request.headers.get("X-Employee-Id") or "").strip() or None
 
 
 @app.post("/chatbot/features/{feature_code}/execute", response_model=ChatbotFeatureExecuteResponse)
@@ -456,10 +473,9 @@ def execute_chatbot_feature(
     http_request: Request,
     service: ChatbotService = Depends(get_chatbot_service),
 ) -> ChatbotFeatureExecuteResponse:
-    # staff_id를 클라이언트 body 값 대신 JWT 토큰에서 추출해 사칭을 방지한다.
-    token_staff_id = _extract_staff_id_from_token(http_request.headers.get("Authorization"))
-    if token_staff_id is not None:
-        request.staff_id = token_staff_id
+    # 게이트웨이가 검증한 값으로 덮어쓴다. 검증되지 않았으면 None 을 넣어
+    # body 로 실려 온 값을 확실히 버린다 — 여기서 대입을 건너뛰면 사칭이 되살아난다.
+    request.staff_id = _verified_staff_id(http_request)
     result = service.execute_feature(feature_code, request)
     if result.status == "NOT_FOUND":
         raise HTTPException(status_code=404, detail=result.message)

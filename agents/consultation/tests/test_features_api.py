@@ -361,12 +361,13 @@ class TestExecuteStaffSupport:
         finally:
             app.dependency_overrides.clear()
 
-    def test_staff_customer_ok(self, service):
+    def test_staff_customer_ok(self, service, staff_headers):
         client = _client(service)
         try:
             resp = client.post(
                 "/chatbot/features/STAFF_CUSTOMER/execute",
-                json={"customer_no": CUST, "staff_id": STAFF},
+                json={"customer_no": CUST},
+                headers=staff_headers(STAFF),
             )
             assert resp.status_code == 200
             assert resp.json()["status"] == "OK"
@@ -374,12 +375,13 @@ class TestExecuteStaffSupport:
         finally:
             app.dependency_overrides.clear()
 
-    def test_staff_contract_ok(self, service):
+    def test_staff_contract_ok(self, service, staff_headers):
         client = _client(service)
         try:
             resp = client.post(
                 "/chatbot/features/STAFF_CONTRACT/execute",
-                json={"customer_no": CUST, "staff_id": STAFF},
+                json={"customer_no": CUST},
+                headers=staff_headers(STAFF),
             )
             assert resp.status_code == 200
             body = resp.json()
@@ -388,24 +390,26 @@ class TestExecuteStaffSupport:
         finally:
             app.dependency_overrides.clear()
 
-    def test_staff_account_ok(self, service):
+    def test_staff_account_ok(self, service, staff_headers):
         client = _client(service)
         try:
             resp = client.post(
                 "/chatbot/features/STAFF_ACCOUNT/execute",
-                json={"customer_no": CUST, "staff_id": STAFF},
+                json={"customer_no": CUST},
+                headers=staff_headers(STAFF),
             )
             assert resp.status_code == 200
             assert resp.json()["status"] == "OK"
         finally:
             app.dependency_overrides.clear()
 
-    def test_staff_transfer_flow_ok(self, service):
+    def test_staff_transfer_flow_ok(self, service, staff_headers):
         client = _client(service)
         try:
             resp = client.post(
                 "/chatbot/features/STAFF_TRANSFER_FLOW/execute",
-                json={"customer_no": CUST, "staff_id": STAFF},
+                json={"customer_no": CUST},
+                headers=staff_headers(STAFF),
             )
             assert resp.status_code == 200
             body = resp.json()
@@ -415,12 +419,13 @@ class TestExecuteStaffSupport:
         finally:
             app.dependency_overrides.clear()
 
-    def test_staff_transfer_flow_data_fields(self, service):
+    def test_staff_transfer_flow_data_fields(self, service, staff_headers):
         client = _client(service)
         try:
             resp = client.post(
                 "/chatbot/features/STAFF_TRANSFER_FLOW/execute",
-                json={"customer_no": CUST, "staff_id": STAFF},
+                json={"customer_no": CUST},
+                headers=staff_headers(STAFF),
             )
             tx = resp.json()["data"][0]
             assert "transaction_type" in tx
@@ -430,12 +435,13 @@ class TestExecuteStaffSupport:
         finally:
             app.dependency_overrides.clear()
 
-    def test_staff_consultation_history_empty(self, service):
+    def test_staff_consultation_history_empty(self, service, staff_headers):
         client = _client(service)
         try:
             resp = client.post(
                 "/chatbot/features/STAFF_CONSULTATION_HISTORY/execute",
-                json={"customer_no": CUST, "staff_id": STAFF},
+                json={"customer_no": CUST},
+                headers=staff_headers(STAFF),
             )
             assert resp.status_code == 200
             assert resp.json()["status"] == "EMPTY"

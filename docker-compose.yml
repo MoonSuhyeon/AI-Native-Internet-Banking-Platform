@@ -495,6 +495,10 @@ services:
       CONSULTATION_CORE_BANKING_URL: http://core-banking-a:8082
       CONSULTATION_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONSULTATION_KAFKA_ENABLED: "false"
+      # 게이트웨이와 나눠 갖는 시크릿. 이 값이 비면 직원용 조회(STAFF_*)가 거절된다 —
+      # 신원을 확인할 수 없는데 열람을 허용하면 감사 기록만 그럴듯해진다(fail-closed).
+      # 게이트웨이의 CONSULTATION_GATEWAY_SHARED_SECRET 와 같은 값이어야 한다.
+      CONSULTATION_GATEWAY_SHARED_SECRET: ${CONSULTATION_GATEWAY_SHARED_SECRET:-}
       CONSULTATION_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       CONSULTATION_OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       GOAL_AGENT_ENABLED: ${GOAL_AGENT_ENABLED:-true}

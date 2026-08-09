@@ -91,6 +91,30 @@ spring:
           predicates:
             - Path=/api/v1/payments/**
 
+        # 직원용 상담 조회 (JWT 필요)
+        #
+        # 조회 대상이 고객 개인정보·계좌·거래·상담이력이라 "누가 열람했는가"가 감사의
+        # 핵심이다. 그런데 지금까지 직원 ID 는 화면의 자유 입력값이 body 로 실려 왔다 —
+        # 아무 직원 번호나 적으면 그 사람 앞으로 열람 기록이 쌓였다.
+        #
+        # 이 라우트를 거치면 JwtAuthenticationFilter 가 클라이언트발 X-Employee-Id 를
+        # 제거한 뒤 JWT 의 empId 클레임으로 덮어쓴다. 상담 서비스는 그 헤더만 믿고
+        # body 의 staff_id 는 쓰지 않는다.
+        #
+        # ⚠ fraud-agent 와 같은 한계다. 상담 서비스가 8087 로 직접 열려 있으면
+        #   게이트웨이를 우회하면 그만이라, 네트워크 격리와 한 세트여야 완결된다.
+        #   공유 시크릿은 그때까지의 최소 방어선이다.
+        - id: consultation-staff
+          uri: http://${CONSULTATION_SERVICE_HOST:localhost}:${CONSULTATION_SERVICE_PORT:8087}
+          predicates:
+            - Path=/api/v1/internal/consultation/**
+          filters:
+            # 상담 서비스는 접두어 없이 /chatbot/... 로 받는다.
+            #   /api/v1/internal/consultation/chatbot/features/X/execute
+            #     → /chatbot/features/X/execute
+            - RewritePath=/api/v1/internal/consultation/(?<segment>.*), /$\{segment}
+            - AddRequestHeader=X-Gateway-Auth, ${CONSULTATION_GATEWAY_SHARED_SECRET:}
+
         # 이상거래 조사 에이전트 (JWT 필요)
         #
         # 이 라우트가 있어야 하는 이유는 단순 프록시가 아니다. 조사 승인(/approve)은
