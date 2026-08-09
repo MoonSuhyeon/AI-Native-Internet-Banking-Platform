@@ -1,0 +1,99 @@
+# Recording rules — 대시보드가 매번 다시 계산하지 않도록 미리 접어 둔다.
+#
+# 왜 필요한가
+#   대시보드 패널은 열 때마다 원시 시계열을 훑는다. 특히 histogram_quantile 은
+#   버킷 전체를 읽고, rate() 는 창 안의 모든 샘플을 본다. 패널이 늘수록,
+#   조회 구간이 길수록 느려진다 — 오늘 만든 에이전트 대시보드가 그 모양이다.
+#
+#   여기서 접어 두면 대시보드는 이미 계산된 한 줄만 읽는다.
+#
+# 이름 규칙
+#   <집계수준>:<원지표>:<연산>  — Prometheus 관례를 따른다.
+#   이름만 보고 무엇을 접은 것인지 알 수 있어야 한다.
+#
+# 주의
+#   Prometheus 자체에는 다운샘플링이 없다. 오래된 데이터를 성글게 보관하려면
+#   Thanos·Mimir 같은 장기 저장소가 필요하다. 여기서는 recording rule 로
+#   조회 비용을 줄이고 retention 으로 보관량을 제한하는 선까지만 한다.
+
+groups:
+  # ─────────────────────────────────────────────────────────────────────────
+  # AI 에이전트 채택률 — 모든 에이전트 대시보드의 핵심 축이다.
+  # 분모가 0일 때 나누지 않도록 원 쿼리와 같은 방식으로 막는다.
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: agent_adoption
+    interval: 30s
+    rules:
+      # 서류 심사: 심사원이 자동 판정(HOLD)을 위조로 확정한 비율
+      - record: agent:doc_review_confirm_rate:ratio30m
+        expr: |
+          sum(rate(doc_agent_human_review_total{decision="CONFIRMED_FORGERY"}[30m]))
+          /
+          (sum(rate(doc_agent_human_review_total[30m])) > 0)
+
+      # 이상거래 조사: 분석가가 권고를 승인한 비율
+      - record: agent:fraud_recommendation_approval_rate:ratio30m
+        expr: |
+          sum(rate(fraud_recommendation_reviewed_total{decision="approved"}[30m]))
+          /
+          (sum(rate(fraud_recommendation_reviewed_total[30m])) > 0)
+
+      # 대출 심사: AI 근거와 Track 결정이 어긋난 비율
+      - record: agent:loan_review_disagreement_rate:ratio30m
+        expr: |
+          sum(rate(ai_agent_disagreement_total[30m]))
+          /
+          (sum(rate(ai_agent_runs_total[30m])) > 0)
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 지연 분위수 — histogram_quantile 이 가장 비싸다. 여기서 한 번만 계산한다.
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: agent_latency
+    interval: 30s
+    rules:
+      - record: agent:doc_agent_pipeline_duration:p95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(doc_agent_pipeline_duration_seconds_bucket[30m])) by (le))
+
+      - record: agent:doc_agent_stage_duration:p95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(doc_agent_stage_duration_seconds_bucket[30m])) by (le, stage))
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 검색 품질 — RAG 가 관련 있는 문서를 찾고 있는가.
+  # 백엔드(inline/es)를 나눠 둬야 어느 쪽이 나쁜지 보인다.
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: rag_quality
+    interval: 30s
+    rules:
+      # 찾긴 했는데 관련이 없는 비율. miss(0건)와 다른 사건이다.
+      - record: rag:low_relevance_rate:ratio30m
+        expr: |
+          sum by (corpus, backend) (rate(rag_search_low_relevance_total[30m]))
+          /
+          (sum by (corpus, backend) (rate(rag_chunk_count_count[30m])) > 0)
+
+      - record: rag:top_score:avg30m
+        expr: |
+          sum by (corpus, backend) (rate(rag_search_top_score_sum[30m]))
+          /
+          (sum by (corpus, backend) (rate(rag_search_top_score_count[30m])) > 0)
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 이상거래 탐지 — 사전·사후 두 계층을 같은 이름으로 접어 비교할 수 있게 한다.
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: fds
+    interval: 30s
+    rules:
+      - record: fds:tier_rate:by_layer30m
+        expr: sum by (layer, tier) (rate(fds_tier_decided_total[30m]))
+
+      # 지연 장치의 성능. 지연시킨 건 중 실제로 취소된 비율 —
+      # 취소가 전혀 없으면 정상 거래만 불편하게 만든 것이다.
+      - record: fds:delay_cancel_rate:ratio1h
+        expr: |
+          sum(rate(payment_fds_delayed_cancelled_total[1h]))
+          /
+          (sum(rate(payment_fds_precheck_outcome_total{outcome="delayed"}[1h])) > 0)

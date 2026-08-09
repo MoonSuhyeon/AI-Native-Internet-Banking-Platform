@@ -46,6 +46,15 @@ public class RagSearchService implements RagSearchBackend {
     private final AgentTracer tracer;
 
     /**
+     * 이 점수 미만이면 "관련 없음" 으로 센다.
+     *
+     * <p>절대값의 의미는 백엔드마다 다르므로 운영에서 분포를 보고 맞춰야 한다.
+     * 그래서 설정으로 뺐다 — 기본값은 분포를 보기 전의 잠정치다.
+     */
+    @org.springframework.beans.factory.annotation.Value("${ai.rag.relevance-floor:0.3}")
+    private double relevanceFloor;
+
+    /**
      * 하이브리드 검색.
      *
      * @param corpus      코퍼스 식별자
@@ -83,6 +92,10 @@ public class RagSearchService implements RagSearchBackend {
             metricsRecorder.recordRagChunkCount(corpus, results.size());
             if (results.isEmpty()) {
                 metricsRecorder.recordRagSearchMiss(corpus);
+            } else {
+                // 건수만으로는 "찾았는데 전부 관련 없음" 을 볼 수 없다. 최고 점수를
+                // 함께 남겨야 검색이 쓸모 있었는지 판단할 수 있다.
+                recordRelevance(corpus, "inline", results);
             }
             try (var trace = tracer.startTrace("rag-search", java.util.Map.of("corpus", corpus))) {
                 trace.recordSpan("rag-search",
@@ -194,6 +207,23 @@ public class RagSearchService implements RagSearchBackend {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * 최고 점수를 남기고, 임계에 못 미치면 따로 센다.
+     *
+     * <p>"못 찾았다"(miss)와 "찾았는데 관련이 없다"(low relevance)는 원인이 다르다.
+     * 전자는 색인·필터를, 후자는 임베딩·질의를 본다. 합쳐 세면 어느 쪽인지 모른다.
+     */
+    private void recordRelevance(String corpus, String backend, List<Chunk> results) {
+        double topScore = results.stream()
+                .mapToDouble(Chunk::hybridScore)
+                .max()
+                .orElse(0.0);
+        metricsRecorder.recordRagTopScore(corpus, backend, topScore);
+        if (topScore < relevanceFloor) {
+            metricsRecorder.recordRagLowRelevance(corpus, backend);
+        }
+    }
+
     private Chunk mapChunk(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
         long id = rs.getLong("id");
         String sourceId = rs.getString("source_id");

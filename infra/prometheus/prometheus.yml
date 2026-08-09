@@ -4,6 +4,9 @@ global:
 
 rule_files:
   - "alerts.yml"
+  # 대시보드가 매번 다시 계산하지 않도록 미리 접어 둔 지표.
+  # 특히 histogram_quantile 과 긴 창의 rate() 가 비싸다.
+  - "rules.yml"
 
 alerting:
   alertmanagers:

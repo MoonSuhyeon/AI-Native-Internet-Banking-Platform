@@ -50,6 +50,10 @@ public class EsHybridSearchService implements RagSearchBackend {
     private final RagSearchProperties searchProps;
     private final AgentMetricsRecorder metricsRecorder;
 
+    /** 이 점수 미만이면 "관련 없음" 으로 센다. 백엔드마다 척도가 달라 설정으로 뺀다. */
+    @org.springframework.beans.factory.annotation.Value("${ai.rag.relevance-floor:0.3}")
+    private double relevanceFloor;
+
     /**
      * 하이브리드 검색 (BM25 + kNN → RRF).
      *
@@ -87,6 +91,16 @@ public class EsHybridSearchService implements RagSearchBackend {
             }
             metricsRecorder.recordRagSearchLatency(corpus, "rrf", Duration.between(start, Instant.now()));
             metricsRecorder.recordRagChunkCount(corpus, results.size());
+            if (!results.isEmpty()) {
+                // 건수만으로는 "찾았는데 전부 관련 없음" 을 볼 수 없다.
+                // backend 태그로 inline 과 나눠 두어야 두 백엔드를 비교할 수 있다.
+                double topScore = results.stream()
+                        .mapToDouble(Chunk::hybridScore).max().orElse(0.0);
+                metricsRecorder.recordRagTopScore(corpus, "es", topScore);
+                if (topScore < relevanceFloor) {
+                    metricsRecorder.recordRagLowRelevance(corpus, "es");
+                }
+            }
             if (results.isEmpty()) {
                 metricsRecorder.recordRagSearchMiss(corpus);
             }

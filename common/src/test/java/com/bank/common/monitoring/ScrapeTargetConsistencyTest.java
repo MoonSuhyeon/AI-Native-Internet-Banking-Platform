@@ -143,6 +143,56 @@ class ScrapeTargetConsistencyTest {
                 .isEmpty();
     }
 
+    @Test
+    @DisplayName("대시보드가 참조하는 recording rule 이 실제로 정의돼 있다")
+    void referencedRecordingRulesExist() throws IOException {
+        // 무거운 쿼리를 recording rule 로 접어 두면 대시보드가 빨라지지만,
+        // 룰 이름이 어긋나면 패널이 조용히 빈다 — 쿼리는 유효하고 결과만 0건이다.
+        // application 라벨과 같은 종류의 사고이고, 같은 이유로 눈으로는 못 잡는다.
+        Path rulesFile = REPO_ROOT.resolve("infra/prometheus/rules.yml");
+        if (!Files.exists(rulesFile)) {
+            return;   // 룰을 쓰지 않는 구성도 유효하다
+        }
+
+        Set<String> defined = new LinkedHashSet<>();
+        Matcher rec = Pattern.compile("record:\s*([a-zA-Z_][a-zA-Z0-9_:]*)")
+                .matcher(Files.readString(rulesFile));
+        while (rec.find()) defined.add(rec.group(1));
+
+        Set<String> referenced = new LinkedHashSet<>();
+        // recording rule 이름은 콜론을 포함한다 — 일반 지표 이름과 그 점에서 구분된다.
+        Pattern ruleRef = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*:[a-zA-Z0-9_:]+)");
+        for (Path f : monitoringFiles()) {
+            if (!f.getFileName().toString().endsWith(".json")) continue;
+            Matcher m = ruleRef.matcher(Files.readString(f));
+            while (m.find()) {
+                String name = m.group(1);
+                // http:// 같은 URL 조각을 걸러낸다.
+                if (!name.contains("//")) referenced.add(name);
+            }
+        }
+        referenced.retainAll(namespacePrefixed(referenced));
+
+        Set<String> missing = new LinkedHashSet<>(referenced);
+        missing.removeAll(defined);
+
+        assertThat(missing)
+                .as("대시보드가 참조하는 recording rule 이 rules.yml 에 없다. "
+                    + "그 패널은 항상 0건이다. 정의된 룰: %s", defined)
+                .isEmpty();
+    }
+
+    /** 우리가 쓰는 recording rule 네임스페이스만 남긴다(agent:, rag:, fds:). */
+    private Set<String> namespacePrefixed(Set<String> names) {
+        Set<String> kept = new LinkedHashSet<>();
+        for (String n : names) {
+            if (n.startsWith("agent:") || n.startsWith("rag:") || n.startsWith("fds:")) {
+                kept.add(n);
+            }
+        }
+        return kept;
+    }
+
     /**
      * 지표에 실제로 붙는 application 라벨 값의 집합.
      *

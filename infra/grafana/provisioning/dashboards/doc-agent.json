@@ -206,7 +206,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(doc_agent_pipeline_duration_seconds_bucket[30m])) by (le))",
+          "expr": "agent:doc_agent_pipeline_duration:p95",
           "legendFormat": "p95",
           "refId": "A"
         }
@@ -351,7 +351,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, stage) (rate(doc_agent_stage_duration_seconds_bucket[30m])))",
+          "expr": "agent:doc_agent_stage_duration:p95",
           "legendFormat": "{{stage}}",
           "refId": "A"
         }

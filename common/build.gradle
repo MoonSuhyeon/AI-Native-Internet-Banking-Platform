@@ -35,5 +35,7 @@ tasks.named('test') {
     inputs.file(rootProject.file('docker-compose.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.file('infra/prometheus/prometheus.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.file('infra/prometheus/alerts.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
+    // 선언하지 않으면 이 파일만 바뀌었을 때 테스트가 up-to-date 로 건너뛴다.
+    inputs.file(rootProject.file('infra/prometheus/rules.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.file('infra/grafana/provisioning/dashboards')).withPathSensitivity(PathSensitivity.RELATIVE)
 }

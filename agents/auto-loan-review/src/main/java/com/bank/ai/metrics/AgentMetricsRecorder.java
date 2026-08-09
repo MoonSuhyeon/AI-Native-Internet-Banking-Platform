@@ -32,12 +32,15 @@ import java.time.Duration;
  *   <li>{@code ai.agent.rpm.remaining}            Gauge               — (LlmRequestRateMeter 등록)</li>
  *   <li>{@code ai.agent.rpd.remaining}            Gauge               — (LlmRequestRateMeter 등록)</li>
  *   <li>{@code ai.agent.disagreement.total}       Counter             track</li>
+ *   <li>{@code ai.shadow.divergence.total}        Counter             track, backend</li>
  *   <li>{@code ai.agent.fallback.total}           Counter             reason</li>
  *   <li>{@code ai.agent.hard.fail.total}          Counter             reason</li>
  *   <li>{@code ai.audit.log.size.bytes}           DistributionSummary —</li>
  *   <li>{@code rag.search.latency.seconds}        Timer               corpus</li>
  *   <li>{@code rag.search.miss.total}             Counter             corpus</li>
  *   <li>{@code rag.chunk.count}                   DistributionSummary corpus</li>
+ *   <li>{@code rag.search.top.score}            DistributionSummary corpus, backend</li>
+ *   <li>{@code rag.search.low.relevance.total}  Counter             corpus, backend</li>
  *   <li>{@code rag.citation.count.per.report}     DistributionSummary track</li>
  * </ul>
  *
@@ -240,6 +243,66 @@ public class AgentMetricsRecorder {
      * loan-service 의 {@code CaseOutboxLagMonitor} 에서 Gauge 로도 등록하므로
      * 여기서는 auto-loan-review 측에서 직접 측정 가능한 경우에만 호출한다.
      */
+    /**
+     * 검색 결과의 최고 점수. 검색이 <b>관련 있는</b> 문서를 찾았는지를 보여준다.
+     *
+     * <p><b>왜 건수만으로는 부족한가.</b> {@code rag.chunk.count} 와 {@code rag.search.miss}
+     * 는 "몇 개 찾았나" 만 말한다. 0건은 잡히지만, <b>10건을 찾았는데 전부 관련이 없는
+     * 경우</b>는 정상으로 보인다. 그러면 LLM 이 엉뚱한 근거로 답을 만들고, 그 답은
+     * 자신 있게 틀린다 — 실무에서 RAG 가 실패하는 대표적인 방식이다.
+     *
+     * <p>점수 분포가 낮은 쪽으로 쏠리면 임베딩·청킹·질의 재작성 중 하나를 손볼 때다.
+     * 반대로 항상 높으면 임계가 느슨해 아무거나 통과시키고 있을 수 있다.
+     *
+     * <p><b>Recall@K·MRR 은 여기서 못 잰다.</b> 정답 문서를 알아야 하는데 운영 중에는
+     * 없다. 그것은 평가셋을 두고 eval 워크플로에서 재야 한다 — 이 지표는 그 대신이
+     * 아니라, 평가셋 없이도 매일 볼 수 있는 근사값이다.
+     *
+     * @param backend 어느 백엔드가 낸 점수인가(inline / es). 둘을 비교하려면 나뉘어야 한다.
+     */
+    /**
+     * 섀도 실행 결과가 실제 실행과 갈린 수.
+     *
+     * <p><b>왜 별도 지표인가.</b> 예전에는 이것을 {@code ai.agent.disagreement.total} 로
+     * 올렸다. 그 지표는 <b>AI 근거와 Track 결정이 어긋난 비율</b>, 즉 이 서비스의 성능 축이다.
+     * 섀도 불일치를 거기 섞으면 섀도를 켜는 순간 성능 지표가 오염된다 — 새 백엔드를
+     * 시험했을 뿐인데 "AI 판단이 나빠졌다" 로 보인다.
+     *
+     * <p>섀도는 사용자 영향 없이 비교하는 장치다. 그 비교 결과가 실제 성능 지표를
+     * 흔들면 장치의 전제가 깨진다.
+     *
+     * @param backend 섀도가 쓴 RAG 백엔드. 무엇을 시험했는지 나뉘어야 비교가 된다.
+     */
+    public void recordShadowDivergence(String track, String backend) {
+        Counter.builder("ai.shadow.divergence.total")
+                .description("섀도 실행이 실제 실행과 갈린 수")
+                .tags("track", track, "backend", backend == null ? "unknown" : backend)
+                .register(registry)
+                .increment();
+    }
+
+    public void recordRagTopScore(String corpus, String backend, double topScore) {
+        DistributionSummary.builder("rag.search.top.score")
+                .description("검색 결과 최고 점수 분포 (관련성 근사)")
+                .tags("corpus", corpus, "backend", backend)
+                .register(registry)
+                .record(topScore);
+    }
+
+    /**
+     * 점수가 임계에 못 미쳐 사실상 쓸모없는 검색. miss 와 나눠 센다.
+     *
+     * <p>"못 찾았다" 와 "찾았는데 관련이 없다" 는 원인이 다르다. 전자는 색인이나
+     * 필터를 보고, 후자는 임베딩이나 질의를 본다. 합쳐 세면 어느 쪽인지 알 수 없다.
+     */
+    public void recordRagLowRelevance(String corpus, String backend) {
+        Counter.builder("rag.search.low.relevance.total")
+                .description("최고 점수가 임계 미만인 검색 수")
+                .tags("corpus", corpus, "backend", backend)
+                .register(registry)
+                .increment();
+    }
+
     public void recordRagIndexLag(String corpus, Duration lag) {
         Timer.builder("rag.index.lag.seconds")
                 .tag(AgentMetricsTags.CORPUS, corpus)

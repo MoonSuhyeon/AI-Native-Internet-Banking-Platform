@@ -69,7 +69,11 @@ public class ShadowModeService {
             repository.insert(result);
 
             if (result.diverged()) {
-                metricsRecorder.recordDisagreement(decision.track());
+                // 성능 지표(ai.agent.disagreement)와 섞지 않는다. 섀도는 사용자 영향 없이
+                // 비교하는 장치인데, 그 결과가 성능 지표를 흔들면 전제가 깨진다 —
+                // 새 백엔드를 시험했을 뿐인데 "AI 판단이 나빠졌다" 로 보인다.
+                metricsRecorder.recordShadowDivergence(
+                        String.valueOf(decision.track()), props.ragBackend());
                 log.warn("[Shadow] revId={} diverged reasons={}", revId, result.divergeReasons());
             }
 

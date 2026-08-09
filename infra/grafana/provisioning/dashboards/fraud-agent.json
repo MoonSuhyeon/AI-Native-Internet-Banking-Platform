@@ -42,7 +42,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(fraud_recommendation_reviewed_total{decision=\"approved\"}[30m]))\n/\n(sum(rate(fraud_recommendation_reviewed_total[30m])) > 0)",
+          "expr": "agent:fraud_recommendation_approval_rate:ratio30m",
           "legendFormat": "권고 채택률",
           "refId": "A"
         }
