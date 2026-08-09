@@ -44,8 +44,8 @@
 - [`payment-service-api-spec.md`](payment-service-api-spec.md) · [`deposit-payment-api-spec.md`](deposit-payment-api-spec.md) — 결제 API ⚠️
 - [`plan/transfer-step-up-auth.md`](plan/transfer-step-up-auth.md) — 이체 추가인증 설계
 
-> ⚠️ 이 세 문서는 **병합 전 기준**이다. `deposit-service`·`payment-service` 를 별도 서비스로
-> 설명하는데 둘은 `core-banking` 으로 합쳐졌다. 갱신 전까지 결정 문서를 함께 볼 것.
+> ⚠️ 이 세 문서는 **병합 전 기준**이다. 각 문서 맨 위에 무엇이 바뀌었는지 적어 뒀다 —
+> **엔드포인트 경로는 그대로**이고 서비스 정체와 포트만 달라졌다(`core-banking`, 8082).
 
 ### 여신계
 - [`loan-guide.md`](loan-guide.md) — 전반

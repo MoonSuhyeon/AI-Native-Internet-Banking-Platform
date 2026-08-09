@@ -1,4 +1,26 @@
 # Internet Banking — 전체 API 명세서
+
+> ## ⚠️ 이 문서는 서비스 병합 전에 쓰였다
+>
+> `deposit-service` 와 `payment-service` 는 **`core-banking` 한 서비스로 합쳐졌다**
+> ([결정 문서](decisions/core-banking-merge.md)). 자행이체를 로컬 트랜잭션으로 끝내기
+> 위한 선택이고, 타행이체 Saga 는 그대로 남아 있다.
+>
+> **엔드포인트 경로는 바뀌지 않았다.** 이 문서의 요청·응답 규약은 지금도 유효하다.
+> 달라진 것은 어디에 붙느냐다.
+>
+> | | 문서 기준 | 현재 |
+> |---|---|---|
+> | 서비스 | `deposit-service` / `payment-service` | **`core-banking`** |
+> | 포트 | 8082 / 8080 | **8082** |
+> | 모듈 | `services/deposit-service` / `services/payment-service` | `services/core-banking` (`com.bank.deposit` · `com.bank.payment` 패키지) |
+>
+> 문서에서 두 서비스를 <b>서로 호출하는 것처럼</b> 설명한 부분은 지금은 같은 프로세스
+> 안의 호출이다. 특히 이체 잔액 반영은 HTTP 가 아니라 `LocalLedgerAdapter` 를 탄다.
+>
+> 본문 갱신은 [`OPEN_ITEMS.md`](OPEN_ITEMS.md) 에 남겨 둔 후속 작업이다.
+
+
 > 전 서비스 REST 엔드포인트 통합 레퍼런스. 소스 컨트롤러에서 자동 추출 후 정리.
 - **서비스 수**: 9
 - **컨트롤러 수**: 118
