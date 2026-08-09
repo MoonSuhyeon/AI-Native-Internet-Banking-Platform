@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bank.payment.domain.mapper.ReconciliationMapper">
+
+    <!--
+      내부 원장 쪽 — 결제별 청산대기 순액.
+
+      CREDIT − DEBIT 로 집계하는 이유: 취소된 거래는 청산대기(대변)와 그 역분개(차변)가
+      같은 금액으로 남는다. 총액만 세면 취소된 건도 "청산대기가 있다" 로 잡혀 정상
+      거래와 구별되지 않고, 그러면 취소분이 전부 MISSING_EXTERNAL 로 오탐된다.
+
+      journal_type 두 종을 함께 보는 것도 같은 이유다. 원분개만 보면 역분개가
+      집계에서 빠져 순액이 안 나온다.
+
+      posting_date 기준인 것은 대사가 "그날 장부에 올라간 것" 을 대상으로 하기
+      때문이다. value_date(자금 이동일) 로 잡으면 선일자 거래가 엉뚱한 날에 걸린다.
+    -->
+    <select id="selectInternalClearing"
+            resultType="com.bank.payment.domain.reconciliation.ClearingRecords$Internal">
+        SELECT payment_instruction_id AS paymentInstructionId,
+               COALESCE(SUM(
+                   CASE WHEN debit_credit = 'CREDIT' THEN amount
+                        WHEN debit_credit = 'DEBIT'  THEN -amount
+                        ELSE 0 END
+               ), 0) AS netAmount
+          FROM ledger
+         WHERE posting_date = #{businessDate}
+           AND account_id   = #{clearingAccountId}
+           AND journal_type IN ('CLEARING_PENDING', 'REVERSAL_CLEARING_PENDING')
+           AND payment_instruction_id IS NOT NULL
+         GROUP BY payment_instruction_id
+    </select>
+
+    <!--
+      외부 청산 쪽 — KFTC.
+
+      COALESCE 로 두 날짜를 보는 이유: settlement_date 는 정산이 끝나야 채워진다.
+      그것만 보면 아직 안 끝난 건(REQUESTED·ACK)이 조회에서 통째로 빠지는데,
+      정작 그것이 STALE_PENDING 으로 잡아야 할 대상이다. 미결을 찾는 대사가
+      미결을 못 보는 셈이 된다.
+    -->
+    <select id="selectExternalKftc"
+            resultType="com.bank.payment.domain.reconciliation.ClearingRecords$External">
+        SELECT our_payment_instruction_id AS paymentInstructionId,
+               clearing_amount            AS amount,
+               clearing_status            AS status
+          FROM kftc_clearing_transaction
+         WHERE COALESCE(settlement_date, SUBSTRING(clearing_requested_at, 1, 8))
+               = #{businessDate}
+    </select>
+
+    <!-- 외부 청산 쪽 — BOK. KFTC 와 같은 이유로 요청일자를 대체값으로 쓴다. -->
+    <select id="selectExternalBok"
+            resultType="com.bank.payment.domain.reconciliation.ClearingRecords$External">
+        SELECT our_payment_instruction_id AS paymentInstructionId,
+               settlement_amount          AS amount,
+               settlement_status          AS status
+          FROM bok_settlement_transaction
+         WHERE COALESCE(settlement_date, SUBSTRING(settlement_requested_at, 1, 8))
+               = #{businessDate}
+    </select>
+
+    <!--
+      적재 — 재실행이 중복이 아니라 갱신이 되게 한다.
+
+      first_detected_at 을 유지하는 것이 핵심이다. 매번 덮어쓰면 "며칠째 미결인가" 를
+      셀 수 없고, 오래된 불일치가 매일 새것처럼 보인다.
+
+      resolution_status 도 건드리지 않는다. 조사 중이던 건이 재실행 한 번에 OPEN 으로
+      돌아가면 담당자가 남긴 상태가 사라진다.
+    -->
+    <insert id="upsertBreak">
+        INSERT INTO reconciliation_break (
+            business_date, network, payment_instruction_id, break_type,
+            internal_amount, external_amount, external_status, detail,
+            resolution_status, first_detected_at, last_detected_at
+        ) VALUES (
+            #{businessDate}, #{network}, #{b.paymentInstructionId}, #{b.type},
+            #{b.internalAmount}, #{b.externalAmount}, #{b.externalStatus}, #{b.detail},
+            'OPEN', #{now}, #{now}
+        )
+        ON CONFLICT (business_date, network, payment_instruction_id, break_type)
+        DO UPDATE SET
+            internal_amount  = EXCLUDED.internal_amount,
+            external_amount  = EXCLUDED.external_amount,
+            external_status  = EXCLUDED.external_status,
+            detail           = EXCLUDED.detail,
+            last_detected_at = EXCLUDED.last_detected_at
+    </insert>
+
+    <!--
+      이번 대사에서 안 나온 건 = 해소된 건.
+
+      last_detected_at 이 이번 실행 시각보다 오래된 것을 고른다. 이렇게 하지 않으면
+      한 번 해소된 불일치가 목록에 영원히 남아, 시간이 지날수록 "이미 해결된 것" 이
+      대부분이 되고 아무도 목록을 안 보게 된다.
+
+      이미 사람이 판단을 내린 건(RESOLVED·ACCEPTED)은 건드리지 않는다.
+    -->
+    <update id="closeResolved">
+        UPDATE reconciliation_break
+           SET resolution_status = 'RESOLVED',
+               resolution_note   = COALESCE(resolution_note, '재대사에서 불일치가 사라졌다'),
+               resolved_at       = #{detectedAt}
+         WHERE business_date     = #{businessDate}
+           AND network           = #{network}
+           AND resolution_status IN ('OPEN', 'INVESTIGATING')
+           AND last_detected_at  &lt; #{detectedAt}
+    </update>
+
+    <select id="selectBreaks"
+            resultType="com.bank.payment.domain.mapper.ReconciliationBreakRow">
+        SELECT reconciliation_break_id AS reconciliationBreakId,
+               business_date           AS businessDate,
+               network,
+               payment_instruction_id  AS paymentInstructionId,
+               break_type              AS breakType,
+               internal_amount         AS internalAmount,
+               external_amount         AS externalAmount,
+               external_status         AS externalStatus,
+               detail,
+               resolution_status       AS resolutionStatus,
+               resolution_note         AS resolutionNote,
+               first_detected_at       AS firstDetectedAt,
+               last_detected_at        AS lastDetectedAt
+          FROM reconciliation_break
+         WHERE business_date = #{businessDate}
+        <if test="network != null">
+           AND network = #{network}
+        </if>
+         ORDER BY break_type, ABS(internal_amount - external_amount) DESC
+    </select>
+
+    <select id="countOpenByType" resultType="com.bank.payment.domain.mapper.BreakCount">
+        SELECT break_type AS breakType,
+               COUNT(*)   AS count
+          FROM reconciliation_break
+         WHERE resolution_status IN ('OPEN', 'INVESTIGATING')
+         GROUP BY break_type
+    </select>
+
+</mapper>

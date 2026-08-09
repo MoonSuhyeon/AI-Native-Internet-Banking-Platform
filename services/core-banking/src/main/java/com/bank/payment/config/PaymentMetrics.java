@@ -2,6 +2,8 @@ package com.bank.payment.config;
 
 import com.bank.payment.domain.mapper.OutboxMessageMapper;
 import com.bank.payment.domain.mapper.PaymentInstructionMapper;
+import com.bank.payment.domain.mapper.ReconciliationMapper;
+import com.bank.payment.domain.reconciliation.ReconciliationBreakType;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -23,8 +25,30 @@ public class PaymentMetrics {
 
     public PaymentMetrics(MeterRegistry registry,
                           OutboxMessageMapper outboxMapper,
-                          PaymentInstructionMapper piMapper) {
+                          PaymentInstructionMapper piMapper,
+                          ReconciliationMapper reconciliationMapper) {
         this.registry = registry;
+
+        // 대사 미해결 불일치 — 유형별 Gauge.
+        //
+        // 유형마다 따로 등록하는 이유: 합계만 보면 "3건" 이 사소한 미결 3건인지
+        // 돈이 실제로 어긋난 3건인지 구별되지 않는다. REVERSED_BUT_SETTLED 가
+        // 1건이라도 뜨면 즉시 봐야 하고, STALE_PENDING 이 10건인 것과는 무게가 다르다.
+        //
+        // 0 을 명시적으로 내보내는 것이 중요하다. 시리즈가 아예 없으면 그래프에
+        // 아무것도 안 그려지는데, 그것이 "깨끗하다" 인지 "대사가 안 돈다" 인지
+        // 구별되지 않는다.
+        for (ReconciliationBreakType type : ReconciliationBreakType.values()) {
+            Gauge.builder("payment.reconciliation.break.open",
+                          reconciliationMapper,
+                          m -> (double) m.countOpenByType().stream()
+                                  .filter(c -> type.name().equals(c.breakType()))
+                                  .mapToLong(c -> c.count())
+                                  .sum())
+                 .tag("type", type.name())
+                 .description("미해결 대사 불일치 건수 — 내부 원장과 외부 청산이 어긋난 지점")
+                 .register(registry);
+        }
 
         // 지표 4: Outbox PENDING 적체 수 (Gauge — Prometheus 스크레이프 시 DB 조회)
         Gauge.builder("payment.outbox.pending", outboxMapper, m -> (double) m.countPending())
@@ -100,5 +124,17 @@ public class PaymentMetrics {
     // 지표 12: 중복 거래 감지 (멱등키 충돌)
     public void idempotencyDuplicate() {
         registry.counter("payment.idempotency.duplicate").increment();
+    }
+
+    /**
+     * 대사 1회 실행.
+     *
+     * <p>불일치 건수만 보면 <b>대사가 멈춘 것과 깨끗한 것이 똑같이 0 으로 보인다.</b>
+     * 실행 자체를 세야 "며칠째 안 돌고 있다" 를 알 수 있다.
+     */
+    public void reconciliationRun(String network, int breakCount) {
+        registry.counter("payment.reconciliation.run", "network", network).increment();
+        registry.counter("payment.reconciliation.break.found", "network", network)
+                .increment(breakCount);
     }
 }
