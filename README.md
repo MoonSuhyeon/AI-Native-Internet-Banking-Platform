@@ -2,44 +2,22 @@
 
 *Team project · 5 people*
 
-A bank is a two-sided market: **depositors** on one side, **borrowers** on the
-other. Between them sits **risk** — will this borrower repay, is this transfer
-fraud, did the money actually settle.
+A bank is a two-sided market — depositors, borrowers, and **risk** in between:
+will this borrower repay, is this transfer fraud, did the money actually settle.
 
 AI agents can do that risk work. But **an agent making risk decisions is itself
-a risk** — wrong in ways nobody notices, acting on an identity nobody verified,
-leaving no evidence of why.
+a risk** — wrong unnoticed, acting on an identity nobody verified, leaving no
+evidence of why.
 
-So each agent runs under the same internal controls a bank applies to a person:
-verified identity, segregation of duties, four-eyes approval, an audit trail
-that cannot be rewritten, decisions that reproduce.
+So each agent runs under the controls a bank applies to a person: a
+gateway-verified identity, a human approval before money moves, a rule engine
+that decides while the LLM only advises, a self-proving ledger. Each was
+verified by breaking it — the ledger check fails 6 tests, the identity guard 5 —
+because the recurring failure was **silence**: it compiled, it passed, it did nothing.
 
-**That constraint is the project.**
-
----
-
-## The controls
-
-Every agent has a gateway-verified identity, stops at a recommendation a human
-approves, and never decides alone — an LLM gives signals, a rule engine decides.
-Loops end on budget. The ledger proves itself by re-reading persisted rows and
-reconciling against KFTC/BOK clearing. Fraud is caught inline, post-hoc and in
-windows.
-
-Each control was verified by breaking it: reverting the ledger check fails 6
-tests, removing the identity guard fails 5, deleting a gateway route fails 3.
-Six of those tests read deployment config rather than `.java` — because the
-recurring failure was **silence**: code compiled, screens worked, tests passed,
-and the thing did nothing.
-
-## My role
-
-Frontend, customer domain, authentication and security, and the fraud
-investigation agent.
-
-This repo is my fork, and after the team phase I also refactored other people's
-domains — the double-entry check, the inline fraud gate, the shared agent
-harness, and moving identity out of request bodies across 24 endpoints.
+**My part** — the frontend, customer domain, authentication and security, and
+the fraud investigation agent. This repo is my fork; after the team phase I
+refactored other people's domains too.
 
 ---
 
