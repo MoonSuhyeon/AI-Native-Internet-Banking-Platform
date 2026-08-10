@@ -53,6 +53,7 @@ tasks.named('test') {
     inputs.files(rootProject.fileTree('.') {
         include '**/Dockerfile'
         include '**/build.gradle'
+        include 'web/lib/*.ts'
         exclude '**/build/**'
     }).withPropertyName('dockerfilesAndBuildScripts')
             .withPathSensitivity(PathSensitivity.RELATIVE)

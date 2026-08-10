@@ -3,8 +3,10 @@ import { getAdminGatewayHeaders } from '@/lib/admin-loan-auth'
 
 // advisory RAG 관리 API — loan-service(8083)에 advisory-service 소스셋이 흡수되어 동작.
 // 폐기된 ai-service(8086) 경로를 advisory RAG 경로(/api/internal/advisory/*)로 교체.
+// 게이트웨이를 거친다. 서비스 주소를 직접 가리키면 검증된 신원 헤더가 붙지 않아
+// 역할 기반 인가가 통째로 무의미해진다.
 const aiApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8083',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088',
   headers: { 'Content-Type': 'application/json' },
 })
 

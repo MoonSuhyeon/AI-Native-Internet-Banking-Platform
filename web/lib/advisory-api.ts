@@ -1,8 +1,16 @@
 import axios from 'axios'
 import { getAdminGatewayHeaders } from '@/lib/admin-loan-auth'
 
+// 자문 호출도 게이트웨이를 거친다.
+//
+// 서비스 주소를 직접 가리키면 게이트웨이를 건너뛰게 되고, 그러면 검증된 신원
+// 헤더(X-Customer-Id·X-Employee-Id·X-User-Role)가 붙지 않는다. 그 헤더 위에
+// 서 있는 인가가 통째로 무의미해진다.
+//
+// 서비스별 NEXT_PUBLIC_*_API_URL 오버라이드를 없앤 것도 같은 이유다 —
+// 남겨 두면 환경변수 한 줄로 우회로가 되살아난다.
 const advisoryApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_ADVISORY_API_URL || 'http://localhost:8083',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088',
   headers: { 'Content-Type': 'application/json' },
 })
 

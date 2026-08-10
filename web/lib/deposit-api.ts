@@ -1,9 +1,12 @@
 import axios from 'axios'
 import type { Account } from '@/lib/mock-data'
 
+// 게이트웨이를 거친다. 수신 경로(/api/accounts·/api/contracts 등)는 게이트웨이가
+// 라우팅하므로 서비스 주소를 직접 가리킬 이유가 없다 — 직접 가리키면 검증된 신원
+// 헤더가 붙지 않는다.
 function depositBaseUrl() {
-  const raw = process.env.NEXT_PUBLIC_DEPOSIT_API_URL || 'http://localhost:8082/api'
-  return raw.replace(/\/$/, '').endsWith('/api') ? raw.replace(/\/$/, '') : `${raw.replace(/\/$/, '')}/api`
+  const gateway = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088').replace(/\/$/, '')
+  return `${gateway}/api`
 }
 
 const depositApi = axios.create({

@@ -87,13 +87,17 @@ spring:
         # X-Actor-Role 헤더를 읽고 있었다. 지금은 게이트웨이가 지우고 덮어쓰는
         # X-User-Role 로 판정한다.
         #
-        # /api/internal/advisory/** 는 넣지 않는다 — 레포 규약상 v1 없는 internal 은
-        # 서비스 간 호출이고(review-ai-gateway 가 도구 API 로 쓴다), 네트워크 정책으로
-        # 보호한다.
+        # /api/internal/advisory/** 도 넣는다. 규약상 v1 없는 internal 은 서비스 간
+        # 호출이지만, 이 경로에는 사람이 쓰는 관리 API(정책문서 인입·인덱스 재구축)가
+        # 섞여 있고 어드민 화면이 그것을 부른다. 라우트가 없으면 브라우저가 직접 부르게
+        # 되고, 그러면 역할 검사가 읽을 X-User-Role 이 붙지 않아 전부 거절된다.
+        #
+        # 라우트를 더해도 review-ai-gateway 의 도구 호출은 그대로다 — 그쪽은 컨테이너
+        # 주소로 직접 부르고, 도구 조회에는 역할 가드가 없다.
         - id: loan
           uri: http://${LOAN_SERVICE_HOST:localhost}:${LOAN_SERVICE_PORT:8083}
           predicates:
-            - Path=/api/loan-applications/**,/api/loan-products/**,/api/loan-contracts/**,/api/collaterals/**,/api/credit-info-reports/**,/api/credit-score/**,/api/loan-certificates/**,/api/loan-documents/**,/api/loan-reviews/**,/api/loans/**,/api/business-calendar/**,/api/notifications/**,/api/status-history/**,/api/admin/loan-contracts/**,/api/audit/**,/api/break-glass/**,/api/advisory/**
+            - Path=/api/loan-applications/**,/api/loan-products/**,/api/loan-contracts/**,/api/collaterals/**,/api/credit-info-reports/**,/api/credit-score/**,/api/loan-certificates/**,/api/loan-documents/**,/api/loan-reviews/**,/api/loans/**,/api/business-calendar/**,/api/notifications/**,/api/status-history/**,/api/admin/loan-contracts/**,/api/audit/**,/api/break-glass/**,/api/advisory/**,/api/internal/advisory/**
 
         # 지급·이체 도메인 (JWT 필요)
         - id: payment
