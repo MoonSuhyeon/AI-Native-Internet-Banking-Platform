@@ -22,7 +22,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # postgres 기본 shared_buffers 로 충분한 데모 규모
+    mem_limit: 512m
   # A은행 코어뱅킹 DB. 수신(deposit)·결제(payment) 두 스키마를 한 데이터베이스에 담는다.
   # 자행이체를 하나의 트랜잭션으로 처리하기 위한 전제다 (docs/decisions/core-banking-merge.md).
   core-banking-db-a:
@@ -45,6 +46,8 @@ services:
     networks:
       - default
       - agent-net
+    # postgres 기본 shared_buffers 로 충분한 데모 규모
+    mem_limit: 512m
   loan-db:
     image: pgvector/pgvector:pg16
     container_name: ib-loan-db
@@ -61,7 +64,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # postgres 기본 shared_buffers 로 충분한 데모 규모
+    mem_limit: 512m
   common-db:
     image: postgres:16-alpine
     container_name: ib-common-db
@@ -78,7 +82,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # postgres 기본 shared_buffers 로 충분한 데모 규모
+    mem_limit: 512m
   # B은행(다온뱅크) 코어뱅킹 DB.
   # 병합 전에는 B가 Mock 이라 저장할 곳이 없었다. 이제 A와 같은 구조의 실제 DB를 갖는다 —
   # 타행이체가 실제로 도착했는지 확인할 대상이 생겼다는 뜻이다.
@@ -99,7 +104,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # postgres 기본 shared_buffers 로 충분한 데모 규모
+    mem_limit: 512m
   ai-db:
     image: pgvector/pgvector:pg16
     container_name: ib-ai-db
@@ -122,6 +128,8 @@ services:
       - default
       - agent-net
       - agent-closed
+    # postgres 기본 shared_buffers 로 충분한 데모 규모
+    mem_limit: 512m
   # =============================================================
   # Message Queue
   # =============================================================
@@ -154,6 +162,8 @@ services:
       - default
       - agent-net
       - agent-closed
+    # KRaft 단일 브로커 데모 기준
+    mem_limit: 1g
   # 결제계 Kafka 토픽 원샷 프로비저닝.
   # 단일 broker(auto-create=false)에 결제계 18개 토픽을 선생성하고 종료한다.
   # init-topics.sh(core-banking/infra)를 마운트해 kafka:29092 대상으로 1회 실행.
@@ -187,7 +197,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # JVM. 스키마만 다룬다
+    mem_limit: 512m
   # =============================================================
   # Cache
   # =============================================================
@@ -209,6 +220,8 @@ services:
       - default
       - agent-net
       - agent-closed
+    # 캐시·상태만
+    mem_limit: 512m
   # =============================================================
   # Application Services
   # =============================================================
@@ -246,8 +259,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-
+    # 힙 768m
+    mem_limit: 1g
   # A은행 코어뱅킹 — 수신(deposit) + 결제(payment) 단일 서비스.
   # 병합 이유는 docs/decisions/core-banking-merge.md 참조.
   core-banking-a:
@@ -312,6 +325,8 @@ services:
     networks:
       - default
       - agent-net
+    # 힙 768m
+    mem_limit: 1g
   loan-service:
     build:
       context: .
@@ -370,6 +385,8 @@ services:
       - default
       - agent-net
       - agent-closed
+    # 자문 병합으로 커졌다
+    mem_limit: 1g
   # B은행(다온뱅크) — 타행이체 상대 은행.
   #
   # 병합 전에는 payment-service 를 mock 프로필로 띄워 수신계를 가짜로 대체했다.
@@ -426,7 +443,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
-
+    # 시연용이라 부하가 낮다
+    mem_limit: 768m
   auto-loan-review:
     build:
       context: .
@@ -482,6 +500,8 @@ services:
     # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
     networks:
       - agent-closed
+    # ML 추론 + RAG
+    mem_limit: 1g
   # 이상거래 조사 에이전트 (사이드카)
   #
   # **ports 를 두지 않는다.** 호스트에 8090 이 열리면 브라우저가 게이트웨이를 우회해
@@ -507,7 +527,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
-
+    # LangGraph 조사 루프
+    mem_limit: 768m
   consultation-service:
     build:
       # 컨텍스트가 agents/ 인 이유: harness-core/python 의 공유 감사 계약을
@@ -561,6 +582,8 @@ services:
     # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
     networks:
       - agent-net
+    # Python 런타임 + RAG 임베딩
+    mem_limit: 768m
   mock-responder:
     image: python:3.12-alpine
     container_name: ib-mock-responder
@@ -581,7 +604,7 @@ services:
     restart: on-failure
     profiles:
       - mock
-
+    mem_limit: 256m
   # =============================================================
   # Monitoring — Metrics (Prometheus + Grafana)
   # =============================================================
@@ -623,7 +646,8 @@ services:
       - fraud-internal
       - agent-net
       - agent-closed
-
+    # 보존기간에 비례. 늘면 함께 올릴 것
+    mem_limit: 1g
   grafana:
     image: grafana/grafana:latest
     container_name: ib-grafana
@@ -658,7 +682,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-
+    mem_limit: 512m
   alertmanager:
     image: prom/alertmanager:latest
     container_name: ib-alertmanager
@@ -685,7 +709,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
-
+    mem_limit: 256m
   blackbox-exporter:
     image: prom/blackbox-exporter:latest
     container_name: ib-blackbox-exporter
@@ -699,7 +723,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
-
+    mem_limit: 128m
   # =============================================================
   # Monitoring — Logging (Loki + Promtail)
   # =============================================================
@@ -718,7 +742,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-
+    mem_limit: 512m
   promtail:
     image: grafana/promtail:latest
     container_name: ib-promtail
@@ -729,7 +753,8 @@ services:
     depends_on:
       loki:
         condition: service_started
-
+    # 로그 수집 에이전트
+    mem_limit: 256m
   # =============================================================
   # Monitoring — LLM Tracing (Langfuse + Phoenix)
   # =============================================================
@@ -750,7 +775,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # postgres 기본 shared_buffers 로 충분한 데모 규모
+    mem_limit: 512m
   langfuse:
     image: langfuse/langfuse:2
     container_name: ib-langfuse
@@ -777,6 +803,8 @@ services:
       - default
       - agent-net
       - agent-closed
+    # Node 런타임
+    mem_limit: 768m
   phoenix:
     image: arizephoenix/phoenix:latest
     container_name: ib-phoenix
@@ -787,7 +815,8 @@ services:
       PHOENIX_WORKING_DIR: /phoenix
     volumes:
       - phoenix-data:/phoenix
-
+    # Python 런타임
+    mem_limit: 768m
   # =============================================================
   # Application
   # =============================================================
@@ -855,7 +884,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # MaxRAMPercentage=75 → 힙 576m. 라우팅만 하므로 가볍다
+    mem_limit: 768m
   # ── doc-agent 전용 (profile: doc) ─────────────────────────────────────────
   doc-agent-db:
     profiles: ["doc"]
@@ -879,6 +909,8 @@ services:
     networks:
       - default
       - agent-net
+    # postgres 기본 shared_buffers 로 충분한 데모 규모
+    mem_limit: 512m
   minio:
     profiles: ["doc"]
     image: minio/minio:latest
@@ -901,6 +933,7 @@ services:
     networks:
       - default
       - agent-net
+    mem_limit: 512m
   vault:
     profiles: ["doc"]
     image: hashicorp/vault:1.15
@@ -927,6 +960,7 @@ services:
     networks:
       - default
       - agent-net
+    mem_limit: 256m
   # ── RAG 전용 (profile: rag) ───────────────────────────────────────────────
   kafka-connect:
     profiles: ["rag"]
@@ -963,7 +997,8 @@ services:
       interval: 15s
       timeout: 10s
       retries: 10
-
+    # JVM 커넥트 워커
+    mem_limit: 1g
   kafka-connect-init:
     profiles: ["rag"]
     image: curlimages/curl:8.7.1
@@ -1003,6 +1038,8 @@ services:
     networks:
       - default
       - agent-net
+    # -Xmx2g + 루씬 오프힙. 힙의 1.5배
+    mem_limit: 3g
   kibana:
     profiles: ["rag"]
     image: docker.elastic.co/kibana/kibana:8.15.0
@@ -1020,7 +1057,8 @@ services:
       interval: 15s
       timeout: 10s
       retries: 10
-
+    # 공식 최소 권장
+    mem_limit: 1g
   # ── 이상거래 탐지 (FDS 탐지 단계) ─────────────────────────────────────────
   # payment.completed 를 별도 컨슈머 그룹으로 구독한다. 결제계·회계계가 쓰는 그룹과
   # 겹치면 서로 이벤트를 나눠 갖게 되어 양쪽 다 일부만 보게 된다.
@@ -1055,6 +1093,8 @@ services:
     networks:
       - default
       - fraud-internal
+    # 힙 576m
+    mem_limit: 768m
   doc-agent:
     profiles: ["doc"]
     build:
@@ -1115,6 +1155,8 @@ services:
     # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
     networks:
       - agent-net
+    # -Xmx384m + JVM 오버헤드
+    mem_limit: 512m
   review-ai-gateway:
     build:
       context: .
@@ -1160,6 +1202,8 @@ services:
     # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
     networks:
       - agent-closed
+    # 힙 576m
+    mem_limit: 768m
   kafka-exporter-kftc:
     image: danielqsj/kafka-exporter:latest
     container_name: ib-kafka-exporter-kftc
@@ -1171,7 +1215,7 @@ services:
       kafka:
         condition: service_healthy
     restart: on-failure
-
+    mem_limit: 128m
   kafka-exporter-bok:
     image: danielqsj/kafka-exporter:latest
     container_name: ib-kafka-exporter-bok
@@ -1183,7 +1227,7 @@ services:
       kafka:
         condition: service_healthy
     restart: on-failure
-
+    mem_limit: 128m
   kafka-exporter-internal:
     image: danielqsj/kafka-exporter:latest
     container_name: ib-kafka-exporter-internal
@@ -1195,7 +1239,7 @@ services:
       kafka:
         condition: service_healthy
     restart: on-failure
-
+    mem_limit: 128m
 volumes:
   customer-db-data:
   core-banking-db-a-data:

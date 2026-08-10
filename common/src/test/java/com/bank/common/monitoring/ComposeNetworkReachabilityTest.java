@@ -122,6 +122,37 @@ class ComposeNetworkReachabilityTest {
                 .isEmpty();
     }
 
+    @Test
+    @DisplayName("상시 기동 서비스는 메모리 상한을 갖는다 — 없으면 호스트를 통째로 먹는다")
+    void longRunningServicesHaveMemoryLimit() throws IOException {
+        // 제한이 없으면 컨테이너가 호스트 메모리를 무제한으로 쓴다. 특히 JVM 서비스는
+        // -XX:MaxRAMPercentage=75 를 쓰는데, 이 설정은 컨테이너 제한이 있을 때만
+        // 의미가 있다 — 없으면 "호스트 전체의 75%" 가 상한이 되어 안전장치가 아니다.
+        //
+        // 1회성 초기화 잡은 뺀다. 거기서 메모리로 막히면 스택 전체가 뜨지 않는다.
+        Set<String> oneShot = Set.of("payment-topic-init", "kafka-connect-init");
+
+        Map<String, Object> root = load(REPO_ROOT.resolve("docker-compose.yml"));
+        @SuppressWarnings("unchecked")
+        Map<String, Map<String, Object>> services =
+                (Map<String, Map<String, Object>>) root.get("services");
+
+        List<String> missing = new ArrayList<>();
+        services.forEach((name, def) -> {
+            if (oneShot.contains(name)) {
+                return;
+            }
+            if (def.get("mem_limit") == null) {
+                missing.add(name);
+            }
+        });
+
+        assertThat(missing)
+                .as("메모리 상한이 없는 서비스. 하나가 폭주하면 다른 서비스까지 함께 "
+                    + "느려진다(bulkhead 없음).")
+                .isEmpty();
+    }
+
     // ── 파싱 ────────────────────────────────────────────────────────────────
 
     /** 이 서비스가 붙는 망. 명시가 없으면 compose 기본값인 default 다. */
