@@ -37,6 +37,16 @@ public interface PaymentInstructionMapper {
 
     int countIncomplete();
 
+    /**
+     * 고객의 당일 이체 누적액 — 인터넷뱅킹 이체한도 판정용.
+     *
+     * <p>계좌가 아니라 고객으로 묶는다. 한도가 고객당이므로 계좌로 집계하면 계좌를
+     * 두 개 가진 사람이 한도를 두 배로 쓴다.
+     */
+    long sumDailyTransferAmount(@Param("senderUserId") String senderUserId,
+                                @Param("businessDate") String businessDate,
+                                @Param("excludePiId") String excludePiId);
+
     int updateScheduled(@Param("paymentInstructionId") String paymentInstructionId,
                         @Param("scheduledExecutionAt") OffsetDateTime scheduledExecutionAt,
                         @Param("version") Integer version);

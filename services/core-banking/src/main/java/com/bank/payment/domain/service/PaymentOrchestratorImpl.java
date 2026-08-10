@@ -1,6 +1,10 @@
 package com.bank.payment.domain.service;
 
+import com.bank.deposit.client.CustomerServiceClient;
+import com.bank.deposit.client.dto.TransferLimitResponse;
 import com.bank.payment.common.BankCodeMapper;
+import com.bank.common.time.BusinessDate;
+import com.bank.payment.domain.mapper.PaymentInstructionMapper;
 import com.bank.payment.common.IdGenerator;
 import com.bank.payment.common.exception.DepositInboundFailureException;
 import com.bank.payment.common.exception.LedgerInsertFailureException;
@@ -69,6 +73,10 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
      */
     private final TransactionTemplate transactionTemplate;
 
+    /** 고객당 인터넷뱅킹 이체한도 조회. 계좌당 출금한도(deposit)와는 다른 개념이다. */
+    private final CustomerServiceClient customerServiceClient;
+    private final PaymentInstructionMapper paymentInstructionMapper;
+
     @Value("${payment.bank-code:A}")
     private String bankCode;
 
@@ -80,6 +88,8 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
             ObjectMapper objectMapper,
             PaymentMetrics metrics,
             DepositFailureSimulator depositFailureSimulator,
+            CustomerServiceClient customerServiceClient,
+            PaymentInstructionMapper paymentInstructionMapper,
             PlatformTransactionManager transactionManager) {
         this.txService = txService;
         this.depositAccountClient = depositAccountClient;
@@ -88,6 +98,8 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
         this.objectMapper = objectMapper;
         this.metrics = metrics;
         this.depositFailureSimulator = depositFailureSimulator;
+        this.customerServiceClient = customerServiceClient;
+        this.paymentInstructionMapper = paymentInstructionMapper;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -566,21 +578,107 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
         recordCall(piId, "BALANCE_INQUIRY", "SENDER", "deposit", "GET",
                 byNumberPath, "DEP-0000");
 
-        // B-2 한도검증 — Account.dailyWithdrawLimit (Long nullable). null=한도 미설정 → 스킵.
-        // D-REQ-4 미해소: perTx/daily/monthly 분리 없음. dailyWithdrawLimit 단일 한도로 단순 비교.
-        Long dailyLimit = senderAcc.dailyWithdrawLimit();
-        if (dailyLimit != null && needed.compareTo(dailyLimit) > 0) {
+        // B-2 한도검증 — 고객당 인터넷뱅킹 한도(1일/1회) + 계좌당 출금한도, 낮은 쪽.
+        //
+        // 예전에는 계좌 한도만 봤고, 그것도 이번 건 금액과만 비교했다. 당일 누적이
+        // 없어서 한도의 90% 짜리를 하루에 몇 번이고 보낼 수 있었다 — "1일 한도" 라는
+        // 이름이 실제로는 "1회 한도" 로 동작했다.
+        step2b_checkTransferLimit(pi, command, senderAcc, byNumberPath);
+    }
+
+    // ── Step 3: 출금 (B-3, 트랜잭션 밖) ─────────────────────────────────────
+    // WithdrawStepResult: BalanceTxData + callId (B-4 실패 시 B-5 compensation_target_call_id 참조용)
+    /**
+     * B-2 한도검증 — 고객당 인터넷뱅킹 한도와 계좌당 출금한도 중 낮은 쪽.
+     *
+     * <p><b>무엇이 달라졌나.</b> 예전에는 계좌 한도만, 그것도 이번 건 금액과만 비교했다.
+     * 당일 누적이 없어서 한도의 90% 짜리를 하루에 몇 번이고 보낼 수 있었다 —
+     * "1일 한도" 라는 이름이 실제로는 "1회 한도" 로 동작했다.
+     *
+     * <p>누적은 계좌가 아니라 <b>고객</b>으로 센다. 인터넷뱅킹 한도가 고객당이므로
+     * 계좌로 집계하면 계좌를 두 개 가진 사람이 한도를 두 배로 쓴다.
+     *
+     * <p><b>고객 한도 조회에 실패하면 막는다(fail-closed).</b> 통과시키면 한도가 없는
+     * 것과 같아지는데, 한도는 고객이 스스로 낮춰 둔 안전장치라 조회가 안 된다는 이유로
+     * 무시하면 그 약속을 깨는 것이다. 잔액·계좌 검증이 이미 통과한 뒤라 여기서 막아도
+     * 돈이 움직이지는 않는다.
+     */
+    private void step2b_checkTransferLimit(PaymentInstruction pi,
+                                           PaymentCommand command,
+                                           AccountInquiryData senderAcc,
+                                           String byNumberPath) {
+        String piId = pi.getPaymentInstructionId();
+
+        // 고객을 특정할 수 있을 때만 고객 한도를 본다.
+        //
+        // 두 경우를 구분한다.
+        //   (1) 고객을 특정할 수 없다 — X-User-Id 가 숫자가 아니다. 게이트웨이는 항상
+        //       customerId 를 넣으므로, 이 상태는 게이트웨이를 거치지 않은 호출이다.
+        //       그때는 고객 한도를 물어볼 대상이 없으므로 계좌 한도만 적용한다.
+        //   (2) 특정은 되는데 조회가 실패했다 — 이때는 막는다. 한도는 고객이 스스로
+        //       낮춰 둔 안전장치라, 읽지 못했다는 이유로 무시하면 그 약속을 깨는 것이다.
+        //
+        // 둘을 같이 처리하면 안 된다. (1)에서 막으면 게이트웨이 밖 경로가 전부 죽고,
+        // (2)에서 통과시키면 customer-service 가 잠깐 흔들릴 때 한도가 사라진다.
+        Long customerId = numericCustomerId(command.userId());
+        TransferLimitResponse customerLimit = null;
+
+        if (customerId == null) {
+            log.warn("[LIMIT] 고객을 특정할 수 없어 고객 이체한도를 건너뛴다 "
+                    + "— 계좌 한도만 적용한다. piId={} userId={}", piId, command.userId());
+        } else {
+            try {
+                customerLimit = customerServiceClient.getTransferLimit(
+                        customerId, "payment-service");
+            } catch (Exception e) {
+                recordCall(piId, "LIMIT_CHECK", "SENDER", "customer", "GET",
+                        "/api/internal/customers/{id}/transfer-limit", "CUST-9999", "FAIL");
+                throw new PaymentValidationException("LIMIT_LOOKUP_FAILED",
+                        "이체한도를 확인하지 못했습니다: " + e.getMessage());
+            }
+        }
+
+        // 한도는 고객이 화면에서 보는 금액(수수료 제외) 기준이다. 수수료까지 세면
+        // 100만원 한도에서 100만원을 못 보내게 되어 안내와 어긋난다.
+        long amount = command.transferAmount();
+        // 지금 처리 중인 건은 뺀다. 결제지시는 검증보다 먼저 INSERT 되므로 빼지 않으면
+        // 이번 금액이 누적에도 들어가 두 번 세어진다.
+        long todayTotal = paymentInstructionMapper.sumDailyTransferAmount(
+                command.userId(), BusinessDate.today(), piId);
+
+        TransferLimitPolicy.Decision decision = TransferLimitPolicy.evaluate(
+                amount, todayTotal,
+                customerLimit == null ? null : customerLimit.dailyLimit(),
+                customerLimit == null ? null : customerLimit.onceLimit(),
+                senderAcc.dailyWithdrawLimit());
+
+        if (!decision.allowed()) {
             recordCall(piId, "LIMIT_CHECK", "SENDER", "deposit", "GET",
                     byNumberPath, "DEP-0000", "FAIL");
-            throw new PaymentValidationException("LIMIT_EXCEEDED",
-                    "이체 한도 초과: 요청 " + needed + " > 1일 한도 " + dailyLimit);
+            throw new PaymentValidationException("LIMIT_EXCEEDED", decision.reason());
         }
         recordCall(piId, "LIMIT_CHECK", "SENDER", "deposit", "GET",
                 byNumberPath, "DEP-0000");
     }
 
-    // ── Step 3: 출금 (B-3, 트랜잭션 밖) ─────────────────────────────────────
-    // WithdrawStepResult: BalanceTxData + callId (B-4 실패 시 B-5 compensation_target_call_id 참조용)
+    /**
+     * X-User-Id 를 고객 번호로 읽는다. 숫자가 아니면 {@code null}.
+     *
+     * <p>게이트웨이는 이 헤더를 지우고 JWT 의 customerId 로 덮어쓰므로 운영 경로에서는
+     * 항상 숫자다. 숫자가 아니라는 것은 게이트웨이를 거치지 않았다는 뜻이고, 그때는
+     * 고객 한도를 물어볼 대상 자체가 없다.
+     */
+    private static Long numericCustomerId(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(userId.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /**
      * 송신계좌에서 실제로 빠지는 총액 = 이체금액 + 수수료.
      *

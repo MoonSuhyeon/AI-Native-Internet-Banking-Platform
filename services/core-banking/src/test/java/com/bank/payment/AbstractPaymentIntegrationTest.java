@@ -110,6 +110,26 @@ public abstract class AbstractPaymentIntegrationTest {
      */
     @MockBean protected com.bank.deposit.security.TransferApprovalGate transferApprovalGate;
 
+    /**
+     * 고객 이체한도 조회는 customer-service 로 나가는 호출이다.
+     *
+     * <p>넉넉한 한도를 돌려준다. 결제 흐름 통합 테스트의 관심사는 원장·보상·이벤트지
+     * 한도 판정이 아니고, 판정 자체는 {@code TransferLimitPolicyTest} 가 본다.
+     *
+     * <p>이 스텁이 없으면 조회 실패로 전 이체가 막힌다 — 한도를 확인하지 못하면
+     * 통과시키지 않는 것이 설계이기 때문이다(fail-closed).
+     */
+    @MockBean protected com.bank.deposit.client.CustomerServiceClient customerServiceClient;
+
+    @org.junit.jupiter.api.BeforeEach
+    void stubTransferLimit() {
+        org.mockito.Mockito.when(customerServiceClient.getTransferLimit(
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(new com.bank.deposit.client.dto.TransferLimitResponse(
+                        10_000_000_000L, 10_000_000_000L));
+    }
+
     @Autowired protected MockMvc mockMvc;
     @Autowired protected ObjectMapper om;
     @Autowired protected JdbcTemplate jdbc;

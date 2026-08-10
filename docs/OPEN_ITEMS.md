@@ -18,7 +18,8 @@
 | **지연 알림 외부 발송** | 앱 알림함에만 쌓인다. SMS·이메일 게이트웨이가 없어 고객이 접속하지 않으면 지연 사실을 모른다 | `NotificationService` |
 | **본심사 API** | 대출 본심사가 없어 테스트가 repository 로 `APPROVED` 를 강제 전이시킨다 | loan-service 통합테스트 |
 | **예약이체 타행/BOK** | 자행만 구현. 타행 예약이체는 `UnsupportedOperationException` | `PaymentOrchestratorImpl` |
-| **일일 한도 세분화** | `perTx/daily/monthly` 구분 없이 `dailyWithdrawLimit` 하나로 비교 (D-REQ-4 미해소) | `step2b_executeValidation` |
+| ~~일일 한도 세분화~~ | **해결.** 고객당 인터넷뱅킹 한도(1일/1회)를 이체 시점에 적용한다. 당일 누적을 고객 단위로 세고 계좌 한도와 낮은 쪽을 쓴다 (QA #58) | `TransferLimitPolicy` |
+| **월 한도** | 1일/1회만 있다. 월 단위는 아직 없다 | — |
 | **잔액·한도 전용 API 부재** | deposit 에 `/balances`·`/limits` 가 없어 계좌조회 응답으로 대체 (D-REQ-3 미해소) | 〃 |
 
 ## 2. 통제·감사에서 비어 있는 것

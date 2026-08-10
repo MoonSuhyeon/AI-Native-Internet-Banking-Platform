@@ -131,6 +131,34 @@
         WHERE status NOT IN ('COMPLETED', 'FAILED', 'CANCELED')
     </select>
 
+    <!--
+      고객의 당일 이체 누적액 (인터넷뱅킹 이체한도 판정용).
+
+      계좌가 아니라 **고객(sender_user_id)** 으로 묶는다. 한도가 고객당이므로 계좌로
+      집계하면 계좌를 두 개 가진 사람이 한도를 두 배로 쓴다.
+
+      실패·취소는 뺀다. 나가지 않은 돈까지 한도를 깎으면, 시스템 오류로 실패한 건 때문에
+      고객이 그날 이체를 못 하게 된다.
+
+      진행 중(PENDING·AUTHORIZED·PROCESSING·CLEARING)은 **포함**한다. 아직 확정되지
+      않았어도 이미 출금은 나갔거나 나갈 예정이라, 빼면 동시에 여러 건을 밀어 넣어
+      한도를 넘길 수 있다.
+
+      수수료는 세지 않는다. 한도는 "얼마를 보냈는가" 에 대한 것이고, 수수료까지 세면
+      고객이 화면에서 계산한 금액과 어긋난다.
+
+      **지금 처리 중인 건은 뺀다.** 결제지시는 검증보다 먼저 INSERT 되므로, 빼지 않으면
+      이번 금액이 누적에도 들어가 두 번 세어진다 — 한도의 절반만 써도 초과로 막힌다.
+    -->
+    <select id="sumDailyTransferAmount" resultType="long">
+        SELECT COALESCE(SUM(transfer_amount), 0)
+        FROM payment_instruction
+        WHERE sender_user_id = #{senderUserId}
+          AND business_date  = #{businessDate}
+          AND status NOT IN ('FAILED', 'CANCELED')
+          AND payment_instruction_id &lt;&gt; #{excludePiId}
+    </select>
+
     <!-- 예약이체 워커: 실행 시각이 도래한 SCHEDULED PI 폴링. selectTimedOut 대칭. -->
     <select id="selectDueScheduled" resultType="com.bank.payment.domain.PaymentInstruction">
         SELECT
