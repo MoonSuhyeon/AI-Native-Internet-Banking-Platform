@@ -2,22 +2,29 @@
 
 *Team project · 5 people*
 
-A bank is a two-sided market — depositors, borrowers, and **risk** in between:
-will this borrower repay, is this transfer fraud, did the money actually settle.
+In a financial marketplace, **risk emerges from serving demand** — from credit
+risk created by borrowing demand to fraud and settlement risk throughout the
+transaction.
 
-AI agents can do that risk work. But **an agent making risk decisions is itself
-a risk** — wrong unnoticed, acting on an identity nobody verified, leaving no
-evidence of why.
+These risk workflows require combining transaction data, customer information,
+documents, and policies across multiple systems. **AI agents can support this
+work by exploring and connecting distributed information for investigation and
+assessment.** But how much autonomy should a financial institution safely give
+an agent?
 
-So each agent runs under the controls a bank applies to a person: a
-gateway-verified identity, a human approval before money moves, a rule engine
-that decides while the LLM only advises, a self-proving ledger. Each was
-verified by breaking it — the ledger check fails 6 tests, the identity guard 5 —
-because the recurring failure was **silence**: it compiled, it passed, it did nothing.
+We built a system around that question: **gateway-based identity and access
+control, core banking ledger and transaction systems, pre-transaction, post-hoc,
+and windowed fraud detection, and a bounded fraud investigation agent with HITL
+approval.** Agents investigate and recommend; access to financial data and
+high-risk actions remains under system and human control.
 
-**My part** — the frontend, customer domain, authentication and security, and
-the fraud investigation agent. This repo is my fork; after the team phase I
-refactored other people's domains too.
+**My part** — frontend, customer domain, authentication and security, and the
+fraud investigation agent. I implemented the customer and Party model, JWT and
+certificate authentication, step-up approval for fund movement, `BankRole`,
+audit logging, per-customer transfer limits, and the agent's **bounded
+investigation loop, evidence gathering, and HITL approval**. After the team
+phase, I continued on the fork, refactoring the payment ledger verification,
+fraud pre-check, agent harness, service boundaries, and security wiring.
 
 ---
 
