@@ -109,53 +109,56 @@ original ownership.
 
 ---
 
-## How the controls work
+## What makes it different
 
-| Control | Mechanism |
+A bank does not trust a person because they are competent. It trusts them
+because of what surrounds them — verified identity, segregation of duties,
+four-eyes approval, an audit trail, decisions that reproduce.
+
+Each agent here runs inside the same frame.
+
+| Control | How it is enforced |
 |---|---|
-| **Verified identity** | Gateway strips client headers, injects claims from a verified JWT. No service reads identity from a request body. Sidecars publish no host ports |
-| **Agents propose, humans dispose** | Investigation agent stops at a recommendation. Payment freeze and STR need human approval + RBAC. Contract signing blocks on an unacknowledged CRITICAL advisory (four-eyes) |
-| **LLM does not decide** | ML gives probability of default, LLM gives signals — a rule engine and policy matrix decide. Same input, same track. Policy is retrieved (BM25 + vector), not recalled |
+| **Verified identity** | Gateway strips client headers and injects claims from a verified JWT. No service reads identity from a request body. Sidecars publish no host ports |
+| **Agents propose, humans dispose** | The investigation agent stops at a recommendation. Payment freeze and STR need human approval + RBAC. Contract signing blocks on an unacknowledged CRITICAL advisory (four-eyes) |
+| **The LLM does not decide** | ML gives probability of default, the LLM gives signals — a rule engine and policy matrix decide. Same input, same track. Policy is retrieved (BM25 + vector), not recalled |
 | **Bounded autonomy** | The loop ends on a decisive fact, on confidence, or on budget. It cannot spin |
 | **Self-proving ledger** | Double-entry checked by re-reading persisted rows. Daily reconciliation against KFTC/BOK clearing |
 | **Fraud in three time bands** | Inline (before the money moves) · post-hoc (Kafka) · windowed (Spark) |
 
----
-
-## How we verified it
-
-A check that cannot fail is worse than no check — it reads as protection.
-So every guard was verified by breaking it.
-
-| Broken on purpose | Tests that failed |
-|---|---|
-| Ledger check compares a variable with itself | 6 |
-| Remove the daily cumulative sum from transfer limits | 6 |
-| Remove the identity guard from the consultation service | 5 |
-| Delete a gateway route | 3 |
+**A control that cannot fail is worse than no control** — it reads as
+protection. So each one was verified by breaking it: reverting the ledger check
+to compare a variable with itself fails 6 tests, removing the identity guard
+fails 5, deleting a gateway route fails 3.
 
 Most of what broke was never in a `.java` file. Six tests read deployment
-config and fail the build:
-
-`SidecarExposureTest` · `ComposeNetworkReachabilityTest` ·
-`FrontendGatewayOnlyTest` · `ScrapeTargetConsistencyTest` ·
-`DockerBuildContextTest` · `InternalRouteConfigTest`
-
-Ledger and reconciliation run against real PostgreSQL (Testcontainers).
-Network isolation was confirmed by booting the stack.
+config and fail the build — `SidecarExposureTest`,
+`ComposeNetworkReachabilityTest`, `FrontendGatewayOnlyTest`,
+`ScrapeTargetConsistencyTest`, `DockerBuildContextTest`,
+`InternalRouteConfigTest`. Ledger and reconciliation run against real
+PostgreSQL; network isolation was confirmed by booting the stack.
 
 > The recurring failure mode was **silence** — code compiled, screens worked,
 > tests passed, and the thing did nothing.
 
+Three decisions shaped the rest, written up in [docs/decisions/](docs/decisions/):
+deposit and payment became [one service](docs/decisions/core-banking-merge.md)
+because a transfer is one fact and a saga's compensation can itself fail;
+[gateway unification](docs/decisions/security-zone-topology.md) applies to
+north-south traffic only, since east-west needs different controls; and agents
+[share one harness](docs/decisions/agent-harness-consolidation.md) so an
+agent's evidence does not depend on who wrote it.
+
 ---
 
-## Why it is built this way
+## Operating it
 
-| Decision | Reason |
-|---|---|
-| [deposit + payment → one service](docs/decisions/core-banking-merge.md) | A transfer is one fact. Split, it needed a saga whose compensation could itself fail |
-| [Security zones](docs/decisions/security-zone-topology.md) | Gateway unification applies to north-south traffic only. East-west needs different controls |
-| [Shared agent harness](docs/decisions/agent-harness-consolidation.md) | An agent's evidence should not depend on who wrote it |
+Prometheus · Grafana · Loki for metrics and logs; Langfuse · Phoenix for
+agent traces.
+
+The metric that matters most is **adoption rate** — how often a human accepts
+what the agent recommended. An agent that is always overridden is not working,
+and without this you cannot tell.
 
 ---
 
@@ -182,17 +185,6 @@ cd web && npm run dev
 docker compose --profile doc up -d    # document agent (MinIO, Vault)
 docker compose --profile rag up -d    # Elasticsearch, Kibana
 ```
-
-## Operating it
-
-Prometheus · Grafana · Loki for metrics and logs; Langfuse · Phoenix for
-agent traces.
-
-The metric that matters most is **adoption rate** — how often a human accepts
-what the agent recommended. An agent that is always overridden is not working,
-and without this you cannot tell.
-
----
 
 ## Docs
 
