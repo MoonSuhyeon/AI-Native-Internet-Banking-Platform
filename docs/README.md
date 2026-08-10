@@ -28,7 +28,8 @@
 | [`decisions/agent-harness-consolidation.md`](decisions/agent-harness-consolidation.md) | 에이전트 공통 기반(harness)을 왜 모았나 |
 | [`decisions/admin-role-model.md`](decisions/admin-role-model.md) | 어드민 역할 어휘를 BankRole 로 단일화한 이유 |
 | [`decisions/repayment-concurrent-update.md`](decisions/repayment-concurrent-update.md) | 상환 동시성 처리 |
-| [`decisions/cors-handling.md`](decisions/cors-handling.md) | CORS 를 어디서 처리하나 |
+| [`decisions/cors-handling.md`](decisions/cors-handling.md) | CORS 를 어디서 처리하나 (현행) |
+| [`decisions/security-zone-topology.md`](decisions/security-zone-topology.md) | **보안 존 구분과 게이트웨이 일원화 범위** — 남북/동서 구분, CORS 일원화 기준 |
 
 ---
 
