@@ -253,6 +253,80 @@ class ScrapeTargetConsistencyTest {
     // ── 파싱 ──────────────────────────────────────────────────────────────────
 
     /** job_name → 첫 번째 target. */
+    @Test
+    @DisplayName("컨테이너 이름으로 긁는 대상은 실제 compose 서비스를 가리킨다")
+    void containerNameTargetsResolveToRealServices() throws IOException {
+        // 사이드카는 호스트 포트를 닫았으므로 host.docker.internal 로 긁을 수 없다.
+        // 대신 컨테이너 이름으로 긁는데, 그 이름이나 포트가 틀리면 대상이 영영 DOWN 이
+        // 되고 그 위의 대시보드·알림이 조용히 빈다.
+        //
+        // 위 everyTargetMapsToAPublishedPort 는 host.docker.internal 대상만 본다.
+        // 컨테이너 이름 대상이 늘어나는데 아무도 검증하지 않으면 같은 사고가 형태만
+        // 바꿔 되풀이된다.
+        Set<String> serviceNames = composeServiceNames();
+        List<String> broken = new ArrayList<>();
+
+        for (Map.Entry<String, String> job : scrapeTargets().entrySet()) {
+            String target = job.getValue();
+            // blackbox probe 는 target 이 host:port 가 아니라 검사할 URL 이다
+            // (http://langfuse:3000/... 처럼). 여기서 볼 대상이 아니다.
+            if (EXTERNAL_JOBS.contains(job.getKey())
+                    || target.startsWith("host.docker.internal:")
+                    || target.startsWith("http://")
+                    || target.startsWith("https://")
+                    || !target.contains(":")) {
+                continue;
+            }
+            String host = target.substring(0, target.indexOf(':'));
+            if (!serviceNames.contains(host)) {
+                broken.add(job.getKey() + " → " + target
+                        + " (compose 에 '" + host + "' 서비스가 없다)");
+            }
+        }
+
+        assertThat(broken)
+                .as("죽은 스크레이프 대상. 늘 DOWN 인 대상은 진짜 장애를 가린다.")
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("포트를 닫은 서비스를 host.docker.internal 로 긁지 않는다")
+    void closedServicesAreNotScrapedViaHost() throws IOException {
+        // 실제로 저지른 실수다. 사이드카 우회를 막으려고 compose 의 ports 를 걷어냈는데,
+        // prometheus 는 그대로 host.docker.internal:<그 포트> 를 긁고 있었다.
+        // 인가는 단단해졌지만 지표가 통째로 죽는 상태였다.
+        //
+        // 둘 중 하나만 고치면 반쪽이라 여기서 함께 묶는다.
+        Map<String, List<String>> published = publishedHostPorts();
+        List<String> broken = new ArrayList<>();
+
+        for (Map.Entry<String, String> job : scrapeTargets().entrySet()) {
+            String target = job.getValue();
+            if (EXTERNAL_JOBS.contains(job.getKey())
+                    || !target.startsWith("host.docker.internal:")) {
+                continue;
+            }
+            String port = target.substring(target.lastIndexOf(':') + 1).replaceAll("/.*", "");
+            if (!published.containsKey(port)) {
+                broken.add(job.getKey() + " → " + target
+                        + " (이 포트를 게시하는 서비스가 없다. 포트를 닫았다면 "
+                        + "스크레이프도 컨테이너 이름으로 바꿔야 한다)");
+            }
+        }
+
+        assertThat(broken)
+                .as("포트를 닫으면서 스크레이프를 안 고치면 지표가 조용히 죽는다.")
+                .isEmpty();
+    }
+
+    /** compose 에 정의된 서비스 이름. */
+    private Set<String> composeServiceNames() throws IOException {
+        Map<String, Object> root = load(REPO_ROOT.resolve("docker-compose.yml"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> services = (Map<String, Object>) root.get("services");
+        return services.keySet();
+    }
+
     private Map<String, String> scrapeTargets() throws IOException {
         Map<String, Object> root = load(REPO_ROOT.resolve("infra/prometheus/prometheus.yml"));
         Map<String, String> out = new LinkedHashMap<>();

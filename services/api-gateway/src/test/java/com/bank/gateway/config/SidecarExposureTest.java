@@ -63,7 +63,9 @@ class SidecarExposureTest {
     @ValueSource(strings = {
             "consultation-service",   // 고객 개인정보·챗봇 이체
             "doc-agent",              // 심사 결정·법적보존 해제
-            "fraud-agent"})           // 조사 큐·조사 실행·승인
+            "fraud-agent",            // 조사 큐·조사 실행·승인
+            "auto-loan-review",       // 심사 결정 로직·ML 추론 (loan-service 만 부른다)
+            "review-ai-gateway"})     // 자문 도구 분석 (서비스 간 호출)
     @DisplayName("사이드카는 호스트에 노출되지 않는다 — 열리면 게이트웨이를 건너뛸 수 있다")
     void sidecarDoesNotPublishHostPort(String name) {
         assertThat(service(name).get("ports"))

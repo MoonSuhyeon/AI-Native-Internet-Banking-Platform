@@ -24,7 +24,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
  */
 class AutoReviewEvaluateClientTest {
 
-    private static final String BASE_URL      = "http://auto-loan-review:8086";
+    private static final String BASE_URL      = "http://auto-loan-review:8089";
     private static final String EVALUATE_PATH = "/api/ai/auto-review/evaluate";
     private static final String TOKEN         = "test-token";
 

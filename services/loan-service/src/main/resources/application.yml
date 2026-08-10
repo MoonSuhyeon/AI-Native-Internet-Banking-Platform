@@ -93,7 +93,9 @@ loan:
 
 auto-review:
   enabled: ${AUTO_REVIEW_ENABLED:true}
-  base-url: ${AUTO_REVIEW_BASE_URL:http://auto-loan-review:8086}
+  # 8089 다. 오래 8086 으로 적혀 있었는데 그 포트에서 듣는 것이 없어 자동심사 호출이
+  # 늘 실패했다 — compose 에 AUTO_REVIEW_BASE_URL override 도 없었다.
+  base-url: ${AUTO_REVIEW_BASE_URL:http://auto-loan-review:8089}
   internal-token: ${AUTO_REVIEW_INTERNAL_TOKEN:local-internal-token}
   connect-timeout-ms: ${AUTO_REVIEW_CONNECT_TIMEOUT_MS:5000}
   read-timeout-ms: ${AUTO_REVIEW_READ_TIMEOUT_MS:30000}

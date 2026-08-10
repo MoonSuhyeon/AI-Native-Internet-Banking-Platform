@@ -50,6 +50,8 @@ import static org.mockito.Mockito.when;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "ai.llm.provider=stub",
+                // 컨트롤러가 X-Internal-Token 을 확인한다. 비워 두면 전부 401 이다.
+                "ai.internal-token=test-internal-token",
                 "ai.rag.enabled=true",
                 "ai.rag.backend=es",
                 "spring.datasource.url=jdbc:h2:mem:esdowndb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VALUE,YEAR",
@@ -64,6 +66,20 @@ import static org.mockito.Mockito.when;
         }
 )
 class EsDownFallbackSmokeTest {
+
+    /**
+     * 서비스 간 토큰을 실어 보낸다.
+     *
+     * <p>{@code /api/ai/*} 는 loan-service 만 부르는 API 인데 오랫동안 아무 검사가
+     * 없었다. 부르는 쪽은 이미 {@code X-Internal-Token} 을 보내고 있었고 받는 쪽만
+     * 안 보고 있었다 — 테스트도 헤더 없이 통과하고 있었으니 그 사실이 드러나지 않았다.
+     */
+    private static <T> org.springframework.http.HttpEntity<T> withToken(T body) {
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.set("X-Internal-Token", "test-internal-token");
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+        return new org.springframework.http.HttpEntity<>(body, headers);
+    }
 
     @MockBean
     private AutoReviewService autoReviewService;
@@ -106,7 +122,7 @@ class EsDownFallbackSmokeTest {
     @Test
     void ES_다운_시_빈_청크_반환_후_인라인_정책_fallback_DONE_콜백() {
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track1Request(206L), String.class);
+                withToken(track1Request(206L)), String.class);
 
         var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->

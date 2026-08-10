@@ -409,15 +409,20 @@ services:
     build:
       context: .
       dockerfile: agents/auto-loan-review/Dockerfile
-    # 포트를 게시해야 Prometheus 가 긁는다.
-    # 이 서비스만 ports 가 없어서 AI 심사 지표(ai_agent_*)가 하나도 수집되지 않았다 —
-    # 컨테이너 안에서는 정상 노출되는데 호스트로 나오지 않아 스크레이프가 실패했고,
-    # 그 위의 Grafana 패널 13종과 알림 3종(폴백률·하드페일·불일치율)이 빈 채로 돌았다.
-    ports:
-      - "${AUTO_LOAN_REVIEW_APP_PORT:-8089}:8089"
+    # 호스트에 포트를 열지 않는다. loan-service 만 부르는 서비스 간 API 라
+    # 밖에서 닿을 이유가 없다.
+    #
+    # 예전에는 "포트를 게시해야 Prometheus 가 긁는다" 는 이유로 열려 있었다. 그런데
+    # Prometheus 는 같은 compose 망에 있으므로 컨테이너 이름으로도 긁을 수 있다 —
+    # 지표 때문에 열어 둘 필요가 없었다. prometheus.yml 을 auto-loan-review:8089 로
+    # 바꿨다.
     container_name: ib-auto-loan-review
     environment:
       AUTO_LOAN_REVIEW_APP_PORT: ${AUTO_LOAN_REVIEW_APP_PORT:-8089}
+      # 서비스 간 호출 토큰. loan-service 가 AUTO_REVIEW_INTERNAL_TOKEN 으로 보내는
+      # 값과 같아야 한다. 비면 /api/ai/* 와 /api/internal/* 이 전부 거부된다 —
+      # 신원을 확인할 수 없는데 통과시키면 검사가 있다는 착각만 남는다(fail-safe).
+      AI_INTERNAL_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
       AI_DB_HOST: ai-db
       AI_DB_PORT: 5432
       AI_DB_NAME: ${AI_DB_NAME:-ai_db}
@@ -1057,8 +1062,10 @@ services:
       context: .
       dockerfile: agents/review-ai-gateway/Dockerfile
     container_name: ib-review-ai-gateway
-    ports:
-      - "${AIGATEWAY_APP_PORT:-8088}:8088"
+    # 호스트에 포트를 열지 않는다 — 자문 도구 분석만 하는 서비스 간 API 다.
+    #
+    # 부수 효과: 8088 은 로컬에서 api-gateway 를 띄울 때 쓰는 포트라 오래 혼동을
+    # 일으켰다. 닫으면서 그 충돌도 사라졌다.
     environment:
       AIGATEWAY_APP_PORT: 8088
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092

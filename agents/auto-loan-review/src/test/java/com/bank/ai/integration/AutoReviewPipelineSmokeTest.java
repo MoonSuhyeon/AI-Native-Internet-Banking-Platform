@@ -52,6 +52,8 @@ import static org.mockito.Mockito.times;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "ai.llm.provider=stub",
+                // 컨트롤러가 X-Internal-Token 을 확인한다. 비워 두면 전부 401 이다.
+                "ai.internal-token=test-internal-token",
                 "spring.datasource.url=jdbc:h2:mem:smokedb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VALUE,YEAR",
                 "spring.datasource.username=sa",
                 "spring.datasource.password=",
@@ -64,6 +66,20 @@ import static org.mockito.Mockito.times;
         }
 )
 class AutoReviewPipelineSmokeTest {
+
+    /**
+     * 서비스 간 토큰을 실어 보낸다.
+     *
+     * <p>{@code /api/ai/*} 는 loan-service 만 부르는 API 인데 오랫동안 아무 검사가
+     * 없었다. 부르는 쪽은 이미 {@code X-Internal-Token} 을 보내고 있었고 받는 쪽만
+     * 안 보고 있었다 — 테스트도 헤더 없이 통과하고 있었으니 그 사실이 드러나지 않았다.
+     */
+    private static <T> org.springframework.http.HttpEntity<T> withToken(T body) {
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.set("X-Internal-Token", "test-internal-token");
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+        return new org.springframework.http.HttpEntity<>(body, headers);
+    }
 
     // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -163,10 +179,8 @@ class AutoReviewPipelineSmokeTest {
 
     @Test
     void 평가_API_동기_응답은_즉시_PENDING_상태로_반환된다() {
-        var response = restTemplate.postForEntity(
-                "/api/ai/auto-review/evaluate",
-                track1Request(99L),
-                String.class);
+        var response = restTemplate.postForEntity("/api/ai/auto-review/evaluate",
+                withToken(track1Request(99L)), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody())
@@ -179,7 +193,7 @@ class AutoReviewPipelineSmokeTest {
     @Test
     void 비동기_LLM_파이프라인_완료_후_loan_service_에_DONE_콜백_전송() {
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track1Request(1L), String.class);
+                withToken(track1Request(1L)), String.class);
 
         // llmExecutor 스레드풀 완료 대기 + Mockito 호출 검증
         var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
@@ -199,7 +213,7 @@ class AutoReviewPipelineSmokeTest {
     @Test
     void revId_null_이면_비동기_파이프라인_스킵_후_콜백_없음() throws InterruptedException {
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track1Request(null), String.class);
+                withToken(track1Request(null)), String.class);
 
         // 비동기가 실행됐다면 완료될 충분한 시간 대기
         TimeUnit.MILLISECONDS.sleep(600);
@@ -227,7 +241,7 @@ class AutoReviewPipelineSmokeTest {
                 .thenReturn(TRACK3_SIM_IMPROVED);  // 시뮬레이션 2
 
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track1Request(10L), String.class);
+                withToken(track1Request(10L)), String.class);
 
         var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
@@ -255,7 +269,7 @@ class AutoReviewPipelineSmokeTest {
     @Test
     void Track2_준법검토_마킹_COMPLIANCE_REVIEW_REQUIRED_포함_DONE_콜백() {
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track2Request(20L), String.class);
+                withToken(track2Request(20L)), String.class);
 
         var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->

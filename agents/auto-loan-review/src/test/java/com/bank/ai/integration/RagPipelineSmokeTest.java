@@ -51,6 +51,8 @@ import static org.mockito.Mockito.when;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "ai.llm.provider=stub",
+                // 컨트롤러가 X-Internal-Token 을 확인한다. 비워 두면 전부 401 이다.
+                "ai.internal-token=test-internal-token",
                 "ai.rag.enabled=true",
                 "spring.datasource.url=jdbc:h2:mem:ragsmokedb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VALUE,YEAR",
                 "spring.datasource.username=sa",
@@ -64,6 +66,20 @@ import static org.mockito.Mockito.when;
         }
 )
 class RagPipelineSmokeTest {
+
+    /**
+     * 서비스 간 토큰을 실어 보낸다.
+     *
+     * <p>{@code /api/ai/*} 는 loan-service 만 부르는 API 인데 오랫동안 아무 검사가
+     * 없었다. 부르는 쪽은 이미 {@code X-Internal-Token} 을 보내고 있었고 받는 쪽만
+     * 안 보고 있었다 — 테스트도 헤더 없이 통과하고 있었으니 그 사실이 드러나지 않았다.
+     */
+    private static <T> org.springframework.http.HttpEntity<T> withToken(T body) {
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.set("X-Internal-Token", "test-internal-token");
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+        return new org.springframework.http.HttpEntity<>(body, headers);
+    }
 
     @MockBean
     private AutoReviewService autoReviewService;
@@ -124,7 +140,7 @@ class RagPipelineSmokeTest {
     @Test
     void Track1_RAG_활성_DONE_콜백() {
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track1Request(201L), String.class);
+                withToken(track1Request(201L)), String.class);
 
         var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
@@ -141,7 +157,7 @@ class RagPipelineSmokeTest {
     @Test
     void Track2_RAG_활성_COMPLIANCE_REVIEW_REQUIRED_콜백() {
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track2Request(202L), String.class);
+                withToken(track2Request(202L)), String.class);
 
         var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
@@ -166,7 +182,7 @@ class RagPipelineSmokeTest {
                 .thenReturn(TRACK3_SIM);
 
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track3Request(203L), String.class);
+                withToken(track3Request(203L)), String.class);
 
         var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
@@ -185,7 +201,7 @@ class RagPipelineSmokeTest {
         when(ragRetrievalService.retrieve(any(), any(), any(), any(), any())).thenReturn(List.of());
 
         restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                track1Request(204L), String.class);
+                withToken(track1Request(204L)), String.class);
 
         var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
@@ -208,6 +224,9 @@ class RagPipelineSmokeTest {
             webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
             properties = {
                     "ai.llm.provider=stub",
+                    // 중첩 클래스는 바깥 properties 를 상속하지 않는다(OVERRIDE).
+                    // 여기에도 토큰을 넣지 않으면 이 시험만 401 로 떨어진다.
+                    "ai.internal-token=test-internal-token",
                     "ai.rag.enabled=false",
                     "spring.datasource.url=jdbc:h2:mem:ragkilldb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VALUE,YEAR",
                     "spring.datasource.username=sa",
@@ -250,7 +269,7 @@ class RagPipelineSmokeTest {
         @Test
         void RAG_킬스위치_비활성_시_인라인_정책으로_DONE_콜백() {
             restTemplate.postForEntity("/api/ai/auto-review/evaluate",
-                    track1Request(205L), String.class);
+                withToken(track1Request(205L)), String.class);
 
             var captor = ArgumentCaptor.forClass(ReviewReportUpdateRequest.class);
             await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->

@@ -82,19 +82,23 @@ scrape_configs:
   - job_name: 'consultation-service'
     metrics_path: /metrics
     static_configs:
-      - targets: ['host.docker.internal:8087']
+      # 컨테이너 이름으로 긁는다. host.docker.internal 을 쓰면 호스트 포트가 열려
+      # 있어야 하는데, 그 포트가 곧 게이트웨이 우회로다 — 지표 때문에 인가에
+      # 구멍을 남기게 된다. fraud-agent 가 원래 이 방식이었다.
+      - targets: ['consultation-service:8087']
         labels:
           application: consultation-service
 
   - job_name: 'review-ai-gateway'
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ['host.docker.internal:8088']
+      # 컨테이너 이름으로 긁는다 — 호스트 포트를 닫았다.
+      - targets: ['review-ai-gateway:8088']
 
   - job_name: 'auto-loan-review'
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ['host.docker.internal:8089']
+      - targets: ['auto-loan-review:8089']
 
   # 조사 에이전트. 격리망(fraud-internal)에 있어 호스트로 포트를 열지 않는다 —
   # 그 안에서 컨테이너 이름으로 긁는다(prometheus 를 같은 망에 붙여 두었다).
@@ -115,7 +119,8 @@ scrape_configs:
   - job_name: 'doc-agent'
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ['host.docker.internal:8091']
+      # 컨테이너 내부 포트는 8087 이다(호스트 8091 매핑은 걷어냈다).
+      - targets: ['doc-agent:8087']
 
   # --- 모니터링 스택 직접 메트릭 ---
 
