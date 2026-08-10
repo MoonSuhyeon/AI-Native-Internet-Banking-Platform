@@ -26,8 +26,10 @@ auditability constrain what they can see and do.**
 - **Fraud investigation agent** — bounded investigation loop · evidence
   gathering · HITL approval gating
 - **Frontend** — internet banking and admin console
-- **System integrity** *(after the team phase, on this fork)* — persisted-row
-  double-entry check · pre-transfer FDS gate · shared agent harness
+
+After the team phase I continued on the fork: fixing the double-entry check to
+verify persisted rows, adding a pre-check that blocks transfers before money
+moves, and extracting a shared agent harness.
 
 ---
 
