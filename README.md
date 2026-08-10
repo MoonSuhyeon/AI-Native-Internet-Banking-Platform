@@ -18,17 +18,30 @@ We built a banking system where **agents investigate and recommend, while
 identity, permissions, service boundaries, policy, human approval, and
 auditability constrain what they can see and do.**
 
-**My part**
+```
+MY CONTRIBUTION
 
-- **Customer & auth** — JWT and certificate login · step-up approval for fund
-  movement · role-based access · audit logging · per-customer transfer limits
-- **Fraud investigation agent** — bounded investigation loop · evidence
-  gathering · HITL approval
-- **Frontend** — internet banking and admin console
+Customer & Auth
+├─ customer / party model
+├─ JWT and certificate login
+├─ step-up approval for fund movement
+├─ role-based access (BankRole)
+├─ access audit logging
+└─ per-customer transfer limits
 
-After the team phase I continued on the fork: fixing the double-entry check to
-verify persisted rows, adding a pre-check that blocks transfers before money
-moves, and extracting a shared agent harness.
+Fraud Investigation Agent
+├─ bounded investigation loop
+├─ evidence gathering
+└─ HITL approval gating
+
+Frontend
+└─ internet banking and admin console
+
+System Integrity                    (after the team phase, on this fork)
+├─ persisted-row double-entry validation
+├─ pre-transfer FDS gate
+└─ shared agent harness
+```
 
 ---
 
