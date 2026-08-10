@@ -20,11 +20,11 @@ auditability constrain what they can see and do.**
 |---|---|
 | Customer & auth | JWT and certificate login · step-up approval for fund movement · role-based access · audit logging · per-customer transfer limits |
 | Fraud investigation agent | Bounded investigation loop · evidence gathering · HITL approval |
-| Frontend | Customer and admin screens |
+| Frontend | Internet banking and admin console |
 
-After the team phase I continued on the fork: making the double-entry check
-actually verify, adding the pre-check that blocks a transfer before money moves,
-and splitting out the shared agent harness.
+After the team phase I continued on the fork: fixing the double-entry check to
+verify persisted rows, adding a pre-check that blocks transfers before money
+moves, and extracting a shared agent harness.
 
 ---
 
