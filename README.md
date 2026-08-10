@@ -14,11 +14,14 @@ We built a banking system where **agents investigate and recommend, while
 identity, permissions, service boundaries, policy, human approval, and
 auditability constrain what they can see and do.**
 
-**My part** — frontend, customer domain, authentication and security, and the
-fraud investigation agent. I built the customer and authentication foundation —
-JWT and certificate login, step-up approval for fund movement, role-based
-access, audit logging, transfer limits, and the customer and admin screens — and
-a **bounded investigation agent with evidence gathering and HITL approval**.
+**My part**
+
+| | |
+|---|---|
+| Customer & auth | JWT and certificate login · step-up approval for fund movement · role-based access · audit logging · per-customer transfer limits |
+| Fraud investigation agent | Bounded investigation loop · evidence gathering · HITL approval |
+| Frontend | Customer and admin screens |
+
 After the team phase I continued on the fork: making the double-entry check
 actually verify, adding the pre-check that blocks a transfer before money moves,
 and splitting out the shared agent harness.
