@@ -2,14 +2,22 @@
 
 *Team project · 5 people*
 
-Letting an AI agent move money is easy. Letting it move money in a way a bank
-could actually sign off on is the hard part.
+A bank is a two-sided market. Depositors put money in, borrowers take money
+out, and what sits between them is **risk** — will this borrower repay, is this
+transfer fraud, did the money actually settle. Managing that risk is most of
+the work, and most of it is still done by hand.
 
-This platform runs AI agents across real banking work — transfers, loan review,
-fraud investigation, document verification — and puts each of them under the
-same internal controls a bank applies to a human doing that job: verified
-identity, segregation of duties, four-eyes approval, an audit trail that cannot
-be rewritten, and decisions that reproduce.
+This platform puts AI agents on that work: credit assessment, fraud
+investigation, document verification, customer advice. Which creates a second
+problem. **An agent making risk decisions is itself a risk.** It can be wrong
+in ways nobody notices, act on an identity nobody verified, and leave no
+evidence of why.
+
+So every agent here runs under the internal controls a bank applies to a person
+doing the same job — verified identity, segregation of duties, four-eyes
+approval, an audit trail that cannot be rewritten, and decisions that reproduce.
+
+That constraint is the project.
 
 ---
 
@@ -133,9 +141,14 @@ It cannot spin.
 
 ### The LLM does not decide
 
-For loan review, the LLM produces discriminative signals; the decision comes
-from a rule engine and a policy matrix. Track 1 (auto-approve), 2 (auto-reject)
-and 3 (human review) are deterministic given the same input.
+For loan review, an ML model produces a probability of default and the LLM
+produces discriminative signals; the decision comes from a rule engine and a
+policy matrix. Track 1 (auto-approve), 2 (auto-reject) and 3 (human review) are
+deterministic given the same input.
+
+Where the agent cites policy, it retrieves the clause rather than recalling it
+— hybrid search (BM25 + vector) over the credit policy corpus, with retrieval
+quality measured against a held-out query set rather than assumed.
 
 In the investigation agent, a decisive fact found mid-loop (death, guardianship)
 terminates immediately regardless of what the model thinks — fail-closed in
