@@ -39,3 +39,21 @@ tasks.named('test') {
     inputs.file(rootProject.file('infra/prometheus/rules.yml')).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.file('infra/grafana/provisioning/dashboards')).withPathSensitivity(PathSensitivity.RELATIVE)
 }
+
+// DockerBuildContextTest·ComposeNetworkReachabilityTest·ScrapeTargetConsistencyTest 는
+// 레포 루트의 설정 파일들을 읽는다. 선언하지 않으면 Gradle 이 그 변경을 모르고 테스트를
+// UP-TO-DATE 로 건너뛴다 — 지키라고 만든 검사가 조용히 안 도는 상태가 된다.
+tasks.named('test') {
+    inputs.file(rootProject.file('docker-compose.yml'))
+            .withPropertyName('dockerComposeFile')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.file('infra/prometheus/prometheus.yml'))
+            .withPropertyName('prometheusConfig')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(rootProject.fileTree('.') {
+        include '**/Dockerfile'
+        include '**/build.gradle'
+        exclude '**/build/**'
+    }).withPropertyName('dockerfilesAndBuildScripts')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+}

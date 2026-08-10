@@ -121,6 +121,7 @@ services:
     networks:
       - default
       - agent-net
+      - agent-closed
   # =============================================================
   # Message Queue
   # =============================================================
@@ -152,6 +153,7 @@ services:
     networks:
       - default
       - agent-net
+      - agent-closed
   # 결제계 Kafka 토픽 원샷 프로비저닝.
   # 단일 broker(auto-create=false)에 결제계 18개 토픽을 선생성하고 종료한다.
   # init-topics.sh(core-banking/infra)를 마운트해 kafka:29092 대상으로 1회 실행.
@@ -206,6 +208,7 @@ services:
     networks:
       - default
       - agent-net
+      - agent-closed
   # =============================================================
   # Application Services
   # =============================================================
@@ -366,6 +369,7 @@ services:
     networks:
       - default
       - agent-net
+      - agent-closed
   # B은행(다온뱅크) — 타행이체 상대 은행.
   #
   # 병합 전에는 payment-service 를 mock 프로필로 띄워 수신계를 가짜로 대체했다.
@@ -477,7 +481,7 @@ services:
     # 기대는데, 기본망에 있으면 41개 서비스 중 아무나 직접 부를 수 있다.
     # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
     networks:
-      - agent-net
+      - agent-closed
   # 이상거래 조사 에이전트 (사이드카)
   #
   # **ports 를 두지 않는다.** 호스트에 8090 이 열리면 브라우저가 게이트웨이를 우회해
@@ -618,6 +622,7 @@ services:
       - default
       - fraud-internal
       - agent-net
+      - agent-closed
 
   grafana:
     image: grafana/grafana:latest
@@ -771,6 +776,7 @@ services:
     networks:
       - default
       - agent-net
+      - agent-closed
   phoenix:
     image: arizephoenix/phoenix:latest
     container_name: ib-phoenix
@@ -830,6 +836,7 @@ services:
       - default
       - fraud-internal
       - agent-net
+      - agent-closed
     volumes:
       - C:/logs/internet-banking:/logs
     depends_on:
@@ -1152,7 +1159,7 @@ services:
     # 기대는데, 기본망에 있으면 41개 서비스 중 아무나 직접 부를 수 있다.
     # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
     networks:
-      - agent-net
+      - agent-closed
   kafka-exporter-kftc:
     image: danielqsj/kafka-exporter:latest
     container_name: ib-kafka-exporter-kftc
@@ -1225,5 +1232,20 @@ networks:
   # (Gemini·OpenAI)을 부르기 때문이다 — 막으면 추론이 폴백으로 조용히 흘러간다.
   # 격리 효과는 "기본망의 아무 서비스나 사이드카를 부를 수 있던 것" 을 없애는 데 있다.
   agent-net:
+  # 유출까지 막는 사이드카망.
+  #
+  # internal: true 는 컨테이너 간 접근이 아니라 **바깥으로 나가는 것**을 막는다.
+  # 격리(누가 부를 수 있는가)는 망 소속으로 이미 정해지므로, 이 설정이 더하는 것은
+  # "털려도 밖으로 내보내지 못한다" 뿐이다.
+  #
+  # 여기 있는 둘(auto-loan-review·review-ai-gateway)은 기본 설정에서 바깥에 나갈 일이
+  # 없다 — LLM 제공자 기본값이 각각 stub·mock 이다. 대출 신청자 정보를 다루는
+  # 서비스라 유출 경로를 닫아 둘 값이 있다.
+  #
+  # ⚠ 실제 LLM(GEMINI_LOAN_PROVIDER·LLM_PROVIDER)을 켜면 이 망에서는 호출이 나가지
+  #   못한다. 그때는 docker-compose.override.sample.yml 의 안내대로 agent-net 을
+  #   함께 붙인다. 켜 두고 안 붙이면 추론이 폴백으로 조용히 흘러간다.
+  agent-closed:
+    internal: true
   fraud-internal:
     internal: true

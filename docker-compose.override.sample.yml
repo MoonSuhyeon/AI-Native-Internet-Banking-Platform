@@ -56,3 +56,25 @@ services:
   #   ports:
   #     # 상담과 컨테이너 내부 포트가 같으므로 호스트 쪽을 달리 준다.
   #     - "8091:8087"
+
+# ── 실제 LLM 을 켤 때 ───────────────────────────────────────────────────────
+#
+# auto-loan-review 와 review-ai-gateway 는 agent-closed(internal: true)에 있어
+# 바깥으로 나가지 못한다. 기본 설정에서는 나갈 일이 없기 때문이다 — LLM 제공자
+# 기본값이 각각 stub·mock 이다.
+#
+# 실제 제공자를 켜면(GEMINI_LOAN_PROVIDER=gemini, LLM_PROVIDER=anthropic 등)
+# 호출이 나가지 못한다. 그때 agent-net 을 함께 붙인다.
+#
+# 붙이지 않고 켜면 추론이 폴백으로 조용히 흘러간다 — 화면은 멀쩡하고 결과만
+# 스텁이 된다. 켤 때 이 블록을 함께 여는 습관이 필요하다.
+#
+# auto-loan-review:
+#   networks:
+#     - agent-closed
+#     - agent-net
+#
+# review-ai-gateway:
+#   networks:
+#     - agent-closed
+#     - agent-net

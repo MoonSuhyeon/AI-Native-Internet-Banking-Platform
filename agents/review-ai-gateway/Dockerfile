@@ -8,6 +8,8 @@ WORKDIR /workspace
 # 의존성 레이어 캐시 (build.gradle 변경 없으면 재사용)
 COPY build.gradle settings.gradle gradle.properties ./
 COPY common/build.gradle common/build.gradle
+# harness-core: 이 서비스가 의존한다. 빠지면 이미지 빌드만 깨진다(Gradle 은 통과).
+COPY agents/harness-core/build.gradle agents/harness-core/build.gradle
 COPY agents/review-ai-gateway/build.gradle agents/review-ai-gateway/build.gradle
 
 # gradle.properties의 Windows JDK 경로는 컨테이너 내에서 유효하지 않으므로 제거
@@ -17,6 +19,7 @@ RUN gradle :agents:review-ai-gateway:dependencies --no-daemon -q 2>/dev/null || 
 
 # 소스 복사 + bootJar 빌드
 COPY common/src common/src
+COPY agents/harness-core/src agents/harness-core/src
 COPY agents/review-ai-gateway/src agents/review-ai-gateway/src
 
 RUN gradle :agents:review-ai-gateway:bootJar --no-daemon -q
