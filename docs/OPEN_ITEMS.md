@@ -29,7 +29,9 @@
 | ~~비밀번호 변경 이력 미연동~~ | **해결.** `password_history.countChangesSince` 를 읽는다. 리포지토리 메서드도 이미 있었다 | `InternalAuthEventsController` |
 | ~~관리자 화면 직원 ID 임시 입력~~ | **해결.** 입력칸을 없애고 게이트웨이가 JWT 에서 주입한 `X-Employee-Id` 만 신뢰한다 | `test_staff_identity_trust.py` |
 | ~~사이드카 호스트 포트 노출~~ | **해결.** 상담·서류심사의 호스트 포트를 닫았다(조사는 원래 닫혀 있었다). 되돌리면 `SidecarExposureTest` 가 잡는다 | `docker-compose.yml` |
-| **같은 망 컨테이너 간 접근** | 포트는 닫았지만 같은 compose 망의 다른 컨테이너는 여전히 서로에게 닿는다. `fraud-agent` 만 전용 내부망(`internal: true`)으로 분리돼 있고, 나머지는 DB·Kafka·core-banking 과 같은 망을 써야 해서 못 나눴다. 다만 각 서비스가 공유 시크릿·내부 토큰을 확인하므로 "닿는다 = 통과한다" 는 아니다 | 배포 설정 |
+| ~~같은 망 컨테이너 간 접근~~ | **해결.** 사이드카 4종을 `agent-net` 전용망으로 옮겨 기본망에서 뺐다. `customer-service` 에서 DNS 조회조차 안 되는 것을 실물로 확인했다 | `SidecarExposureTest` |
+| **agent-net 은 내부망이 아니다** | 사이드카가 외부 LLM(Gemini·OpenAI)을 부르므로 `internal: true` 를 못 걸었다. 즉 사이드카에서 인터넷으로 나가는 것은 막히지 않는다 | 배포 설정 |
+| **auto-loan-review Docker 빌드 실패** | `harness-core` 가 빌드 컨텍스트에 없어 `com.bank.harness.validation` 을 못 찾는다. Gradle 로는 되고 이미지 빌드만 깨진다 | `agents/auto-loan-review/Dockerfile` |
 | ~~상담 서비스 인증 미들웨어~~ | **해결.** 신원을 `app/identity.py` 한 곳에서만 읽고, 게이트웨이가 검증한 헤더만 믿는다 | `test_endpoint_authorization.py` |
 | **P-029 self-listening** | 자기가 보낸 메시지를 자기가 받는 것을 sender 은행코드로만 막는다 | `KftcNetworkResponseConsumer` |
 | **역분개 미구현** | `reversal_yn` 스키마만 있고 코드가 없다 | 결제 원장 |

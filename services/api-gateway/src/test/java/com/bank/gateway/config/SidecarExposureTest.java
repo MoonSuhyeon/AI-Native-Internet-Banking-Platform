@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,6 +88,49 @@ class SidecarExposureTest {
                 .containsEntry("CONSULTATION_SERVICE_HOST", "consultation-service")
                 .containsEntry("DOC_AGENT_HOST", "doc-agent")
                 .containsEntry("FRAUD_AGENT_HOST", "fraud-agent");
+    }
+
+    @Test
+    @DisplayName("사이드카는 기본망에 없다 — 있으면 아무 서비스나 직접 부를 수 있다")
+    void sidecarsAreOffTheDefaultNetwork() {
+        // 포트를 닫아도 같은 망의 컨테이너는 여전히 닿는다. 기본망에는 41개 서비스가
+        // 있어서, 거기 남겨 두면 "게이트웨이를 거쳐야 한다" 는 전제가 사실상 없다.
+        //
+        // 실물로 확인했다. 분리 후 customer-service 에서 사이드카 이름이 DNS 조회조차
+        // 안 되고, 게이트웨이에서는 정상으로 조회된다.
+        for (String name : List.of("consultation-service", "doc-agent",
+                                   "auto-loan-review", "review-ai-gateway")) {
+            assertThat(networksOf(name))
+                    .as("'%s' 가 기본망에 있다. 사이드카는 agent-net 에만 둔다", name)
+                    .doesNotContain("default");
+        }
+    }
+
+    @Test
+    @DisplayName("X-Gateway-Auth 기본값이 비어 있지 않다 — 비면 게이트웨이가 아예 못 뜬다")
+    void gatewayAuthHeaderHasNonEmptyDefault() throws IOException {
+        // Spring Cloud Gateway 의 AddRequestHeader 는 값이 비면 바인딩을 거부하고
+        // ApplicationContext 가 죽는다. 시크릿 미설정이 기본값이므로, ${VAR:} 로 두면
+        // 아무 설정 없이 띄웠을 때 **반드시** 게이트웨이가 못 뜬다.
+        //
+        // 실제로 그 상태였다. compose 로 올려 보고서야 드러났다.
+        String yaml = Files.readString(
+                Path.of("src/main/resources/application.yml").toAbsolutePath());
+
+        assertThat(yaml)
+                .as("AddRequestHeader 값에 빈 기본값(${VAR:})이 있으면 게이트웨이가 죽는다. "
+                    + "비어 있지 않은 표식을 쓴다 — 사이드카는 자기 시크릿이 비면 "
+                    + "무엇이 오든 믿지 않으므로 보안은 그대로다")
+                .doesNotContain("AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:}")
+                .doesNotContainPattern("AddRequestHeader=[^\n]*[$][{][A-Z_]+:[}]");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> networksOf(String service) {
+        Object nets = service(service).get("networks");
+        return nets instanceof List<?> list
+                ? list.stream().map(String::valueOf).toList()
+                : List.of("default");
     }
 
     @Test

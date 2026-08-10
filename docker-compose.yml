@@ -41,7 +41,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   loan-db:
     image: pgvector/pgvector:pg16
     container_name: ib-loan-db
@@ -114,7 +117,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   # =============================================================
   # Message Queue
   # =============================================================
@@ -142,7 +148,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   # 결제계 Kafka 토픽 원샷 프로비저닝.
   # 단일 broker(auto-create=false)에 결제계 18개 토픽을 선생성하고 종료한다.
   # init-topics.sh(core-banking/infra)를 마운트해 kafka:29092 대상으로 1회 실행.
@@ -193,7 +202,10 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   # =============================================================
   # Application Services
   # =============================================================
@@ -293,7 +305,10 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   loan-service:
     build:
       context: .
@@ -347,7 +362,10 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   # B은행(다온뱅크) — 타행이체 상대 은행.
   #
   # 병합 전에는 payment-service 를 mock 프로필로 띄워 수신계를 가짜로 대체했다.
@@ -455,7 +473,11 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
-
+    # default 에서 뺐다. 이 서비스의 인가는 게이트웨이가 주입한 신원 헤더에
+    # 기대는데, 기본망에 있으면 41개 서비스 중 아무나 직접 부를 수 있다.
+    # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
+    networks:
+      - agent-net
   # 이상거래 조사 에이전트 (사이드카)
   #
   # **ports 를 두지 않는다.** 호스트에 8090 이 열리면 브라우저가 게이트웨이를 우회해
@@ -530,7 +552,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-
+    # default 에서 뺐다. 이 서비스의 인가는 게이트웨이가 주입한 신원 헤더에
+    # 기대는데, 기본망에 있으면 41개 서비스 중 아무나 직접 부를 수 있다.
+    # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
+    networks:
+      - agent-net
   mock-responder:
     image: python:3.12-alpine
     container_name: ib-mock-responder
@@ -591,6 +617,7 @@ services:
     networks:
       - default
       - fraud-internal
+      - agent-net
 
   grafana:
     image: grafana/grafana:latest
@@ -740,7 +767,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   phoenix:
     image: arizephoenix/phoenix:latest
     container_name: ib-phoenix
@@ -791,14 +821,15 @@ services:
       #
       # 각 사이드카의 같은 이름 변수와 값이 맞아야 한다. 한쪽만 넣으면 조용히
       # 거절되고 원인이 안 보인다.
-      FRAUD_GATEWAY_SHARED_SECRET: ${FRAUD_GATEWAY_SHARED_SECRET:-}
-      CONSULTATION_GATEWAY_SHARED_SECRET: ${CONSULTATION_GATEWAY_SHARED_SECRET:-}
-      DOC_AGENT_GATEWAY_SHARED_SECRET: ${DOC_AGENT_GATEWAY_SHARED_SECRET:-}
+      FRAUD_GATEWAY_SHARED_SECRET: ${FRAUD_GATEWAY_SHARED_SECRET:-not-configured}
+      CONSULTATION_GATEWAY_SHARED_SECRET: ${CONSULTATION_GATEWAY_SHARED_SECRET:-not-configured}
+      DOC_AGENT_GATEWAY_SHARED_SECRET: ${DOC_AGENT_GATEWAY_SHARED_SECRET:-not-configured}
     # 기본 네트워크에 더해 fraud 전용 내부망에도 붙는다.
     # default 를 명시하지 않으면 이 서비스만 기본망에서 빠져 다른 서비스와 끊긴다.
     networks:
       - default
       - fraud-internal
+      - agent-net
     volumes:
       - C:/logs/internet-banking:/logs
     depends_on:
@@ -837,7 +868,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   minio:
     profiles: ["doc"]
     image: minio/minio:latest
@@ -856,7 +890,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   vault:
     profiles: ["doc"]
     image: hashicorp/vault:1.15
@@ -879,7 +916,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   # ── RAG 전용 (profile: rag) ───────────────────────────────────────────────
   kafka-connect:
     profiles: ["rag"]
@@ -952,7 +992,10 @@ services:
       interval: 15s
       timeout: 15s
       retries: 10
-
+    # 사이드카와 통신해야 하므로 agent-net 에도 붙는다.
+    networks:
+      - default
+      - agent-net
   kibana:
     profiles: ["rag"]
     image: docker.elastic.co/kibana/kibana:8.15.0
@@ -1000,7 +1043,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
-
+    # fraud-agent 는 전용 내부망에만 있다. 여기에 붙지 않으면 탐지 후 조사 위임이
+    # 통째로 실패한다 — 컨테이너는 멀쩡히 뜨고 그 호출만 조용히 죽는다.
+    networks:
+      - default
+      - fraud-internal
   doc-agent:
     profiles: ["doc"]
     build:
@@ -1056,7 +1103,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    # default 에서 뺐다. 이 서비스의 인가는 게이트웨이가 주입한 신원 헤더에
+    # 기대는데, 기본망에 있으면 41개 서비스 중 아무나 직접 부를 수 있다.
+    # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
+    networks:
+      - agent-net
   review-ai-gateway:
     build:
       context: .
@@ -1097,7 +1148,11 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
-
+    # default 에서 뺐다. 이 서비스의 인가는 게이트웨이가 주입한 신원 헤더에
+    # 기대는데, 기본망에 있으면 41개 서비스 중 아무나 직접 부를 수 있다.
+    # agent-net 에는 이 서비스가 필요로 하는 상대와 부르는 쪽만 둔다.
+    networks:
+      - agent-net
   kafka-exporter-kftc:
     image: danielqsj/kafka-exporter:latest
     container_name: ib-kafka-exporter-kftc
@@ -1166,5 +1221,9 @@ volumes:
 # =============================================================
 networks:
   default:
+  # 사이드카 전용망. internal: true 로 두지 않는 이유는 이 서비스들이 외부 LLM
+  # (Gemini·OpenAI)을 부르기 때문이다 — 막으면 추론이 폴백으로 조용히 흘러간다.
+  # 격리 효과는 "기본망의 아무 서비스나 사이드카를 부를 수 있던 것" 을 없애는 데 있다.
+  agent-net:
   fraud-internal:
     internal: true

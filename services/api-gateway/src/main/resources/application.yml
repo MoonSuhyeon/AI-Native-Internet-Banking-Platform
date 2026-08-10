@@ -116,7 +116,7 @@ spring:
           predicates:
             - Path=/api/documents/**
           filters:
-            - AddRequestHeader=X-Gateway-Auth, ${DOC_AGENT_GATEWAY_SHARED_SECRET:}
+            - AddRequestHeader=X-Gateway-Auth, ${DOC_AGENT_GATEWAY_SHARED_SECRET:not-configured}
 
         # 고객용 상담·챗봇 (JWT 필요)
         #
@@ -133,8 +133,18 @@ spring:
             - Path=/api/v1/consultation/**
           filters:
             - RewritePath=/api/v1/consultation/(?<segment>.*), /$\{segment}
-            - AddRequestHeader=X-Gateway-Auth, ${CONSULTATION_GATEWAY_SHARED_SECRET:}
+            - AddRequestHeader=X-Gateway-Auth, ${CONSULTATION_GATEWAY_SHARED_SECRET:not-configured}
 
+        # ── X-Gateway-Auth 기본값에 대하여 ────────────────────────────────
+        #
+        # 빈 문자열을 쓰면 게이트웨이가 아예 뜨지 않는다. Spring Cloud Gateway 의
+        # AddRequestHeader 는 값이 비면 "must not be empty" 로 바인딩을 거부하고
+        # ApplicationContext 가 죽는다. 시크릿 미설정이 기본값이므로, 그대로 두면
+        # 아무 설정 없이 띄웠을 때 반드시 게이트웨이가 못 뜬다.
+        #
+        # 그래서 비어 있지 않은 표식을 넣는다. 사이드카는 자기 시크릿이 비어 있으면
+        # 무엇이 오든 믿지 않으므로(fail-closed) 이 값으로 통과하지 않는다.
+        #
         # 직원용 상담 조회 (JWT 필요)
         #
         # 조회 대상이 고객 개인정보·계좌·거래·상담이력이라 "누가 열람했는가"가 감사의
@@ -157,7 +167,7 @@ spring:
             #   /api/v1/internal/consultation/chatbot/features/X/execute
             #     → /chatbot/features/X/execute
             - RewritePath=/api/v1/internal/consultation/(?<segment>.*), /$\{segment}
-            - AddRequestHeader=X-Gateway-Auth, ${CONSULTATION_GATEWAY_SHARED_SECRET:}
+            - AddRequestHeader=X-Gateway-Auth, ${CONSULTATION_GATEWAY_SHARED_SECRET:not-configured}
 
         # 이상거래 조사 에이전트 (JWT 필요)
         #
@@ -179,7 +189,7 @@ spring:
             #   /api/v1/internal/fraud/investigate → /api/investigate
             - RewritePath=/api/v1/internal/fraud/(?<segment>.*), /api/$\{segment}
             # 게이트웨이를 거쳤다는 증거. 사이드카는 이 값이 맞을 때만 신원 헤더를 믿는다.
-            - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:}
+            - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:not-configured}
 
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-please-change-in-production-min-32-chars-long}
