@@ -1,6 +1,6 @@
 # AI Agents Under Banking Internal Controls
 
-*Team project · 6 people*
+*Team project · 5 people*
 
 Letting an AI agent move money is easy. Letting it move money in a way a bank
 could actually sign off on is the hard part.
@@ -78,20 +78,31 @@ be rewritten, and decisions that reproduce.
 
 ## My role
 
-I own the **customer / authentication** domain (backend and frontend), and
-worked across payment, loan, and the agent platform. ~210 of ~320 commits.
-
-Most of what follows in *How* and *How we verified it* is work I did or led.
-Where a section describes a control, the specific things I built are:
+**My assigned scope** was the frontend, the customer domain, authentication
+and security, and the fraud investigation agent.
 
 | | |
 |---|---|
-| Identity | JWT issuance and claims, certificate auth, step-up approval tokens, `BankRole`, access audit logging, per-customer transfer limits |
-| Ledger | Double-entry verification against persisted rows · reconciliation against KFTC/BOK |
-| Fraud | Inline pre-check gate — blocking *before* money moves |
-| Agent platform | `harness-core` split out · OpenTelemetry tracing unified |
-| Boundaries | deposit + payment → `core-banking` · advisory → `loan-service` |
-| Security wiring | All traffic through the gateway · sidecar ports closed · identity out of request bodies across 24 endpoints |
+| Customer / auth | Customer, party and contract model · login and JWT issuance · certificate auth · step-up approval tokens for fund movement · `BankRole` · access audit logging · per-customer transfer limits |
+| Fraud investigation agent | Bounded investigation loop · HITL approval gating · gateway-verified identity for approvals |
+| Frontend | Customer and admin screens |
+
+**Beyond that scope**, this repository is my fork, and I have kept working on
+it after the team phase. Those changes touch other people's domains and are
+refactors of their work rather than original ownership:
+
+| | |
+|---|---|
+| Payment ledger | Made the double-entry check actually verify — it re-reads persisted rows instead of comparing a variable with itself. Built reconciliation against KFTC/BOK clearing records |
+| Fraud detection | Added the inline pre-check so a transfer can be blocked *before* the money moves; detection had been after the fact only |
+| Agent platform | Split `harness-core` out so agents share one contract for tracing, audit and retry |
+| Service boundaries | deposit + payment → `core-banking` (one transaction instead of a two-database saga) · advisory → `loan-service` (it had never been in the build) |
+| Security wiring | All traffic through the gateway · sidecar host ports closed · identity moved out of request bodies across 24 endpoints |
+| Conventions | Amounts to `BIGINT`, timestamps to `TIMESTAMPTZ`, `*_yn CHAR(1)` to `BOOLEAN` — 52 columns across 4 schemas |
+
+The sections below describe the system as it stands, not only my part.
+Decisions are in [docs/decisions/](docs/decisions/); what is still missing is in
+[docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md).
 
 ---
 
