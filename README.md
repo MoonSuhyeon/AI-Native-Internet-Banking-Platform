@@ -1,12 +1,19 @@
-# AI-Native Internet Banking
+# AI Agents Under Banking Internal Controls
 
-An internet banking platform where AI agents carry out banking work — transfers,
-loan review, fraud investigation, document verification — and humans approve at
-the points that need judgment.
+*Team project · 6 people*
+
+Letting an AI agent move money is easy. Letting it move money in a way a bank
+could actually sign off on is the hard part.
+
+This platform runs AI agents across real banking work — transfers, loan review,
+fraud investigation, document verification — and puts each of them under the
+same internal controls a bank applies to a human doing that job: verified
+identity, segregation of duties, four-eyes approval, an audit trail that cannot
+be rewritten, and decisions that reproduce.
 
 ---
 
-## Architecture
+## What we built
 
 ```
                     ┌──────────────────────────┐
@@ -69,68 +76,160 @@ the points that need judgment.
 
 ---
 
-## What makes it different
+## My role
 
-**Double-entry ledger, verified against what was stored.** Every transfer writes
-balanced journal entries, and the check re-reads the persisted rows instead of
-comparing in-memory objects.
+I own the **customer / authentication** domain (backend and frontend), and
+worked across payment, loan, and the agent platform. ~210 of ~320 commits.
 
-**Reconciliation.** Internal ledger is matched against external clearing records
-daily. Breaks are typed by severity and persisted, so trends are visible.
+Most of what follows in *How* and *How we verified it* is work I did or led.
+Where a section describes a control, the specific things I built are:
 
-**Fraud detection in three layers.** Inline (before the money moves), post-hoc
-(after settlement), and windowed aggregation — each with its own time budget.
-
-**Agents propose, humans decide.** The investigation agent runs a bounded loop
-and stops at a recommendation. Payment freeze and STR require human approval.
-
-**One way in.** All external traffic passes the gateway, which strips
-client-supplied identity headers and replaces them with verified JWT claims.
-Agent sidecars publish no host ports.
+| | |
+|---|---|
+| Identity | JWT issuance and claims, certificate auth, step-up approval tokens, `BankRole`, access audit logging, per-customer transfer limits |
+| Ledger | Double-entry verification against persisted rows · reconciliation against KFTC/BOK |
+| Fraud | Inline pre-check gate — blocking *before* money moves |
+| Agent platform | `harness-core` split out · OpenTelemetry tracing unified |
+| Boundaries | deposit + payment → `core-banking` · advisory → `loan-service` |
+| Security wiring | All traffic through the gateway · sidecar ports closed · identity out of request bodies across 24 endpoints |
 
 ---
 
-## My role
+## How
 
-A 6-person team project. I own the **customer / authentication** domain
-(backend and frontend), and worked across payment, loan, and the agent
-platform. ~210 of ~320 commits.
+### Identity never comes from the request
 
-**Customer & auth (owner)**
-Customer/party/contract model, login and JWT issuance, certificate auth,
-step-up approval tokens for fund movement, role model (`BankRole`), access
-audit logging, per-customer internet-banking transfer limits.
+The gateway strips client-supplied identity headers and replaces them with
+values taken from a verified JWT. Services and agents read only those headers.
 
-**Payment ledger**
-Made the double-entry check actually verify: it now re-reads persisted rows
-and compares debit/credit sums per journal group. The previous check compared
-a variable to itself and could never fail. Built reconciliation — internal
-ledger against KFTC/BOK clearing records, five break types, persisted daily.
+This sounds obvious and was not the case. Endpoints took `customer_no` and
+`staff_id` from the request body — including the one that moves money. The
+ownership check existed but compared against the value the caller had sent, so
+it could not fail.
 
-**Fraud detection**
-Added the inline pre-check so a transfer can be delayed or blocked *before*
-the money moves; detection used to be after the fact only.
+Sidecar agents publish no host ports, and each one refuses identity headers
+unless the request carries proof it came through the gateway.
 
-**Agent platform**
-Split `harness-core` out so agents share one contract for tracing, audit, and
-retry. Unified agent tracing on OpenTelemetry.
+### Agents propose, humans dispose
 
-**Service boundaries**
-Merged deposit and payment into `core-banking` so an intra-bank transfer is
-one transaction instead of a two-database saga. Merged advisory into
-`loan-service` — it had never been in the build.
+The investigation agent runs a bounded loop — hypothesize → plan → act →
+observe → gate — and stops at a recommendation. Payment freeze and STR filing
+are gated on human approval plus RBAC. Contract signing is blocked when a
+CRITICAL advisory report is unacknowledged (four-eyes).
 
-**Security wiring**
-Routed all traffic through the gateway, closed sidecar host ports, and moved
-identity out of request bodies into gateway-verified headers across 24
-endpoints.
+The loop terminates on a decisive fact, on confidence, or on budget exhaustion.
+It cannot spin.
 
-Type and schema conventions were unified repo-wide along the way — amounts to
-`BIGINT`, timestamps to `TIMESTAMPTZ`, `*_yn CHAR(1)` to `BOOLEAN` across 52
-columns and 4 schemas.
+### The LLM does not decide
 
-Decisions are written down in [docs/decisions/](docs/decisions/); what is
-still missing is in [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md).
+For loan review, the LLM produces discriminative signals; the decision comes
+from a rule engine and a policy matrix. Track 1 (auto-approve), 2 (auto-reject)
+and 3 (human review) are deterministic given the same input.
+
+In the investigation agent, a decisive fact found mid-loop (death, guardianship)
+terminates immediately regardless of what the model thinks — fail-closed in
+code, not in a prompt.
+
+### The ledger proves itself
+
+Every transfer writes balanced journal entries, and the check re-reads the
+persisted rows and sums debits against credits per journal group. Daily
+reconciliation matches the internal ledger against KFTC/BOK clearing records
+and classifies breaks by severity.
+
+### Fraud detection sits in three time bands
+
+Inline (milliseconds, before the money moves — pass, step-up, delay, block),
+post-hoc (after settlement, via Kafka), and windowed aggregation (Spark).
+Each has its own budget so the slow layers cannot stall a transfer.
+
+---
+
+## How we verified it
+
+A control that cannot fail is worse than no control: it reads as protection.
+So every guard here was checked by breaking it and confirming the failure.
+
+**Mutation over assertion.** Reverting the ledger check to compare a variable
+with itself fails 6 tests. Removing the FDS cumulative sum fails 6. Dropping
+the identity guard from the consultation service fails 5. Removing a gateway
+route fails 3. Each number was observed, not estimated.
+
+**Guarding configuration, not just code.** Most of what broke was never in a
+`.java` file. These tests read deployment config and fail the build:
+
+| | |
+|---|---|
+| `SidecarExposureTest` | agent ports are not published to the host |
+| `ComposeNetworkReachabilityTest` | network splits do not silently sever a caller |
+| `FrontendGatewayOnlyTest` | the frontend never calls a service directly |
+| `ScrapeTargetConsistencyTest` | no dead metrics targets |
+| `DockerBuildContextTest` | module dependencies reach the image |
+| `InternalRouteConfigTest` | gateway routes still exist |
+
+**Real stack, not mocks.** Ledger and reconciliation tests run against
+PostgreSQL in Testcontainers. Network isolation was confirmed by booting the
+stack and checking that a peer service cannot resolve a sidecar by name while
+the gateway can.
+
+The recurring failure mode was silence — code compiled, screens worked, tests
+passed, and the thing did nothing. A `fail-open` fallback that never fired. A
+Docker image missing a module while Gradle built fine. Metrics scraping a port
+that had been closed. All of these now fail loudly.
+
+---
+
+## Why it is built this way
+
+Written up in [docs/decisions/](docs/decisions/). The ones that shaped the most:
+
+**[Merging deposit and payment](docs/decisions/core-banking-merge.md)** — an
+intra-bank transfer is one fact. Split across two services it needed a saga,
+and the compensation could itself fail, leaving money withdrawn and not
+deposited. Service purity lost to atomicity.
+
+**[Security zones](docs/decisions/security-zone-topology.md)** — gateway
+unification applies to north-south traffic only. East-west needs different
+controls. Getting this distinction wrong turns half the system into exceptions.
+
+**[Agent harness consolidation](docs/decisions/agent-harness-consolidation.md)** —
+agents share one contract for audit, tracing and retry, so an agent's evidence
+does not depend on who wrote it.
+
+---
+
+## Reusing the pieces
+
+**`harness-core`** — audit, tracing and retry as one contract, implemented for
+both Java and Python. Any agent that plugs in produces the same evidence
+shape.
+
+**The identity pattern** — gateway strips and re-injects identity, sidecars
+trust the headers only with proof of passage, and no service accepts identity
+from a request body. Portable to any system where a language boundary tempts
+you to pass identity by hand.
+
+**Structural tests** — the six above are not domain-specific. They encode
+"deployment must match intent" and transfer to any Docker Compose project.
+
+---
+
+## Operating it
+
+Metrics, logs and traces go to Prometheus / Loki / Grafana; LLM and agent
+traces to Langfuse and Phoenix.
+
+The metric that matters most is **adoption rate** — how often a human accepts
+what the agent recommended, split from disagreement caused by shadow
+divergence. An agent that is always overridden is not working, and without this
+you cannot tell.
+
+Reconciliation breaks persist with a first-seen timestamp, so "how many days
+has this been open" is answerable.
+
+What is *not* done is tracked in [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md) —
+including gaps against real banking infrastructure (batch isolation, read
+replicas, ISO 20022, HSM, DR) and why each was out of scope.
 
 ---
 
@@ -144,8 +243,6 @@ still missing is in [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md).
 | Data | PostgreSQL 16 (pgvector) · Redis 7 · Kafka 3.8 (KRaft) |
 | Runtime | Docker Compose |
 
----
-
 ## Run locally
 
 ```bash
@@ -155,14 +252,10 @@ docker compose up -d
 cd web && npm run dev
 ```
 
-Optional profiles:
-
 ```bash
 docker compose --profile doc up -d    # document agent (MinIO, Vault)
 docker compose --profile rag up -d    # Elasticsearch, Kibana
 ```
-
----
 
 ## Docs
 
