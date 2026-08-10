@@ -141,6 +141,11 @@ PostgreSQL; network isolation was confirmed by booting the stack.
 > The recurring failure mode was **silence** — code compiled, screens worked,
 > tests passed, and the thing did nothing.
 
+Verification proves the control works. **Adoption rate** proves the agent does
+— how often a human accepts what it recommended, tracked separately from
+disagreement caused by shadow deployments. An agent that is always overridden
+is not working, and without this you cannot tell.
+
 Three decisions shaped the rest, written up in [docs/decisions/](docs/decisions/):
 deposit and payment became [one service](docs/decisions/core-banking-merge.md)
 because a transfer is one fact and a saga's compensation can itself fail;
@@ -148,17 +153,6 @@ because a transfer is one fact and a saga's compensation can itself fail;
 north-south traffic only, since east-west needs different controls; and agents
 [share one harness](docs/decisions/agent-harness-consolidation.md) so an
 agent's evidence does not depend on who wrote it.
-
----
-
-## Operating it
-
-Prometheus · Grafana · Loki for metrics and logs; Langfuse · Phoenix for
-agent traces.
-
-The metric that matters most is **adoption rate** — how often a human accepts
-what the agent recommended. An agent that is always overridden is not working,
-and without this you cannot tell.
 
 ---
 
@@ -171,6 +165,7 @@ and without this you cannot tell.
 | Frontend | Next.js · TypeScript |
 | Data | PostgreSQL 16 (pgvector) · Redis 7 · Kafka 3.8 (KRaft) |
 | Runtime | Docker Compose |
+| Observability | Prometheus · Grafana · Loki · Langfuse · Phoenix |
 
 ## Run locally
 
