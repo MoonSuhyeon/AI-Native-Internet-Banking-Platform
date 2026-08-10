@@ -2,6 +2,10 @@
 
 *Team project · 5 people*
 
+![AI + Distributed / Financial System](https://img.shields.io/badge/AI%20%2B%20Distributed%20%2F%20Financial%20System-0B1220?style=for-the-badge)
+
+![Agent](https://img.shields.io/badge/Agent-7C3AED?style=for-the-badge) ![FDS](https://img.shields.io/badge/FDS-BE123C?style=for-the-badge) ![RBAC](https://img.shields.io/badge/RBAC-BE123C?style=for-the-badge) ![audit](https://img.shields.io/badge/audit-BE123C?style=for-the-badge) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-475569?style=for-the-badge) ![Kafka](https://img.shields.io/badge/Kafka-475569?style=for-the-badge) ![Redis](https://img.shields.io/badge/Redis-475569?style=for-the-badge) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-475569?style=for-the-badge)
+
 In a financial marketplace, **serving demand creates risks the financial
 institution has to manage** — credit risk when someone borrows, and fraud and
 settlement risk when money moves.
