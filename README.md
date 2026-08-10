@@ -20,41 +20,26 @@ that cannot be rewritten, decisions that reproduce.
 
 ## The controls
 
-| | |
-|---|---|
-| **Verified identity** | The gateway strips client headers and injects claims from a verified JWT. No service reads identity from a request body |
-| **Agents propose, humans dispose** | The investigation agent stops at a recommendation. Payment freeze and STR need human approval + RBAC. Contract signing blocks on an unacknowledged CRITICAL advisory |
-| **The LLM does not decide** | ML gives probability of default, the LLM gives signals — a rule engine decides. Same input, same track. Policy is retrieved, not recalled |
-| **Bounded autonomy** | The loop ends on a decisive fact, on confidence, or on budget. It cannot spin |
-| **Self-proving ledger** | Double-entry checked by re-reading persisted rows. Daily reconciliation against KFTC/BOK clearing |
-| **Fraud in three time bands** | Inline (before the money moves) · post-hoc (Kafka) · windowed (Spark) |
+Every agent has a gateway-verified identity, stops at a recommendation a human
+approves, and never decides alone — an LLM gives signals, a rule engine decides.
+Loops end on budget. The ledger proves itself by re-reading persisted rows and
+reconciling against KFTC/BOK clearing. Fraud is caught inline, post-hoc and in
+windows.
 
-**A control that cannot fail is worse than no control** — it reads as
-protection. So each was verified by breaking it: reverting the ledger check to
-compare a variable with itself fails 6 tests, removing the identity guard fails
-5, deleting a gateway route fails 3. Six of those tests read deployment config
-rather than `.java`, because that is where most of it broke.
-
-> The recurring failure mode was **silence** — code compiled, screens worked,
-> tests passed, and the thing did nothing.
-
-Verification proves the control works; **adoption rate** — how often a human
-accepts what an agent recommended — proves the agent does.
+Each control was verified by breaking it: reverting the ledger check fails 6
+tests, removing the identity guard fails 5, deleting a gateway route fails 3.
+Six of those tests read deployment config rather than `.java` — because the
+recurring failure was **silence**: code compiled, screens worked, tests passed,
+and the thing did nothing.
 
 ## My role
 
-**My scope** was the frontend, the customer domain, authentication and security,
-and the fraud investigation agent: the customer and party model, JWT and
-certificate auth, step-up approval tokens, `BankRole`, access audit logging,
-per-customer transfer limits, and the agent's bounded loop and HITL gating.
+Frontend, customer domain, authentication and security, and the fraud
+investigation agent.
 
-**Beyond it** — this repo is my fork and I kept working after the team phase.
-These are refactors of other people's domains, not original ownership: making
-the double-entry check actually verify and building reconciliation; adding the
-inline fraud pre-check so a transfer can be blocked *before* the money moves;
-splitting out `harness-core` so agents share one contract for tracing and audit;
-merging deposit + payment into `core-banking`; routing all traffic through the
-gateway and moving identity out of request bodies across 24 endpoints.
+This repo is my fork, and after the team phase I also refactored other people's
+domains — the double-entry check, the inline fraud gate, the shared agent
+harness, and moving identity out of request bodies across 24 endpoints.
 
 ---
 
