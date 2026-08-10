@@ -16,11 +16,11 @@ auditability constrain what they can see and do.**
 
 **My part**
 
-| | |
-|---|---|
-| Customer & auth | JWT and certificate login · step-up approval for fund movement · role-based access · audit logging · per-customer transfer limits |
-| Fraud investigation agent | Bounded investigation loop · evidence gathering · HITL approval |
-| Frontend | Internet banking and admin console |
+- **Customer & auth** — JWT and certificate login · step-up approval for fund
+  movement · role-based access · audit logging · per-customer transfer limits
+- **Fraud investigation agent** — bounded investigation loop · evidence
+  gathering · HITL approval
+- **Frontend** — internet banking and admin console
 
 After the team phase I continued on the fork: fixing the double-entry check to
 verify persisted rows, adding a pre-check that blocks transfers before money
