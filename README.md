@@ -2,29 +2,26 @@
 
 *Team project · 5 people*
 
-In a financial marketplace, **risk emerges from serving demand** — from credit
-risk created by borrowing demand to fraud and settlement risk throughout the
-transaction.
+In a financial marketplace, **serving demand creates risks the financial
+institution has to manage** — credit risk when someone borrows, and fraud and
+settlement risk when money moves.
 
-These risk workflows require combining transaction data, customer information,
-documents, and policies across multiple systems. **AI agents can support this
-work by exploring and connecting distributed information for investigation and
-assessment.** But how much autonomy should a financial institution safely give
-an agent?
+AI agents can help investigate these risks by connecting data, documents, and
+policies across systems. But **how much autonomy should a financial institution
+safely give an agent?**
 
-We built a system around that question: **gateway-based identity and access
-control, core banking ledger and transaction systems, pre-transaction, post-hoc,
-and windowed fraud detection, and a bounded fraud investigation agent with HITL
-approval.** Agents investigate and recommend; access to financial data and
-high-risk actions remains under system and human control.
+We built a banking system where **agents investigate and recommend, while
+identity, permissions, service boundaries, policy, human approval, and
+auditability constrain what they can see and do.**
 
 **My part** — frontend, customer domain, authentication and security, and the
-fraud investigation agent. I implemented the customer and Party model, JWT and
-certificate authentication, step-up approval for fund movement, `BankRole`,
-audit logging, per-customer transfer limits, and the agent's **bounded
-investigation loop, evidence gathering, and HITL approval**. After the team
-phase, I continued on the fork, refactoring the payment ledger verification,
-fraud pre-check, agent harness, service boundaries, and security wiring.
+fraud investigation agent. I built the customer and authentication foundation —
+JWT and certificate login, step-up approval for fund movement, role-based
+access, audit logging, transfer limits, and the customer and admin screens — and
+a **bounded investigation agent with evidence gathering and HITL approval**.
+After the team phase I continued on the fork: making the double-entry check
+actually verify, adding the pre-check that blocks a transfer before money moves,
+and splitting out the shared agent harness.
 
 ---
 
