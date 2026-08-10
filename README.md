@@ -21,26 +21,16 @@ auditability constrain what they can see and do.**
 ```
 MY CONTRIBUTION
 
-Customer & Auth
-├─ customer / party model
-├─ JWT and certificate login
-├─ step-up approval for fund movement
+Customer & Auth                          Fraud Investigation Agent
+├─ customer / party model                ├─ bounded investigation loop
+├─ JWT and certificate login             ├─ evidence gathering
+├─ step-up approval for fund movement    └─ HITL approval gating
 ├─ role-based access (BankRole)
-├─ access audit logging
-└─ per-customer transfer limits
-
-Fraud Investigation Agent
-├─ bounded investigation loop
-├─ evidence gathering
-└─ HITL approval gating
-
-Frontend
+├─ access audit logging                  System Integrity   (after the team phase)
+└─ per-customer transfer limits          ├─ persisted-row double-entry check
+                                         ├─ pre-transfer FDS gate
+Frontend                                 └─ shared agent harness
 └─ internet banking and admin console
-
-System Integrity                    (after the team phase, on this fork)
-├─ persisted-row double-entry validation
-├─ pre-transfer FDS gate
-└─ shared agent harness
 ```
 
 ---
