@@ -90,6 +90,50 @@ Agent sidecars publish no host ports.
 
 ---
 
+## My role
+
+A 6-person team project. I own the **customer / authentication** domain
+(backend and frontend), and worked across payment, loan, and the agent
+platform. ~210 of ~320 commits.
+
+**Customer & auth (owner)**
+Customer/party/contract model, login and JWT issuance, certificate auth,
+step-up approval tokens for fund movement, role model (`BankRole`), access
+audit logging, per-customer internet-banking transfer limits.
+
+**Payment ledger**
+Made the double-entry check actually verify: it now re-reads persisted rows
+and compares debit/credit sums per journal group. The previous check compared
+a variable to itself and could never fail. Built reconciliation — internal
+ledger against KFTC/BOK clearing records, five break types, persisted daily.
+
+**Fraud detection**
+Added the inline pre-check so a transfer can be delayed or blocked *before*
+the money moves; detection used to be after the fact only.
+
+**Agent platform**
+Split `harness-core` out so agents share one contract for tracing, audit, and
+retry. Unified agent tracing on OpenTelemetry.
+
+**Service boundaries**
+Merged deposit and payment into `core-banking` so an intra-bank transfer is
+one transaction instead of a two-database saga. Merged advisory into
+`loan-service` — it had never been in the build.
+
+**Security wiring**
+Routed all traffic through the gateway, closed sidecar host ports, and moved
+identity out of request bodies into gateway-verified headers across 24
+endpoints.
+
+Type and schema conventions were unified repo-wide along the way — amounts to
+`BIGINT`, timestamps to `TIMESTAMPTZ`, `*_yn CHAR(1)` to `BOOLEAN` across 52
+columns and 4 schemas.
+
+Decisions are written down in [docs/decisions/](docs/decisions/); what is
+still missing is in [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md).
+
+---
+
 ## Stack
 
 | | |
