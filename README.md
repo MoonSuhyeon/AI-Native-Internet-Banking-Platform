@@ -31,6 +31,8 @@ After the team phase I continued on the fork: fixing the double-entry check to
 verify persisted rows, adding a pre-check that blocks transfers before money
 moves, and extracting a shared agent harness.
 
+**484 agent-evaluation tests**, 0 failures — HITL gate, fail-closed and endpoint identity pinned deterministically without an LLM key
+
 ---
 
 ## Architecture
@@ -110,6 +112,29 @@ moves, and extracting a shared agent harness.
 ---
 
 ## Trade-offs
+
+Agent behaviour is verified **without an LLM key** — the fraud agent runs in mock
+mode and loan review under a stub client — so the guarantees below are pinned
+deterministically rather than sampled from a model.
+
+| Suite | Tests |
+|---|---|
+| Fraud investigation agent | **62**, 0 failures |
+| Auto loan review agent | **422**, 0 failures |
+| Total | **484** — 0 failures · 0 errors · 0 skipped |
+
+| What is pinned | |
+|---|---|
+| HITL gate | no approval → no execution; RBAC denies without the role |
+| Fail-closed | a decisive fact ends the investigation even with budget left |
+| Path branching | H1 confirms in two loops; H2 takes a different route (device → auth) |
+| Endpoint identity | forged headers rejected; customer tokens rejected on investigation endpoints |
+| Grounding | citation existence (19 tests) · prompt injection defence (17 tests) |
+| Fairness | bias reporting and drift alerting (16 tests) |
+| **Adoption rate** | instrumented — approvals and rejections are each recorded, pinned by test. The **value** comes from operation, not from a test run. |
+
+LLM output *quality* — plausibility ranges and red-flag detection — is scored
+against a live model in a separate workflow and requires an API key.
 
 ### Java for the core, Python for the agents
 
