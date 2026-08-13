@@ -98,6 +98,107 @@ moves, and extracting a shared agent harness.
 
 ---
 
+## Flows
+
+The architecture above shows what exists. These two show *when* — where the
+system stops, and what happens when a step fails. Neither can be read off a
+component diagram.
+
+### Human approval on a fraud investigation
+
+The agent investigates and recommends. It never executes. Identity is only
+trusted when it arrives through the gateway, because this sidecar is reachable
+directly and a hand-written header would otherwise buy the same authority.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as Analyst (admin console)
+    participant G as API Gateway
+    participant F as Fraud Agent
+    participant T as Tools (auth · device · STR)
+    participant D as Audit log
+
+    A->>G: investigate case
+    G->>F: POST /api/investigate<br/>X-Gateway-Auth · X-Employee-Id
+    Note over F: identity required here too —<br/>investigation reads customer data<br/>and costs money
+    loop until confident or budget spent
+        F->>T: pick the tool that best separates<br/>the competing hypotheses
+        T-->>F: evidence
+        Note over F: 5 scenarios re-weighted and renormalised<br/>H1…H5 compete, tags stay independent
+    end
+    alt decisive fact (death, guardianship)
+        Note over F: fail-closed — ends immediately,<br/>liability grade forced to L4<br/>even with budget left
+    end
+    F->>D: record recommendation
+    F-->>A: trace + recommendation + thread_id
+    Note over F,A: ⏸ nothing has been executed
+
+    A->>G: approve(thread_id)
+    G->>F: POST /api/approve<br/>X-Gateway-Auth · X-User-Role
+    alt gateway signature not verified
+        Note over F: actor_id stays NULL;<br/>self-claimed roles recorded as claimed_roles only.<br/>RBAC never falls back to the request body
+        F-->>A: gated actions refused
+    else verified and role present
+        F->>T: execute gated action (freeze · STR)
+        F->>D: record execution with actor_id
+        F-->>A: executed actions
+    else verified but role missing
+        F->>D: record refusal (RBAC)
+        F-->>A: refused — required role absent
+    end
+    Note over D: refusals are recorded too —<br/>otherwise "nothing happened" and<br/>"a human blocked it" look identical
+```
+
+### A transfer that fraud detection delays, and the loop it feeds
+
+Detection before the money moves is a gate. Detection after it has moved cannot
+undo the transfer — so instead it marks the customer, and that mark is what the
+*next* transfer's pre-check reads. The loop closes across three services.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Customer
+    participant CB as Core Banking
+    participant FD as FDS Detector
+    participant K as Kafka
+    participant FA as Fraud Agent
+
+    C->>CB: transfer request
+    CB->>FD: POST /precheck
+    FD->>FD: read prior risk marks for this customer
+    FD-->>CB: tier + the signals behind it
+
+    alt PASS · MONITOR
+        CB->>C: transfer proceeds
+    else STEP_UP
+        CB->>C: additional authentication required
+    else DELAY · HOLD_REVIEW
+        CB->>C: transfer delayed, customer notified
+        Note over CB,C: delayed rather than silently blocked —<br/>a single threshold would have to choose<br/>between missing fraud and stopping customers
+    else BLOCK · FREEZE_RECOMMEND
+        CB-->>C: refused
+    end
+
+    CB->>K: payment completed
+    K->>FD: consume (idempotent — duplicates ignored)
+    FD->>FD: post-hoc detection
+    Note over FD: this transfer cannot be undone
+    FD->>FD: mark the customer in risk state
+    Note over FD: ← the next pre-check reads this mark
+    opt tier needs a human
+        FD->>FA: dispatch as a real case
+        Note over FA: investigation loop → recommendation → HITL
+    end
+```
+
+Settlement leaves the system as well. Interbank legs are written to an outbox
+and cleared through KFTC and BOK, with a reconciliation engine that records
+breaks rather than silently correcting them.
+
+---
+
 ## Stack
 
 | | |
