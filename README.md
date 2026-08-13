@@ -137,7 +137,7 @@ sequenceDiagram
     A->>G: approve(thread_id)
     G->>F: POST /api/approve<br/>X-Gateway-Auth · X-User-Role
     alt gateway signature not verified
-        Note over F: actor_id stays NULL;<br/>self-claimed roles recorded as claimed_roles only.<br/>RBAC never falls back to the request body
+        Note over F: actor_id stays NULL<br/>self-claimed roles recorded as claimed_roles only<br/>RBAC never falls back to the request body
         F-->>A: gated actions refused
     else verified and role present
         F->>T: execute gated action (freeze · STR)
