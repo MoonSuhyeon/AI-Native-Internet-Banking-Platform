@@ -18,12 +18,18 @@
 `consultation/app/main.py:8` 주석이 `_setup_phoenix` 를 언급하지만 **그 함수는 어디에도 없다.**
 컨테이너는 뜨고 UI 도 열리는데 비어 있다. 이 레포가 반복해 온 *조용한 실패*와 같은 모양이다.
 
-### Langfuse 는 절반만 켜져 있고, 켜도 트리가 안 나온다
+### Langfuse 는 켜져 있는 것처럼 보였을 뿐이다
 
-| 서비스 | `LANGFUSE_ENABLED` |
+> **정정.** 처음엔 "자바 두 곳은 켜져 있다"고 적었다. 아니었다. compose 의
+> `LANGFUSE_ENABLED: "true"` 를 **읽는 코드가 없다.** 자바의 실제 스위치는
+> `HARNESS_TRACING_ENABLED` 이고 compose 가 설정하지 않아 꺼져 있었으며,
+> 엔드포인트도 `localhost:4318` 이라 아무 데도 가지 않았다. 죽은 설정이
+> "자바 추적이 꺼져 있다" 는 사실을 가리고 있었다.
+
+| 서비스 | 실제 상태 |
 |---|---|
-| `auto-loan-review` · `review-ai-gateway` (Java) | `true` |
-| `fraud-investigation-agent` · `consultation` · `goal-agent` (Python) | 미설정 → 기본 `false` → **전부 no-op** |
+| `auto-loan-review` · `review-ai-gateway` (Java) | `HARNESS_TRACING_ENABLED` 미설정 → **꺼짐**. 다만 코드는 이미 OTLP·`gen_ai.*` 표준이라 벤더 중립 |
+| `fraud-investigation-agent` · `consultation` · `goal-agent` (Python) | `LANGFUSE_ENABLED` 미설정 → **전부 no-op** |
 
 그리고 `fraud-investigation-agent/src/agent/tracing.py` 의 `trace_node` 는 **span 마다
 `Langfuse()` 클라이언트를 새로 만든다.** 부모-자식 관계가 없어 `plan` · `act` · `observe`
@@ -64,7 +70,7 @@ Phoenix Evals 의 표준 사용법은 `OpenAIModel(model="gpt-4o")` 를 심판�
 
 ## 단계
 
-### Phase 0 — 경계를 정한다 (결정)
+### Phase 0 — 경계를 정한다 ✅
 
 | 도구 | 무엇을 보나 | 상태 |
 |---|---|---|
@@ -77,9 +83,10 @@ Phoenix Evals 의 표준 사용법은 `OpenAIModel(model="gpt-4o")` 를 심판�
 - OpenInference 는 OpenTelemetry 표준이라 벤더 중립이다. Langfuse 는 자체 SDK 다.
 - 둘 다 두면 계측 지점이 두 벌이 되고, **마스킹도 두 벌** 해야 한다. 한쪽을 빠뜨리면
   그쪽이 유출 경로로 남는다.
-- Langfuse 는 Java 두 곳에만 실제로 걸려 있어 옮기는 비용이 작다.
+- 자바는 이미 OTLP 라 옮길 것이 없었다. 파이썬 쪽 `@observe` 7곳·`langfuse_context`
+  3곳만 하네스 계약으로 바꾸면 됐다. langfuse·langfuse-db 컨테이너(1.28GB)도 걷어냈다.
 
-### Phase 1 — Phoenix 를 실제로 켠다 (조사 에이전트부터)
+### Phase 1 — Phoenix 를 실제로 켠다 ✅ (조사 에이전트부터)
 
 조사 에이전트가 먼저인 이유: 이 레포에서 **자유도가 가장 높은 에이전트**이고(스스로
 도구를 고른다), 그래서 "왜 그렇게 판단했나" 가 가장 필요한 곳이다.
@@ -91,21 +98,51 @@ Phoenix Evals 의 표준 사용법은 `OpenAIModel(model="gpt-4o")` 를 심판�
 | 조사 1건을 루트 span 으로, 노드를 자식으로 | 전부 루트 |
 | `session.id = case_id` | 없음 |
 
-### Phase 2 — 마스킹 (Phase 1 과 같은 PR)
+### Phase 2 — 마스킹 ✅ (Phase 1 과 같은 커밋)
 
 `PiiMaskingUtil` 이 이미 있으나 RAG 색인·자문 의견에만 걸려 있다. span attribute 가
 나가는 경로에 processor 를 두고 거기서 거른다.
 
 검증은 이 레포 방식대로 — **마스킹을 빼면 실패하는 테스트**를 같이 넣는다.
 
-### Phase 3 — 결정적 평가
+### Phase 3 — 결정적 평가 ✅
 
-| 지표 | 채점 방법 | LLM 필요 |
-|---|---|---|
-| 도구 선택 정확도 | `TOOL_MATRIX.separates` 대조 | ✕ |
-| 경로 효율성 | `budget_left` 소비량 | ✕ |
-| fail-closed 준수 | `decisive: True` 도구가 결정적 사실을 냈는데 루프가 계속됐나 | ✕ |
-| 근거성 | 권고가 수집한 증거에 근거하나 | ○ — **내부 추론 서버** |
+`src/agent/evaluation.py` · `tests/test_evaluation_baseline.py` · `scripts/evaluate_cases.py`
+
+판정 6종으로 나눴다. 앞의 셋은 예산을 쓸 값어치가 있었다는 뜻이고, 뒤의 셋은 각각
+다른 이유로 흘렸다는 뜻이다 — 뭉뚱그리면 원인별로 고칠 수 없다.
+
+| 판정 | 뜻 |
+|---|---|
+| `DECISIVE_PROBE` | 결정적 사실을 낼 수 있는 도구 — 언제 불러도 정당 |
+| `INFORMATIVE` | 경합 중인 시나리오 쌍을 가른다 |
+| `TAG_REVEALING` | 시나리오는 못 가르나 안 켜진 태그를 켤 수 있다 |
+| `SETTLED` | 가르긴 하는데 그 쌍이 이미 닫혔다 — **플래너 오판** |
+| `CONTEXT_ONLY` | 애초에 가르는 게 없는 baseline 도구 |
+| `REDUNDANT` | 이미 부른 도구 — 순수 낭비 |
+
+채점하려면 **선택 시점에 무엇이 경합 중이었는지**가 있어야 한다. `reason` 은 LLM 이
+쓴 문장이라 그것만으로는 타당했는지 확인할 수 없어서, `ToolLogEntry` 에 `competing`
+과 `tags_on` 을 같이 남기게 했다. 감사 기록이 서술에서 검증 가능한 것으로 바뀐다.
+
+**첫 실측 (목 플래너, 7건)**
+
+```
+case_death        1회 100%   DECISIVE_PROBE×1
+case_deceased     1회 100%   DECISIVE_PROBE×1
+case_h1           2회 100%   INFORMATIVE×2
+case_h1_flipped   2회  50%   INFORMATIVE×1 · SETTLED×1
+case_h2           2회  50%   INFORMATIVE×1 · SETTLED×1
+case_h5           6회  50%   INFORMATIVE×3 · SETTLED×2 · CONTEXT_ONLY×1
+case_provisional  6회  50%   INFORMATIVE×3 · SETTLED×2 · CONTEXT_ONLY×1
+```
+
+7건 중 4건이 예산 절반을 판별에 못 쓴다. fail-closed 는 7건 다 지켜졌고 중복 호출은
+없다. **이건 목 플래너의 성적이지 실제 LLM 의 성적이 아니다** — 스크립트가 어느
+플래너로 돈 것인지 첫 줄에 찍는 이유다.
+
+남은 것: 근거성(groundedness)만 LLM 심판이 필요하고, 그것도 내부 `inference-server`
+로 돌린다.
 
 ### Phase 4 — 회귀
 

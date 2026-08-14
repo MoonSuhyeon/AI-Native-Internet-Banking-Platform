@@ -144,6 +144,11 @@ class ToolLogEntry(BaseModel):
     reason: str                       # 왜 이 도구를 골랐나 (Matrix 참고 + LLM 판단)
     ts: datetime = Field(default_factory=datetime.now)
 
+    # 선택 시점의 판단 근거. reason 은 LLM 이 쓴 문장이라 그것만으로는 타당했는지
+    # 확인할 수 없다. 무엇이 경합 중이었는지가 같이 남아야 사후에 채점된다.
+    competing: list[AttackScenario] = Field(default_factory=list)
+    tags_on: list[Tag] = Field(default_factory=list)
+
 
 class ProposedAction(BaseModel):
     """권고 동작 제안. 실행 아님 — HITL 승인 대상."""

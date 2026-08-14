@@ -11,7 +11,8 @@ Stage 6까지 목만 동작한다(원칙 5).
 from __future__ import annotations
 
 from .llm import LLMClient
-from .models import AgentState, ToolLogEntry
+from .hypotheses import CLOSE_THRESHOLD
+from .models import AgentState, AttackScenario, ToolLogEntry
 from .tool_matrix import TOOL_MATRIX, render_matrix
 
 
@@ -30,9 +31,29 @@ def plan_next_tool(
 
     tool = decision["tool"]
     reason = decision["reason"]
-    # 선택 이유는 예외 없이 기록 (감사 구멍 방지)
-    state.tool_log.append(ToolLogEntry(tool=tool, reason=reason))
+    # 선택 이유는 예외 없이 기록 (감사 구멍 방지).
+    #
+    # 경합 후보와 켜진 태그를 같이 남긴다. reason 은 LLM 이 쓴 문장이라 그것만으로는
+    # 타당했는지 확인할 수 없다 — 무엇을 두고 고른 것인지가 있어야 사후에 채점된다.
+    state.tool_log.append(
+        ToolLogEntry(
+            tool=tool,
+            reason=reason,
+            competing=competing_scenarios(state),
+            tags_on=[t for t, on in (state.tags or {}).items() if on],
+        )
+    )
     return tool
 
 
-__all__ = ["plan_next_tool", "render_matrix"]
+def competing_scenarios(state: AgentState) -> list[AttackScenario]:
+    """아직 경합 중인 시나리오. 닫힌 후보(≤0.15)는 뺀다.
+
+    분포가 아직 없으면(첫 계획) 전부 경합으로 본다 — 균등 사전분포이므로 맞다.
+    """
+    if not state.scenarios:
+        return list(AttackScenario)
+    return [s for s, v in state.scenarios.items() if v > CLOSE_THRESHOLD]
+
+
+__all__ = ["competing_scenarios", "plan_next_tool", "render_matrix"]

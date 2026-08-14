@@ -14,6 +14,11 @@ from .models import AgentState, AttackScenario, Tag
 
 S = AttackScenario
 
+# 종료·경합 판정 임계값 (§16-5). 게이트(graph.py)와 채점기(evaluation.py)가 같은
+# 값을 봐야 해서 분포 의미를 소유한 여기에 둔다. 둘로 나뉘면 한쪽만 바뀐다.
+CONFIRM_THRESHOLD = 0.75   # 이 이상이면 확정
+CLOSE_THRESHOLD = 0.15     # 이 이하면 후보를 닫는다(더 이상 경합 아님)
+
 
 def init_scenarios() -> dict[AttackScenario, float]:
     """균등 사전분포(각 0.2)로 5개 시나리오를 연다."""

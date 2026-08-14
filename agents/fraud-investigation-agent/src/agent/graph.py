@@ -26,11 +26,10 @@ from .llm import LLMClient, get_llm_client
 from .models import ActionType, AgentState, Case
 from .planner import plan_next_tool
 from .recommend import build_recommendation
+from .hypotheses import CLOSE_THRESHOLD, CONFIRM_THRESHOLD
 from .tool_matrix import TOOL_MATRIX
 from .tracing import investigation_span, trace_node
 
-CONFIRM_THRESHOLD = 0.75
-CLOSE_THRESHOLD = 0.15
 ACCOUNT_TOOLS = {"get_device_fingerprint", "get_related_accounts"}
 
 # 동작별 필요 RBAC 역할 (목). 실서비스면 BankRole·hasAnyRole 게이팅.

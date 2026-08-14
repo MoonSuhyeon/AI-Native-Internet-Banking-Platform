@@ -39,6 +39,16 @@ from harness_core.tracing import span as _span
 # observe 는 가설 분포를 갱신한다(LLM 아님).
 _NODE_KIND = {"plan": "LLM", "act": "TOOL", "observe": "CHAIN"}
 
+def _verdict(log) -> str | None:
+    """마지막 도구 선택의 판정. 채점기가 없어도 추적은 돌아야 한다."""
+    try:
+        from .evaluation import score_tool_choice
+
+        return score_tool_choice(log[-1], {e.tool for e in log[:-1]}).value
+    except Exception:
+        return None
+
+
 # ── 속성 만들기 (순수 함수 — 조사에서 무엇이 볼 값인가) ──────────────────────
 
 
@@ -87,6 +97,9 @@ def node_attrs(name: str, state=None) -> dict:
         last = log[-1]
         attrs["tool.name"] = getattr(last, "tool", None)
         attrs["fraud.tool_reason"] = getattr(last, "reason", None)
+        # 이 선택이 예산을 판별에 썼는지. 결정적 채점이라 추적에 그대로 실을 수 있다
+        # — LLM 심판이면 같은 trace 를 두 번 볼 때 값이 달라진다.
+        attrs["eval.tool_choice"] = _verdict(log)
 
     return _clean(attrs)
 
