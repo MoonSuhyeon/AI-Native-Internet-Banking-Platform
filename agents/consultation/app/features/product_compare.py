@@ -9,23 +9,20 @@ import os
 import re
 from typing import Any
 
+from harness_core.tracing import span, update_current_span
+
 from app.features.base import FeatureExecutorBase
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse
 
 
-def _langfuse_trace(name: str, input_data: Any, output: Any, model: str = "") -> None:
-    """Langfuse 환경변수가 설정된 경우 trace를 직접 전송한다."""
-    if not os.getenv("LANGFUSE_SECRET_KEY"):
-        return
-    try:
-        from langfuse import Langfuse
-        lf = Langfuse()
-        trace = lf.trace(name=name, input=input_data, output=output)
-        if model:
-            trace.generation(name="llm-call", model=model, input=input_data, output=output)
-        lf.flush()
-    except Exception as e:
-        print(f"[Langfuse] trace error ({name}): {e}", flush=True)
+def _trace_llm(name: str, input_data: Any, output: Any, model: str = "") -> None:
+    """LLM 호출 한 번을 추적에 남긴다.
+
+    이전 구현은 Langfuse 로 프롬프트와 응답을 **그대로** 보냈다. 상품 비교 프롬프트에는
+    고객 보유 상품과 잔액이 들어간다. 지금은 하네스를 지나며 가려진다.
+    """
+    with span(name, "LLM", {"gen_ai.request.model": model} if model else None):
+        update_current_span(input=input_data, output=output)
 
 
 # ── 항목 레이블 ───────────────────────────────────────────────────────────────
@@ -206,7 +203,7 @@ def _gpt_compare(
             temperature=0.3,
         )
         result = resp.choices[0].message.content or None
-        _langfuse_trace("llm-product-compare", prompt, result, model)
+        _trace_llm("llm-product-compare", prompt, result, model)
         return result
     except Exception:
         return None

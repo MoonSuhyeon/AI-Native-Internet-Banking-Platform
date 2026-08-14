@@ -13,7 +13,7 @@ import json
 import re
 from decimal import Decimal, ROUND_DOWN
 
-from langfuse.decorators import langfuse_context, observe
+from harness_core.tracing import observe, update_current_span
 
 import anthropic
 from sqlalchemy.orm import Session
@@ -376,7 +376,7 @@ def _run_goal_agent_claude(db: Session, customer_id: str, message: str) -> dict:
     Tool Calling 기반 Goal-Based Financial Agent 메인 함수.
     Claude가 사용자 메시지를 보고 필요한 도구를 선택·실행한다.
     """
-    langfuse_context.update_current_observation(
+    update_current_span(
         input={"customer_id": customer_id, "message": message},
         metadata={"model": "claude-opus-4-8"},
     )

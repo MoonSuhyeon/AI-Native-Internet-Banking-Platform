@@ -14,11 +14,13 @@ span** 이 됐다. 조사 한 건이 하나로 안 묶이니 "어떤 순서로 �
     ├─ observe                     (CHAIN)   ← 가설이 어떻게 움직였나
     └─ ... (예산 소진 또는 확정까지 반복)
 
-**나가는 값은 전부 가린다.** 추적 저장소는 운영 DB 가 아니고 접근 통제도 다르다.
-계측만 켜고 마스킹을 나중에 붙이면 그 사이 쌓인 trace 가 전부 PII 사본이 된다.
-그래서 속성을 만드는 자리(:func:`investigation_attrs` · :func:`node_attrs`)에서
-바로 가린다. 규칙은 ``harness_core.pii`` 에 있다 — 에이전트마다 각자 가리면 한 곳이
-빠지고, 빠진 곳이 유출 경로로 남는다.
+**여기는 조사 도메인만 안다.** span 을 열고 값을 가리는 일은
+``harness_core.tracing`` 이 한다. 이 파일에 남는 것은 "조사에서 무엇이 볼 값인가"
+— 가설 분포, 남은 예산, 어떤 도구를 왜 골랐나 — 뿐이다. 에이전트마다 등록 로직을
+따로 두면 그중 하나가 어긋나고, 어긋난 쪽이 조용히 안 남는다.
+
+식별자만 여기서 가명으로 바꾼다. 무엇이 식별자인지는 도메인이 알고, 자유 텍스트
+마스킹은 하네스가 span 에 붙이는 길목에서 일괄로 한다.
 
 **켜지 않으면 아무 일도 없다.** ``PHOENIX_ENABLED`` 가 참일 때만 동작하고, 그 외에는
 전부 no-op 이다. 실패도 조용히 삼킨다 — 관측은 보조라서 조사 루프를 멈추면 안 된다.
@@ -27,64 +29,17 @@ span** 이 됐다. 조사 한 건이 하나로 안 묶이니 "어떤 순서로 �
 from __future__ import annotations
 
 import contextlib
-import os
-import threading
 
-from harness_core.pii import pseudonymize, scrub
-
-# OpenInference 가 정의한 span 종류. Phoenix UI 가 이 값에 따라 다르게 그린다.
-SPAN_KIND = "openinference.span.kind"
+from harness_core.pii import pseudonymize
+from harness_core.tracing import SPAN_KIND, reset_for_test as _reset_for_test  # noqa: F401
+from harness_core.tracing import get_tracer as _get_tracer  # noqa: F401
+from harness_core.tracing import span as _span
 
 # 노드 이름 → span 종류. plan 은 LLM 이 도구를 고르고, act 는 도구를 부르고,
 # observe 는 가설 분포를 갱신한다(LLM 아님).
 _NODE_KIND = {"plan": "LLM", "act": "TOOL", "observe": "CHAIN"}
 
-_lock = threading.Lock()
-_tracer = None
-_init_done = False
-
-
-def _enabled() -> bool:
-    return os.getenv("PHOENIX_ENABLED", "false").lower() in ("1", "true", "yes")
-
-
-def _get_tracer():
-    """tracer provider 를 프로세스에서 한 번만 등록한다.
-
-    이전 구현이 span 마다 클라이언트를 만들어 트리가 끊겼다. 여기서 캐시한다.
-    """
-    global _tracer, _init_done
-    if _init_done:
-        return _tracer
-    with _lock:
-        if _init_done:
-            return _tracer
-        _init_done = True
-        if not _enabled():
-            return None
-        try:
-            from phoenix.otel import register  # 지연 import — 미설치여도 패키지는 뜬다
-
-            provider = register(
-                project_name=os.getenv("PHOENIX_PROJECT", "fraud-investigation"),
-                endpoint=os.getenv("PHOENIX_GRPC_ENDPOINT", "http://localhost:4317"),
-                auto_instrument=False,  # 우리가 붙이는 span 만 쓴다
-            )
-            _tracer = provider.get_tracer(__name__)
-        except Exception:
-            _tracer = None  # 관측이 조사를 막지 않는다
-        return _tracer
-
-
-def _reset_for_test() -> None:
-    """테스트에서 등록 캐시를 비운다. 운영 경로에서는 쓰지 않는다."""
-    global _tracer, _init_done
-    with _lock:
-        _tracer = None
-        _init_done = False
-
-
-# ── 속성 만들기 (순수 함수 — 여기서 가린다) ─────────────────────────────────
+# ── 속성 만들기 (순수 함수 — 조사에서 무엇이 볼 값인가) ──────────────────────
 
 
 def investigation_attrs(case, budget=None) -> dict:
@@ -137,49 +92,17 @@ def node_attrs(name: str, state=None) -> dict:
 
 
 def _clean(attrs: dict) -> dict:
-    """None 을 버리고 남은 값을 전부 가린다.
-
-    ``scrub`` 을 여기 한 곳에 두는 이유는, 속성이 늘 때마다 마스킹을 다시
-    떠올리지 않아도 되게 하기 위해서다. 새 필드는 자동으로 이 경로를 지난다.
-    """
-    return {k: scrub(v) for k, v in attrs.items() if v is not None}
+    """None 을 버린다. 가리는 일은 하네스가 span 에 붙일 때 한다."""
+    return {k: v for k, v in attrs.items() if v is not None}
 
 
 # ── span 열기 ──────────────────────────────────────────────────────────────
 
 
 @contextlib.contextmanager
-def _traced(name: str, attrs: dict):
-    tracer = _get_tracer()
-    if tracer is None:
-        yield None
-        return
-    try:
-        span_cm = tracer.start_as_current_span(name)
-        span = span_cm.__enter__()
-    except Exception:
-        yield None
-        return
-    try:
-        for key, value in attrs.items():
-            span.set_attribute(key, value)
-    except Exception:
-        pass
-    try:
-        yield span
-    except BaseException as exc:  # 조사 쪽 예외는 span 에 남기고 그대로 올린다
-        with contextlib.suppress(Exception):
-            span_cm.__exit__(type(exc), exc, exc.__traceback__)
-        raise
-    else:
-        with contextlib.suppress(Exception):
-            span_cm.__exit__(None, None, None)
-
-
-@contextlib.contextmanager
 def investigation_span(case, budget=None):
     """조사 1건을 감싸는 루트 span. 노드 span 이 이 아래로 붙는다."""
-    with _traced("investigate", investigation_attrs(case, budget)) as span:
+    with _span("investigate", "AGENT", investigation_attrs(case, budget)) as span:
         yield span
 
 
@@ -191,5 +114,5 @@ def trace_node(name: str, state=None):
         log = getattr(state, "tool_log", None) or []
         if log:
             label = f"act:{getattr(log[-1], 'tool', '') or ''}".rstrip(":")
-    with _traced(label, node_attrs(name, state)) as span:
+    with _span(label, _NODE_KIND.get(name, "CHAIN"), node_attrs(name, state)) as span:
         yield span

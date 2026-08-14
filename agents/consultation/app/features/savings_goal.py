@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from langfuse.decorators import observe
+from harness_core.tracing import observe
 
 from app.features.base import FeatureExecutorBase
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse

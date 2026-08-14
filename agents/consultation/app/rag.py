@@ -20,7 +20,7 @@
 import math
 from typing import Any, Protocol, runtime_checkable
 
-from langfuse.decorators import observe
+from harness_core.tracing import observe
 
 
 # ── 임베딩 프로바이더 인터페이스 ─────────────────────────────────────────────────

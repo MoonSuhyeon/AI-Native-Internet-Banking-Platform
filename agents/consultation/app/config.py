@@ -19,10 +19,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     llm_confidence_threshold: int = 70
-    langfuse_enabled: bool = False
-    langfuse_secret_key: str = ""
-    langfuse_public_key: str = ""
-    langfuse_host: str = "http://localhost:3001"
+    # 추적은 harness_core.tracing 이 PHOENIX_ENABLED·PHOENIX_GRPC_ENDPOINT 를
+    # 직접 읽는다. 여기 두면 설정 지점이 둘이 되어 한쪽만 켜지는 일이 생긴다.
     # customer-service 연동 (나이/생년월일 조회용)
     customer_service_url: str = "http://localhost:8081"
     # core-banking 연동 — 자금 이동은 여기를 거친다.

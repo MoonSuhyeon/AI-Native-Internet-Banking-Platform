@@ -542,7 +542,7 @@ class LlmAdapter:
         raise RuntimeError("상품 추천은 규칙 기반 추천 엔진에서만 처리합니다.")
 
 
-from langfuse.decorators import observe
+from harness_core.tracing import observe
 
 
 class OpenAIDocumentAnalyzer:

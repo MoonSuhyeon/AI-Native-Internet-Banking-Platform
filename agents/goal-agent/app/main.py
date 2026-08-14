@@ -15,19 +15,8 @@ from app.database import get_db
 logger = logging.getLogger(__name__)
 
 
-def _setup_langfuse() -> None:
-    if not settings.langfuse_enabled:
-        return
-    from langfuse import Langfuse
-    Langfuse(
-        secret_key=settings.langfuse_secret_key,
-        public_key=settings.langfuse_public_key,
-        host=settings.langfuse_host,
-    )
-    logger.info("[Langfuse] LLM 추적 활성화 → %s", settings.langfuse_host)
-
-
-_setup_langfuse()
+# 추적기 등록은 harness_core.tracing 이 첫 사용 시점에 한 번만 한다.
+# 기동 시 등록을 따로 두면 등록 지점이 둘이 되고, 그중 하나가 어긋난다.
 from app.registry import TABLES
 from app import services
 from app import agent_maturity

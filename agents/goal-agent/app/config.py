@@ -21,10 +21,8 @@ class Settings(BaseSettings):
     # 기본값을 켜 둔 것은 의도적이다. 감사는 켜는 것이 기본이고 끄는 것이 예외다.
     # 끄더라도 NoOp 이 들어가므로 부르는 쪽은 깨지지 않는다.
     harness_audit_enabled: bool = True
-    langfuse_enabled: bool = False
-    langfuse_secret_key: str = ""
-    langfuse_public_key: str = ""
-    langfuse_host: str = "http://localhost:3001"
+    # 추적은 harness_core.tracing 이 PHOENIX_ENABLED·PHOENIX_GRPC_ENDPOINT 를
+    # 직접 읽는다. 여기 두면 설정 지점이 둘이 되어 한쪽만 켜지는 일이 생긴다.
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
