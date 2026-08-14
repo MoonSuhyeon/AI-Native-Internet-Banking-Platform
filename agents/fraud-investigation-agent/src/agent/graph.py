@@ -27,7 +27,7 @@ from .models import ActionType, AgentState, Case
 from .planner import plan_next_tool
 from .recommend import build_recommendation
 from .tool_matrix import TOOL_MATRIX
-from .tracing import trace_node
+from .tracing import investigation_span, trace_node
 
 CONFIRM_THRESHOLD = 0.75
 CLOSE_THRESHOLD = 0.15
@@ -147,7 +147,9 @@ def investigate(
     init = AgentState(alert=case.alert)
     if budget is not None:
         init.budget_left = budget
-    graph.invoke(init, config)  # execute_action 직전에서 정지
+    # 노드 span 이 이 아래로 붙어야 조사 1건이 하나의 트리가 된다.
+    with investigation_span(case, init.budget_left):
+        graph.invoke(init, config)  # execute_action 직전에서 정지
     return graph, config, _as_state(graph.get_state(config).values)
 
 

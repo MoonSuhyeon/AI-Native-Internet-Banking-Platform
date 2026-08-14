@@ -13,3 +13,8 @@ prometheus-client>=0.20
 # NOTE: keep this file ASCII-only. pip decodes requirements files with the
 # locale encoding, so Korean comments break `pip install` on cp949 Windows.
 psycopg[binary]>=3.2
+
+# Phoenix tracing. Only imported when PHOENIX_ENABLED is true (agent/tracing.py
+# imports lazily); without it the investigation loop still runs and tracing is
+# a no-op.
+arize-phoenix-otel>=0.16.0
