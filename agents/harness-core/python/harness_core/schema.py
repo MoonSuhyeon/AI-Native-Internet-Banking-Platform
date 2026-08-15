@@ -17,6 +17,7 @@ consultation 과 goal-agent 가 같은 방식으로 짜여 둘 다 깨져 있었
 from __future__ import annotations
 
 import logging
+from contextlib import suppress
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -43,8 +44,13 @@ def apply_schema_sql(engine, sql_path: str | Path) -> bool:
         return False
 
     sql = path.read_text(encoding="utf-8")
-    raw = engine.raw_connection()
+
+    # 접속 획득도 try 안에 둔다. 밖에 두면 SQL 실패만 삼키고 **접속 실패는 그대로
+    # 올라간다** — DB 가 잠깐 안 뜬 상태에서 기동하면 서비스가 통째로 죽는다.
+    # 위 계약("실패해도 예외를 올리지 않는다")과 어긋나던 자리다.
+    raw = None
     try:
+        raw = engine.raw_connection()
         with raw.cursor() as cur:
             # 파라미터를 넘기지 않는다. 넘기는 순간 트리거 본문의 % 가 해석된다.
             cur.execute(sql)
@@ -52,8 +58,13 @@ def apply_schema_sql(engine, sql_path: str | Path) -> bool:
         logger.info("감사 스키마 적용 완료: %s", path.name)
         return True
     except Exception:
-        raw.rollback()
+        # 접속이 죽은 상태면 rollback 자체도 던진다. 정리하다 원래 실패를 덮지 않는다.
+        if raw is not None:
+            with suppress(Exception):
+                raw.rollback()
         logger.exception("감사 스키마 적용 실패: %s — 기록이 남지 않는다", path)
         return False
     finally:
-        raw.close()
+        if raw is not None:
+            with suppress(Exception):
+                raw.close()

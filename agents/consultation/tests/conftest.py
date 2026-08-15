@@ -49,6 +49,22 @@ sys.path.insert(0, str(ROOT))
 # (requirements-dev.txt 의 -e ../harness-core/python).
 os.environ["CONSULTATION_KAFKA_ENABLED"] = "false"
 
+# Settings.database_url 은 기본값이 없다 — 운영에서 미설정이면 기동 즉시 죽는 것이
+# 의도다. 그런데 아래 `from app.database import Base` 가 그 Settings 를 만들기 때문에,
+# 값이 없으면 테스트가 한 건도 실행되지 않고 **수집 단계에서 통째로** 죽는다.
+# CI 는 env 로 넣어 주지만 로컬은 아무도 안 넣어서, 로컬에서만 스위트 전체가
+# 안 돌아가는 상태였다.
+#
+# 테스트 본체는 인메모리 SQLite 픽스처를 쓰고 감사 저장소도 `audit_spy` 가 갈아끼우므로
+# 이 값은 실제로 쓰이지 않는다. 그래서 "닿을 수 없는 주소" 를 넣는다 — 혹시라도 무언가
+# 진짜로 접속을 시도하면 조용히 도는 대신 즉시 터져서 드러나야 한다.
+#
+# setdefault 라 CI 가 준 진짜 DSN 이 있으면 그쪽이 이긴다.
+os.environ.setdefault(
+    "CONSULTATION_DATABASE_URL",
+    "postgresql+psycopg://unused:unused@127.0.0.1:1/settings-validation-only",
+)
+
 from app.database import Base
 from app.llm import LlmAdapter, LlmHandoffAdapter
 from app.services import ChatbotService

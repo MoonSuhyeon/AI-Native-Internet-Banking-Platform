@@ -44,8 +44,15 @@ def audit_engine():
     if not dsn:
         pytest.fail(
             f"{DSN_ENV} 가 없다. 감사 배선은 실제 PostgreSQL 로만 검증된다 — "
-            f"JSONB·INSERT-ONLY 트리거를 SQLite 로는 확인할 수 없다. "
-            f"끄려면 SKIP_AUDIT_DB_TESTS=1 을 명시할 것."
+            f"JSONB·INSERT-ONLY 트리거를 SQLite 로는 확인할 수 없다.\n"
+            f"\n"
+            f"로컬에서 돌리려면:\n"
+            f"  docker run -d --rm --name ib-audit-test -p 5442:5432 \\\n"
+            f"    -e POSTGRES_DB=audittest -e POSTGRES_USER=audit "
+            f"-e POSTGRES_PASSWORD=audit postgres:16-alpine\n"
+            f"  {DSN_ENV}=postgresql+psycopg://audit:audit@localhost:5442/audittest pytest\n"
+            f"\n"
+            f"끄려면 SKIP_AUDIT_DB_TESTS=1 을 명시할 것 (조용한 skip 은 없다)."
         )
     engine = create_engine(dsn)
     # 서비스가 기동 시 하는 것과 같은 경로로 테이블을 만든다.
