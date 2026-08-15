@@ -94,10 +94,10 @@ services:
       CONSULTATION_OPENAI_API_KEY:                 ${CONSULTATION_OPENAI_API_KEY:-}
       PHOENIX_ENABLED:                             ${PHOENIX_ENABLED:-false}
       PHOENIX_GRPC_ENDPOINT:                       ${PHOENIX_GRPC_ENDPOINT:-http://localhost:4317}
-      CONSULTATION_LANGFUSE_ENABLED:               ${CONSULTATION_LANGFUSE_ENABLED:-false}
-      CONSULTATION_LANGFUSE_SECRET_KEY:            ${LANGFUSE_SECRET_KEY:-}
-      CONSULTATION_LANGFUSE_PUBLIC_KEY:            ${LANGFUSE_PUBLIC_KEY:-}
-      CONSULTATION_LANGFUSE_HOST:                  ${LANGFUSE_HOST:-http://localhost:3002}
+      PHOENIX_PROJECT:                             consultation
+      # 가명처리 소금. 미설정이면 재기동마다 같은 고객이 다른 가명이 되어
+      # "같은 고객의 상담 3건" 을 묶을 수 없다.
+      AGENT_PII_SALT:                              ${AGENT_PII_SALT:-}
     volumes:
       - C:/logs/internet-banking:/logs
       - consultation_uploads:/app/uploads
