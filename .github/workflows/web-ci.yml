@@ -10,6 +10,43 @@ on:
     paths: ['web/**']
 
 jobs:
+  # 타입 오류를 빌드가 무시하고 있었다(next.config.js 의 ignoreBuildErrors).
+  # 그래서 상담 대기열이 null 을 1970년으로 계산해 멀쩡한 상담을 종료시키던 것이
+  # 한 번도 안 걸렸다. 여기서 막는다.
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+
+  # lint 는 아직 막지 않는다 — 미사용 변수 11건이 남아 있고 그중 6건이
+  # ChatbotWidget.tsx(팀원 작업물)라 협의 없이 지울 수 없다. 다만 보이지 않으면
+  # 줄지 않으므로 CI 에 띄우고, 다 정리되면 continue-on-error 를 뗀다.
+  lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+
   test:
     runs-on: ubuntu-latest
     defaults:

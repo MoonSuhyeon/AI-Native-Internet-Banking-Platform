@@ -17,6 +17,11 @@ import {
 } from '@/lib/consultation-api'
 
 const dt = (v: string | null) => (v ? v.slice(0, 16).replace('T', ' ') : '-')
+
+/** 대기 시각을 아는 상담 중 10분을 넘긴 것. 모르면(null) 오래됐다고 보지 않는다. */
+const STALE_MS = 10 * 60 * 1000
+const isStale = (waitingSince: string | null) =>
+  waitingSince !== null && Date.now() - new Date(waitingSince).getTime() > STALE_MS
 const SS_AGENT = 'chatAgent'
 const SS_CONSULT = 'chatConsultationId'
 
@@ -282,7 +287,9 @@ export default function ConsultationChatPage() {
               <span className="text-sm font-semibold text-gray-700">대기 목록</span>
               <div className="flex gap-2">
                 <button onClick={async () => {
-                  const old = queue.filter(i => new Date(i.waiting_since).getTime() < Date.now() - 10 * 60 * 1000)
+                  // waiting_since 가 없으면 건드리지 않는다. new Date(null) 은 1970년이라
+                  // "10분 초과"로 판정되고, 대기 시각을 모르는 상담이 종료돼 버린다.
+                  const old = queue.filter(i => isStale(i.waiting_since))
                   for (const i of old) {
                     await fetch(`/api/consultation/chat/consultations/${i.chat_consultation_id}/end`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ employee_id: agent.employee_id }) })
                   }
