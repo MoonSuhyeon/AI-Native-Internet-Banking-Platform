@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const CUSTOMER_API_URL = process.env.CUSTOMER_API_URL || 'http://localhost:8081'
+// 게이트웨이를 가리킨다. 8081(customer-service) 직통이면 JwtAuthenticationFilter 가
+// 클라이언트발 신원 헤더를 지우고 검증된 클레임으로 덮어쓰는 단계를 통째로 건너뛴다.
+const CUSTOMER_API_URL = process.env.CUSTOMER_API_URL || 'http://localhost:8088'
 
 // 상담 서비스 계정(agent01·agent02·super01·admin01)은 consultation-service /auth/agent/login 에서 인증
 // 이 mock은 customer-service 미기동 시 데모 전용 폴백이며 운영 배포 전 제거 필요

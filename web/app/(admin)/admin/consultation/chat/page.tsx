@@ -291,7 +291,8 @@ export default function ConsultationChatPage() {
                   // "10분 초과"로 판정되고, 대기 시각을 모르는 상담이 종료돼 버린다.
                   const old = queue.filter(i => isStale(i.waiting_since))
                   for (const i of old) {
-                    await fetch(`/api/consultation/chat/consultations/${i.chat_consultation_id}/end`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ employee_id: agent.employee_id }) })
+                    // 게이트웨이 경유. 프록시로 직접 부르면 직원 신원이 서비스에 닿지 않는다.
+                    await endChat(i.chat_consultation_id)
                   }
                   loadQueue()
                 }} className="text-xs text-red-400 hover:underline">오래된거 정리</button>

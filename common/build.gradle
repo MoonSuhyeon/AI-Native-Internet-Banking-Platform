@@ -54,6 +54,10 @@ tasks.named('test') {
         include '**/Dockerfile'
         include '**/build.gradle'
         include 'web/lib/*.ts'
+        // 서버측 프록시. FrontendGatewayOnlyTest 가 여기도 읽는다 — 선언하지 않으면
+        // 프록시를 서비스 직통으로 되돌려도 테스트가 UP-TO-DATE 로 안 돌아, 실제로
+        // 그 변이가 통과했다.
+        include 'web/app/api/**/route.ts'
         exclude '**/build/**'
     }).withPropertyName('dockerfilesAndBuildScripts')
             .withPathSensitivity(PathSensitivity.RELATIVE)

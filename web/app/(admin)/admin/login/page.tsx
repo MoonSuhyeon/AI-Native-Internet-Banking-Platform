@@ -6,6 +6,7 @@ import { AdminUser } from '@/lib/admin-mock-data'
 import { branchLabel } from '@/lib/admin-auth'
 import type { DemoAccount } from '@/lib/admin-demo-accounts'
 import { api } from '@/lib/api'
+import { agentLogin, type AgentLoginResponse } from '@/lib/consultation-api'
 
 // 데모 모드: 로컬/개발 빌드에선 기본 노출, 운영 빌드에선 NEXT_PUBLIC_DEMO_MODE=true 일 때만.
 // (운영에 직원 명단을 인증 전 화면에 깔지 않기 위함)
@@ -53,18 +54,16 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError('')
     try {
-      // consultation service DB로 인증
-      const res = await fetch('/api/consultation/auth/agent/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login_id: id, password }),
-      })
-      if (!res.ok) {
+      // 게이트웨이를 거친다. 예전에는 /api/consultation/... 프록시를 직접 불렀는데,
+      // 그 프록시가 Content-Type 외의 헤더를 버려서 신원이 서비스에 닿지 않았다.
+      let agent: AgentLoginResponse
+      try {
+        agent = await agentLogin(id, password)
+      } catch {
         setError('아이디 또는 비밀번호가 올바르지 않습니다.')
         setLoading(false)
         return
       }
-      const agent = await res.json()
 
       // 관리자/슈퍼바이저만 이 페이지로 접근 허용
       if (agent.role !== 'ADMIN' && agent.role !== 'SUPERVISOR') {
