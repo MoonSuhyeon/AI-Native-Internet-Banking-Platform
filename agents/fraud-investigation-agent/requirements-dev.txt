@@ -11,3 +11,8 @@
 -r requirements.txt
 -e ../harness-core/python
 pytest>=8.0
+
+# Phoenix dataset/experiment client. Evaluation tooling only - NOT a runtime
+# dependency, so it is not in requirements.txt. scripts/phoenix_dataset.py
+# degrades to a message when this is missing.
+arize-phoenix-client>=1.0

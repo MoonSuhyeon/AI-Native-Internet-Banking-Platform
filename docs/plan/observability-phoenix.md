@@ -144,10 +144,40 @@ case_provisional  6회  50%   INFORMATIVE×3 · SETTLED×2 · CONTEXT_ONLY×1
 남은 것: 근거성(groundedness)만 LLM 심판이 필요하고, 그것도 내부 `inference-server`
 로 돌린다.
 
-### Phase 4 — 회귀
+### Phase 4 — 회귀 ✅
 
-`data/cases` 에 사건이 이미 있다. Phoenix Dataset 으로 올리면 프롬프트·모델·도구 표를
-바꿀 때 Experiment 로 전후를 비교할 수 있다. 회귀 테스트 역할을 한다.
+`scripts/phoenix_dataset.py`
+
+세 도구가 겹치지 않게 갈랐다.
+
+| | 무엇을 답하나 | 누가 본다 |
+|---|---|---|
+| `evaluate_cases.py` | 지금 얼마인가 | 사람 |
+| `test_evaluation_baseline.py` | 바뀌었나 | 빌드가 막는다 |
+| `phoenix_dataset.py` | **어떻게 바뀌어 왔나** | 이력이 쌓인다 |
+
+앞의 둘은 한 시점을 본다. 세 번째만 자취를 남긴다 — 실행마다 사건별 결과가 라벨과
+함께 남아 프롬프트·모델·도구 표를 바꿔 온 과정을 나란히 볼 수 있다.
+
+예시 메타데이터에 `trace_id` 를 같이 올린다. 사건별 점수에서 **그 실행의 도구 호출
+순서로 건너뛸 수 있어야** "왜 이 점수인가" 를 답할 수 있다. Phase 5 가 만든 링크를
+여기서 쓴다.
+
+평가 도구라 `requirements-dev.txt` 에만 넣었다. Phoenix 가 없으면 안내만 하고 끝난다 —
+평가 도구가 없다고 조사 코드가 영향을 받지 않는다.
+
+**실물 검증 (Phoenix 를 띄우고 확인).** 여기까지의 Phase 1·2·5 가 실제로 도는지도
+이때 처음 확인됐다.
+
+```
+trace 3개 · span 30개 (agent 3 · llm 9 · tool 9 · chain 9)
+```
+
+- **중첩이 된다** — 조사 3건이 trace 3개다. 끊겼다면 30개가 됐다.
+- **가명처리가 걸린다** — 서버에 도착한 span 을 값 단위로 훑어 원본 식별자 0건.
+  `session.id=case_…` · `fraud.customer=cust_…` · `fraud.account=acct_…`
+- **채점이 실린다** — `eval.tool_choice` 가 `INFORMATIVE` · `SETTLED` · `CONTEXT_ONLY`
+  로 오프라인 채점과 일치한다.
 
 ### Phase 5 — 감사 연결 ✅
 
