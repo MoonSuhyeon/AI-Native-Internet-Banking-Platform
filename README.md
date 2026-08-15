@@ -24,14 +24,15 @@ auditability constrain what they can see and do.**
   step-up approval for fund movement · role-based access (`BankRole`) · access
   audit logging · per-customer transfer limits
 - **Fraud investigation agent** — bounded investigation loop · evidence
-  gathering · HITL approval gating
+  gathering · HITL approval gating · case-scoped tool access · deterministic
+  scoring of tool choices
 - **Frontend** — internet banking and admin console
 
 After the team phase I continued on the fork: fixing the double-entry check to
 verify persisted rows, adding a pre-check that blocks transfers before money
 moves, and extracting a shared agent harness.
 
-**484 agent-evaluation tests**, 0 failures — HITL gate, fail-closed and endpoint identity pinned deterministically without an LLM key
+**537 agent-evaluation tests**, 0 failures — HITL gate, fail-closed and endpoint identity pinned deterministically without an LLM key
 
 ---
 
@@ -92,7 +93,7 @@ moves, and extracting a shared agent harness.
               ┌──────────────────────────────────────────────────┐
               │                OBSERVABILITY                     │
               │  Prometheus · Grafana · Loki · Alertmanager      │
-              │  Langfuse · Phoenix (LLM / agent tracing)        │
+              │  Phoenix (LLM / agent tracing)                   │
               └──────────────────────────────────────────────────┘
 ```
 
@@ -208,7 +209,7 @@ breaks rather than silently correcting them.
 | Frontend | Next.js · TypeScript |
 | Data | PostgreSQL 16 (pgvector) · Redis 7 · Kafka 3.8 (KRaft) |
 | Runtime | Docker Compose |
-| Observability | Prometheus · Grafana · Loki · Langfuse · Phoenix |
+| Observability | Prometheus · Grafana · Loki · Phoenix |
 
 ---
 
@@ -220,9 +221,9 @@ deterministically rather than sampled from a model.
 
 | Suite | Tests |
 |---|---|
-| Fraud investigation agent | **62**, 0 failures |
+| Fraud investigation agent | **115**, 0 failures |
 | Auto loan review agent | **422**, 0 failures |
-| Total | **484** — 0 failures · 0 errors · 0 skipped |
+| Total | **537** — 0 failures · 0 errors · 0 skipped |
 
 | What is pinned | |
 |---|---|
