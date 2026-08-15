@@ -56,7 +56,8 @@ from .models import (
 from .planner import plan_next_tool
 from .recommend import build_recommendation
 from .tool_matrix import TOOL_MATRIX
-from .tools import CASES_DIR, TOOLS, load_case
+from .scope import CaseScope
+from .tools import CASES_DIR, TOOLS, call_tool, load_case
 
 app = FastAPI(
     title="Fraud Investigation Agent API",
@@ -206,6 +207,7 @@ def _gate(state: AgentState) -> str:
 def _run_trace(case: Case) -> tuple[list[TraceStep], Recommendation, AgentState]:
     llm = get_llm_client()
     state = AgentState(alert=case.alert)
+    scope = CaseScope.of(case.alert)
     state.scenarios = hypotheses.init_scenarios()
     state.tags = hypotheses.init_tags()
 
@@ -218,10 +220,9 @@ def _run_trace(case: Case) -> tuple[list[TraceStep], Recommendation, AgentState]
         state.budget_left -= 1
         reason = state.tool_log[-1].reason
 
-        fn = TOOLS[tool]
         fraud_tool_calls_total.labels(tool=str(tool)).inc()
-        ident = state.alert.account if tool in ACCOUNT_TOOLS else state.alert.customer_id
-        result = fn(case, ident)
+        # graph.py 와 같은 경로를 쓴다. 예전에는 같은 계산이 두 곳에 따로 있었다.
+        result = call_tool(case, tool, scope)
         state.evidence.append(result.to_evidence())
         if result.decisive_fact:
             state.decisive_fact = result.decisive_fact

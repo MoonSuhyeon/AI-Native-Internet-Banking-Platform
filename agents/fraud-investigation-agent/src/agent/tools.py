@@ -250,3 +250,19 @@ TOOLS = {
         get_aml_history,
     )
 }
+
+def call_tool(case: Case, tool: str, scope, subject: str | None = None) -> ToolResult:
+    """도구를 부르는 **유일한 정상 경로**.
+
+    대상을 인자로 받지 않고 스코프에게 물어본다. 호출부가 식별자를 만들지 않으면
+    잘못 만들 수도 없다 — 예전에는 이 계산이 graph 와 api 두 곳에 각각 있었고,
+    한쪽만 고치면 다른 쪽이 조용히 옛 규칙으로 남았다.
+
+    ``subject`` 를 굳이 넘기면 범위 안인지 확인한 뒤 쓴다(이중 방어). 범위 밖이면
+    :class:`OutOfScopeError` 다 — 조회 실패가 아니라 봐서는 안 되는 것이다.
+    """
+    fn = TOOLS.get(tool)
+    if fn is None:
+        raise KeyError(f"알 수 없는 도구: {tool!r}")
+    target = scope.check(tool, subject) if subject is not None else scope.subject_for(tool)
+    return fn(case, target)

@@ -26,11 +26,10 @@ from .llm import LLMClient, get_llm_client
 from .models import ActionType, AgentState, Case
 from .planner import plan_next_tool
 from .recommend import build_recommendation
+from .scope import ACCOUNT_TOOLS, CaseScope  # noqa: F401  (api.py 가 ACCOUNT_TOOLS 를 가져간다)
 from .hypotheses import CLOSE_THRESHOLD, CONFIRM_THRESHOLD
 from .tool_matrix import TOOL_MATRIX
 from .tracing import current_trace_id, investigation_span, trace_node
-
-ACCOUNT_TOOLS = {"get_device_fingerprint", "get_related_accounts"}
 
 # 동작별 필요 RBAC 역할 (목). 실서비스면 BankRole·hasAnyRole 게이팅.
 _REQUIRED_ROLE = "FRAUD_OFFICER"
@@ -40,6 +39,8 @@ _GATED_ACTIONS = {ActionType.FREEZE_PAYMENT, ActionType.FILE_STR}
 def build_graph(llm: LLMClient, case: Case, matrix: dict | None = None):
     """7노드 그래프 + execute_action 을 컴파일. recommend 뒤 HITL interrupt."""
     matrix = matrix or TOOL_MATRIX
+    # 이 사건이 열어 주는 범위. 그래프가 사는 동안 넓어지지 않는다.
+    scope = CaseScope.of(case.alert)
 
     def hypothesize(state: AgentState) -> dict:
         return {
@@ -56,9 +57,8 @@ def build_graph(llm: LLMClient, case: Case, matrix: dict | None = None):
     def act(state: AgentState) -> dict:
         with trace_node("act", state):
             tool = state.tool_log[-1].tool
-            fn = tools_mod.TOOLS[tool]
-            ident = state.alert.account if tool in ACCOUNT_TOOLS else state.alert.customer_id
-            result = fn(case, ident)
+            # 대상을 여기서 만들지 않는다. 만들 수 있으면 잘못 만들 수도 있다.
+            result = tools_mod.call_tool(case, tool, scope)
             updates: dict = {"evidence": state.evidence + [result.to_evidence()]}
             if result.decisive_fact:  # 결정적 사실은 게이트가 가로챔 (fail-closed)
                 updates["decisive_fact"] = result.decisive_fact
