@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import contextlib
 import functools
+import inspect
 import os
 import threading
 
@@ -121,6 +122,30 @@ def _flatten(value):
     return repr(value)
 
 
+def current_trace_id() -> str | None:
+    """지금 열려 있는 추적의 id (32자리 hex). 없으면 ``None``.
+
+    **감사 기록과 추적을 잇는 유일한 값이다.** 감사 로그에 이 값이 있어야 "이 권고가
+    왜 나왔나" 를 물었을 때 그 실행의 도구 호출 순서까지 되짚을 수 있다. 없으면 감사는
+    결론만 남고 과정은 사라진다.
+
+    **span 이 닫힌 뒤에 부르면 ``None`` 이다.** 감사 기록은 보통 실행이 끝난 뒤에
+    쓰이므로, 값을 쓸 자리가 아니라 **span 안에서 미리 받아 두어야** 한다.
+
+    추적이 꺼져 있으면 ``None`` 이고, 그대로 남기는 것이 맞다. 다른 식별자(스레드 id
+    같은 것)를 대신 넣으면 이어지지 않는 링크가 이어지는 것처럼 보인다.
+    """
+    try:
+        from opentelemetry import trace as _trace
+
+        ctx = _trace.get_current_span().get_span_context()
+        if not ctx.is_valid:
+            return None
+        return format(ctx.trace_id, "032x")
+    except Exception:
+        return None
+
+
 def update_current_span(*, input=None, output=None, metadata: dict | None = None) -> None:
     """지금 열려 있는 span 에 값을 덧붙인다 (가려서).
 
@@ -153,6 +178,17 @@ def observe(name: str | None = None, *, kind: str = "CHAIN", **_ignored):
 
     def decorate(fn):
         label = name or getattr(fn, "__name__", "span")
+
+        # 비동기 함수를 동기 래퍼로 감싸면 span 이 코루틴을 **만들자마자** 닫힌다.
+        # 실제 작업은 그 밖에서 돌아 아무것도 안 남고, 예외도 안 나서 조용하다.
+        if inspect.iscoroutinefunction(fn):
+
+            @functools.wraps(fn)
+            async def async_wrapper(*args, **kwargs):
+                with span(label, kind):
+                    return await fn(*args, **kwargs)
+
+            return async_wrapper
 
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):

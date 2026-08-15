@@ -94,6 +94,46 @@ class TestObserve:
             f()
 
 
+class TestAsync:
+    """비동기 함수도 감쌀 수 있어야 한다.
+
+    동기 래퍼로 감싸면 span 이 코루틴을 만들자마자 닫힌다. 실제 작업은 그 밖에서
+    돌아 아무것도 안 남고, 예외도 안 나서 조용히 비어 있게 된다. 상담의 턴 처리가
+    async 라 이 자리가 실제로 필요하다.
+    """
+
+    def test_코루틴_함수를_감싸도_결과가_그대로다(self):
+        import asyncio
+
+        @tracing.observe(name="turn", kind="AGENT")
+        async def handle(x):
+            await asyncio.sleep(0)
+            return x * 2
+
+        assert asyncio.run(handle(21)) == 42
+
+    def test_코루틴을_반환하지_않고_await_가능해야_한다(self):
+        import asyncio
+        import inspect
+
+        @tracing.observe(name="turn")
+        async def handle():
+            return "ok"
+
+        assert inspect.iscoroutinefunction(handle), "동기 래퍼로 감싸면 여기서 걸린다"
+        assert asyncio.run(handle()) == "ok"
+
+    def test_비동기_예외도_그대로_올라간다(self):
+        import asyncio
+
+        @tracing.observe(name="boom")
+        async def f():
+            raise ValueError("실패")
+
+        with pytest.raises(ValueError):
+            asyncio.run(f())
+
+
 class TestDisabled:
     def test_켜지_않으면_tracer_가_없다(self, monkeypatch):
         monkeypatch.delenv("PHOENIX_ENABLED", raising=False)

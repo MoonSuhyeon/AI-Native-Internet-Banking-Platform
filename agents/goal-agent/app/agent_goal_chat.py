@@ -13,7 +13,7 @@ import json
 import re
 from decimal import Decimal, ROUND_DOWN
 
-from harness_core.tracing import observe, update_current_span
+from harness_core.tracing import current_trace_id, observe, update_current_span
 
 import anthropic
 from sqlalchemy.orm import Session
@@ -652,9 +652,13 @@ def run_goal_agent_mock(db: Session, customer_id: str, message: str) -> dict:
     }
 
 
+@observe(name="goal-agent-turn", kind="AGENT")
 def run_goal_agent(db: Session, customer_id: str, message: str) -> dict:
     """
     API Key가 있으면 Claude Tool Calling Agent, 없으면 Mock으로 자동 전환.
+
+    턴 하나가 AGENT span 이다. 안쪽 LLM 호출 span 이 이 아래로 붙고, 감사 기록도
+    같은 추적 id 를 갖는다 — 그래야 "이 답변이 왜 나왔나" 를 되짚을 수 있다.
     """
     llm_used = bool(settings.anthropic_api_key)
     result = (
@@ -670,5 +674,7 @@ def run_goal_agent(db: Session, customer_id: str, message: str) -> dict:
         message=message,
         result=result,
         llm_used=llm_used,
+        # 감사와 추적을 잇는 값. 이 함수가 span 안이라 여기서 받을 수 있다.
+        trace_id=current_trace_id(),
     )
     return result

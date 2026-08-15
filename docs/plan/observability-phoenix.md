@@ -149,13 +149,32 @@ case_provisional  6회  50%   INFORMATIVE×3 · SETTLED×2 · CONTEXT_ONLY×1
 `data/cases` 에 사건이 이미 있다. Phoenix Dataset 으로 올리면 프롬프트·모델·도구 표를
 바꿀 때 Experiment 로 전후를 비교할 수 있다. 회귀 테스트 역할을 한다.
 
-### Phase 5 — 감사 연결
+### Phase 5 — 감사 연결 ✅
 
-`agent_audit_log` 는 UPDATE/DELETE 차단 트리거가 걸린 WORM 테이블이다. 여기에 trace id
-를 같이 남기면 **"이 권고가 왜 나왔나"를 감사 시점에 재구성**할 수 있다.
+`AgentAuditEntry.trace_id` 는 계약에 **"감사와 추적을 잇는 유일한 연결고리"** 라고
+적혀 있었다. 실제로는 이랬다.
 
-일반 서비스에서 Phoenix 는 디버깅 도구지만, 여기서는 **설명책임 장치**다. README 의
-`auditability` 가 실제로 뒷받침되는 지점이 여기다.
+| 자리 | 들어가던 값 |
+|---|---|
+| 조사 권고(`record_investigation`) | **아예 안 넣음** → 항상 NULL |
+| 조사 실행(API 경로) | LangGraph **스레드 id** → Phoenix 에서 못 찾는 값 |
+| 조사 실행(`approve_and_execute`) | 스레드 id 조차 안 넘김 |
+| 상담·목표 에이전트 | 파라미터만 있고 **아무도 안 넘김** → 항상 NULL |
+
+**빈 값보다 틀린 값이 나쁘다.** 빈 값은 "없다" 를 말하지만, 틀린 값은 있다고 말한 뒤
+따라가면 없다.
+
+이제 `current_trace_id()` 가 OTel 추적 id 를 준다. 추적이 꺼져 있으면 `None` 이고
+그대로 남긴다 — 다른 식별자로 채우면 이어지지 않는 링크가 이어지는 것처럼 보인다.
+스레드 id 는 버리지 않고 `request_json` 에 남긴다(그 용도로는 유효하다).
+
+**받는 시점이 중요하다.** 감사 기록은 실행이 끝난 뒤에 쓰이는데 그때는 span 이 닫혀
+있어 `None` 이 나온다. 그래서 span 안에서 미리 받아 상태에 실어 보낸다.
+
+상담·목표 에이전트는 감사 호출부가 **어떤 span 안에도 없었다.** 턴 하나를 `AGENT`
+span 으로 감싸 그 안에서 받게 했다. 이 과정에서 `observe` 가 **비동기 함수를 못
+감싸는** 것도 드러났다 — 상담 턴이 async 라, 동기 래퍼로 감싸면 span 이 코루틴을
+만들자마자 닫혀 아무것도 안 남고 예외도 안 난다.
 
 ---
 

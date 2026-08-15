@@ -33,6 +33,7 @@ import contextlib
 from harness_core.pii import pseudonymize
 from harness_core.tracing import SPAN_KIND, reset_for_test as _reset_for_test  # noqa: F401
 from harness_core.tracing import get_tracer as _get_tracer  # noqa: F401
+from harness_core.tracing import current_trace_id  # noqa: F401  (graph 가 쓴다)
 from harness_core.tracing import span as _span
 
 # 노드 이름 → span 종류. plan 은 LLM 이 도구를 고르고, act 는 도구를 부르고,

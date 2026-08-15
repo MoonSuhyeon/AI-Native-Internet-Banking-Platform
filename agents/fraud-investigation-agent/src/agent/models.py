@@ -181,6 +181,12 @@ class AgentState(BaseModel):
     """
 
     alert: Alert
+
+    # 이 조사의 추적 id. 감사 기록에 같이 남아야 "왜 그 권고가 나왔나" 를 물었을 때
+    # 도구 호출 순서까지 되짚을 수 있다. 추적이 꺼져 있으면 None 이고, 그대로 둔다 —
+    # 다른 식별자를 대신 넣으면 이어지지 않는 링크가 이어지는 것처럼 보인다.
+    trace_id: str | None = None
+
     scenarios: dict[AttackScenario, float] = Field(default_factory=dict)  # 합 ≈ 1
     tags: dict[Tag, bool] = Field(default_factory=dict)
     evidence: list[Evidence] = Field(default_factory=list)

@@ -94,6 +94,9 @@ def record_investigation(state, *, case_name: str | None = None) -> None:
         tool_calls_json=AgentAuditEntry.json_of(
             [t.model_dump(mode="json") for t in (state.tool_log or [])]
         ),
+        # 이 값이 있어야 감사 기록에서 그 실행의 추적으로 건너갈 수 있다.
+        # 추적이 꺼져 있으면 None 이고, NULL 이 "추적이 없다" 는 사실을 말한다.
+        trace_id=getattr(state, "trace_id", None),
     )
     get_audit_log().record(entry)
 
@@ -107,6 +110,7 @@ def record_action_execution(
     actor_id: str | None = None,
     claimed_roles: list[str] | None = None,
     thread_id: str | None = None,
+    trace_id: str | None = None,
 ) -> None:
     """승인 뒤 무엇이 실행됐는지 남긴다.
 
@@ -126,12 +130,16 @@ def record_action_execution(
         decision_kind=KIND_ACTION_EXECUTION,
         actor_id=actor_id,
         actor_roles=AgentAuditEntry.json_of(actor_roles),
-        trace_id=thread_id,
+        # 추적 id 다. 예전에는 여기에 LangGraph 스레드 id 를 넣었는데, 그 값으로는
+        # Phoenix 의 어떤 추적도 찾을 수 없다 — 이어지지 않는 링크가 이어지는 것처럼
+        # 보였다. 스레드 id 는 아래 request_json 에 남긴다(그쪽 용도로는 유효하다).
+        trace_id=trace_id,
         request_json=AgentAuditEntry.json_of({
             "approved": approved,
             # 검증되지 않은 자칭 역할. 컬럼이 아니라 여기 남는 것 자체가 신뢰수준 표시다.
             "claimed_roles": claimed_roles or [],
             "identity_verified": actor_id is not None,
+            "thread_id": thread_id,
         }),
         output_json=AgentAuditEntry.json_of({
             "approved": approved,

@@ -28,7 +28,7 @@ from .planner import plan_next_tool
 from .recommend import build_recommendation
 from .hypotheses import CLOSE_THRESHOLD, CONFIRM_THRESHOLD
 from .tool_matrix import TOOL_MATRIX
-from .tracing import investigation_span, trace_node
+from .tracing import current_trace_id, investigation_span, trace_node
 
 ACCOUNT_TOOLS = {"get_device_fingerprint", "get_related_accounts"}
 
@@ -148,6 +148,9 @@ def investigate(
         init.budget_left = budget
     # 노드 span 이 이 아래로 붙어야 조사 1건이 하나의 트리가 된다.
     with investigation_span(case, init.budget_left):
+        # span 이 닫히면 추적 id 를 못 받는다. 감사 기록은 실행이 끝난 뒤에 쓰이므로
+        # 여기서 미리 받아 상태에 실어 보낸다.
+        init.trace_id = current_trace_id()
         graph.invoke(init, config)  # execute_action 직전에서 정지
     return graph, config, _as_state(graph.get_state(config).values)
 
@@ -181,6 +184,10 @@ def approve_and_execute(
     state = _as_state(graph.get_state(config).values)
     record_action_execution(
         alert_id=state.alert.id,
+        trace_id=state.trace_id,
+        # API 경로(api.py)는 넘기는데 여기서는 빠져 있었다. 스레드 id 가 없으면
+        # 이 실행 기록에서 어느 조사 세션을 재개한 것인지 되짚을 수 없다.
+        thread_id=(config or {}).get("configurable", {}).get("thread_id"),
         approved=approved,
         actor_id=actor_id,
         actor_roles=actor_roles,

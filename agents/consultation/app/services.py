@@ -8,6 +8,8 @@ import httpx
 from sqlalchemy import bindparam, or_, select, text
 from sqlalchemy.orm import Session, aliased
 
+from harness_core.tracing import current_trace_id, observe
+
 from app.audit import record_chatbot_turn
 from app.features import ProductFeatureExecutor, StaffFeatureExecutor, UserFinanceFeatureExecutor
 from app.features.base import build_history_context
@@ -130,6 +132,7 @@ class ChatbotService:
             buttons=self._button_responses(first_node.node_id),
         )
 
+    @observe(name="consultation-turn", kind="AGENT")
     async def handle_message(
         self,
         chatbot_consultation_id: int,
@@ -447,6 +450,8 @@ class ChatbotService:
             process_method=process_method,
             agent_transfer_required=agent_transfer_required,
             feature_code=response_feature_code,
+            # 감사와 추적을 잇는 값. 이 메서드가 AGENT span 안이라 여기서 받을 수 있다.
+            trace_id=current_trace_id(),
         )
 
         return ChatbotMessageResponse(
