@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { fetchInboundPayments, InboundPayment } from '@/lib/other-bank-api'
+import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
 
 /* ── 다온은행 계좌 정보 (mock) ── */
 const DAON_ACCOUNT = {
@@ -78,7 +79,7 @@ export default function DaonAccountsPage() {
       {/* 타행 입금 도착 배너 */}
       {!loading && latestDeposit && (
         <div className="rounded-xl px-6 py-4 mb-5 flex items-center justify-between"
-          style={{ background: 'linear-gradient(135deg, #1B3A6B 0%, #384d84 100%)' }}>
+          style={{ background: `linear-gradient(135deg, ${KB_GNB_BIZ_ACTIVE} 0%, #384d84 100%)` }}>
           <div className="flex items-center gap-4">
             <div className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center text-2xl">💸</div>
             <div className="text-white">
@@ -111,7 +112,7 @@ export default function DaonAccountsPage() {
               <button
                 onClick={() => setBalanceVisible(v => !v)}
                 className="relative w-10 h-5 rounded-full transition-colors"
-                style={{ backgroundColor: balanceVisible ? '#1B3A6B' : '#cbd5e1' }}
+                style={{ backgroundColor: balanceVisible ? KB_GNB_BIZ_ACTIVE : '#cbd5e1' }}
               >
                 <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${balanceVisible ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 <span className={`absolute text-[9px] font-bold text-white ${balanceVisible ? 'left-1.5 top-0.5' : 'right-1 top-0.5'}`}>
@@ -193,7 +194,7 @@ export default function DaonAccountsPage() {
               placeholder="거래 내용을 입력하세요"
               className="border border-kb-border px-3 py-1.5 text-[13px] w-60 focus:outline-none"
             />
-            <button className="px-5 py-1.5 text-[12px] font-bold text-white hover:brightness-110" style={{ backgroundColor: '#1B3A6B' }}>
+            <button className="px-5 py-1.5 text-[12px] font-bold text-white hover:brightness-110" style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}>
               조회
             </button>
           </div>

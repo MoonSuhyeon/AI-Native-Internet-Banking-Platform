@@ -41,6 +41,7 @@ import {
   type DepositInterestRate,
 } from '@/lib/deposit-api'
 import ConsultModal from '@/components/layout/ConsultModal'
+import { KB_CHAT } from '@/lib/theme'
 
 type ChatMessage = {
   id: string
@@ -2715,7 +2716,7 @@ export default function ChatbotWidget() {
                             {/* 양쪽 비교 */}
                             <div className="grid grid-cols-2 gap-1.5">
                               <div>
-                                <p className="text-[11px] font-bold mb-1 text-center" style={{ color: '#2D6A4F' }}>📈 저축 성장형<br/><span className="text-[9px] font-normal text-kb-text-muted">적금 가중치 1.3×</span></p>
+                                <p className="text-[11px] font-bold mb-1 text-center" style={{ color: KB_CHAT }}>📈 저축 성장형<br/><span className="text-[9px] font-normal text-kb-text-muted">적금 가중치 1.3×</span></p>
                                 {renderCol(message.compareData.accumulate, '#2D6A4F')}
                               </div>
                               <div>

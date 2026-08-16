@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -220,14 +220,14 @@ export default function TransferConfirmPage() {
           </div>
 
           {/* 확인 헤더 */}
-          <div className="rounded-xl p-6 mb-5 text-center" style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl p-6 mb-5 text-center" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <p className="text-[16px] font-bold" style={{ color: KB_PRIMARY }}>
               {data.receiverName}님께 {formatNumber(data.amount)}원 이체하시겠습니까?
             </p>
           </div>
 
           {/* 안내 메시지 */}
-          <div className="mb-5 text-[12px] space-y-1 rounded-xl px-5 py-4" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+          <div className="mb-5 text-[12px] space-y-1 rounded-xl px-5 py-4" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <p className="text-kb-text-muted">· 입금은행, 입금계좌번호, 이체금액 및 받는분을 다시 한번 확인하세요.</p>
             <p className="text-kb-text-muted">· 메시지·문자로 송금을 요구받은 경우에는 반드시 사실관계 확인 후 이체하시기 바랍니다.</p>
             <p className="font-medium" style={{ color: KB_PRIMARY }}>
@@ -246,13 +246,13 @@ export default function TransferConfirmPage() {
                 수정
               </button>
             </div>
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <table className="w-full border-collapse text-[13px]">
                 <thead>
                   <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                     {['출금계좌번호', '입금계좌번호', '이체금액', '수수료', '받는분', '상태'].map(h => (
                       <th key={h} className="px-4 py-3 text-center font-semibold text-[12px]"
-                        style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>
+                        style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>
                         {h}
                       </th>
                     ))}
@@ -304,7 +304,7 @@ export default function TransferConfirmPage() {
 
             {/* 왼쪽 - 브랜드 */}
             <div className="w-[180px] flex-shrink-0 flex flex-col items-center justify-center gap-4 p-6"
-              style={{ backgroundColor: KB_PRIMARY_BG, borderRight: '1px solid #E2F5EF' }}>
+              style={{ backgroundColor: KB_PRIMARY_BG, borderRight: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <div className="text-center">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-white text-[13px] font-extrabold"
                   style={{ backgroundColor: KB_PRIMARY }}>
@@ -316,7 +316,7 @@ export default function TransferConfirmPage() {
 
             {/* 오른쪽 - 내용 */}
             <div className="flex-1 flex flex-col">
-              <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #E2F5EF' }}>
+              <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <span className="text-[13px] font-bold text-kb-text">금융인증서비스</span>
                 <button onClick={() => setShowCertModal(false)} className="text-kb-text-muted hover:text-kb-text text-lg">✕</button>
               </div>
@@ -325,7 +325,7 @@ export default function TransferConfirmPage() {
                 {certStep === 'info' ? (
                   <div>
                     <p className="text-[14px] font-bold text-kb-text mb-4">전자서명 원문</p>
-                    <div className="rounded-xl p-4 text-[13px] space-y-1.5 mb-6" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+                    <div className="rounded-xl p-4 text-[13px] space-y-1.5 mb-6" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                       <div className="flex gap-3">
                         <span className="text-kb-text-muted w-24">이체금액</span>
                         <span className="font-semibold" style={{ color: KB_PRIMARY }}>{formatNumber(data.amount)}원</span>

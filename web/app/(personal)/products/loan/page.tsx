@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY } from '@/lib/theme'
+import { KB_GOLD, KB_PRIMARY, KB_PRIMARY_BORDER, KB_TEXT_BODY } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState } from 'react'
@@ -137,7 +137,7 @@ export default function LoanMainPage() {
         <main className="flex-1 pl-8 pt-4 pb-12 min-w-0">
 
       {/* ===== 히어로 영역 ===== */}
-      <div className="flex rounded-xl overflow-hidden mb-6" style={{ border: '1px solid #E2F5EF' }}>
+      <div className="flex rounded-xl overflow-hidden mb-6" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
 
         {/* 좌: 슬라이드 배너 */}
         <div className="bg-white px-12 pt-9 pb-7 relative min-h-[340px] flex flex-col justify-between"
@@ -153,7 +153,7 @@ export default function LoanMainPage() {
             <div className="flex gap-14 mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: '#C09B3A' }}>
+                  style={{ backgroundColor: KB_GOLD }}>
                   <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="white" strokeWidth="1.8">
                     <rect x="3" y="4" width="18" height="17" rx="2"/>
                     <line x1="3" y1="9" x2="21" y2="9"/>
@@ -168,7 +168,7 @@ export default function LoanMainPage() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: '#C09B3A' }}>
+                  style={{ backgroundColor: KB_GOLD }}>
                   <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="white" strokeWidth="1.8">
                     <circle cx="12" cy="12" r="9"/>
                     <text x="12" y="16" textAnchor="middle" fontSize="11" fill="white" stroke="none" fontWeight="bold">₩</text>
@@ -182,7 +182,7 @@ export default function LoanMainPage() {
             </div>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: '#C09B3A' }}>
+                style={{ backgroundColor: KB_GOLD }}>
                 <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="white" strokeWidth="2">
                   <circle cx="12" cy="12" r="9"/>
                   <line x1="12" y1="7" x2="12" y2="17"/>
@@ -323,7 +323,7 @@ export default function LoanMainPage() {
             ].map(s => (
               <Link key={s.label} href={s.href}
                 className="flex flex-col items-center gap-2 hover:opacity-75 transition-opacity"
-                style={{ color: '#333333' }}>
+                style={{ color: KB_TEXT_BODY }}>
                 {s.icon}
                 <span className="text-[12px] text-kb-text-body text-center leading-tight">{s.label}</span>
               </Link>

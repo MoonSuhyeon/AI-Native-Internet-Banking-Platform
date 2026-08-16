@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
 
 type MenuItem = { label: string; arrow?: boolean; href?: string; active?: boolean }
 type MenuColumn = { header?: string; items: MenuItem[] }
@@ -174,9 +175,9 @@ export default function DaonHeader() {
       <div className="border-b border-kb-border bg-white">
         <div className="max-w-kb-container mx-auto px-6 flex items-center h-[70px]">
           <Link href="/other-bank" className="flex items-center gap-3">
-            <div className="w-[4px] self-stretch" style={{ backgroundColor: '#1B3A6B' }} />
+            <div className="w-[4px] self-stretch" style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }} />
             <div className="flex flex-col leading-none gap-1.5">
-              <span className="text-[22px] font-bold tracking-[0.1em]" style={{ color: '#1B3A6B' }}>다온은행</span>
+              <span className="text-[22px] font-bold tracking-[0.1em]" style={{ color: KB_GNB_BIZ_ACTIVE }}>다온은행</span>
               <span className="text-[14px] font-medium text-kb-text-body tracking-[0.18em]">DAON Bank</span>
             </div>
           </Link>

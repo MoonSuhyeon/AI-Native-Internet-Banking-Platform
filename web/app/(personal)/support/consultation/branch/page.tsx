@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BORDER } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BORDER } from '@/lib/theme'
 
 /* eslint-disable @typescript-eslint/no-unused-vars -- 예약 폼 미사용 state, 추후 기능 연결 예정 (빌드 차단 방지) */
 
@@ -86,7 +86,7 @@ export default function BranchConsultationPage() {
           {pageTab === 'apply' && (
             <>
               {/* 상담예약 절차 */}
-              <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm" style={{ border: '1px solid #5BC9A820' }}>
+              <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm" style={{ border: `1px solid ${KB_MINT}20` }}>
                 <p className="text-[14px] font-bold text-kb-text mb-5">상담예약 절차</p>
                 <div className="flex items-center gap-3 flex-wrap">
 
@@ -96,7 +96,7 @@ export default function BranchConsultationPage() {
                       style={{ backgroundColor: KB_PRIMARY }}>
                       1
                     </div>
-                    <div className="bg-kb-primary-bg rounded-xl px-4 py-2.5 text-center" style={{ border: '1px solid #5BC9A820' }}>
+                    <div className="bg-kb-primary-bg rounded-xl px-4 py-2.5 text-center" style={{ border: `1px solid ${KB_MINT}20` }}>
                       <p className="text-[12px] font-bold text-kb-primary whitespace-nowrap">상담예약 신청</p>
                     </div>
                   </div>
@@ -109,15 +109,15 @@ export default function BranchConsultationPage() {
                       style={{ backgroundColor: KB_PRIMARY_BORDER, color: KB_PRIMARY }}>
                       2
                     </div>
-                    <div className="rounded-xl px-4 py-2.5 text-center" style={{ border: '1px solid #5BC9A840', backgroundColor: '#FAFAFA' }}>
+                    <div className="rounded-xl px-4 py-2.5 text-center" style={{ border: `1px solid ${KB_MINT}40`, backgroundColor: '#FAFAFA' }}>
                       <p className="text-[12px] font-semibold text-kb-text whitespace-nowrap">상담직원 선택</p>
                     </div>
                     <div className="flex gap-2 mt-1">
-                      <div className="bg-white rounded-xl px-3 py-2 text-[11px] text-center shadow-sm" style={{ border: '1px solid #5BC9A820' }}>
+                      <div className="bg-white rounded-xl px-3 py-2 text-[11px] text-center shadow-sm" style={{ border: `1px solid ${KB_MINT}20` }}>
                         <p className="font-semibold text-kb-text">직원 자동배정</p>
                         <p className="text-kb-text-muted mt-0.5">예약 즉시 확정</p>
                       </div>
-                      <div className="bg-white rounded-xl px-3 py-2 text-[11px] text-center shadow-sm" style={{ border: '1px solid #5BC9A820' }}>
+                      <div className="bg-white rounded-xl px-3 py-2 text-[11px] text-center shadow-sm" style={{ border: `1px solid ${KB_MINT}20` }}>
                         <p className="font-semibold text-kb-text">직원 직접 선택</p>
                         <p className="text-kb-text-muted mt-0.5">직원 확인 후 확정</p>
                       </div>
@@ -132,7 +132,7 @@ export default function BranchConsultationPage() {
                       style={{ backgroundColor: KB_PRIMARY_BORDER, color: KB_PRIMARY }}>
                       3
                     </div>
-                    <div className="rounded-xl px-4 py-2.5 text-center" style={{ border: '1px solid #5BC9A840', backgroundColor: '#FAFAFA' }}>
+                    <div className="rounded-xl px-4 py-2.5 text-center" style={{ border: `1px solid ${KB_MINT}40`, backgroundColor: '#FAFAFA' }}>
                       <p className="text-[12px] font-semibold text-kb-text whitespace-nowrap">예약지점 방문</p>
                     </div>
                   </div>
@@ -141,7 +141,7 @@ export default function BranchConsultationPage() {
               </div>
 
               {/* 안내 사항 */}
-              <div className="bg-kb-primary-bg rounded-xl px-5 py-4 mb-6" style={{ border: '1px solid #5BC9A830' }}>
+              <div className="bg-kb-primary-bg rounded-xl px-5 py-4 mb-6" style={{ border: `1px solid ${KB_MINT}30` }}>
                 <ul className="space-y-1.5 text-[12px] text-kb-text-muted">
                   {[
                     '상담 직원을 선택하면 직원 확인 후 예약이 확정돼요.',
@@ -160,7 +160,7 @@ export default function BranchConsultationPage() {
               </div>
 
               {/* 상담 예약 정보 입력 */}
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-5" style={{ border: '1px solid #5BC9A820' }}>
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-5" style={{ border: `1px solid ${KB_MINT}20` }}>
                 <div className="px-6 py-4 border-b" style={{ borderColor: KB_PRIMARY_BORDER, backgroundColor: '#F8FDFB' }}>
                   <h2 className="text-[16px] font-bold text-kb-text">상담 예약 정보 입력</h2>
                   <p className="text-[12px] text-kb-danger mt-1">
@@ -326,7 +326,7 @@ export default function BranchConsultationPage() {
               </div>
 
               {/* 주의사항 */}
-              <div className="bg-kb-primary-bg rounded-xl px-5 py-4 mb-6" style={{ border: '1px solid #5BC9A830' }}>
+              <div className="bg-kb-primary-bg rounded-xl px-5 py-4 mb-6" style={{ border: `1px solid ${KB_MINT}30` }}>
                 <ul className="space-y-1 text-[12px] text-kb-text-muted">
                   {[
                     '상담 예약을 신청하면 카카오톡 또는 문자 메시지로 내역이 발송됩니다.',
@@ -356,7 +356,7 @@ export default function BranchConsultationPage() {
           )}
 
           {pageTab === 'history' && (
-            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-[14px] text-kb-text-muted" style={{ border: '1px solid #5BC9A820' }}>
+            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-[14px] text-kb-text-muted" style={{ border: `1px solid ${KB_MINT}20` }}>
               예약 현황이 없습니다.
             </div>
           )}

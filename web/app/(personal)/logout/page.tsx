@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect } from 'react'
@@ -22,7 +22,7 @@ function LogoutContent() {
 
   return (
     <div className="min-h-[calc(100vh-260px)] py-12" style={{ backgroundColor: KB_PRIMARY_BG }}>
-      <div className="w-full max-w-[540px] mx-auto bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: '1px solid #5BC9A820' }}>
+      <div className="w-full max-w-[540px] mx-auto bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: `1px solid ${KB_MINT}20` }}>
 
         {/* 본문 */}
         <div className="flex flex-col items-center px-12 py-14 gap-5">
@@ -73,7 +73,7 @@ function LogoutContent() {
 
         {/* AXful 인증서 배너 */}
         <div className="border-t mx-6 mb-6" style={{ borderColor: KB_PRIMARY_BORDER }} />
-        <div className="mx-6 mb-6 flex items-center gap-4 rounded-xl p-5" style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A820' }}>
+        <div className="mx-6 mb-6 flex items-center gap-4 rounded-xl p-5" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}20` }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[13px] font-bold"
             style={{ backgroundColor: KB_PRIMARY }}>
             AX

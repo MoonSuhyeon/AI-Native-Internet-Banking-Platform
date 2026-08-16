@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { AdminUser } from '@/lib/admin-mock-data'
 import { getAdminRoles, hasAnyRole, primaryRoleLabel } from '@/lib/admin-auth'
+import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
 
 // 게이팅은 BankRole(JWT, admin_roles) 단일 어휘로 한다. 섹션/항목에 bankRoles 를 지정하고
 // 항목에 없으면 섹션 값을 상속한다. (ROLE_ADMIN 은 hasAnyRole 에서 항상 통과)
@@ -173,7 +174,7 @@ export default function AdminSidebar() {
     .filter((g) => g.items.length > 0)
 
   return (
-    <aside className="w-52 flex-shrink-0 flex flex-col h-screen sticky top-0 overflow-hidden" style={{ backgroundColor: '#1B3A6B' }}>
+    <aside className="w-52 flex-shrink-0 flex flex-col h-screen sticky top-0 overflow-hidden" style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}>
 
       {/* 로고 */}
       <div className="flex items-stretch gap-2.5 px-4 py-4" style={{ backgroundColor: '#122550', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>

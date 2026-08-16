@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState, useEffect, Suspense } from 'react'
@@ -377,7 +377,7 @@ function DepositListPageInner() {
           </div>
 
           {/* 필터 */}
-          <div className="rounded-xl p-5 mb-5" style={{ border: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_SURFACE }}>
+          <div className="rounded-xl p-5 mb-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_SURFACE }}>
             <div className="grid grid-cols-[100px_1fr] gap-y-3 text-[13px] items-center">
               <span className="font-semibold text-kb-text">• 상품명</span>
               <input
@@ -450,16 +450,16 @@ function DepositListPageInner() {
           </div>
 
           {/* 상품 목록 */}
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             {products.map((product, idx) => (
               <div key={product.id}
                 className="py-5 px-5 hover:bg-kb-primary-surface transition-colors"
-                style={{ borderBottom: idx < products.length - 1 ? '1px solid #E2F5EF' : 'none' }}>
+                style={{ borderBottom: idx < products.length - 1 ? `1px solid ${KB_PRIMARY_BORDER}` : 'none' }}>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[11px] rounded px-1.5 py-0.5 text-kb-text-muted"
-                        style={{ border: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_BG }}>
+                        style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_BG }}>
                         {product.channel}
                       </span>
                       {product.isNew && (

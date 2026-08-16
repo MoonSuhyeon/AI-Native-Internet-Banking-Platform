@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT } from '@/lib/theme'
+import { KB_GOLD, KB_MINT } from '@/lib/theme'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -193,7 +193,7 @@ export default function ProductShowcase() {
                 {/* field1 */}
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: '#C09B3A' }}>
+                    style={{ backgroundColor: KB_GOLD }}>
                     <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="white" strokeWidth="1.8">
                       <rect x="3" y="4" width="18" height="17" rx="2"/>
                       <line x1="3" y1="9" x2="21" y2="9"/>
@@ -209,7 +209,7 @@ export default function ProductShowcase() {
                 {/* field2 */}
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: '#C09B3A' }}>
+                    style={{ backgroundColor: KB_GOLD }}>
                     <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="white" strokeWidth="1.8">
                       <circle cx="12" cy="12" r="9"/>
                       <text x="12" y="16" textAnchor="middle" fontSize="11" fill="white" stroke="none" fontWeight="bold">₩</text>
@@ -225,7 +225,7 @@ export default function ProductShowcase() {
               {/* 금리 */}
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: '#C09B3A' }}>
+                  style={{ backgroundColor: KB_GOLD }}>
                   <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="white" strokeWidth="2">
                     <circle cx="12" cy="12" r="9"/>
                     <line x1="12" y1="7" x2="12" y2="17"/>

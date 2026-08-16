@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -93,7 +93,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 
 function HistoryRow({ item }: { item: HistoryItem }) {
   return (
-    <div className="flex items-center text-[12px] py-2 gap-3" style={{ borderBottom: '1px solid #F0FAF7' }}>
+    <div className="flex items-center text-[12px] py-2 gap-3" style={{ borderBottom: `1px solid ${KB_PRIMARY_BG}` }}>
       <span className="text-kb-text-muted w-28 flex-shrink-0">{fmtDate(item.effectiveAt)}</span>
       <span className="text-kb-text-muted flex-shrink-0">{item.previousCode ? gradeLabel(item.previousCode) : '–'} → </span>
       <span className="font-semibold text-kb-text">{gradeLabel(item.newCode)}</span>
@@ -280,8 +280,8 @@ export default function MyKBPage() {
       {gradeHistory.length > 0 && (
         <section className="mb-6">
           <h2 className="text-lg font-bold text-kb-text mb-2">등급 변경 이력</h2>
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
-            <div className="px-5 py-3 text-[12px] font-semibold" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '1px solid #E2F5EF', color: KB_PRIMARY }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
+            <div className="px-5 py-3 text-[12px] font-semibold" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `1px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>
               최근 5건
             </div>
             <div className="px-5 py-2">
@@ -295,8 +295,8 @@ export default function MyKBPage() {
       {statusHistory.length > 0 && (
         <section className="mb-6">
           <h2 className="text-lg font-bold text-kb-text mb-2">상태 변경 이력</h2>
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
-            <div className="px-5 py-3 text-[12px] font-semibold" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '1px solid #E2F5EF', color: KB_PRIMARY }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
+            <div className="px-5 py-3 text-[12px] font-semibold" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `1px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>
               최근 5건
             </div>
             <div className="px-5 py-2">
@@ -309,14 +309,14 @@ export default function MyKBPage() {
       {/* 알림설정 */}
       <section className="mb-6">
         <h2 className="text-lg font-bold text-kb-text mb-2">알림설정</h2>
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
-          <div className="px-5 py-3 text-[13px] font-semibold text-kb-text" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '1px solid #E2F5EF' }}>수신 동의</div>
+        <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
+          <div className="px-5 py-3 text-[13px] font-semibold text-kb-text" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>수신 동의</div>
           {[
             { key: 'smsReceiveYn' as const, label: 'SMS 수신', desc: '이체·입금 등 주요 알림을 문자로 받습니다.' },
             { key: 'emailReceiveYn' as const, label: '이메일 수신', desc: '이벤트·혜택·공지를 이메일로 받습니다.' },
             { key: 'postalReceiveYn' as const, label: '우편 수신', desc: '금융 안내를 우편으로 받습니다.' },
           ].map(({ key, label, desc }, i, arr) => (
-            <div key={key} className="flex items-center justify-between px-5 py-4" style={{ borderBottom: i < arr.length - 1 ? '1px solid #E2F5EF' : 'none' }}>
+            <div key={key} className="flex items-center justify-between px-5 py-4" style={{ borderBottom: i < arr.length - 1 ? `1px solid ${KB_PRIMARY_BORDER}` : 'none' }}>
               <div>
                 <p className="text-[13px] font-semibold text-kb-text">{label}</p>
                 <p className="text-[12px] text-kb-text-muted mt-0.5">{desc}</p>
@@ -324,8 +324,8 @@ export default function MyKBPage() {
               <Toggle checked={notification[key]} onChange={v => setNotification(prev => ({ ...prev, [key]: v }))} />
             </div>
           ))}
-          <div className="px-5 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_SURFACE }}>
-            {notifMsg ? <p className="text-[12px]" style={{ color: notifMsg.includes('실패') ? '#E05555' : KB_PRIMARY }}>{notifMsg}</p> : <span />}
+          <div className="px-5 py-3 flex items-center justify-between" style={{ borderTop: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_SURFACE }}>
+            {notifMsg ? <p className="text-[12px]" style={{ color: notifMsg.includes('실패') ? KB_DANGER : KB_PRIMARY }}>{notifMsg}</p> : <span />}
             <button onClick={handleNotifSave} disabled={notifSaving}
               className="px-8 py-2 text-[13px] font-bold text-white rounded-xl hover:opacity-85 disabled:opacity-50" style={{ backgroundColor: KB_PRIMARY }}>
               {notifSaving ? '저장 중...' : '저장'}
@@ -337,10 +337,10 @@ export default function MyKBPage() {
       {/* 비밀번호 변경 */}
       <section className="mb-8">
         <h2 className="text-lg font-bold text-kb-text mb-2">비밀번호 변경</h2>
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
-          <div className="px-5 py-3 text-[13px] font-semibold text-kb-text" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '1px solid #E2F5EF' }}>인터넷뱅킹 비밀번호</div>
+        <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
+          <div className="px-5 py-3 text-[13px] font-semibold text-kb-text" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>인터넷뱅킹 비밀번호</div>
           <div className="px-5 py-5 space-y-4">
-            <div className="rounded-xl px-4 py-3 text-[12px] text-kb-text-muted space-y-1" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+            <div className="rounded-xl px-4 py-3 text-[12px] text-kb-text-muted space-y-1" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <p>· 비밀번호는 8자 이상, 영문·숫자·특수문자를 조합하여 설정해주세요.</p>
               <p>· 직전 비밀번호와 동일한 비밀번호는 사용할 수 없습니다.</p>
             </div>
@@ -357,7 +357,7 @@ export default function MyKBPage() {
                 </div>
               ))}
             </div>
-            {pwError && <p className="text-[12px] font-medium" style={{ color: '#E05555' }}>{pwError}</p>}
+            {pwError && <p className="text-[12px] font-medium" style={{ color: KB_DANGER }}>{pwError}</p>}
             {pwMsg && <p className="text-[12px] font-medium" style={{ color: KB_PRIMARY }}>{pwMsg}</p>}
             <div className="flex gap-2 pt-1">
               <button onClick={handlePasswordChange} disabled={pwSaving}
@@ -376,14 +376,14 @@ export default function MyKBPage() {
       {/* 하단 카드 */}
       <div className="grid grid-cols-2 gap-6">
         <Link href="/banking/transfer-limit"
-          className="rounded-xl p-6 flex items-center justify-between hover:bg-kb-primary-bg transition-colors group" style={{ border: '1px solid #E2F5EF' }}>
+          className="rounded-xl p-6 flex items-center justify-between hover:bg-kb-primary-bg transition-colors group" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
           <div>
             <p className="text-[15px] font-bold text-kb-text group-hover:text-kb-primary">이체한도 조회/변경 &gt;</p>
             <p className="text-[13px] text-kb-text-muted mt-1">1일·1회 이체한도를 확인하고 변경하세요.</p>
           </div>
         </Link>
         <Link href="/support/customer-info/withdraw"
-          className="rounded-xl p-6 flex items-center justify-between hover:bg-red-50 transition-colors group" style={{ border: '1px solid #E2F5EF' }}>
+          className="rounded-xl p-6 flex items-center justify-between hover:bg-red-50 transition-colors group" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
           <div>
             <p className="text-[15px] font-bold text-kb-text group-hover:text-kb-danger">회원탈퇴 &gt;</p>
             <p className="text-[13px] text-kb-text-muted mt-1">인터넷뱅킹 이용을 중단하고 탈퇴합니다.</p>

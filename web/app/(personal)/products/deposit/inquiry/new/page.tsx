@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useEffect, useState } from 'react'
 import DepositSidebar from '@/components/products/DepositSidebar'
@@ -72,7 +72,7 @@ export default function DepositNewHistoryPage() {
           <h1 className="text-[22px] font-bold text-kb-text mb-5">신규결과/내역 조회</h1>
 
           <div className="rounded-xl px-5 py-4 mb-5 text-[12px] space-y-1.5"
-            style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+            style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <p className="flex gap-1.5 text-kb-text-muted">
               <span className="flex-shrink-0">·</span>
               <span>예금 신규결과/내역입니다.</span>
@@ -83,13 +83,13 @@ export default function DepositNewHistoryPage() {
             </p>
           </div>
 
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                   {['신규일자', '신규계좌번호', '신규계좌종류', '출금계좌번호', '신규금액'].map(h => (
                     <th key={h} className="px-4 py-3 text-center font-semibold text-[12px]"
-                      style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>
+                      style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>
                       {h}
                     </th>
                   ))}

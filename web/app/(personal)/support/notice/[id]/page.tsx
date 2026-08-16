@@ -1,4 +1,4 @@
-import { KB_PRIMARY } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY } from '@/lib/theme'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -38,7 +38,7 @@ const NOTICES: Record<string, {
           </ul>
         </div>
 
-        <div className="bg-kb-primary-bg rounded-xl p-5" style={{ border: '1px solid #5BC9A820' }}>
+        <div className="bg-kb-primary-bg rounded-xl p-5" style={{ border: `1px solid ${KB_MINT}20` }}>
           <p className="text-[14px] text-kb-text-muted">
             ※ AX Assistant는 AI 기반 서비스로, 제공되는 금융상품 추천 및 분석은 참고용이며 투자·금융 의사결정의 최종 책임은 고객에게 있습니다.<br />
             ※ 서비스 이용 중 불편사항은 고객센터(1588-0000)로 문의해 주시기 바랍니다.
@@ -79,7 +79,7 @@ const NOTICES: Record<string, {
           </ul>
         </div>
 
-        <div className="bg-kb-primary-bg rounded-xl p-5" style={{ border: '1px solid #5BC9A820' }}>
+        <div className="bg-kb-primary-bg rounded-xl p-5" style={{ border: `1px solid ${KB_MINT}20` }}>
           <p className="text-[14px] text-kb-text-muted">
             ※ 본 시스템 도입으로 인한 서비스 중단은 없습니다.<br />
             ※ 이상거래 탐지 관련 문의: 고객센터 1588-0000 (24시간 운영)
@@ -110,7 +110,7 @@ export default function NoticePage({ params }: { params: { id: string } }) {
         </div>
 
         {/* 헤더 */}
-        <div className="mb-8 pb-6" style={{ borderBottom: '2px solid #0D5C47' }}>
+        <div className="mb-8 pb-6" style={{ borderBottom: `2px solid ${KB_PRIMARY}` }}>
           <span className="inline-block px-3 py-1 text-[12px] font-bold text-white rounded-full mb-3"
             style={{ backgroundColor: KB_PRIMARY }}>
             {notice.category}

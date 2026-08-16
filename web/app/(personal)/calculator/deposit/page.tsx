@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY } from '@/lib/theme'
+import { KB_GOLD, KB_PRIMARY } from '@/lib/theme'
 
 import { useState } from 'react'
 
@@ -63,7 +63,7 @@ export default function DepositCalculatorPage() {
                   calcTab === i ? 'bg-white font-bold text-kb-text' : 'text-kb-text-muted hover:text-kb-text'
                 }`}
                 style={calcTab === i ? { borderLeft: '3px solid #C09B3A' } : { borderLeft: '3px solid transparent' }}>
-                <span style={{ color: calcTab === i ? '#C09B3A' : undefined }}>{icon}</span>
+                <span style={{ color: calcTab === i ? KB_GOLD : undefined }}>{icon}</span>
                 <span>{CALC_TABS[i]}</span>
               </button>
             ))}

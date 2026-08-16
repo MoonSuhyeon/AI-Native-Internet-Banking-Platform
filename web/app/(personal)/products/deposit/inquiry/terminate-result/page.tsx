@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useState } from 'react'
 import DepositSidebar from '@/components/products/DepositSidebar'
@@ -71,7 +71,7 @@ export default function TerminateResultPage() {
           <h1 className="text-[22px] font-bold text-kb-text mb-5">해지결과/내역 조회</h1>
 
           <div className="rounded-xl px-5 py-4 mb-5 text-[12px] space-y-1.5"
-            style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+            style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <p className="flex gap-1.5 text-kb-text-muted">
               <span className="flex-shrink-0">·</span>
               <span>조회시작일은 당일 기준으로 5년 이내에서 선택 가능합니다. 단, 1회 조회 시 최대기간은 1년입니다.</span>
@@ -83,7 +83,7 @@ export default function TerminateResultPage() {
           </div>
 
           {/* 필터 */}
-          <div className="rounded-xl px-5 py-5 mb-5" style={{ border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl px-5 py-5 mb-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <div className="flex items-center gap-3 flex-wrap mb-4">
               <span className="text-[13px] font-semibold text-kb-text">조회기간</span>
               <div className="flex gap-1.5">
@@ -129,13 +129,13 @@ export default function TerminateResultPage() {
           </div>
 
           {/* 결과 테이블 */}
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                   {['해지계좌번호', '해지일자', '해지계좌종류', '해지금액', '바로가기'].map(h => (
                     <th key={h} className="px-4 py-3 text-center font-semibold text-[12px]"
-                      style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>{h}</th>
+                      style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>{h}</th>
                   ))}
                 </tr>
               </thead>

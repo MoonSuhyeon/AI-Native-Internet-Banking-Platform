@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_DANGER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { Fragment, useState, useEffect } from 'react'
@@ -160,10 +160,10 @@ export default function TransactionsPage() {
           {/* ── 달력으로 보기 ── */}
           {activeTab === '달력으로 보기' && (
             <div>
-              <div className="rounded-xl overflow-hidden mb-5" style={{ border: '1px solid #E2F5EF' }}>
+              <div className="rounded-xl overflow-hidden mb-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <table className="w-full text-[13px]">
                   <tbody>
-                    <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                    <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                       <td className={labelCell} style={{ backgroundColor: KB_PRIMARY_BG }}>계좌번호</td>
                       <td className={valueCell}>
                         <select value={calAccount} onChange={e => { setCalAccount(e.target.value); setCalSearched(false) }}
@@ -213,8 +213,8 @@ export default function TransactionsPage() {
                           <th key={d} className="py-2 text-center font-semibold text-[12px]"
                             style={{
                               backgroundColor: KB_PRIMARY_BG,
-                              border: '1px solid #E2F5EF',
-                              color: i === 0 ? '#E05555' : i === 6 ? '#3B82F6' : '#374151',
+                              border: `1px solid ${KB_PRIMARY_BORDER}`,
+                              color: i === 0 ? KB_DANGER : i === 6 ? '#3B82F6' : '#374151',
                             }}>
                             {d}
                           </th>
@@ -231,8 +231,8 @@ export default function TransactionsPage() {
                             return (
                               <td key={dayIdx} className="align-top p-1.5 h-20 text-[11px]"
                                 style={{
-                                  border: '1px solid #E2F5EF',
-                                  color: dayIdx === 0 ? '#E05555' : dayIdx === 6 ? '#3B82F6' : '#374151',
+                                  border: `1px solid ${KB_PRIMARY_BORDER}`,
+                                  color: dayIdx === 0 ? KB_DANGER : dayIdx === 6 ? '#3B82F6' : '#374151',
                                 }}>
                                 {valid && (
                                   <>
@@ -263,10 +263,10 @@ export default function TransactionsPage() {
           {/* ── 간편조회 / 상세조회 ── */}
           {activeTab !== '달력으로 보기' && (
             <div>
-              <div className="rounded-xl overflow-hidden mb-5" style={{ border: '1px solid #E2F5EF' }}>
+              <div className="rounded-xl overflow-hidden mb-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <table className="w-full text-[13px]">
                   <tbody>
-                    <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                    <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                       <td className={labelCell} style={{ backgroundColor: KB_PRIMARY_BG }}>계좌번호</td>
                       <td className={valueCell}>
                         <select value={selectedAccount}
@@ -280,7 +280,7 @@ export default function TransactionsPage() {
                     </tr>
 
                     {activeTab === '상세조회' && (
-                      <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                      <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                         <td className={labelCell} style={{ backgroundColor: KB_PRIMARY_BG }}>월별조회</td>
                         <td className={valueCell}>
                           <div className="flex items-center gap-2">
@@ -315,7 +315,7 @@ export default function TransactionsPage() {
 
                     {activeTab === '상세조회' && (
                       <>
-                        <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                        <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                           <td className={labelCell} style={{ backgroundColor: KB_PRIMARY_BG }}>조회내용</td>
                           <td className={valueCell}>
                             <div className="flex items-center gap-5">
@@ -331,7 +331,7 @@ export default function TransactionsPage() {
                             </div>
                           </td>
                         </tr>
-                        <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                        <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                           <td className={labelCell} style={{ backgroundColor: KB_PRIMARY_BG }}>조회결과 순서</td>
                           <td className={valueCell}>
                             <div className="flex items-center gap-5">
@@ -347,7 +347,7 @@ export default function TransactionsPage() {
                             </div>
                           </td>
                         </tr>
-                        <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                        <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                           <td className={labelCell} style={{ backgroundColor: KB_PRIMARY_BG }}>메모</td>
                           <td className={valueCell}>
                             <select value={memoFilter} onChange={e => setMemoFilter(e.target.value)}
@@ -396,7 +396,7 @@ export default function TransactionsPage() {
                 <div>
                   {/* 선택 계좌 카드 */}
                   {selectedAcc && (
-                    <div className="rounded-xl p-5 mb-4" style={{ border: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_SURFACE }}>
+                    <div className="rounded-xl p-5 mb-4" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_SURFACE }}>
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
@@ -429,13 +429,13 @@ export default function TransactionsPage() {
                   </div>
 
                   {/* 거래 테이블 */}
-                  <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+                  <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                     <table className="w-full border-collapse text-[12px]">
                       <thead>
                         <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                           {['거래일시', '적요', '보낸분/받는분', '출금액(원)', '입금액(원)', '잔액(원)', '메모'].map(h => (
                             <th key={h} className="px-3 py-2.5 text-center font-semibold text-[12px]"
-                              style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>
+                              style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>
                               {h}
                             </th>
                           ))}
@@ -466,7 +466,7 @@ export default function TransactionsPage() {
                                 <td className="px-3 py-2.5 text-center" style={{ borderBottom: '1px solid #F0F0F0' }}>{tx.transactionAt?.slice(0,16).replace('T',' ')}</td>
                                 <td className="px-3 py-2.5" style={{ borderBottom: '1px solid #F0F0F0' }}>{tx.transactionSummary || tx.transactionType}</td>
                                 <td className="px-3 py-2.5 text-center" style={{ borderBottom: '1px solid #F0F0F0' }}>{tx.counterpartyName ?? ''}</td>
-                                <td className="px-3 py-2.5 text-right font-semibold" style={{ borderBottom: '1px solid #F0F0F0', color: '#E05555' }}>
+                                <td className="px-3 py-2.5 text-right font-semibold" style={{ borderBottom: '1px solid #F0F0F0', color: KB_DANGER }}>
                                   {!isIn ? formatNumber(amt) : ''}
                                 </td>
                                 <td className="px-3 py-2.5 text-right font-semibold" style={{ borderBottom: '1px solid #F0F0F0', color: KB_PRIMARY }}>
@@ -477,7 +477,7 @@ export default function TransactionsPage() {
                               </tr>
                               {isExpanded && (
                                 <tr>
-                                  <td colSpan={7} style={{ backgroundColor: KB_PRIMARY_SURFACE, borderBottom: '1px solid #E2F5EF' }}>
+                                  <td colSpan={7} style={{ backgroundColor: KB_PRIMARY_SURFACE, borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                                     <div className="flex gap-10 px-6 py-4 text-[12px]">
                                       <div className="space-y-1.5">
                                         {[
@@ -487,7 +487,7 @@ export default function TransactionsPage() {
                                         ].map(([k, v]) => (
                                           <div key={k} className="flex gap-3">
                                             <span className="text-kb-text-muted w-20">{k}</span>
-                                            <span className="font-medium" style={{ color: k === '거래구분' ? (isIn ? KB_PRIMARY : '#E05555') : '#374151' }}>{v}</span>
+                                            <span className="font-medium" style={{ color: k === '거래구분' ? (isIn ? KB_PRIMARY : KB_DANGER) : '#374151' }}>{v}</span>
                                           </div>
                                         ))}
                                       </div>

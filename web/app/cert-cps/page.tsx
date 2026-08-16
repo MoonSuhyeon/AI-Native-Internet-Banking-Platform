@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useState } from 'react'
 
@@ -62,13 +62,13 @@ const SECTIONS = [
         <section>
           <h3 className="text-[17px] font-bold mb-2 text-kb-text">1.4 인증서 종류</h3>
           <h4 className="text-[16px] font-bold mb-3 text-kb-text">1.4.1 인증서 이용범위 및 용도</h4>
-          <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid #E2F5EF' }}>
+          <div className="overflow-x-auto rounded-xl" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
-                  <th className="px-4 py-2.5 text-left font-semibold" style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>구분</th>
-                  <th className="px-4 py-2.5 text-left font-semibold" style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>용도</th>
-                  <th className="px-4 py-2.5 text-left font-semibold" style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>유효기간</th>
+                  <th className="px-4 py-2.5 text-left font-semibold" style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>구분</th>
+                  <th className="px-4 py-2.5 text-left font-semibold" style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>용도</th>
+                  <th className="px-4 py-2.5 text-left font-semibold" style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>유효기간</th>
                 </tr>
               </thead>
               <tbody className="text-kb-text-body">
@@ -77,7 +77,7 @@ const SECTIONS = [
                   ['AXful인증서(대면용)', '대면 업무용 서비스(마이데이터통합인증)를 위한 전자서명 업무', '발급 후 3시간'],
                   ['AXful인증서(기업)', '전자서명인증이 필요한 모든 전자거래 업무에 이용', '발급일로부터 3년'],
                 ].map(([name, desc, period], i) => (
-                  <tr key={name} style={{ backgroundColor: i % 2 === 1 ? KB_PRIMARY_SURFACE : 'white', borderTop: '1px solid #E2F5EF' }}>
+                  <tr key={name} style={{ backgroundColor: i % 2 === 1 ? KB_PRIMARY_SURFACE : 'white', borderTop: `1px solid ${KB_PRIMARY_BORDER}` }}>
                     <td className="px-4 py-2.5">{name}</td>
                     <td className="px-4 py-2.5">{desc}</td>
                     <td className="px-4 py-2.5 whitespace-nowrap">{period}</td>
@@ -171,18 +171,18 @@ const SECTIONS = [
         </section>
         <section>
           <h3 className="text-[16px] font-bold mb-2 text-kb-text">4.4 인증서 유효기간</h3>
-          <div className="overflow-x-auto" style={{ border: '1px solid #E2F5EF', borderRadius: 8 }}>
+          <div className="overflow-x-auto" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, borderRadius: 8 }}>
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                   {['인증서 종류', '유효기간'].map(h => (
-                    <th key={h} className="px-4 py-2 text-left font-semibold" style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>{h}</th>
+                    <th key={h} className="px-4 py-2 text-left font-semibold" style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {[['AXful인증서', '2년'], ['AXful인증서(기업)', '3년'], ['금융인증서', '3년']].map(([name, period], i) => (
-                  <tr key={name} style={{ backgroundColor: i % 2 === 1 ? KB_PRIMARY_SURFACE : 'white', borderTop: '1px solid #E2F5EF' }}>
+                  <tr key={name} style={{ backgroundColor: i % 2 === 1 ? KB_PRIMARY_SURFACE : 'white', borderTop: `1px solid ${KB_PRIMARY_BORDER}` }}>
                     <td className="px-4 py-2">{name}</td>
                     <td className="px-4 py-2">{period}</td>
                   </tr>
@@ -310,12 +310,12 @@ const SECTIONS = [
       <div className="space-y-4 text-[14px] text-kb-text-body leading-relaxed">
         <section>
           <h3 className="text-[16px] font-bold mb-3 text-kb-text">A.1 AXful인증서 인증서 프로파일</h3>
-          <div className="overflow-x-auto" style={{ border: '1px solid #E2F5EF', borderRadius: 8 }}>
+          <div className="overflow-x-auto" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, borderRadius: 8 }}>
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                   {['필드', '값'].map(h => (
-                    <th key={h} className="px-4 py-2 text-left font-semibold" style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>{h}</th>
+                    <th key={h} className="px-4 py-2 text-left font-semibold" style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -328,7 +328,7 @@ const SECTIONS = [
                   ['주체 공개키', 'EC P-256'],
                   ['키 용도', 'digitalSignature, nonRepudiation'],
                 ].map(([field, val], i) => (
-                  <tr key={field} style={{ backgroundColor: i % 2 === 1 ? KB_PRIMARY_SURFACE : 'white', borderTop: '1px solid #E2F5EF' }}>
+                  <tr key={field} style={{ backgroundColor: i % 2 === 1 ? KB_PRIMARY_SURFACE : 'white', borderTop: `1px solid ${KB_PRIMARY_BORDER}` }}>
                     <td className="px-4 py-2 font-medium text-kb-text">{field}</td>
                     <td className="px-4 py-2 text-kb-text-muted">{val}</td>
                   </tr>
@@ -344,12 +344,12 @@ const SECTIONS = [
     num: '부록 B', title: '개정이력',
     content: (
       <div className="space-y-4 text-[14px] text-kb-text-body leading-relaxed">
-        <div className="overflow-x-auto" style={{ border: '1px solid #E2F5EF', borderRadius: 8 }}>
+        <div className="overflow-x-auto" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, borderRadius: 8 }}>
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                 {['버전', '개정일', '주요 내용'].map(h => (
-                  <th key={h} className="px-4 py-2 text-left font-semibold" style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>{h}</th>
+                  <th key={h} className="px-4 py-2 text-left font-semibold" style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -361,7 +361,7 @@ const SECTIONS = [
                 ['Ver.1.0.11', '2024.06.30', '전자서명법 시행령 개정에 따른 신원확인 조항 수정'],
                 ['Ver.1.0.10', '2024.01.02', '최초 제정 및 시행'],
               ].map(([ver, date, desc], i) => (
-                <tr key={ver} style={{ backgroundColor: i % 2 === 1 ? KB_PRIMARY_SURFACE : 'white', borderTop: '1px solid #E2F5EF' }}>
+                <tr key={ver} style={{ backgroundColor: i % 2 === 1 ? KB_PRIMARY_SURFACE : 'white', borderTop: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <td className="px-4 py-2 font-medium text-kb-text whitespace-nowrap">{ver}</td>
                   <td className="px-4 py-2 text-kb-text-muted whitespace-nowrap">{date}</td>
                   <td className="px-4 py-2 text-kb-text-muted">{desc}</td>
@@ -400,7 +400,7 @@ export default function CertCpsPage() {
       </div>
 
       {/* 목차 */}
-      <div className="rounded-xl p-5 mb-8 space-y-1.5" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+      <div className="rounded-xl p-5 mb-8 space-y-1.5" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
         <p className="text-[13px] font-bold mb-2" style={{ color: KB_PRIMARY }}>목차</p>
         {TOC.map((item) => (
           <p key={item.num} className="text-[13px] text-kb-text-muted">
@@ -416,7 +416,7 @@ export default function CertCpsPage() {
         {SECTIONS.map((section) => {
           const isOpen = openSections.has(section.num)
           return (
-            <div key={section.num} className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+            <div key={section.num} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <button
                 onClick={() => toggle(section.num)}
                 className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
@@ -431,7 +431,7 @@ export default function CertCpsPage() {
               </button>
 
               {isOpen && (
-                <div className="px-6 py-5 bg-white" style={{ borderTop: '1px solid #E2F5EF' }}>
+                <div className="px-6 py-5 bg-white" style={{ borderTop: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   {section.content ?? (
                     <p className="text-[13px] text-kb-text-muted italic">해당 섹션의 내용은 준비 중입니다.</p>
                   )}
@@ -443,7 +443,7 @@ export default function CertCpsPage() {
       </div>
 
       {/* 부칙 */}
-      <div className="mt-6 rounded-xl px-5 py-4 space-y-1" style={{ border: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_SURFACE }}>
+      <div className="mt-6 rounded-xl px-5 py-4 space-y-1" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_SURFACE }}>
         <p className="text-[14px] font-bold text-kb-text">부칙</p>
         <p className="text-[13px] font-medium" style={{ color: KB_PRIMARY }}>이 준칙은 2026년 02월 24일부터 시행합니다.</p>
       </div>

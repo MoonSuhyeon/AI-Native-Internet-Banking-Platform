@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -140,7 +140,7 @@ export default function MyLoanPage() {
                   },
                 ].map(({ label, value, sub, icon }) => (
                   <div key={label} className="rounded-xl p-4"
-                    style={{ border: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_SURFACE }}>
+                    style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_SURFACE }}>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: '#E8F7F3' }}>
@@ -163,7 +163,7 @@ export default function MyLoanPage() {
                 <p className="text-[13px] text-kb-text-muted">불러오는 중...</p>
               </div>
             )}
-            {error && <p className="text-[13px] py-10 text-center" style={{ color: '#E05555' }}>{error}</p>}
+            {error && <p className="text-[13px] py-10 text-center" style={{ color: KB_DANGER }}>{error}</p>}
 
             {/* 대출 카드 목록 */}
             {!loading && !error && contracts.map(c => {
@@ -179,7 +179,7 @@ export default function MyLoanPage() {
 
                   {/* 카드 헤더 */}
                   <div className="px-6 py-4 flex items-start justify-between"
-                    style={{ borderBottom: '1px solid #E2F5EF', backgroundColor: isActive ? '#FAFFFE' : '#FAFAFA' }}>
+                    style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: isActive ? '#FAFFFE' : '#FAFAFA' }}>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[15px] font-bold text-kb-text">{c.cntrNo}</span>
@@ -241,7 +241,7 @@ export default function MyLoanPage() {
                     {/* 월 납부 예정액 */}
                     {isActive && monthlyPayment > 0 && (
                       <div className="rounded-lg px-4 py-3 mb-4 flex items-center justify-between"
-                        style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #E2F5EF' }}>
+                        style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                         <div className="flex items-center gap-2">
                           <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 flex-shrink-0" stroke="#0D5C47" strokeWidth="1.8">
                             <rect x="3" y="4" width="14" height="13" rx="2"/>
@@ -281,7 +281,7 @@ export default function MyLoanPage() {
             {/* 빈 상태 */}
             {!loading && !error && contracts.length === 0 && (
               <div className="rounded-xl px-6 py-14 text-center"
-                style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+                style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ backgroundColor: '#E8F7F3' }}>
                   <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7" stroke="#0D5C47" strokeWidth="1.5">

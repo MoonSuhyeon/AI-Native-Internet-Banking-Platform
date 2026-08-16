@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import LoanSidebar from '@/components/inquiry/LoanSidebar'
 import AutoBreadcrumb from '@/components/layout/AutoBreadcrumb'
@@ -17,10 +17,10 @@ function RateTable() {
   return (
     <div>
       <p className="text-[13px] text-kb-text-muted mb-4">단위: 연%, 2026.05.25 기준 / 세전 / 우대금리 미포함</p>
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+      <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
         <table className="w-full text-[13px]">
           <thead>
-            <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '2px solid #0D5C47' }}>
+            <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `2px solid ${KB_PRIMARY}` }}>
               <th className="px-4 py-3 text-left font-semibold" style={{ color: KB_PRIMARY }}>상품명</th>
               <th className="px-4 py-3 text-center font-semibold" style={{ color: KB_PRIMARY }}>최저금리</th>
               <th className="px-4 py-3 text-center font-semibold" style={{ color: KB_PRIMARY }}>최고금리</th>
@@ -31,7 +31,7 @@ function RateTable() {
           <tbody>
             {rows.map((r, i) => (
               <tr key={r.product} className="hover:bg-kb-primary-surface transition-colors"
-                style={{ borderBottom: i < rows.length - 1 ? '1px solid #E2F5EF' : 'none' }}>
+                style={{ borderBottom: i < rows.length - 1 ? `1px solid ${KB_PRIMARY_BORDER}` : 'none' }}>
                 <td className="px-4 py-3">{r.product}</td>
                 <td className="px-4 py-3 text-center">연 {r.min}%</td>
                 <td className="px-4 py-3 text-center">연 {r.max}%</td>
@@ -55,10 +55,10 @@ function FeeTable() {
     { fee: '계좌 관리 수수료', desc: '한도형 대출 유지비', amount: '없음' },
   ]
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
       <table className="w-full text-[13px]">
         <thead>
-          <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '2px solid #0D5C47' }}>
+          <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `2px solid ${KB_PRIMARY}` }}>
             <th className="px-4 py-3 text-left font-semibold" style={{ color: KB_PRIMARY }}>수수료 종류</th>
             <th className="px-4 py-3 text-left font-semibold" style={{ color: KB_PRIMARY }}>부과 사유</th>
             <th className="px-4 py-3 text-center font-semibold" style={{ color: KB_PRIMARY }}>금액</th>
@@ -67,7 +67,7 @@ function FeeTable() {
         <tbody>
           {rows.map((r, i) => (
             <tr key={r.fee} className="hover:bg-kb-primary-surface transition-colors"
-              style={{ borderBottom: i < rows.length - 1 ? '1px solid #E2F5EF' : 'none' }}>
+              style={{ borderBottom: i < rows.length - 1 ? `1px solid ${KB_PRIMARY_BORDER}` : 'none' }}>
               <td className="px-4 py-3 font-medium">{r.fee}</td>
               <td className="px-4 py-3 text-kb-text-muted">{r.desc}</td>
               <td className="px-4 py-3 text-center">{r.amount}</td>
@@ -83,7 +83,7 @@ function TextContent({ sections }: { sections: { heading: string; body: string }
   return (
     <div className="space-y-6 max-w-2xl text-[13px] text-kb-text-body leading-relaxed">
       {sections.map(s => (
-        <div key={s.heading} className="rounded-xl p-5" style={{ border: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_SURFACE }}>
+        <div key={s.heading} className="rounded-xl p-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_SURFACE }}>
           <h3 className="font-bold mb-2" style={{ color: KB_PRIMARY }}>{s.heading}</h3>
           <p>{s.body}</p>
         </div>
@@ -102,10 +102,10 @@ function LateFeeTable() {
   return (
     <div>
       <p className="text-[13px] text-kb-text-muted mb-3">연체이율 10% 기준 예시 (원금 기준)</p>
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+      <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
         <table className="w-full text-[13px]">
           <thead>
-            <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '2px solid #0D5C47' }}>
+            <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `2px solid ${KB_PRIMARY}` }}>
               <th className="px-4 py-3 text-center font-semibold" style={{ color: KB_PRIMARY }}>연체기간</th>
               <th className="px-4 py-3 text-center font-semibold" style={{ color: KB_PRIMARY }}>100만원</th>
               <th className="px-4 py-3 text-center font-semibold" style={{ color: KB_PRIMARY }}>1,000만원</th>
@@ -115,7 +115,7 @@ function LateFeeTable() {
           <tbody>
             {rows.map((r, i) => (
               <tr key={r.period} className="hover:bg-kb-primary-surface transition-colors"
-                style={{ borderBottom: i < rows.length - 1 ? '1px solid #E2F5EF' : 'none' }}>
+                style={{ borderBottom: i < rows.length - 1 ? `1px solid ${KB_PRIMARY_BORDER}` : 'none' }}>
                 <td className="px-4 py-3 text-center">{r.period}</td>
                 <td className="px-4 py-3 text-center">{r.amount100}</td>
                 <td className="px-4 py-3 text-center">{r.amount1000}</td>

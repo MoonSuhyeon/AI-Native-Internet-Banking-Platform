@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useState, Suspense } from 'react'
@@ -180,7 +180,7 @@ function TerminatePageInner() {
           {step === 1 && (
             <>
               <div className="rounded-xl px-5 py-4 mb-5 text-[12px] space-y-1.5"
-                style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+                style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <p className="flex gap-1.5 text-kb-text-muted">
                   <span className="flex-shrink-0">·</span>
                   <span>인터넷으로 해지 가능한 예금은 우측 [도움말]을 참조하시기 바랍니다.</span>
@@ -189,7 +189,7 @@ function TerminatePageInner() {
                   <span className="flex-shrink-0">·</span>
                   <span>해지예상조회를 이용하여 해지 시 고객님의 해지계좌번호를 다시 한번 확인하여 선택하기 바랍니다.</span>
                 </p>
-                <p className="flex gap-1.5 font-medium" style={{ color: '#E05555' }}>
+                <p className="flex gap-1.5 font-medium" style={{ color: KB_DANGER }}>
                   <span className="flex-shrink-0">·</span>
                   <span>청약관련예금과 장기주택마련저축은 추가사항이 필요한 상품으로 인터넷뱅킹을 통한 해지가 제한됩니다.</span>
                 </p>
@@ -197,7 +197,7 @@ function TerminatePageInner() {
 
               {/* 총 잔액 요약 */}
               <div className="flex items-center justify-between mb-5 rounded-xl px-6 py-4"
-                style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+                style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <p className="text-[14px] font-bold text-kb-text">
                   총 예금 잔액{' '}
                   <span className="text-[18px]" style={{ color: KB_PRIMARY }}>{formatNumber(totalBalance)}</span>원
@@ -215,11 +215,11 @@ function TerminatePageInner() {
                   { label: '청약',    accounts: subscriptionAccounts,    open: subscriptionOpen,   toggle: () => setSubscriptionOpen(v => !v) },
                 ] as const
               ).map(({ label, accounts, open, toggle }) => (
-                <div key={label} className="rounded-xl overflow-hidden mb-4" style={{ border: '1px solid #E2F5EF' }}>
+                <div key={label} className="rounded-xl overflow-hidden mb-4" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <button
                     onClick={toggle}
                     className="flex items-center justify-between w-full px-5 py-3.5"
-                    style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: open ? '1px solid #E2F5EF' : 'none' }}>
+                    style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: open ? `1px solid ${KB_PRIMARY_BORDER}` : 'none' }}>
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: KB_PRIMARY }} />
                       <span className="text-[14px] font-bold text-kb-text">{label}</span>
@@ -239,7 +239,7 @@ function TerminatePageInner() {
                           <tr style={{ backgroundColor: KB_PRIMARY_SURFACE }}>
                             {['계좌번호', '상품명', '잔액', ''].map((h, i) => (
                               <th key={i} className="px-4 py-2.5 text-[12px] font-semibold text-left"
-                                style={{ borderBottom: '1px solid #E2F5EF', color: KB_PRIMARY }}>{h}</th>
+                                style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -258,14 +258,14 @@ function TerminatePageInner() {
           {step === 2 && selected && (
             <>
               <div className="rounded-xl px-5 py-4 mb-5 text-[12px]"
-                style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+                style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <p className="flex gap-1.5 text-kb-text-muted">
                   <span className="flex-shrink-0">·</span>
                   <span>해지 시 잔액이 선택하신 방법으로 지급됩니다.</span>
                 </p>
               </div>
 
-              <div className="rounded-xl overflow-hidden mb-4" style={{ border: '1px solid #E2F5EF' }}>
+              <div className="rounded-xl overflow-hidden mb-4" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <table className="w-full border-collapse text-[13px]">
                   <tbody>
                     {[
@@ -273,12 +273,12 @@ function TerminatePageInner() {
                       { label: '해지계좌명',   value: selected.name },
                       { label: '해지금액',     value: <span className="font-bold text-[15px]" style={{ color: KB_PRIMARY }}>{formatNumber(selected.balance)}원</span> },
                     ].map(({ label, value }, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #E2F5EF' }}>
+                      <tr key={i} style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                         <td className={`${rowStyle} ${labelStyle}`} style={{ backgroundColor: KB_PRIMARY_BG, width: 160 }}>{label}</td>
                         <td className={rowStyle}>{value}</td>
                       </tr>
                     ))}
-                    <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                    <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                       <td className={`${rowStyle} ${labelStyle}`} style={{ backgroundColor: KB_PRIMARY_BG }}>해지계좌비밀번호</td>
                       <td className={rowStyle}>
                         <div className="flex flex-col gap-2">
@@ -303,7 +303,7 @@ function TerminatePageInner() {
                       </td>
                     </tr>
                     {/* 지급 방법 선택 */}
-                    <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                    <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                       <td className={`${rowStyle} ${labelStyle}`} style={{ backgroundColor: KB_PRIMARY_BG }}>지급 방법</td>
                       <td className={rowStyle}>
                         <div className="flex gap-3">
@@ -328,7 +328,7 @@ function TerminatePageInner() {
                     </tr>
                     {/* 당행: 내 계좌 선택 */}
                     {receiveMethod === 'internal' && (
-                      <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                      <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                         <td className={`${rowStyle} ${labelStyle}`} style={{ backgroundColor: KB_PRIMARY_BG }}>입금계좌</td>
                         <td className={rowStyle}>
                           <select
@@ -347,7 +347,7 @@ function TerminatePageInner() {
                     {/* 타행: 은행 선택 + 계좌번호 입력 */}
                     {receiveMethod === 'external' && (
                       <>
-                        <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                        <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                           <td className={`${rowStyle} ${labelStyle}`} style={{ backgroundColor: KB_PRIMARY_BG }}>은행</td>
                           <td className={rowStyle}>
                             <button
@@ -359,7 +359,7 @@ function TerminatePageInner() {
                             </button>
                           </td>
                         </tr>
-                        <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                        <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                           <td className={`${rowStyle} ${labelStyle}`} style={{ backgroundColor: KB_PRIMARY_BG }}>계좌번호</td>
                           <td className={rowStyle}>
                             <input
@@ -376,7 +376,7 @@ function TerminatePageInner() {
                     )}
                     {/* 현금: 안내 문구 */}
                     {receiveMethod === 'cash' && (
-                      <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                      <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                         <td className={`${rowStyle} ${labelStyle}`} style={{ backgroundColor: KB_PRIMARY_BG }}>안내</td>
                         <td className={`${rowStyle} text-kb-text-muted text-[12px]`}>
                           해지 후 영업점 방문 시 현금으로 수령하실 수 있습니다.
@@ -434,7 +434,7 @@ function TerminatePageInner() {
           {step === 3 && (
             <>
               <div className="rounded-xl p-6 mb-6 flex items-center gap-5"
-                style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #E2F5EF' }}>
+                style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: KB_PRIMARY }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

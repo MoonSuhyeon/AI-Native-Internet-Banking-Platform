@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER } from '@/lib/theme'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -81,7 +81,7 @@ export default function NewsListPage() {
         </div>
 
         {/* 목록 */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: '1px solid #5BC9A820' }}>
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: `1px solid ${KB_MINT}20` }}>
           {filtered.length === 0 ? (
             <p className="text-center text-kb-text-muted py-16 text-[14px]">해당하는 게시물이 없습니다.</p>
           ) : (

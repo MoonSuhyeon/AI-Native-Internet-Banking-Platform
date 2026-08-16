@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { KB_GOLD } from '@/lib/theme'
 
 type Tab = '공동인증서' | '인터넷뱅킹' | '인증서로그인'
 
@@ -97,7 +98,7 @@ export default function FaqPage() {
         <button
           onClick={() => {}}
           className="px-4 py-2 text-[13px] font-bold text-white"
-          style={{ backgroundColor: '#C09B3A' }}
+          style={{ backgroundColor: KB_GOLD }}
         >
           검색
         </button>

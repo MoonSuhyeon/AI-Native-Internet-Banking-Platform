@@ -58,6 +58,10 @@ tasks.named('test') {
         // 프록시를 서비스 직통으로 되돌려도 테스트가 UP-TO-DATE 로 안 돌아, 실제로
         // 그 변이가 통과했다.
         include 'web/app/api/**/route.ts'
+        // 색 두 벌(ThemeTokenSyncTest). 선언하지 않으면 한쪽만 고쳐도 검사가
+        // UP-TO-DATE 로 안 돌아, 어긋난 상태가 통과한다.
+        include 'web/tailwind.config.ts'
+        include 'web/lib/theme.ts'
         exclude '**/build/**'
     }).withPropertyName('dockerfilesAndBuildScripts')
             .withPathSensitivity(PathSensitivity.RELATIVE)

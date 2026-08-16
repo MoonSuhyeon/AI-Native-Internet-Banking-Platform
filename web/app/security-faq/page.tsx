@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState } from 'react'
@@ -130,7 +130,7 @@ export default function SecurityFaqPage() {
                   className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-kb-primary-surface transition-colors">
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: KB_PRIMARY_BG, color: KB_PRIMARY, border: '1px solid #5BC9A820' }}>
+                      style={{ backgroundColor: KB_PRIMARY_BG, color: KB_PRIMARY, border: `1px solid ${KB_MINT}20` }}>
                       {item.category}
                     </span>
                     <span className="text-[14px] font-semibold text-kb-text">{item.q}</span>
@@ -151,7 +151,7 @@ export default function SecurityFaqPage() {
 
         {/* 추가 문의 */}
         <div className="bg-white rounded-2xl px-6 py-5 flex items-center justify-between shadow-sm"
-          style={{ border: '1px solid #5BC9A820' }}>
+          style={{ border: `1px solid ${KB_MINT}20` }}>
           <div>
             <p className="text-[15px] font-bold text-kb-text mb-0.5">해결되지 않으셨나요?</p>
             <p className="text-[13px] text-kb-text-muted">고객센터에 문의하시면 빠르게 도와드리겠습니다.</p>

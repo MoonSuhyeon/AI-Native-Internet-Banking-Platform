@@ -1,4 +1,4 @@
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG } from '@/lib/theme'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -14,7 +14,7 @@ const EVENTS: Record<string, {
       <div className="space-y-6 text-[15px] text-kb-text-body leading-relaxed">
         <p>AXful Bank의 새로운 <strong>AI 포트폴리오 추천 서비스</strong> 출시를 기념하여 특별 금리 우대 이벤트를 진행합니다.</p>
 
-        <div className="rounded-2xl p-6 space-y-4" style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A830' }}>
+        <div className="rounded-2xl p-6 space-y-4" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}30` }}>
           <h3 className="text-[17px] font-bold text-kb-text">이벤트 혜택</h3>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
@@ -72,7 +72,7 @@ const EVENTS: Record<string, {
       <div className="space-y-6 text-[15px] text-kb-text-body leading-relaxed">
         <p>AXful Bank 앱이 완전히 새로워졌습니다! AX 뱅킹 앱 리뉴얼을 기념하여 <strong>AI 챌린지 이벤트</strong>를 진행합니다.</p>
 
-        <div className="rounded-2xl p-6 space-y-4" style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A830' }}>
+        <div className="rounded-2xl p-6 space-y-4" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}30` }}>
           <h3 className="text-[17px] font-bold text-kb-text">AI 챌린지 미션</h3>
           <div className="space-y-3">
             {[
@@ -81,7 +81,7 @@ const EVENTS: Record<string, {
               { mission: 'AI 지출 분석 확인', reward: 'AX 포인트 1,500점', desc: '이번 달 AI 지출 분석 리포트를 확인하세요' },
               { mission: 'AI 대출 한도 조회', reward: 'AX 포인트 1,000점', desc: 'AI 기반 대출 한도 조회 서비스를 이용해보세요' },
             ].map((item, i) => (
-              <div key={i} className="flex items-start gap-3 bg-white rounded-xl p-4" style={{ border: '1px solid #5BC9A820' }}>
+              <div key={i} className="flex items-start gap-3 bg-white rounded-xl p-4" style={{ border: `1px solid ${KB_MINT}20` }}>
                 <span className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0"
                   style={{ backgroundColor: KB_MINT }}>
                   {i + 1}
@@ -135,9 +135,9 @@ export default function EventPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* 헤더 */}
-        <div className="mb-8 pb-6" style={{ borderBottom: '2px solid #5BC9A8' }}>
+        <div className="mb-8 pb-6" style={{ borderBottom: `2px solid ${KB_MINT}` }}>
           <span className="inline-block px-3 py-1 text-[12px] font-bold rounded-full mb-3"
-            style={{ backgroundColor: '#5BC9A820', color: KB_PRIMARY }}>
+            style={{ backgroundColor: `${KB_MINT}20`, color: KB_PRIMARY }}>
             이벤트
           </span>
           <h1 className="text-[24px] font-bold text-kb-text leading-snug mb-3">{event.title}</h1>

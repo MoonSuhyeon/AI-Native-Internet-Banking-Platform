@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import DaonHeroCarousel from '@/components/other-bank/DaonHeroCarousel'
 import DaonProductCarousel from '@/components/other-bank/DaonProductCarousel'
+import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
 
 const QUICK_MENUS = [
   {
@@ -159,7 +160,7 @@ export default function DaonHomePage() {
           <div>
             <h2 className="text-2xl font-bold text-kb-text mb-6">고객센터</h2>
             <div>
-              <p className="text-xl font-bold" style={{ color: '#1B3A6B' }}>1599·0000</p>
+              <p className="text-xl font-bold" style={{ color: KB_GNB_BIZ_ACTIVE }}>1599·0000</p>
               <p className="text-sm text-kb-text-body mt-1 mb-2">평일 08~22시 / 토·요일 09~14시</p>
               <p className="text-base font-bold text-kb-text">개인뱅킹서비스 1599-1111</p>
               <p className="text-sm text-kb-text-muted mt-1 mb-3">평일 09~18시</p>

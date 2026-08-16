@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
@@ -101,7 +101,7 @@ export default function TransferResultPage() {
 
           {/* 완료/실패 배너 */}
           {(!paymentResult || paymentResult.status === 'COMPLETED' || paymentResult.status === 'CLEARING') ? (
-            <div className="rounded-xl p-6 mb-6 flex items-center gap-5" style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #E2F5EF' }}>
+            <div className="rounded-xl p-6 mb-6 flex items-center gap-5" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: KB_PRIMARY }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
@@ -142,13 +142,13 @@ export default function TransferResultPage() {
           {/* 이체결과 테이블 */}
           <div className="mb-6">
             <p className="text-[15px] font-bold text-kb-text mb-3">이체결과</p>
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <table className="w-full border-collapse text-[13px]">
                 <thead>
                   <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                     {['출금계좌번호', '입금계좌번호', '이체금액', '수수료', '받는분', '결과'].map(h => (
                       <th key={h} className="px-4 py-3 text-center font-semibold text-[12px]"
-                        style={{ borderBottom: '2px solid #E2F5EF', color: KB_PRIMARY }}>
+                        style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>
                         {h}
                       </th>
                     ))}
@@ -208,7 +208,7 @@ export default function TransferResultPage() {
           </div>
 
           {/* 안내 */}
-          <div className="rounded-xl px-5 py-4 text-[12px] text-kb-text-muted space-y-1" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl px-5 py-4 text-[12px] text-kb-text-muted space-y-1" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <p>· 인터넷뱅킹 종료 시 반드시 [로그아웃] 버튼을 눌러 종료하시기 바랍니다.</p>
             <p>· 평소 이체금액을 감안하여 이체한도를 조정하실 수 있습니다.{' '}
               <Link href="/banking/transfer-limit" className="underline font-medium" style={{ color: KB_PRIMARY }}>

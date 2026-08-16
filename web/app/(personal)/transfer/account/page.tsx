@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -178,7 +178,7 @@ export default function TransferAccountPage() {
           <h1 className="text-[22px] font-bold text-kb-text mb-5">계좌이체</h1>
 
           {/* 수취인 탭 */}
-          <div className="rounded-xl overflow-hidden mb-5" style={{ border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl overflow-hidden mb-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <div className="flex border-b" style={{ borderColor: KB_PRIMARY_BORDER }}>
               {['최근입금계좌', '자주쓰는계좌', '내계좌', '단축이체'].map(tab => (
                 <button key={tab} onClick={() => setActiveRecipientTab(tab)}
@@ -236,10 +236,10 @@ export default function TransferAccountPage() {
           </div>
 
           {/* 이체 폼 */}
-          <div className="rounded-xl overflow-hidden mb-6" style={{ border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl overflow-hidden mb-6" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <table className="w-full text-[13px]">
               <tbody>
-                <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <td className={labelCell} style={{ backgroundColor: KB_PRIMARY_BG }}>출금계좌번호</td>
                   <td className={valueCell}>
                     {isFromAccountLocked && fromAcc ? (
@@ -257,7 +257,7 @@ export default function TransferAccountPage() {
                     )}
                   </td>
                 </tr>
-                <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <td className={labelCell + " align-top pt-4"} style={{ backgroundColor: KB_PRIMARY_BG }}>입금계좌</td>
                   <td className={valueCell}>
                     {/* 당행 / 타행 토글 */}
@@ -322,7 +322,7 @@ export default function TransferAccountPage() {
                     )}
                   </td>
                 </tr>
-                <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <td className={labelCell + " align-top pt-4"} style={{ backgroundColor: KB_PRIMARY_BG }}>이체금액</td>
                   <td className={valueCell}>
                     <div className="flex gap-1.5 mb-2 flex-wrap">

@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -133,11 +133,11 @@ export default function TransferInquiryPage() {
           </div>
 
           {/* 조회 폼 */}
-          <div className="rounded-xl overflow-hidden mb-5" style={{ border: '1px solid #E2F5EF' }}>
+          <div className="rounded-xl overflow-hidden mb-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <table className="w-full text-[13px]">
               <tbody>
                 {/* 출금계좌번호 */}
-                <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <td className="px-4 py-3 font-semibold text-kb-text w-[140px] whitespace-nowrap" style={{ backgroundColor: KB_PRIMARY_BG }}>출금계좌번호</td>
                   <td className="px-4 py-3">
                     <select
@@ -154,7 +154,7 @@ export default function TransferInquiryPage() {
                 </tr>
 
                 {/* 조회기간 */}
-                <tr style={{ borderBottom: '1px solid #E2F5EF' }}>
+                <tr style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <td className="px-4 py-3 font-semibold text-kb-text whitespace-nowrap" style={{ backgroundColor: KB_PRIMARY_BG }}>조회기간</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 mb-2 flex-wrap">
@@ -240,7 +240,7 @@ export default function TransferInquiryPage() {
                 </tr>
               </tbody>
             </table>
-            <div className="flex justify-center py-4" style={{ borderTop: '1px solid #E2F5EF' }}>
+            <div className="flex justify-center py-4" style={{ borderTop: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <button
                 onClick={() => setSearched(true)}
                 className="px-24 py-2.5 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity"
@@ -254,7 +254,7 @@ export default function TransferInquiryPage() {
           {/* 결과 영역 */}
           {searched && (
             <>
-              <div className="rounded-xl px-4 py-3 mb-2 text-[13px]" style={{ border: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_SURFACE }}>
+              <div className="rounded-xl px-4 py-3 mb-2 text-[13px]" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_SURFACE }}>
                 <span className="text-kb-text-muted mr-1">*</span>
                 <span className="text-kb-text-muted">계좌번호 : </span>
                 <Link href="#" className="underline font-medium" style={{ color: KB_PRIMARY }}>{fromAccount}</Link>
@@ -264,16 +264,16 @@ export default function TransferInquiryPage() {
                 조회기간 : {displayFrom} ~ {displayTo}
               </div>
 
-              <div className="overflow-x-auto mb-1 rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+              <div className="overflow-x-auto mb-1 rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                 <table className="w-full border-collapse text-[13px]">
                   <thead>
-                    <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '2px solid #E2F5EF' }}>
-                      <th className="px-2 py-2 text-center w-8" style={{ borderBottom: '2px solid #0D5C47' }}>
+                    <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `2px solid ${KB_PRIMARY_BORDER}` }}>
+                      <th className="px-2 py-2 text-center w-8" style={{ borderBottom: `2px solid ${KB_PRIMARY}` }}>
                         <input type="checkbox" checked={allChecked} onChange={e => toggleAll(e.target.checked)} className="w-4 h-4" />
                       </th>
                       {['이체일시', '입금은행', '입금계좌번호', '받는분', '이체금액', '출금통장표시내용', '이체유무'].map(h => (
                         <th key={h} className="px-3 py-2 text-center font-semibold text-[12px] whitespace-nowrap"
-                          style={{ borderBottom: '2px solid #0D5C47', color: KB_PRIMARY }}>
+                          style={{ borderBottom: `2px solid ${KB_PRIMARY}`, color: KB_PRIMARY }}>
                           {h}
                         </th>
                       ))}
@@ -287,7 +287,7 @@ export default function TransferInquiryPage() {
                         </td>
                       </tr>
                     ) : displayResults.map(row => (
-                      <tr key={row.id} className="hover:bg-kb-primary-surface transition-colors" style={{ borderBottom: '1px solid #E2F5EF' }}>
+                      <tr key={row.id} className="hover:bg-kb-primary-surface transition-colors" style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                         <td className="px-2 py-3 text-center">
                           <input type="checkbox" checked={checkedRows.has(row.id)} onChange={() => toggleRow(row.id)} className="w-4 h-4" />
                         </td>

@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -58,7 +58,7 @@ export default function SecurityInstallPage() {
         <button
           disabled
           className="col-span-2 py-3 text-[14px] font-bold rounded-lg flex items-center justify-center gap-2 cursor-default"
-          style={{ backgroundColor: KB_PRIMARY_BG, color: KB_PRIMARY, border: '2px solid #5BC9A8' }}>
+          style={{ backgroundColor: KB_PRIMARY_BG, color: KB_PRIMARY, border: `2px solid ${KB_MINT}` }}>
           <IconCheck />
           설치 완료
         </button>
@@ -107,7 +107,7 @@ export default function SecurityInstallPage() {
       <main className="flex-1 max-w-[900px] mx-auto w-full px-6 py-10 space-y-6">
 
         {/* 히어로 */}
-        <div className="flex items-center justify-between bg-white rounded-2xl px-8 py-6 shadow-sm" style={{ border: '1px solid #5BC9A820' }}>
+        <div className="flex items-center justify-between bg-white rounded-2xl px-8 py-6 shadow-sm" style={{ border: `1px solid ${KB_MINT}20` }}>
           <div className="space-y-2">
             <p className="text-[13px] font-semibold" style={{ color: KB_MINT }}>Security Program</p>
             <h1 className="text-[22px] font-bold text-kb-text">
@@ -118,7 +118,7 @@ export default function SecurityInstallPage() {
             </p>
           </div>
           <div className="flex-shrink-0 w-20 h-20 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A820' }}>
+            style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}20` }}>
             <svg viewBox="0 0 24 24" fill="none" className="w-9 h-9" stroke="currentColor" strokeWidth="1.5" style={{ color: KB_PRIMARY }}>
               <path d="M12 2l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V5l7-3z"/>
               <path d="M9 12l2 2 4-4"/>
@@ -127,14 +127,14 @@ export default function SecurityInstallPage() {
         </div>
 
         {/* 프로그램 카드 */}
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #5BC9A820' }}>
+        <div className="bg-white rounded-2xl overflow-hidden shadow-sm" style={{ border: `1px solid ${KB_MINT}20` }}>
           <div className="grid grid-cols-2 divide-x" style={{ borderColor: KB_PRIMARY_BORDER }}>
 
             {/* 공동인증프로그램 */}
             <div className="p-8 space-y-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A820' }}>
+                  style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}20` }}>
                   <IconCert />
                 </div>
                 <h2 className="text-[17px] font-bold text-kb-text">공동인증프로그램</h2>
@@ -172,7 +172,7 @@ export default function SecurityInstallPage() {
             <div className="p-8 space-y-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A820' }}>
+                  style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}20` }}>
                   <IconShield />
                 </div>
                 <h2 className="text-[17px] font-bold text-kb-text">통합 보안프로그램</h2>

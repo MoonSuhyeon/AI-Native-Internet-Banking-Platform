@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_DANGER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -18,7 +18,7 @@ function EmptyState({ message, subMessage, actionHref, actionLabel }: {
   actionLabel?: string
 }) {
   return (
-    <div className="rounded-xl px-6 py-5 flex items-center gap-5" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+    <div className="rounded-xl px-6 py-5 flex items-center gap-5" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
       <div className="flex-shrink-0">
         <svg viewBox="0 0 56 56" fill="none" className="w-12 h-12">
           <rect x="8" y="6" width="32" height="40" rx="2" fill="#E2F5EF" stroke="#5BC9A8" strokeWidth="1.5"/>
@@ -54,7 +54,7 @@ function SectionHeader({ dotColor, label, count, balance, open, onToggle }: {
   onToggle: () => void
 }) {
   return (
-    <div className="flex items-center justify-between mb-3 pb-2" style={{ borderBottom: '2px solid #E2F5EF' }}>
+    <div className="flex items-center justify-between mb-3 pb-2" style={{ borderBottom: `2px solid ${KB_PRIMARY_BORDER}` }}>
       <div className="flex items-center gap-2">
         <span className={`w-2.5 h-2.5 rounded-full inline-block flex-shrink-0 ${dotColor}`} />
         <span className="text-[14px] font-bold text-kb-text">{label}</span>
@@ -159,7 +159,7 @@ export default function AccountsPage() {
   const bal = (n: number) => balanceVisible ? formatNumber(n) : '●●●●●●●'
 
   const accountCard = (account: Account, buttons: React.ReactNode) => (
-    <div key={account.id} className="rounded-xl p-5 mb-3 bg-white shadow-sm" style={{ border: '1px solid #E2F5EF' }}>
+    <div key={account.id} className="rounded-xl p-5 mb-3 bg-white shadow-sm" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -214,7 +214,7 @@ export default function AccountsPage() {
           {/* 조회기준 + 인사 + 잔액 */}
           <p className="text-[12px] text-kb-text-muted mb-4">조회기준일시 : {datetime}</p>
 
-          <div className="flex items-center justify-between mb-6 rounded-xl px-6 py-4" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+          <div className="flex items-center justify-between mb-6 rounded-xl px-6 py-4" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <p className="text-[16px] font-bold text-kb-text">{userName ? `${userName} 고객님` : '고객님'}</p>
             <div className="text-right">
               <div className="flex items-center justify-end gap-2 mb-1">
@@ -267,7 +267,7 @@ export default function AccountsPage() {
                               style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>계좌관리</button>
                             <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                               className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-red-50"
-                              style={{ borderColor: '#E05555', color: '#E05555' }}>
+                              style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
                               해지
                             </Link>
                           </div>
@@ -299,7 +299,7 @@ export default function AccountsPage() {
                             ))}
                             <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                               className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-red-50"
-                              style={{ borderColor: '#E05555', color: '#E05555' }}>
+                              style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
                               해지
                             </Link>
                           </div>
@@ -331,7 +331,7 @@ export default function AccountsPage() {
                             ))}
                             <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                               className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-red-50"
-                              style={{ borderColor: '#E05555', color: '#E05555' }}>
+                              style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
                               해지
                             </Link>
                           </div>
@@ -364,7 +364,7 @@ export default function AccountsPage() {
                         </Link>
                         <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                           className="px-4 py-1.5 text-[12px] font-semibold rounded-lg border transition-colors hover:bg-red-50"
-                          style={{ borderColor: '#E05555', color: '#E05555' }}>
+                          style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
                           해지
                         </Link>
                       </div>
@@ -376,7 +376,7 @@ export default function AccountsPage() {
                           계좌관리
                         </button>
                         {mgmtOpen === account.id && (
-                          <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg z-50 w-[180px] py-1.5 overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+                          <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg z-50 w-[180px] py-1.5 overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                             {MANAGEMENT_ITEMS.map(item => (
                               <button key={item} className="block w-full text-left px-4 py-2 text-[12px] text-kb-text-body hover:bg-kb-primary-bg">
                                 {item}
@@ -408,7 +408,7 @@ export default function AccountsPage() {
                             ))}
                             <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                               className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-red-50"
-                              style={{ borderColor: '#E05555', color: '#E05555' }}>
+                              style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
                               해지
                             </Link>
                           </div>
@@ -451,7 +451,7 @@ export default function AccountsPage() {
                 { label: '예금', open: allDepOpen, toggle: () => setAllDepOpen(v => !v), accounts: depositTabAccounts, cols: ['계좌번호', '계좌명', '신규일', '만기일', '잔액'] },
                 { label: '대출', open: allLoanAllOpen, toggle: () => setAllLoanAllOpen(v => !v), accounts: [] as Account[], cols: ['계좌번호', '계좌명', '만기일', '대출잔액'] },
               ].map(({ label, open, toggle, accounts, cols }) => (
-                <div key={label} className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
+                <div key={label} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <button onClick={toggle}
                     className="w-full flex items-center justify-between px-5 py-3 text-left"
                     style={{ backgroundColor: KB_PRIMARY_BG }}>
@@ -466,7 +466,7 @@ export default function AccountsPage() {
                       <thead>
                         <tr style={{ backgroundColor: KB_PRIMARY_SURFACE }}>
                           {cols.map(col => (
-                            <th key={col} className="px-4 py-2.5 text-[12px] font-semibold text-center" style={{ color: KB_PRIMARY, borderBottom: '1px solid #E2F5EF' }}>{col}</th>
+                            <th key={col} className="px-4 py-2.5 text-[12px] font-semibold text-center" style={{ color: KB_PRIMARY, borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>{col}</th>
                           ))}
                         </tr>
                       </thead>

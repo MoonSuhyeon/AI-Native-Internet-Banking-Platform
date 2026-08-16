@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { KB_BLUE, KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
 
 type DaonLoginTab = '공동금융인증서' | 'daon인증서' | '간편로그인'
 
@@ -57,7 +58,7 @@ export default function DaonLoginPage() {
                     <button
                       onClick={handleLogin}
                       className="w-full py-3.5 text-base font-bold text-white transition-all hover:brightness-110"
-                      style={{ backgroundColor: '#1B3A6B' }}
+                      style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}
                     >
                       공동인증서(구 공인인증서) 로그인
                     </button>
@@ -74,7 +75,7 @@ export default function DaonLoginPage() {
                     <button
                       onClick={handleLogin}
                       className="w-full py-3.5 text-base font-bold text-white transition-all hover:brightness-110"
-                      style={{ backgroundColor: '#1B3A6B' }}
+                      style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}
                     >
                       금융인증서(브라우저인증서) 로그인
                     </button>
@@ -96,7 +97,7 @@ export default function DaonLoginPage() {
                   <button
                     onClick={handleLogin}
                     className="w-full max-w-[360px] py-3.5 text-base font-bold text-white transition-all hover:brightness-110"
-                    style={{ backgroundColor: '#1B3A6B' }}
+                    style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}
                   >
                     다온인증서 로그인
                   </button>
@@ -127,7 +128,7 @@ export default function DaonLoginPage() {
                   <button
                     type="submit"
                     className="w-full max-w-[360px] py-3.5 text-base font-bold text-white transition-all hover:brightness-110"
-                    style={{ backgroundColor: '#1B3A6B' }}
+                    style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}
                   >
                     로그인
                   </button>
@@ -165,10 +166,10 @@ export default function DaonLoginPage() {
 
           {/* 카드 하단 안내 */}
           <div className="mt-4 px-1 space-y-1">
-            <p className="text-sm" style={{ color: '#0066CC' }}>
+            <p className="text-sm" style={{ color: KB_BLUE }}>
               • 인터넷뱅킹 종료 시, 안전한 금융거래를 위하여 반드시 [로그아웃]버튼을 눌러 종료하시기 바랍니다.
             </p>
-            <p className="text-sm" style={{ color: '#0066CC' }}>
+            <p className="text-sm" style={{ color: KB_BLUE }}>
               • 로그인설정 버튼을 통해 자주 쓰는 로그인 방식을 설정해두면 더 간편하게 로그인 하실 수 있습니다.
             </p>
           </div>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -79,7 +79,7 @@ function NewsSection() {
           </div>
 
           {/* 고객센터 */}
-          <div className="rounded-2xl p-6" style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A820' }}>
+          <div className="rounded-2xl p-6" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}20` }}>
             <h2 className="text-[22px] font-bold text-kb-text mb-4">고객센터</h2>
             <p className="text-[30px] font-bold mb-1" style={{ color: KB_PRIMARY }}>1588-0000</p>
             <div className="space-y-1 text-[14px] text-kb-text-muted mb-4">
@@ -87,7 +87,7 @@ function NewsSection() {
               <p>외국인상담 1599-0044</p>
               <p className="text-[13px]">평일 09:00 ~ 18:00 (은행휴무일 제외)</p>
             </div>
-            <div className="border-t pt-3 flex items-center gap-0 flex-wrap" style={{ borderColor: '#5BC9A830' }}>
+            <div className="border-t pt-3 flex items-center gap-0 flex-wrap" style={{ borderColor: `${KB_MINT}30` }}>
               {[
                 { label: '인터넷뱅킹 이용안내', href: '/support/internet-banking-guide' },
                 { label: '보안프로그램 설치', href: '/security-install' },
@@ -190,7 +190,7 @@ export default function HomePage() {
                 </div>
 
                 {/* 계좌 카드 */}
-                <div className="rounded-2xl p-5 relative z-10 shadow-sm" style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A830' }}>
+                <div className="rounded-2xl p-5 relative z-10 shadow-sm" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}30` }}>
                   <div className="flex items-center justify-between mb-3">
                     <Link href="/inquiry/accounts" className="flex items-center gap-1 text-[13px] text-kb-text-body hover:underline">
                       <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" stroke="currentColor" strokeWidth="1.5">
@@ -214,7 +214,7 @@ export default function HomePage() {
                       {formatNumber(Number(mainAccount?.balance ?? 0))}원
                     </p>
                   </div>
-                  <div className="flex gap-2 pt-3 border-t border-dashed" style={{ borderColor: '#5BC9A840' }}>
+                  <div className="flex gap-2 pt-3 border-t border-dashed" style={{ borderColor: `${KB_MINT}40` }}>
                     <Link href="/inquiry/accounts"
                       className="flex-1 py-2.5 text-[15px] font-bold text-center rounded-lg border-2 transition-colors hover:bg-white"
                       style={{ borderColor: KB_PRIMARY, color: KB_PRIMARY }}>
@@ -231,7 +231,7 @@ export default function HomePage() {
               </div>
 
               {/* ===== 우측: 최근이체 내역 ===== */}
-              <div className="w-[420px] flex-shrink-0 rounded-2xl p-6 shadow-sm" style={{ backgroundColor: KB_PRIMARY_BG, border: '1px solid #5BC9A830' }}>
+              <div className="w-[420px] flex-shrink-0 rounded-2xl p-6 shadow-sm" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_MINT}30` }}>
                 <h2 className="text-[18px] font-bold text-kb-text mb-4">최근이체 내역</h2>
                 <div className="space-y-0">
                   {recentTransfers.length === 0 ? (

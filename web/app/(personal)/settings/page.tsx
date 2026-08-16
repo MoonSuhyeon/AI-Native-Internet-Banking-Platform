@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useEffect, useState } from 'react'
 import PinManageModal from '@/components/PinManageModal'
@@ -56,23 +56,23 @@ function SaveBar({ msg, isError, onSave, saving, label = '저장' }: { msg: stri
         className="px-12 py-2.5 text-[14px] font-bold text-white rounded-xl hover:opacity-85 disabled:opacity-50" style={{ backgroundColor: KB_PRIMARY }}>
         {saving ? '저장 중...' : label}
       </button>
-      {msg && <span className="text-[13px] font-medium" style={{ color: isError ? '#E05555' : KB_PRIMARY }}>{msg}</span>}
+      {msg && <span className="text-[13px] font-medium" style={{ color: isError ? KB_DANGER : KB_PRIMARY }}>{msg}</span>}
     </div>
   )
 }
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>{children}</div>
+  return <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>{children}</div>
 }
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-5 py-3 text-[13px] font-semibold" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '1px solid #E2F5EF', color: KB_PRIMARY }}>
+    <div className="px-5 py-3 text-[13px] font-semibold" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `1px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>
       {children}
     </div>
   )
 }
 function FieldRow({ label, children, last }: { label: string; children: React.ReactNode; last?: boolean }) {
   return (
-    <div className="flex items-center" style={{ borderBottom: last ? 'none' : '1px solid #E2F5EF' }}>
+    <div className="flex items-center" style={{ borderBottom: last ? 'none' : `1px solid ${KB_PRIMARY_BORDER}` }}>
       <div className={ROW_LABEL} style={rowLabelStyle}>{label}</div>
       <div className="flex-1 px-5 py-2.5">{children}</div>
     </div>
@@ -106,7 +106,7 @@ function ProfileTab({ data }: { data: SettingsData }) {
   return (
     <div>
       <Card>
-        <div className="flex" style={{ borderBottom: '1px solid #E2F5EF', backgroundColor: KB_PRIMARY_BG }}>
+        <div className="flex" style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}`, backgroundColor: KB_PRIMARY_BG }}>
           <div className="w-[180px] px-5 py-3 text-[13px] font-semibold flex-shrink-0" style={{ color: KB_PRIMARY }}>이름</div>
           <div className="flex-1 px-5 py-3 text-[13px] text-kb-text">{data.name}</div>
         </div>
@@ -144,7 +144,7 @@ function PasswordTab() {
 
   return (
     <div>
-      <div className="rounded-xl px-5 py-4 mb-5 text-[12px] space-y-1.5" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+      <div className="rounded-xl px-5 py-4 mb-5 text-[12px] space-y-1.5" style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
         <p className="text-kb-text-muted">· 영문·숫자·특수문자를 포함하여 8~20자로 설정해 주세요.</p>
         <p className="text-kb-text-muted">· 90일마다 비밀번호 변경을 권장합니다.</p>
       </div>
@@ -189,7 +189,7 @@ function NotificationTab({ data }: { data: SettingsData }) {
       <Card>
         {NOTIF_ITEMS.map((item, i, arr) => (
           <div key={item.key} className="flex items-center justify-between px-5 py-4"
-            style={{ borderBottom: i < arr.length - 1 ? '1px solid #E2F5EF' : 'none' }}>
+            style={{ borderBottom: i < arr.length - 1 ? `1px solid ${KB_PRIMARY_BORDER}` : 'none' }}>
             <div>
               <p className="text-[14px] font-semibold text-kb-text">{item.label}</p>
               <p className="text-[12px] text-kb-text-muted mt-0.5">{item.desc}</p>
@@ -255,7 +255,7 @@ function ScreenTab() {
           {['기본형', '간편형'].map(l => btn(mainPageLayout === l, () => setMainPageLayout(l), l))}
         </div>
       </div>
-      <div className="flex items-center justify-between rounded-xl px-5 py-4" style={{ border: '1px solid #E2F5EF' }}>
+      <div className="flex items-center justify-between rounded-xl px-5 py-4" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
         <div>
           <p className="text-[14px] font-semibold text-kb-text">퀵메뉴 표시</p>
           <p className="text-[12px] text-kb-text-muted mt-0.5">메인 화면 상단 퀵메뉴 바를 표시합니다.</p>
@@ -409,7 +409,7 @@ function AuthMethodTab() {
       {/* 간편비밀번호(PIN) — 모달로 등록/해제 */}
       <button type="button" onClick={() => setShowPinModal(true)}
         className="w-full flex items-center justify-between rounded-xl px-5 py-4 mb-4 hover:bg-kb-primary-bg transition-colors text-left"
-        style={{ border: '1px solid #E2F5EF' }}>
+        style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
         <div>
           <p className="text-[14px] font-bold text-kb-text">간편비밀번호(PIN)</p>
           <p className="text-[12px] text-kb-text-muted mt-0.5">이 기기에 PIN을 등록하면 아이디·비밀번호 없이 간편하게 로그인할 수 있습니다.</p>
@@ -418,7 +418,7 @@ function AuthMethodTab() {
       </button>
       {showPinModal && <PinManageModal onClose={() => setShowPinModal(false)} onChanged={reload} />}
 
-      {msg && <p className="mb-3 text-[13px] font-medium" style={{ color: isError ? '#E05555' : KB_PRIMARY }}>{msg}</p>}
+      {msg && <p className="mb-3 text-[13px] font-medium" style={{ color: isError ? KB_DANGER : KB_PRIMARY }}>{msg}</p>}
       {loading ? (
         <p className="text-[13px] text-kb-text-muted">불러오는 중...</p>
       ) : methods.length === 0 ? (
@@ -426,7 +426,7 @@ function AuthMethodTab() {
       ) : (
       <div className="space-y-3">
         {methods.map(m => (
-          <div key={m.authMethodId} className="rounded-xl px-5 py-4" style={{ border: '1px solid #E2F5EF' }}>
+          <div key={m.authMethodId} className="rounded-xl px-5 py-4" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -435,7 +435,7 @@ function AuthMethodTab() {
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: KB_PRIMARY, color: 'white' }}>주</span>
                   )}
                   <span className="text-[11px] px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: m.authMethodStatusCode === 'ACTIVE' ? KB_PRIMARY_BG : '#FEE2E2', color: m.authMethodStatusCode === 'ACTIVE' ? KB_PRIMARY : '#E05555' }}>
+                    style={{ backgroundColor: m.authMethodStatusCode === 'ACTIVE' ? KB_PRIMARY_BG : '#FEE2E2', color: m.authMethodStatusCode === 'ACTIVE' ? KB_PRIMARY : KB_DANGER }}>
                     {m.authMethodStatusCode === 'ACTIVE' ? '활성' : '비활성'}
                   </span>
                 </div>
@@ -465,7 +465,7 @@ function AuthMethodTab() {
                 )}
                 {m.authMethodStatusCode === 'ACTIVE' && !m.primary && (
                   <button onClick={() => deactivate(m.authMethodId)}
-                    className="border text-[12px] px-3 py-1.5 rounded-lg hover:bg-red-50" style={{ borderColor: '#E05555', color: '#E05555' }}>
+                    className="border text-[12px] px-3 py-1.5 rounded-lg hover:bg-red-50" style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
                     비활성화
                   </button>
                 )}
@@ -606,16 +606,16 @@ function TaxResidencyTab() {
 
   return (
     <div className="space-y-4">
-      {msg && <p className="text-[13px] font-medium" style={{ color: isError ? '#E05555' : KB_PRIMARY }}>{msg}</p>}
+      {msg && <p className="text-[13px] font-medium" style={{ color: isError ? KB_DANGER : KB_PRIMARY }}>{msg}</p>}
 
       {list.length === 0 ? (
-        <div className="rounded-xl px-5 py-8 text-center text-[13px] text-kb-text-muted" style={{ border: '1px solid #E2F5EF' }}>
+        <div className="rounded-xl px-5 py-8 text-center text-[13px] text-kb-text-muted" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
           등록된 납세거주 정보가 없습니다.
         </div>
       ) : (
         <div className="space-y-3">
           {list.map(t => (
-            <div key={t.taxResidencyId} className="rounded-xl px-5 py-4 flex items-start justify-between" style={{ border: '1px solid #E2F5EF' }}>
+            <div key={t.taxResidencyId} className="rounded-xl px-5 py-4 flex items-start justify-between" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <div>
                 <p className="text-[14px] font-bold text-kb-text">{residentLabel(t.residentTypeCode)}</p>
                 {t.taxCountryCode && <p className="text-[12px] text-kb-text-muted mt-0.5">국가: {t.taxCountryCode}</p>}
@@ -623,7 +623,7 @@ function TaxResidencyTab() {
                 <p className="text-[11px] text-kb-text-muted mt-1">확인일: {t.taxResidencyConfirmDate?.slice(0,4)}.{t.taxResidencyConfirmDate?.slice(4,6)}.{t.taxResidencyConfirmDate?.slice(6,8)}</p>
               </div>
               <button onClick={() => handleDelete(t.taxResidencyId)}
-                className="border text-[12px] px-3 py-1.5 rounded-lg hover:bg-red-50 flex-shrink-0" style={{ borderColor: '#E05555', color: '#E05555' }}>
+                className="border text-[12px] px-3 py-1.5 rounded-lg hover:bg-red-50 flex-shrink-0" style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
                 삭제
               </button>
             </div>
@@ -638,7 +638,7 @@ function TaxResidencyTab() {
           + 납세거주 정보 추가
         </button>
       ) : (
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #0D5C47' }}>
+        <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY}` }}>
           <SectionTitle>납세거주 추가</SectionTitle>
           <div className="p-5 space-y-3">
             <div className="flex items-center gap-3">
@@ -716,7 +716,7 @@ export default function SettingsPage() {
       </div>
 
       {/* 컨텐츠 */}
-      {loadError && <p className="text-[13px]" style={{ color: '#E05555' }}>{loadError}</p>}
+      {loadError && <p className="text-[13px]" style={{ color: KB_DANGER }}>{loadError}</p>}
 
       {/* 설정 데이터 필요 없는 탭 */}
       {SETTINGS_FREE_TABS.includes(activeTab) && (

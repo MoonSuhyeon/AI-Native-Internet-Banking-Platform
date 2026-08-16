@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -66,21 +66,21 @@ export default function PrescreeningPage() {
             <h1 className="text-[22px] font-bold text-kb-text mb-5">한도조회(가심사)</h1>
 
             <div className="rounded-xl px-5 py-4 mb-5 text-[12px] space-y-1.5"
-              style={{ backgroundColor: KB_PRIMARY_SURFACE, border: '1px solid #E2F5EF' }}>
+              style={{ backgroundColor: KB_PRIMARY_SURFACE, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <p className="text-kb-text-muted">· 접수 중인 대출 신청에 대해 예상 한도와 금리를 미리 확인합니다.</p>
               <p className="text-kb-text-muted">· 가심사는 신용점수에 영향을 주지 않습니다.</p>
               <p className="font-medium" style={{ color: KB_PRIMARY }}>· 가심사 결과는 참고용이며, 실제 심사 결과와 다를 수 있습니다.</p>
             </div>
 
             {loading && <p className="text-[13px] text-kb-text-muted py-10 text-center">불러오는 중...</p>}
-            {error   && <p className="text-[13px] py-4" style={{ color: '#E05555' }}>{error}</p>}
+            {error   && <p className="text-[13px] py-4" style={{ color: KB_DANGER }}>{error}</p>}
 
             {!loading && (
               <>
                 {/* 신청 목록 */}
-                <div className="rounded-xl overflow-hidden mb-5" style={{ border: '1px solid #E2F5EF' }}>
+                <div className="rounded-xl overflow-hidden mb-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
                   <div className="px-5 py-3 text-[13px] font-semibold"
-                    style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '1px solid #E2F5EF', color: KB_PRIMARY }}>
+                    style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `1px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>
                     가심사 대상 신청 선택
                   </div>
                   {applications.length === 0 ? (
@@ -96,7 +96,7 @@ export default function PrescreeningPage() {
                         <tr style={{ backgroundColor: KB_PRIMARY_SURFACE }}>
                           {['선택', '신청번호', '신청금액', '기간', '신청일'].map(h => (
                             <th key={h} className="px-4 py-2.5 text-center font-semibold text-[12px]"
-                              style={{ borderBottom: '1px solid #E2F5EF', color: KB_PRIMARY }}>{h}</th>
+                              style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}`, color: KB_PRIMARY }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -106,7 +106,7 @@ export default function PrescreeningPage() {
                             className="hover:bg-kb-primary-surface cursor-pointer transition-colors"
                             onClick={() => setSelected(app)}
                             style={{
-                              borderBottom: i < arr.length - 1 ? '1px solid #E2F5EF' : 'none',
+                              borderBottom: i < arr.length - 1 ? `1px solid ${KB_PRIMARY_BORDER}` : 'none',
                               backgroundColor: selected?.applId === app.applId ? KB_PRIMARY_BG : undefined,
                             }}>
                             <td className="px-4 py-3 text-center">
@@ -135,11 +135,11 @@ export default function PrescreeningPage() {
                 )}
 
                 {result && (
-                  <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2F5EF' }}>
-                    <div className="px-5 py-3" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '2px solid #E2F5EF' }}>
+                  <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
+                    <div className="px-5 py-3" style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `2px solid ${KB_PRIMARY_BORDER}` }}>
                       <span className="text-[14px] font-bold" style={{ color: KB_PRIMARY }}>가심사 결과</span>
                     </div>
-                    <div className="grid grid-cols-3" style={{ borderBottom: '1px solid #E2F5EF' }}>
+                    <div className="grid grid-cols-3" style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                       {[
                         { label: '심사 결과',    value: result.prescreeningResultCd === 'PASS' ? '통과' : '거절',
                           color: result.prescreeningResultCd === 'PASS' ? KB_PRIMARY : '#E05555' },
@@ -147,7 +147,7 @@ export default function PrescreeningPage() {
                         { label: '예상 금리',    value: `연 ${((result.estimatedRate ?? 0) / 100).toFixed(2)}%`, color: KB_PRIMARY },
                       ].map(({ label, value, color }, i, arr) => (
                         <div key={label} className="px-6 py-5 text-center"
-                          style={{ borderRight: i < arr.length - 1 ? '1px solid #E2F5EF' : 'none' }}>
+                          style={{ borderRight: i < arr.length - 1 ? `1px solid ${KB_PRIMARY_BORDER}` : 'none' }}>
                           <p className="text-[12px] text-kb-text-muted mb-1">{label}</p>
                           <p className="text-[18px] font-bold" style={{ color }}>{value}</p>
                         </div>

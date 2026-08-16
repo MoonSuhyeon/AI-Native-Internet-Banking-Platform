@@ -1,4 +1,5 @@
 'use client'
+import { KB_MINT } from '@/lib/theme'
 
 type Props = {
   onClose: () => void
@@ -38,7 +39,7 @@ export default function ConsultModal({ onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-3" style={{ backgroundColor: '#5BC9A8' }}>
+        <div className="flex items-center justify-between px-5 py-3" style={{ backgroundColor: KB_MINT }}>
           <span className="text-[16px] font-bold text-kb-text">상담신청</span>
           <span className="text-[13px] font-bold text-kb-text flex items-center gap-1">
             <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="2">

@@ -1,5 +1,5 @@
 ﻿'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG,KB_PRIMARY_BORDER,KB_PRIMARY_DARK,KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_DARK, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -646,7 +646,7 @@ function JointCertModal({ onClose }: { onClose: () => void }) {
             <div className="rounded-xl border overflow-hidden" style={{ borderColor: KB_PRIMARY_BORDER }}>
               <table className="w-full text-[12px]">
                 <thead>
-                  <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: '1px solid #E2F5EF' }}>
+                  <tr style={{ backgroundColor: KB_PRIMARY_BG, borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                     {['구분', '사용자', '만료일', '발급자'].map((h) => (
                       <th key={h} className="py-2.5 px-3 font-semibold text-left text-kb-text-muted">{h}</th>
                     ))}

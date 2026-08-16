@@ -1,5 +1,5 @@
 ﻿'use client'
-import { KB_PRIMARY_DARK } from '@/lib/theme'
+import { KB_BLUE, KB_PRIMARY_DARK } from '@/lib/theme'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -82,10 +82,10 @@ export default function BizLoginPage() {
 
           {/* 카드 하단 안내 */}
           <div className="mt-4 px-1 space-y-1">
-            <p className="text-sm" style={{ color: '#0066CC' }}>
+            <p className="text-sm" style={{ color: KB_BLUE }}>
               • 인터넷뱅킹 종료 시, 안전한 금융거래를 위하여 반드시 [로그아웃]버튼을 눌러 종료하시기 바랍니다.
             </p>
-            <p className="text-sm" style={{ color: '#0066CC' }}>
+            <p className="text-sm" style={{ color: KB_BLUE }}>
               • 로그인설정 버튼을 통해 자주 쓰는 로그인 방식을 설정해두면 더 간편하게 로그인 하실 수 있습니다.
             </p>
           </div>
@@ -442,7 +442,7 @@ function KBCertTab() {
             <p className="text-body text-kb-text">
               확인 코드 <span className="font-bold">{confirmCode}</span>
             </p>
-            <p className="text-body font-medium" style={{ color: '#0066CC' }}>
+            <p className="text-body font-medium" style={{ color: KB_BLUE }}>
               남은 시간 {mm}분 {ss}초
             </p>
             <p className="text-caption text-kb-text-muted leading-relaxed pt-1">
