@@ -1,5 +1,5 @@
 ﻿'use client'
-import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_DARK, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_DARK, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -1274,7 +1274,7 @@ function FinCertModal({ onClose }: { onClose: () => void }) {
                     <div
                       key={i}
                       className="w-9 h-9 rounded flex items-center justify-center border-2"
-                      style={i < pin.length ? { backgroundColor: KB_PRIMARY, borderColor: KB_PRIMARY } : { borderColor: '#D1D5DB', backgroundColor: 'white' }}
+                      style={i < pin.length ? { backgroundColor: KB_PRIMARY, borderColor: KB_PRIMARY } : { borderColor: KB_BORDER, backgroundColor: 'white' }}
                     >
                       {i < pin.length && <span className="text-white text-sm font-bold">●</span>}
                     </div>

@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useState } from 'react'
 import DepositSidebar from '@/components/products/DepositSidebar'
@@ -60,7 +60,7 @@ export default function TerminateResultPage() {
   }
 
   const selectCls = "border rounded-lg px-2 py-1.5 text-[12px] outline-none bg-white"
-  const selectStyle = { borderColor: '#D1D5DB' }
+  const selectStyle = { borderColor: KB_BORDER }
 
   return (
     <div className="max-w-kb-container mx-auto px-6">

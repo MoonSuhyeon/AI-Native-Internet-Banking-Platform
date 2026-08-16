@@ -1,5 +1,5 @@
 'use client'
-import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_LIGHT, KB_TEXT_MUTED } from '@/lib/theme'
 
 import { useEffect, useState } from 'react'
 import PinManageModal from '@/components/PinManageModal'
@@ -36,7 +36,7 @@ type Tab = '프로필 수정' | '비밀번호 변경' | '알림 설정' | '화�
 const TABS: Tab[] = ['프로필 수정', '비밀번호 변경', '알림 설정', '화면 설정', '개인정보', '인증수단', '외국인정보', '납세거주']
 
 const inputCls   = "border rounded-lg px-3 py-2 text-[13px] outline-none focus:ring-1 transition-all"
-const inputStyle = { borderColor: '#D1D5DB' }
+const inputStyle = { borderColor: KB_BORDER }
 
 const ROW_LABEL = "w-[180px] px-5 py-3 text-[13px] font-semibold flex-shrink-0 flex items-center"
 const rowLabelStyle = { backgroundColor: KB_PRIMARY_BG, color: KB_PRIMARY, alignSelf: 'stretch' as const, display: 'flex' as const, alignItems: 'center' as const }
@@ -44,7 +44,7 @@ const rowLabelStyle = { backgroundColor: KB_PRIMARY_BG, color: KB_PRIMARY, align
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
     <button onClick={onChange} className="relative w-10 h-5 rounded-full transition-colors flex-shrink-0"
-      style={{ backgroundColor: checked ? KB_PRIMARY : '#D1D5DB' }}>
+      style={{ backgroundColor: checked ? KB_PRIMARY : KB_BORDER }}>
       <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
     </button>
   )
@@ -229,7 +229,7 @@ function ScreenTab() {
   }
   const btn = (active: boolean, onClick: () => void, children: React.ReactNode) => (
     <button onClick={onClick} className="border rounded-lg px-7 py-2 text-[13px] font-medium transition-colors"
-      style={active ? { backgroundColor: KB_PRIMARY, borderColor: KB_PRIMARY, color: 'white', fontWeight: 700 } : { borderColor: KB_PRIMARY_BORDER, color: '#6B7280' }}>
+      style={active ? { backgroundColor: KB_PRIMARY, borderColor: KB_PRIMARY, color: 'white', fontWeight: 700 } : { borderColor: KB_PRIMARY_BORDER, color: KB_TEXT_MUTED }}>
       {children}
     </button>
   )
@@ -670,7 +670,7 @@ function TaxResidencyTab() {
                 {saving ? '추가 중...' : '추가'}
               </button>
               <button onClick={() => setShowForm(false)}
-                className="border rounded-xl px-6 py-2 text-[13px] hover:bg-gray-50" style={{ borderColor: '#D1D5DB', color: '#6B7280' }}>
+                className="border rounded-xl px-6 py-2 text-[13px] hover:bg-gray-50" style={{ borderColor: KB_BORDER, color: KB_TEXT_MUTED }}>
                 취소
               </button>
             </div>
@@ -709,7 +709,7 @@ export default function SettingsPage() {
         {TABS.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className="px-5 py-3 text-[13px] font-medium border-b-2 -mb-px transition-colors whitespace-nowrap"
-            style={activeTab === tab ? { borderColor: KB_PRIMARY, color: KB_PRIMARY, fontWeight: 700 } : { borderColor: 'transparent', color: '#9CA3AF' }}>
+            style={activeTab === tab ? { borderColor: KB_PRIMARY, color: KB_PRIMARY, fontWeight: 700 } : { borderColor: 'transparent', color: KB_TEXT_LIGHT }}>
             {tab}
           </button>
         ))}

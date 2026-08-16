@@ -1,5 +1,5 @@
 'use client'
-import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_MUTED } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -85,7 +85,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   return (
     <button onClick={() => onChange(!checked)}
       className="relative w-10 h-5 rounded-full transition-colors flex-shrink-0"
-      style={{ backgroundColor: checked ? KB_PRIMARY : '#D1D5DB' }}>
+      style={{ backgroundColor: checked ? KB_PRIMARY : KB_BORDER }}>
       <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
     </button>
   )
@@ -353,7 +353,7 @@ export default function MyKBPage() {
                 <div key={key} className="flex items-center gap-4">
                   <label className="w-32 text-[13px] font-medium text-kb-text flex-shrink-0">{label}</label>
                   <input type="password" value={pwForm[key]} onChange={e => setPwForm(prev => ({ ...prev, [key]: e.target.value }))}
-                    placeholder={placeholder} className={ic} style={{ borderColor: '#D1D5DB' }} />
+                    placeholder={placeholder} className={ic} style={{ borderColor: KB_BORDER }} />
                 </div>
               ))}
             </div>
@@ -365,7 +365,7 @@ export default function MyKBPage() {
                 {pwSaving ? '변경 중...' : '비밀번호 변경'}
               </button>
               <button onClick={() => { setPwForm({ current: '', next: '', confirm: '' }); setPwError(''); setPwMsg('') }}
-                className="border rounded-xl px-8 py-2.5 text-[14px] font-medium hover:bg-kb-primary-bg" style={{ borderColor: '#D1D5DB', color: '#6B7280' }}>
+                className="border rounded-xl px-8 py-2.5 text-[14px] font-medium hover:bg-kb-primary-bg" style={{ borderColor: KB_BORDER, color: KB_TEXT_MUTED }}>
                 취소
               </button>
             </div>

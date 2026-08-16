@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_MUTED } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
@@ -202,7 +202,7 @@ export default function TransferResultPage() {
             </Link>
             <Link href="/"
               className="border rounded-xl px-8 py-2.5 text-[14px] font-medium transition-colors hover:bg-gray-50"
-              style={{ borderColor: '#D1D5DB', color: '#6B7280' }}>
+              style={{ borderColor: KB_BORDER, color: KB_TEXT_MUTED }}>
               홈으로
             </Link>
           </div>

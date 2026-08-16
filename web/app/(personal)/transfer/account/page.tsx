@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_LIGHT } from '@/lib/theme'
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -12,7 +12,7 @@ const AMOUNT_SHORTCUTS = ['100만', '50만', '10만', '5만', '1만', '전액', 
 const labelCell = "px-4 py-3 text-[13px] font-semibold text-kb-text whitespace-nowrap w-[130px]"
 const valueCell = "px-4 py-3"
 const inputCls  = "border rounded-lg px-3 py-1.5 text-[13px] outline-none focus:ring-1 transition-all"
-const inputStyle = { borderColor: '#D1D5DB' }
+const inputStyle = { borderColor: KB_BORDER }
 
 export default function TransferAccountPage() {
   const router = useRouter()
@@ -185,7 +185,7 @@ export default function TransferAccountPage() {
                   className="px-5 py-2.5 text-[13px] font-medium transition-colors"
                   style={activeRecipientTab === tab
                     ? { backgroundColor: 'white', color: KB_PRIMARY, fontWeight: 700, borderBottom: '2px solid #0D5C47' }
-                    : { backgroundColor: KB_PRIMARY_SURFACE, color: '#9CA3AF' }}>
+                    : { backgroundColor: KB_PRIMARY_SURFACE, color: KB_TEXT_LIGHT }}>
                   {tab}
                 </button>
               ))}
@@ -394,7 +394,7 @@ export default function TransferAccountPage() {
                     className="px-5 py-2 text-[13px] border-b-2 -mb-px transition-colors"
                     style={bankTab === t
                       ? { borderColor: KB_PRIMARY, color: KB_PRIMARY, fontWeight: 700 }
-                      : { borderColor: 'transparent', color: '#9CA3AF' }}>
+                      : { borderColor: 'transparent', color: KB_TEXT_LIGHT }}>
                     {t}
                   </button>
                 ))}

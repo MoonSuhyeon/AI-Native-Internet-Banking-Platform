@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_BODY } from '@/lib/theme'
 
 import { useState } from 'react'
 
@@ -424,7 +424,7 @@ export default function CertCpsPage() {
                 onMouseEnter={e => { if (!isOpen) (e.currentTarget as HTMLElement).style.backgroundColor = KB_PRIMARY_SURFACE }}
                 onMouseLeave={e => { if (!isOpen) (e.currentTarget as HTMLElement).style.backgroundColor = 'white' }}
               >
-                <span className="text-[14px] font-bold" style={{ color: isOpen ? KB_PRIMARY : '#374151' }}>
+                <span className="text-[14px] font-bold" style={{ color: isOpen ? KB_PRIMARY : KB_TEXT_BODY }}>
                   {section.num}. {section.title}
                 </span>
                 <span className="text-[11px] text-kb-text-muted">{isOpen ? '▲' : '▼'}</span>

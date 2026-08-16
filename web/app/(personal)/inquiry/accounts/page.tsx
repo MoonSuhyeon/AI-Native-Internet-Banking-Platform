@@ -1,5 +1,5 @@
 'use client'
-import { KB_DANGER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_DANGER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -222,7 +222,7 @@ export default function AccountsPage() {
                 <button
                   onClick={() => setBalanceVisible(v => !v)}
                   className="relative w-10 h-5 rounded-full transition-colors"
-                  style={{ backgroundColor: balanceVisible ? KB_PRIMARY : '#D1D5DB' }}
+                  style={{ backgroundColor: balanceVisible ? KB_PRIMARY : KB_BORDER }}
                 >
                   <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${balanceVisible ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   <span className={`absolute text-[9px] font-bold text-white ${balanceVisible ? 'left-1.5 top-0.5' : 'right-1 top-0.5'}`}>

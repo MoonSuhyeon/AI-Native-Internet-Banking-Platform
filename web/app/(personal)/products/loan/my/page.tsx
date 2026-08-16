@@ -1,5 +1,5 @@
 'use client'
-import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT, KB_TEXT_MUTED } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -196,7 +196,7 @@ export default function MyLoanPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-[11px] text-kb-text-muted mb-0.5">대출금액</p>
-                      <p className="text-[22px] font-bold" style={{ color: isActive ? KB_PRIMARY : '#6B7280' }}>
+                      <p className="text-[22px] font-bold" style={{ color: isActive ? KB_PRIMARY : KB_TEXT_MUTED }}>
                         {fmt(c.contractedAmount)}원
                       </p>
                     </div>
@@ -217,7 +217,7 @@ export default function MyLoanPage() {
                           style={{ backgroundColor: highlight ? KB_PRIMARY_BG : '#F5F6F8' }}>
                           <p className="text-[11px] text-kb-text-muted mb-1">{label}</p>
                           <p className="text-[14px] font-bold"
-                            style={{ color: highlight ? KB_PRIMARY : '#1F2937' }}>
+                            style={{ color: highlight ? KB_PRIMARY : KB_TEXT }}>
                             {value}
                           </p>
                         </div>

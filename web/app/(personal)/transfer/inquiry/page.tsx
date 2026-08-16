@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_LIGHT } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -125,7 +125,7 @@ export default function TransferInquiryPage() {
                 className="px-5 py-2.5 text-[13px] border-b-2 -mb-px transition-colors"
                 style={activeTab === tab
                   ? { borderColor: KB_PRIMARY, color: KB_PRIMARY, fontWeight: 700, backgroundColor: 'white' }
-                  : { borderColor: 'transparent', backgroundColor: KB_PRIMARY_SURFACE, color: '#9CA3AF' }}
+                  : { borderColor: 'transparent', backgroundColor: KB_PRIMARY_SURFACE, color: KB_TEXT_LIGHT }}
               >
                 {tab}
               </button>
@@ -144,7 +144,7 @@ export default function TransferInquiryPage() {
                       value={fromAccount}
                       onChange={e => setFromAccount(e.target.value)}
                       className="border rounded-lg px-3 py-1.5 text-[13px] w-[280px] outline-none"
-                      style={{ borderColor: '#D1D5DB' }}
+                      style={{ borderColor: KB_BORDER }}
                     >
                       {accounts.map(a => (
                         <option key={a.id} value={a.number}>{a.number}</option>
@@ -184,11 +184,11 @@ export default function TransferInquiryPage() {
                           onChange={e => setStartDate(e.target.value)}
                           maxLength={8}
                           className="border rounded-lg px-2 py-1.5 text-[13px] w-28 outline-none"
-                          style={{ borderColor: '#D1D5DB' }}
+                          style={{ borderColor: KB_BORDER }}
                           placeholder="YYYYMMDD"
                         />
                         <button className="border rounded-lg px-2 py-1.5 text-kb-text-muted hover:bg-kb-primary-bg transition-colors"
-                          style={{ borderColor: '#D1D5DB' }}>
+                          style={{ borderColor: KB_BORDER }}>
                           <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="1.5">
                             <rect x="1" y="2" width="14" height="13" rx="1"/><line x1="5" y1="1" x2="5" y2="4"/><line x1="11" y1="1" x2="11" y2="4"/><line x1="1" y1="7" x2="15" y2="7"/>
                           </svg>
@@ -202,11 +202,11 @@ export default function TransferInquiryPage() {
                           onChange={e => setEndDate(e.target.value)}
                           maxLength={8}
                           className="border rounded-lg px-2 py-1.5 text-[13px] w-28 outline-none"
-                          style={{ borderColor: '#D1D5DB' }}
+                          style={{ borderColor: KB_BORDER }}
                           placeholder="YYYYMMDD"
                         />
                         <button className="border rounded-lg px-2 py-1.5 text-kb-text-muted hover:bg-kb-primary-bg transition-colors"
-                          style={{ borderColor: '#D1D5DB' }}>
+                          style={{ borderColor: KB_BORDER }}>
                           <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="1.5">
                             <rect x="1" y="2" width="14" height="13" rx="1"/><line x1="5" y1="1" x2="5" y2="4"/><line x1="11" y1="1" x2="11" y2="4"/><line x1="1" y1="7" x2="15" y2="7"/>
                           </svg>
@@ -233,7 +233,7 @@ export default function TransferInquiryPage() {
                         onChange={e => setCounterAccount(e.target.value)}
                         disabled={!useCounter}
                         className="border rounded-lg px-3 py-1.5 text-[13px] w-44 outline-none"
-                        style={{ borderColor: '#D1D5DB', backgroundColor: useCounter ? 'white' : KB_PRIMARY_SURFACE }}
+                        style={{ borderColor: KB_BORDER, backgroundColor: useCounter ? 'white' : KB_PRIMARY_SURFACE }}
                       />
                     </div>
                   </td>

@@ -1,5 +1,5 @@
 'use client'
-import { KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_DANGER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_BODY, KB_TEXT_LIGHT, KB_TEXT_MUTED } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useEffect, useState, Suspense } from 'react'
@@ -169,7 +169,7 @@ function TerminatePageInner() {
                   className="text-[13px]"
                   style={i + 1 === step
                     ? { color: KB_PRIMARY, fontWeight: 700, borderBottom: '2px solid #0D5C47', paddingBottom: '2px' }
-                    : { color: '#9CA3AF' }}>
+                    : { color: KB_TEXT_LIGHT }}>
                   STEP {i + 1}. {label}
                 </span>
               </div>
@@ -292,7 +292,7 @@ function TerminatePageInner() {
                               maxLength={4}
                               placeholder="4자리 입력"
                               className="border rounded-lg px-3 py-1.5 text-[13px] w-28 outline-none focus:ring-1"
-                              style={{ borderColor: '#D1D5DB' }}
+                              style={{ borderColor: KB_BORDER }}
                             />
                           )}
                           <label className="flex items-center gap-1.5 text-[12px] text-kb-text-muted cursor-pointer w-fit">
@@ -335,7 +335,7 @@ function TerminatePageInner() {
                             value={depositNo}
                             onChange={e => setDepositNo(e.target.value)}
                             className="border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white"
-                            style={{ borderColor: '#D1D5DB' }}>
+                            style={{ borderColor: KB_BORDER }}>
                             <option value="">- 선택 -</option>
                             {allAccounts.filter(a => a.id !== selected.id).map(a => (
                               <option key={a.id} value={a.id}>{a.number} ({a.name}) · {formatNumber(a.balance)}원</option>
@@ -354,7 +354,7 @@ function TerminatePageInner() {
                               type="button"
                               onClick={() => setShowBankModal(true)}
                               className="border rounded-lg px-3 py-1.5 text-[13px] bg-white min-w-[120px] text-left"
-                              style={{ borderColor: '#D1D5DB', color: extBankCode ? '#111' : '#9CA3AF' }}>
+                              style={{ borderColor: KB_BORDER, color: extBankCode ? '#111' : KB_TEXT_LIGHT }}>
                               {extBankCode ? MOCK_BANKS.find(b => b.code === extBankCode)?.name ?? '은행 선택' : '은행 선택'}
                             </button>
                           </td>
@@ -368,7 +368,7 @@ function TerminatePageInner() {
                               onChange={e => setExtAccountNo(e.target.value.replace(/\D/g, ''))}
                               placeholder="계좌번호 입력 (숫자만)"
                               className="border rounded-lg px-3 py-1.5 text-[13px] w-48 outline-none focus:ring-1"
-                              style={{ borderColor: '#D1D5DB' }}
+                              style={{ borderColor: KB_BORDER }}
                             />
                           </td>
                         </tr>
@@ -401,8 +401,8 @@ function TerminatePageInner() {
                           onClick={() => { setExtBankCode(bank.code); setShowBankModal(false) }}
                           className="border rounded-lg py-2 text-[12px] font-medium transition-colors hover:bg-kb-primary-bg"
                           style={{
-                            borderColor: extBankCode === bank.code ? KB_PRIMARY : '#E5E7EB',
-                            color: extBankCode === bank.code ? KB_PRIMARY : '#374151',
+                            borderColor: extBankCode === bank.code ? KB_PRIMARY : KB_BORDER,
+                            color: extBankCode === bank.code ? KB_PRIMARY : KB_TEXT_BODY,
                             backgroundColor: extBankCode === bank.code ? KB_PRIMARY_BG : 'white',
                           }}>
                           {bank.name}
@@ -417,7 +417,7 @@ function TerminatePageInner() {
                 <button
                   onClick={() => setStep(1)}
                   className="border rounded-xl px-12 py-3 text-[14px] font-medium transition-colors hover:bg-kb-primary-bg"
-                  style={{ borderColor: '#D1D5DB', color: '#6B7280' }}>
+                  style={{ borderColor: KB_BORDER, color: KB_TEXT_MUTED }}>
                   이전
                 </button>
                 <button

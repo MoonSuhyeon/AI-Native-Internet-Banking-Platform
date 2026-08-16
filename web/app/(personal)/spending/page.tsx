@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_LIGHT, KB_TEXT_MUTED } from '@/lib/theme'
 
 interface Anomaly {
   category: string
@@ -77,7 +77,7 @@ function CategoryBadge({ type }: { type: string }) {
   }
   return (
     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full text-white"
-      style={{ backgroundColor: colors[type] ?? '#9CA3AF' }}>
+      style={{ backgroundColor: colors[type] ?? KB_TEXT_LIGHT }}>
       {type}
     </span>
   )
@@ -205,7 +205,7 @@ export default function SpendingPage() {
             className="px-5 py-2 text-[13px] font-semibold rounded-full border transition-colors"
             style={mode === m
               ? { backgroundColor: KB_PRIMARY, color: '#fff', borderColor: KB_PRIMARY }
-              : { backgroundColor: '#fff', color: '#6B7280', borderColor: '#D1D5DB' }}>
+              : { backgroundColor: '#fff', color: KB_TEXT_MUTED, borderColor: KB_BORDER }}>
             {m === 'data' ? '거래 데이터 분석' : '소비 고민 입력'}
           </button>
         ))}
@@ -223,7 +223,7 @@ export default function SpendingPage() {
               onKeyDown={e => e.key === 'Enter' && !loading && runAnalysis()}
               placeholder="예: 요즘 배달앱만 계속 써, 카페 지출이 너무 많아"
               className="flex-1 border rounded-lg px-3 py-2 text-[13px] outline-none focus:ring-1"
-              style={{ borderColor: '#D1D5DB' }}
+              style={{ borderColor: KB_BORDER }}
             />
             <button onClick={() => runAnalysis()} disabled={loading || !userMessage.trim()}
               className="px-5 py-2 text-[13px] font-bold text-white rounded-lg disabled:opacity-50"
@@ -477,7 +477,7 @@ export default function SpendingPage() {
             </button>
             <button onClick={() => { setResult(null); setUserMessage('') }}
               className="px-8 py-3 text-[14px] font-medium border rounded-xl hover:bg-gray-50"
-              style={{ borderColor: '#D1D5DB', color: '#6B7280' }}>
+              style={{ borderColor: KB_BORDER, color: KB_TEXT_MUTED }}>
               초기화
             </button>
           </div>

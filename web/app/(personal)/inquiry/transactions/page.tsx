@@ -1,5 +1,5 @@
 'use client'
-import { KB_DANGER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_DANGER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_BODY, KB_TEXT_LIGHT, KB_TEXT_MUTED } from '@/lib/theme'
 
 import Link from 'next/link'
 import { Fragment, useState, useEffect } from 'react'
@@ -123,7 +123,7 @@ export default function TransactionsPage() {
   }
 
   const inputCls = "border rounded-lg px-3 py-1.5 text-[13px] outline-none focus:ring-1 transition-all"
-  const inputStyle = { borderColor: '#D1D5DB' }
+  const inputStyle = { borderColor: KB_BORDER }
 
   const periodBtn = (p: string) => (
     <button key={p} onClick={() => setPeriod(p)}
@@ -151,7 +151,7 @@ export default function TransactionsPage() {
                 className="px-6 py-2.5 text-[14px] font-medium border-b-2 -mb-px transition-colors"
                 style={activeTab === tab
                   ? { borderColor: KB_PRIMARY, color: KB_PRIMARY, fontWeight: 700 }
-                  : { borderColor: 'transparent', color: '#9CA3AF' }}>
+                  : { borderColor: 'transparent', color: KB_TEXT_LIGHT }}>
                 {tab}
               </button>
             ))}
@@ -214,7 +214,7 @@ export default function TransactionsPage() {
                             style={{
                               backgroundColor: KB_PRIMARY_BG,
                               border: `1px solid ${KB_PRIMARY_BORDER}`,
-                              color: i === 0 ? KB_DANGER : i === 6 ? '#3B82F6' : '#374151',
+                              color: i === 0 ? KB_DANGER : i === 6 ? '#3B82F6' : KB_TEXT_BODY,
                             }}>
                             {d}
                           </th>
@@ -232,7 +232,7 @@ export default function TransactionsPage() {
                               <td key={dayIdx} className="align-top p-1.5 h-20 text-[11px]"
                                 style={{
                                   border: `1px solid ${KB_PRIMARY_BORDER}`,
-                                  color: dayIdx === 0 ? KB_DANGER : dayIdx === 6 ? '#3B82F6' : '#374151',
+                                  color: dayIdx === 0 ? KB_DANGER : dayIdx === 6 ? '#3B82F6' : KB_TEXT_BODY,
                                 }}>
                                 {valid && (
                                   <>
@@ -472,8 +472,8 @@ export default function TransactionsPage() {
                                 <td className="px-3 py-2.5 text-right font-semibold" style={{ borderBottom: '1px solid #F0F0F0', color: KB_PRIMARY }}>
                                   {isIn ? formatNumber(amt) : ''}
                                 </td>
-                                <td className="px-3 py-2.5 text-right" style={{ borderBottom: '1px solid #F0F0F0', color: '#6B7280' }}>-</td>
-                                <td className="px-3 py-2.5 text-center" style={{ borderBottom: '1px solid #F0F0F0', color: '#6B7280' }}>{tx.transactionMemo ?? ''}</td>
+                                <td className="px-3 py-2.5 text-right" style={{ borderBottom: '1px solid #F0F0F0', color: KB_TEXT_MUTED }}>-</td>
+                                <td className="px-3 py-2.5 text-center" style={{ borderBottom: '1px solid #F0F0F0', color: KB_TEXT_MUTED }}>{tx.transactionMemo ?? ''}</td>
                               </tr>
                               {isExpanded && (
                                 <tr>
@@ -487,7 +487,7 @@ export default function TransactionsPage() {
                                         ].map(([k, v]) => (
                                           <div key={k} className="flex gap-3">
                                             <span className="text-kb-text-muted w-20">{k}</span>
-                                            <span className="font-medium" style={{ color: k === '거래구분' ? (isIn ? KB_PRIMARY : KB_DANGER) : '#374151' }}>{v}</span>
+                                            <span className="font-medium" style={{ color: k === '거래구분' ? (isIn ? KB_PRIMARY : KB_DANGER) : KB_TEXT_BODY }}>{v}</span>
                                           </div>
                                         ))}
                                       </div>

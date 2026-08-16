@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY } from '@/lib/theme'
+import { KB_BORDER, KB_PRIMARY } from '@/lib/theme'
 
 import { useState } from 'react'
 
@@ -48,7 +48,7 @@ export default function MouseNumKeypad({ value, onChange, maxLength = 7, dotCoun
             style={
               i < value.length
                 ? { backgroundColor: KB_PRIMARY, borderColor: KB_PRIMARY }
-                : { borderColor: '#D1D5DB', backgroundColor: 'white' }
+                : { borderColor: KB_BORDER, backgroundColor: 'white' }
             }
           >
             {i < value.length && <span className="text-white text-[10px] font-bold">●</span>}

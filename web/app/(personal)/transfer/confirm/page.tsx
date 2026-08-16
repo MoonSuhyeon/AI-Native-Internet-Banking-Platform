@@ -1,5 +1,5 @@
 'use client'
-import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_BODY, KB_TEXT_LIGHT, KB_TEXT_MUTED } from '@/lib/theme'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -290,7 +290,7 @@ export default function TransferConfirmPage() {
             <button
               onClick={() => router.push('/transfer/account')}
               className="border rounded-xl px-16 py-3 text-[15px] font-medium transition-colors hover:bg-kb-primary-bg"
-              style={{ borderColor: '#D1D5DB', color: '#6B7280' }}>
+              style={{ borderColor: KB_BORDER, color: KB_TEXT_MUTED }}>
               취소
             </button>
           </div>
@@ -355,7 +355,7 @@ export default function TransferConfirmPage() {
                           value={selectedCert}
                           onChange={e => setSelectedCert(e.target.value)}
                           className="w-full border rounded-lg px-3 py-2 text-[13px]"
-                          style={{ borderColor: '#D1D5DB' }}>
+                          style={{ borderColor: KB_BORDER }}>
                           {certs.map(c => (
                             <option key={c.serialNumber} value={c.serialNumber}>
                               {(c.certTypeName ?? '인증서') + ' — ' + c.serialNumber}
@@ -412,7 +412,7 @@ export default function TransferConfirmPage() {
                           className="w-9 h-9 rounded-lg border-2 flex items-center justify-center transition-colors"
                           style={i < pin.length
                             ? { backgroundColor: KB_PRIMARY, borderColor: KB_PRIMARY }
-                            : { borderColor: '#D1D5DB', backgroundColor: 'white' }}>
+                            : { borderColor: KB_BORDER, backgroundColor: 'white' }}>
                           {i < pin.length && <span className="text-white text-sm font-bold">●</span>}
                         </div>
                       ))}
@@ -422,7 +422,7 @@ export default function TransferConfirmPage() {
                         row.map((key, ci) => (
                           <button key={`${ri}-${ci}`} onClick={() => handlePinKey(key)}
                             className="h-12 text-[18px] font-medium transition-colors hover:bg-kb-primary-bg rounded-lg"
-                            style={{ color: typeof key === 'string' ? '#9CA3AF' : '#374151' }}>
+                            style={{ color: typeof key === 'string' ? KB_TEXT_LIGHT : KB_TEXT_BODY }}>
                             {key}
                           </button>
                         ))

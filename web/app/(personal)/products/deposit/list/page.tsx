@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_LIGHT } from '@/lib/theme'
 
 import Link from 'next/link'
 import { useState, useEffect, Suspense } from 'react'
@@ -369,7 +369,7 @@ function DepositListPageInner() {
                 className="px-8 py-3 text-[14px] font-medium transition-colors border-b-2 -mb-px"
                 style={tab === t
                   ? { borderColor: KB_PRIMARY, color: KB_PRIMARY, fontWeight: 700, backgroundColor: 'white' }
-                  : { borderColor: 'transparent', color: '#9CA3AF', backgroundColor: KB_PRIMARY_SURFACE }}
+                  : { borderColor: 'transparent', color: KB_TEXT_LIGHT, backgroundColor: KB_PRIMARY_SURFACE }}
               >
                 {t}
               </button>
@@ -385,7 +385,7 @@ function DepositListPageInner() {
                 value={searchName}
                 onChange={e => setSearchName(e.target.value)}
                 className="border rounded-lg px-3 py-1.5 text-[13px] w-64 outline-none bg-white"
-                style={{ borderColor: '#D1D5DB' }}
+                style={{ borderColor: KB_BORDER }}
               />
 
               {showProductTypeFilter && (
