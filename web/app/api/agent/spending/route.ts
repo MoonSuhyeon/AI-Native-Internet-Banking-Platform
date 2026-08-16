@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// 게이트웨이. 예전 기본값 8086 은 아무도 듣지 않는 포트였다 — goal-agent 는
+// compose 에 없고 호스트(:8000)에서 돌기 때문이다. 지출 분석이 조용히 실패하고 있었다.
 const AI_API_URL =
-  process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8086'
+  process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8088'
 
 /** Authorization: Bearer 토큰에서 customer_id를 서버사이드로 추출.
  *  토큰 포맷:
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
 
-    const upstream = await fetch(`${AI_API_URL}/agent/spending/chat`, {
+    const upstream = await fetch(`${AI_API_URL}/api/v1/agent/spending/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       // customer_id는 서버에서 토큰으로 확정 — 클라이언트 값 무시

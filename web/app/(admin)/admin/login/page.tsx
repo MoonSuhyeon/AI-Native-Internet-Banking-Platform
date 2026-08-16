@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { AdminUser } from '@/lib/admin-mock-data'
 import { branchLabel } from '@/lib/admin-auth'
 import type { DemoAccount } from '@/lib/admin-demo-accounts'
-import { api } from '@/lib/api'
 import { agentLogin, type AgentLoginResponse } from '@/lib/consultation-api'
 
 // 데모 모드: 로컬/개발 빌드에선 기본 노출, 운영 빌드에선 NEXT_PUBLIC_DEMO_MODE=true 일 때만.
@@ -13,16 +12,6 @@ import { agentLogin, type AgentLoginResponse } from '@/lib/consultation-api'
 const DEMO_MODE =
   process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || process.env.NODE_ENV !== 'production'
 const DEMO_PASSWORD = 'Employee1234!'
-
-/** accessToken(JWT) payload 에서 roles(BankRole)·branch 추출. ASCII 라 atob 로 충분. */
-function decodePayload(token: string): { roles: string[]; branch?: string } {
-  try {
-    const p = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-    return { roles: Array.isArray(p.roles) ? p.roles : [], branch: p.branch }
-  } catch {
-    return { roles: [] }
-  }
-}
 
 /**
  * 로그인 후 화면용 AdminUser 구성. 역할은 admin_roles(BankRole[])로 따로 저장하므로

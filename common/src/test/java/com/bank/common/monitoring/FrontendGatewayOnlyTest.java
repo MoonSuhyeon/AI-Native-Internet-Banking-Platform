@@ -59,9 +59,17 @@ class FrontendGatewayOnlyTest {
     private static final Pattern DIRECT_SERVICE_URL = Pattern.compile(
             "NEXT_PUBLIC_(?!API_URL|GRAFANA_URL|DEMO_MODE)[A-Z_]*API_URL");
 
-    /** 서비스 포트를 직접 적은 흔적. 환경변수를 없애도 상수로 남을 수 있다. */
+    /**
+     * 서비스 포트를 직접 적은 흔적. 환경변수를 없애도 상수로 남을 수 있다.
+     *
+     * <p>8080 이 빠져 있었다. prod 에서 게이트웨이가 쓰는 번호라 넣지 않았던 것으로
+     * 보이는데, <b>로컬에서는 payment-service-a 가 물고 있어</b> 게이트웨이는 8088 이다.
+     * 그 사이로 {@code lib/api.ts} 의 기본값 8080 이 통과했고, 계좌·거래·대출상품
+     * 조회가 게이트웨이를 건너뛰고 엉뚱한 서비스를 부르고 있었다 — 브라우저를 띄워
+     * 확인하기 전까지 아무 검사도 이것을 말해 주지 않았다.
+     */
     private static final Pattern HARDCODED_SERVICE_PORT =
-            Pattern.compile("localhost:(8081|8082|8083|8084|8086|8087|8089|8090|8091)");
+            Pattern.compile("localhost:(8080|8081|8082|8083|8084|8086|8087|8089|8090|8091)");
 
     @Test
     @DisplayName("프론트 클라이언트가 서비스 직통 주소를 쓰지 않는다")
@@ -129,12 +137,11 @@ class FrontendGatewayOnlyTest {
      *
      * <p>예외를 지우지 않고 적어 두는 이유는, 이유 없이 남아 있는 것과 이유가 있어
      * 남아 있는 것을 구별하기 위해서다. 게이트웨이에 경로가 생기면 여기서 지운다.
+     *
+     * <p>지금은 비어 있다. {@code agent/spending} 이 여기 있었으나 goal-agent
+     * 라우트({@code /api/v1/agent/**})가 생겨 지웠다.
      */
-    private static final Map<String, String> NO_GATEWAY_ROUTE_YET = Map.of(
-            "agent/spending",
-            "goal-agent 는 compose 에 없고 호스트(:8000)에서 돈다. 게이트웨이 라우트도 "
-                    + "아직 없다. 지금 기본값 8086 은 아무도 듣지 않는 죽은 포트다 — "
-                    + "OPEN_ITEMS 참조");
+    private static final Map<String, String> NO_GATEWAY_ROUTE_YET = Map.of();
 
     @Test
     @DisplayName("서버측 프록시가 호출자의 자격증명을 버리지 않는다")

@@ -68,9 +68,9 @@ export default function LoanListPage({ loanTypeCd, pageTitle, activeHref }: Prop
     <main className="pb-16">
       <div className="max-w-kb-container mx-auto px-6 pt-6">
         <nav className="text-[12px] text-kb-text-muted mb-4 flex items-center gap-1">
-          <Link href="/personal" className="hover:underline">개인뱅킹</Link>
+          <Link href="/" className="hover:underline">개인뱅킹</Link>
           <span>›</span>
-          <Link href="/products/deposit" className="hover:underline">금융상품</Link>
+          <Link href="/products/deposit/list" className="hover:underline">금융상품</Link>
           <span>›</span>
           <Link href="/products/loan" className="hover:underline">대출</Link>
           <span>›</span>

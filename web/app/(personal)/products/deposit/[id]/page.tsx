@@ -698,7 +698,7 @@ export default function DepositDetailPage() {
                   className="bg-kb-primary px-10 py-3 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity">
                   온라인가입
                 </Link>
-                <Link href="/products/deposit"
+                <Link href="/products/deposit/list"
                   className="border border-kb-border rounded-xl px-10 py-3 text-[14px] text-kb-text-body hover:bg-kb-beige-light transition-colors">
                   목록
                 </Link>
@@ -737,7 +737,7 @@ export default function DepositDetailPage() {
                   className="bg-kb-primary px-10 py-3 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity">
                   온라인가입
                 </Link>
-                <Link href="/products/deposit"
+                <Link href="/products/deposit/list"
                   className="border border-kb-border rounded-xl px-10 py-3 text-[14px] text-kb-text-body hover:bg-kb-beige-light transition-colors">
                   목록
                 </Link>
@@ -957,7 +957,7 @@ export default function DepositDetailPage() {
                   className="bg-kb-primary px-10 py-3 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity">
                   온라인가입
                 </Link>
-                <Link href="/products/deposit"
+                <Link href="/products/deposit/list"
                   className="border border-kb-border rounded-xl px-10 py-3 text-[14px] text-kb-text-body hover:bg-kb-beige-light transition-colors">
                   목록
                 </Link>

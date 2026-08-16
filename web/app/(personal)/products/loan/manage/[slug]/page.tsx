@@ -8,7 +8,7 @@ import AutoBreadcrumb from '@/components/layout/AutoBreadcrumb'
 import {
   loanContractApi, repaymentApi, rateApi, closureApi, loanMiscApi, guaranteeInsuranceApi,
   getCustomerId, bpsToRate, formatAmount,
-  type LoanContract, type RepaymentSchedule, type Notification,
+  type LoanContract, type RepaymentSchedule,
 } from '@/lib/loan-api'
 
 // ─── 계약 선택 훅 ─────────────────────────────────────────────

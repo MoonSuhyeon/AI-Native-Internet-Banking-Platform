@@ -213,7 +213,7 @@ export default function BizHeader() {
           <nav className="flex items-center ml-auto">
             {['개인', '기업'].map((item, i) => (
               <span key={item} className="flex items-center">
-                <Link href={item === '개인' ? '/' : '/biz'}
+                <Link href={item === '개인' ? '/' : '/biz/login'}
                   className={`text-[15px] px-2 hover:text-kb-text transition-colors
                     ${item === '기업' ? 'text-kb-text font-semibold' : 'text-kb-text-muted'}`}>
                   {item}

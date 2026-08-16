@@ -195,6 +195,27 @@ spring:
             # 게이트웨이를 거쳤다는 증거. 사이드카는 이 값이 맞을 때만 신원 헤더를 믿는다.
             - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:not-configured}
 
+        # 목표·지출 에이전트 (JWT 필요)
+        #
+        # 프론트의 BFF 프록시가 NEXT_PUBLIC_AI_API_URL 기본값 8086 으로 이 에이전트를
+        # 부르고 있었는데, 그 포트는 아무도 듣지 않는다 — goal-agent 는 compose 에 없고
+        # 호스트에서 돈다. 지출 분석 화면이 조용히 실패하고 있었다.
+        #
+        # 게이트웨이 경로를 만들어 그 우회로를 없앤다. 고객 지출 내역을 다루므로
+        # 신원이 검증된 요청만 닿아야 한다.
+        #
+        # ⚠ goal-agent 가 호스트에서 도는 것 자체가 배치가 아니라 개발 편의다.
+        #   컨테이너로 올리고 망을 나누는 것이 정상화이며, 그때 uri 만 바뀐다.
+        #   (docs/decisions/security-zone-topology.md 의 "호스트 연동" 항목)
+        - id: goal-agent
+          uri: http://${GOAL_AGENT_HOST:host.docker.internal}:${GOAL_AGENT_PORT:8000}
+          predicates:
+            - Path=/api/v1/agent/**
+          filters:
+            # 에이전트는 /agent/spending/chat 로 받는다.
+            #   /api/v1/agent/spending/chat → /agent/spending/chat
+            - RewritePath=/api/v1/agent/(?<segment>.*), /agent/$\{segment}
+
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-please-change-in-production-min-32-chars-long}
   access-token-validity: 600000    # 10분 (밀리초)

@@ -88,7 +88,7 @@ export default function SecurityInstallPage() {
           <nav className="flex items-center gap-1 text-[14px]">
             {[
               { label: '개인', href: '/' },
-              { label: '기업', href: '/biz' },
+              { label: '기업', href: '/biz/login' },
               { label: '자산관리', href: '#' },
               { label: '부동산', href: '#' },
               { label: '퇴직연금', href: '#' },

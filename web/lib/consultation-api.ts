@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { executeDepositTransfer } from '@/lib/deposit-api'
 
 export type ChatbotButton = {
   id: number

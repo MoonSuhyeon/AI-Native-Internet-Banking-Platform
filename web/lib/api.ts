@@ -1,7 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+  // 게이트웨이. 예전 기본값 8080 은 로컬에서 payment-service-a 가 물고 있어,
+  // 이 클라이언트를 쓰는 화면(계좌·거래·대출상품 조회)이 게이트웨이를 건너뛰고
+  // 엉뚱한 서비스를 불렀다 — 브라우저 콘솔에 404 로 찍히던 것이 이것이다.
+  // 같은 변수를 lib/advisory-api.ts·ai-api.ts 는 이미 8088 로 쓰고 있었다.
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8088",
   headers: { "Content-Type": "application/json" },
 });
 
