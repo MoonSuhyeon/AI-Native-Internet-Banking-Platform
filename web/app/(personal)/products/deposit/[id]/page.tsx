@@ -558,24 +558,8 @@ export default function DepositDetailPage() {
 
           {/* SNS 공유 */}
           <div className="flex justify-end items-center gap-1.5 mb-4 py-2">
-            {[
-              { label: 'f', bg: '#1877F2', color: 'white' },
-              { label: '𝕏', bg: '#1DA1F2', color: 'white' },
-              { label: 'N', bg: '#03C75A', color: 'white' },
-              { label: 'K', bg: '#F7E600', color: '#3C1E1E' },
-            ].map(sns => (
-              <button key={sns.label}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold hover:opacity-80"
-                style={{ backgroundColor: sns.bg, color: sns.color }}>
-                {sns.label}
-              </button>
-            ))}
-            <button className="flex items-center gap-1 border border-kb-border rounded-lg px-3 py-1.5 text-[12px] text-kb-text-body hover:bg-kb-beige-light ml-1">
-              <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" stroke="currentColor" strokeWidth="1.5">
-                <rect x="1" y="3" width="14" height="10" rx="1"/><polyline points="1,3 8,9 15,3"/>
-              </svg>
-              추천메일
-            </button>
+            {/* SNS 공유·추천메일 버튼이 있었다. 공유는 외부 SDK(카카오 등), 추천메일은
+                메일 발송 백엔드가 필요한데 둘 다 없어 눌러도 아무 일이 없었다. */}
           </div>
 
           {/* 탭 */}

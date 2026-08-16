@@ -209,10 +209,6 @@ export default function BranchConsultationPage() {
                           >
                             {CONTENT_TYPES.map(c => <option key={c}>{c}</option>)}
                           </select>
-                          <button className="border-2 rounded-lg px-4 py-1.5 text-[12px] font-semibold hover:bg-kb-primary-bg transition-colors"
-                            style={{ borderColor: KB_PRIMARY, color: KB_PRIMARY }}>
-                            선택
-                          </button>
                         </div>
                         <p className="text-[12px] text-kb-danger flex items-start gap-1">
                           <span className="bg-kb-danger text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">ⓘ</span>
@@ -233,18 +229,10 @@ export default function BranchConsultationPage() {
                             <option>선택</option>
                             {MONTHS.map(m => <option key={m}>{m}</option>)}
                           </select>
-                          <button className="border-2 rounded-lg px-4 py-1.5 text-[12px] font-semibold hover:bg-kb-primary-bg transition-colors"
-                            style={{ borderColor: KB_PRIMARY, color: KB_PRIMARY }}>
-                            선택
-                          </button>
                           <select value={time} onChange={e => setTime(e.target.value)}
                             className="border border-kb-primary-border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white focus:border-kb-mint transition-colors">
                             {TIMES.map(t => <option key={t}>{t}</option>)}
                           </select>
-                          <button className="border-2 rounded-lg px-4 py-1.5 text-[12px] font-semibold hover:bg-kb-primary-bg transition-colors"
-                            style={{ borderColor: KB_PRIMARY, color: KB_PRIMARY }}>
-                            선택
-                          </button>
                         </div>
                         <p className="text-[12px] text-kb-text-muted flex items-start gap-1">
                           <span className="bg-kb-text-muted text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">ⓘ</span>

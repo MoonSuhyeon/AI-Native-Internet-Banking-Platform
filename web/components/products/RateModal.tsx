@@ -52,23 +52,15 @@ export default function RateModal({ productName, rates, onClose }: Props) {
         </div>
 
         <div className="overflow-y-auto flex-1">
-          {/* 카테고리 탭 */}
-          <div className="flex items-center justify-center gap-8 py-4 border-b border-kb-border">
-            {[
-              { label: '예금', icon: '🐷', active: true },
-              { label: '펀드', icon: '📈', active: false },
-              { label: '대출', icon: '💼', active: false },
-              { label: '신탁', icon: '📋', active: false },
-              { label: '외환', icon: '💵', active: false },
-            ].map(cat => (
-              <button key={cat.label}
-                className={`flex flex-col items-center gap-1 text-[13px] pb-1 ${
-                  cat.active ? 'text-kb-primary border-b-2 border-kb-primary font-bold' : 'text-kb-text-muted hover:text-kb-text'
-                }`}>
-                <span className="text-lg">{cat.icon}</span>
-                {cat.label}
-              </button>
-            ))}
+          {/* 무엇의 금리인지 표시.
+              예전에는 예금·펀드·대출·신탁·외환 다섯 탭이었는데, 이 모달은 예금 상품
+              상세에서만 열리고 rates 도 그 상품 것 하나뿐이라 나머지 넷은 눌러도
+              보여줄 데이터가 없었다. active: true 가 예금에 박혀 있던 것은 그 증상이다. */}
+          <div className="flex items-center justify-center py-4 border-b border-kb-border">
+            <span className="flex flex-col items-center gap-1 text-[13px] pb-1 text-kb-primary border-b-2 border-kb-primary font-bold">
+              <span className="text-lg">🐷</span>
+              예금
+            </span>
           </div>
 
           {/* 서브 탭 */}

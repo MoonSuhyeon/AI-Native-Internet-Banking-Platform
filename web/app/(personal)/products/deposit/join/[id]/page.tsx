@@ -834,9 +834,7 @@ export default function DepositJoinPage() {
                   className="bg-kb-primary px-10 py-2.5 text-[13px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity">
                   다음
                 </button>
-                <button className="border border-kb-border rounded-xl px-10 py-2.5 text-[13px] text-kb-text-body hover:bg-kb-beige-light">
-                  임시저장
-                </button>
+                {/* 임시저장: 가입 중단 복구를 저장할 곳이 없어 뺐다 */}
               </div>
             </div>
           )}
