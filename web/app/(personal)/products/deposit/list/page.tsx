@@ -515,8 +515,9 @@ function DepositListPageInner() {
 
           {/* 페이지네이션 */}
           <div className="flex justify-center mt-8 gap-1">
-            <button className="w-8 h-8 text-[13px] rounded-lg font-bold text-white"
-              style={{ backgroundColor: KB_PRIMARY }}>1</button>
+            {/* 목록을 한 번에 다 보여주므로 쪽이 하나뿐이다. 누를 것이 없어 표시로 둔다. */}
+            <span className="w-8 h-8 text-[13px] rounded-lg font-bold text-white flex items-center justify-center"
+              style={{ backgroundColor: KB_PRIMARY }}>1</span>
           </div>
         </main>
       </div>

@@ -111,11 +111,12 @@ export default function DepositNewHistoryPage() {
           </div>
 
           <div className="flex justify-center mt-5">
-            <button
+            {/* 쪽이 하나뿐이라 표시로 둔다 */}
+            <span
               className="w-8 h-8 text-[13px] font-bold text-white rounded-lg flex items-center justify-center"
               style={{ backgroundColor: KB_PRIMARY }}>
               1
-            </button>
+            </span>
           </div>
         </main>
       </div>

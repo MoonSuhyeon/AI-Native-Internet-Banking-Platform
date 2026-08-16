@@ -3,6 +3,7 @@ import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PR
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import DatePickerButton from '@/components/ui/DatePickerButton'
 import { formatNumber } from '@/lib/mock-data'
 import { fetchDepositAccountViewModels, fetchTransactions, getCurrentDepositCustomerId, type DepositViewAccount } from '@/lib/deposit-api'
 import TransferSidebar from '@/components/inquiry/TransferSidebar'
@@ -20,6 +21,7 @@ export default function TransferInquiryPage() {
   const [counterAccount, setCounterAccount] = useState('')
   const [useCounter, setUseCounter] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [page, setPage] = useState(1)
   const [checkedRows, setCheckedRows] = useState<Set<string>>(new Set())
   const [localResults, setLocalResults] = useState<ResultRow[]>([])
   const [accounts, setAccounts] = useState<InquiryAccount[]>([])
@@ -61,6 +63,14 @@ export default function TransferInquiryPage() {
   }, [])
 
   const displayResults: ResultRow[] = apiResults.length > 0 ? apiResults : localResults.length > 0 ? localResults : []
+
+  // 쪽 나누기. 조회 결과가 클라이언트에 다 있어 서버 왕복 없이 자른다.
+  // 예전에는 |< < > >| 버튼이 아무 일도 하지 않았고, 옆의 "현재 1-N건 / N건" 도
+  // 늘 전체를 가리켜 몇 건이든 한 쪽처럼 보였다.
+  const PAGE_SIZE = 10
+  const totalPages = Math.max(1, Math.ceil(displayResults.length / PAGE_SIZE))
+  const pageStart = (page - 1) * PAGE_SIZE
+  const pageRows = displayResults.slice(pageStart, pageStart + PAGE_SIZE)
 
   function toggleRow(id: string) {
     setCheckedRows(prev => {
@@ -187,12 +197,7 @@ export default function TransferInquiryPage() {
                           style={{ borderColor: KB_BORDER }}
                           placeholder="YYYYMMDD"
                         />
-                        <button className="border rounded-lg px-2 py-1.5 text-kb-text-muted hover:bg-kb-primary-bg transition-colors"
-                          style={{ borderColor: KB_BORDER }}>
-                          <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="1.5">
-                            <rect x="1" y="2" width="14" height="13" rx="1"/><line x1="5" y1="1" x2="5" y2="4"/><line x1="11" y1="1" x2="11" y2="4"/><line x1="1" y1="7" x2="15" y2="7"/>
-                          </svg>
-                        </button>
+                        <DatePickerButton value={startDate} onChange={setStartDate} label="조회 시작일 선택" />
                       </div>
                       <span className="text-kb-text-muted">~</span>
                       <div className="flex items-center gap-1">
@@ -205,12 +210,7 @@ export default function TransferInquiryPage() {
                           style={{ borderColor: KB_BORDER }}
                           placeholder="YYYYMMDD"
                         />
-                        <button className="border rounded-lg px-2 py-1.5 text-kb-text-muted hover:bg-kb-primary-bg transition-colors"
-                          style={{ borderColor: KB_BORDER }}>
-                          <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="1.5">
-                            <rect x="1" y="2" width="14" height="13" rx="1"/><line x1="5" y1="1" x2="5" y2="4"/><line x1="11" y1="1" x2="11" y2="4"/><line x1="1" y1="7" x2="15" y2="7"/>
-                          </svg>
-                        </button>
+                        <DatePickerButton value={endDate} onChange={setEndDate} label="조회 종료일 선택" />
                       </div>
                     </div>
                   </td>
@@ -242,7 +242,7 @@ export default function TransferInquiryPage() {
             </table>
             <div className="flex justify-center py-4" style={{ borderTop: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <button
-                onClick={() => setSearched(true)}
+                onClick={() => { setSearched(true); setPage(1) }}
                 className="px-24 py-2.5 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity"
                 style={{ backgroundColor: KB_PRIMARY }}
               >
@@ -286,7 +286,7 @@ export default function TransferInquiryPage() {
                           조회된 이체 내역이 없습니다.
                         </td>
                       </tr>
-                    ) : displayResults.map(row => (
+                    ) : pageRows.map(row => (
                       <tr key={row.id} className="hover:bg-kb-primary-surface transition-colors" style={{ borderBottom: `1px solid ${KB_PRIMARY_BORDER}` }}>
                         <td className="px-2 py-3 text-center">
                           <input type="checkbox" checked={checkedRows.has(row.id)} onChange={() => toggleRow(row.id)} className="w-4 h-4" />
@@ -311,15 +311,23 @@ export default function TransferInquiryPage() {
               {/* 페이지네이션 */}
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-1">
-                  {['|<', '<', '>', '>|'].map(btn => (
-                    <button key={btn}
-                      className="border rounded-lg px-2 py-1 text-[12px] text-kb-text-muted hover:bg-kb-primary-bg transition-colors"
+                  {([
+                    ['|<', 1,               page === 1],
+                    ['<',  page - 1,        page === 1],
+                    ['>',  page + 1,        page === totalPages],
+                    ['>|', totalPages,      page === totalPages],
+                  ] as const).map(([label, target, disabled]) => (
+                    <button key={label}
+                      onClick={() => setPage(target)}
+                      disabled={disabled}
+                      className="border rounded-lg px-2 py-1 text-[12px] text-kb-text-muted hover:bg-kb-primary-bg transition-colors disabled:opacity-40"
                       style={{ borderColor: KB_PRIMARY_BORDER }}>
-                      {btn}
+                      {label}
                     </button>
                   ))}
                   <span className="ml-2 text-[12px] text-kb-text-muted">
-                    현재 1-{displayResults.length}건 / {displayResults.length}건
+                    현재 {displayResults.length === 0 ? 0 : pageStart + 1}-{pageStart + pageRows.length}건
+                    {' / '}{displayResults.length}건
                   </span>
                 </div>
               </div>
