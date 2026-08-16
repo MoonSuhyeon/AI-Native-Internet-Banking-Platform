@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { fetchInboundPayments, InboundPayment } from '@/lib/other-bank-api'
-import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
+import { DAON_NAVY, DAON_NAVY_MID } from '@/lib/theme'
 
 /* ── 다온은행 계좌 정보 (mock) ── */
 const DAON_ACCOUNT = {
@@ -79,7 +79,7 @@ export default function DaonAccountsPage() {
       {/* 타행 입금 도착 배너 */}
       {!loading && latestDeposit && (
         <div className="rounded-xl px-6 py-4 mb-5 flex items-center justify-between"
-          style={{ background: `linear-gradient(135deg, ${KB_GNB_BIZ_ACTIVE} 0%, #384d84 100%)` }}>
+          style={{ background: `linear-gradient(135deg, ${DAON_NAVY} 0%, ${DAON_NAVY_MID} 100%)` }}>
           <div className="flex items-center gap-4">
             <div className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center text-2xl">💸</div>
             <div className="text-white">
@@ -97,7 +97,7 @@ export default function DaonAccountsPage() {
       )}
 
       {/* 계좌 정보 헤더 */}
-      <div className="border border-kb-border-dark rounded-xl p-6 mb-6 bg-kb-beige-light">
+      <div className="border border-kb-border-dark rounded-xl p-6 mb-6 bg-daon-surface-light">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[13px] text-kb-text-muted mb-1">{DAON_ACCOUNT.name} · 예금주 {DAON_ACCOUNT.holder}</p>
@@ -112,7 +112,7 @@ export default function DaonAccountsPage() {
               <button
                 onClick={() => setBalanceVisible(v => !v)}
                 className="relative w-10 h-5 rounded-full transition-colors"
-                style={{ backgroundColor: balanceVisible ? KB_GNB_BIZ_ACTIVE : '#cbd5e1' }}
+                style={{ backgroundColor: balanceVisible ? DAON_NAVY : '#cbd5e1' }}
               >
                 <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${balanceVisible ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 <span className={`absolute text-[9px] font-bold text-white ${balanceVisible ? 'left-1.5 top-0.5' : 'right-1 top-0.5'}`}>
@@ -194,7 +194,7 @@ export default function DaonAccountsPage() {
               placeholder="거래 내용을 입력하세요"
               className="border border-kb-border px-3 py-1.5 text-[13px] w-60 focus:outline-none"
             />
-            <button className="px-5 py-1.5 text-[12px] font-bold text-white hover:brightness-110" style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}>
+            <button className="px-5 py-1.5 text-[12px] font-bold text-white hover:brightness-110" style={{ backgroundColor: DAON_NAVY }}>
               조회
             </button>
           </div>
@@ -229,7 +229,7 @@ export default function DaonAccountsPage() {
           {/* 거래내역 테이블 */}
           <table className="w-full border-collapse text-[13px]">
             <thead>
-              <tr className="bg-kb-beige-light border-t-2 border-kb-text">
+              <tr className="bg-daon-surface-light border-t-2 border-kb-text">
                 <th className="border border-kb-border px-4 py-2 text-left font-semibold text-kb-text">날짜/시간</th>
                 <th className="border border-kb-border px-4 py-2 text-left font-semibold text-kb-text">내용</th>
                 <th className="border border-kb-border px-4 py-2 text-right font-semibold text-kb-text">입금금액</th>
@@ -272,7 +272,7 @@ export default function DaonAccountsPage() {
       )}
 
       <div className="mt-4 flex justify-center">
-        <Link href="/other-bank" className="border border-kb-border px-8 py-2 text-[13px] text-kb-text-body hover:bg-kb-beige-light transition-colors">
+        <Link href="/other-bank" className="border border-kb-border px-8 py-2 text-[13px] text-kb-text-body hover:bg-daon-surface-light transition-colors">
           홈으로
         </Link>
       </div>

@@ -62,6 +62,9 @@ tasks.named('test') {
         // UP-TO-DATE 로 안 돌아, 어긋난 상태가 통과한다.
         include 'web/tailwind.config.ts'
         include 'web/lib/theme.ts'
+        // 다온은행 화면(DaonPaletteIsolationTest).
+        include 'web/app/other-bank/**/*.tsx'
+        include 'web/components/other-bank/*.tsx'
         exclude '**/build/**'
     }).withPropertyName('dockerfilesAndBuildScripts')
             .withPathSensitivity(PathSensitivity.RELATIVE)

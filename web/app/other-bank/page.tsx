@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import DaonHeroCarousel from '@/components/other-bank/DaonHeroCarousel'
 import DaonProductCarousel from '@/components/other-bank/DaonProductCarousel'
-import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
+import { DAON_NAVY } from '@/lib/theme'
 
 const QUICK_MENUS = [
   {
@@ -14,7 +14,7 @@ const QUICK_MENUS = [
         <line x1="16" y1="18" x2="26" y2="18" stroke="currentColor" strokeWidth="1.5"/>
         <rect x="4" y="32" width="40" height="10" rx="1" fill="white" stroke="currentColor" strokeWidth="2"/>
         <rect x="16" y="35" width="16" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.3"/>
-        <circle cx="37" cy="37" r="10" fill="#5a73a8" stroke="currentColor" strokeWidth="2.2"/>
+        <circle cx="37" cy="37" r="10" fill="#5A73A8" stroke="currentColor" strokeWidth="2.2"/>
         <line x1="44.1" y1="44.1" x2="51" y2="51" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"/>
       </svg>
     ),
@@ -27,7 +27,7 @@ const QUICK_MENUS = [
         <line x1="10" y1="13" x2="26" y2="13" stroke="currentColor" strokeWidth="2"/>
         <line x1="10" y1="20" x2="26" y2="20" stroke="currentColor" strokeWidth="2"/>
         <line x1="10" y1="27" x2="20" y2="27" stroke="currentColor" strokeWidth="2"/>
-        <circle cx="37" cy="37" r="10" fill="#5a73a8" stroke="currentColor" strokeWidth="2.2"/>
+        <circle cx="37" cy="37" r="10" fill="#5A73A8" stroke="currentColor" strokeWidth="2.2"/>
         <line x1="44.1" y1="44.1" x2="51" y2="51" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"/>
       </svg>
     ),
@@ -37,7 +37,7 @@ const QUICK_MENUS = [
     svg: (
       <svg viewBox="0 0 56 56" fill="none" className="w-14 h-14" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="22" cy="28" r="18" fill="white" stroke="currentColor" strokeWidth="2.2"/>
-        <circle cx="22" cy="28" r="13" fill="#5a73a8" stroke="none"/>
+        <circle cx="22" cy="28" r="13" fill="#5A73A8" stroke="none"/>
         <text x="22" y="33" textAnchor="middle" fontSize="13" fontWeight="bold" stroke="none" fill="currentColor">W</text>
         <line x1="42" y1="28" x2="54" y2="28" stroke="currentColor" strokeWidth="2.2"/>
         <polyline points="50,23 54,28 50,33" stroke="currentColor" strokeWidth="2.2" fill="none"/>
@@ -52,7 +52,7 @@ const QUICK_MENUS = [
         <line x1="10" y1="13" x2="26" y2="13" stroke="currentColor" strokeWidth="2"/>
         <line x1="10" y1="20" x2="26" y2="20" stroke="currentColor" strokeWidth="2"/>
         <line x1="10" y1="27" x2="20" y2="27" stroke="currentColor" strokeWidth="2"/>
-        <path d="M27 30 L43 14 L49 20 L33 36 L25 38 Z" fill="#5a73a8" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M27 30 L43 14 L49 20 L33 36 L25 38 Z" fill="#5A73A8" stroke="currentColor" strokeWidth="1.5"/>
       </svg>
     ),
   },
@@ -64,7 +64,7 @@ const QUICK_MENUS = [
         <line x1="10" y1="13" x2="26" y2="13" stroke="currentColor" strokeWidth="2"/>
         <line x1="10" y1="20" x2="26" y2="20" stroke="currentColor" strokeWidth="2"/>
         <line x1="10" y1="27" x2="20" y2="27" stroke="currentColor" strokeWidth="2"/>
-        <circle cx="37" cy="37" r="10" fill="#5a73a8" stroke="currentColor" strokeWidth="2.2"/>
+        <circle cx="37" cy="37" r="10" fill="#5A73A8" stroke="currentColor" strokeWidth="2.2"/>
         <polyline points="32,37 36,41 43,31" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     ),
@@ -103,7 +103,7 @@ export default function DaonHomePage() {
                   <span className="text-lg text-kb-text-body group-hover:font-bold transition-all duration-150">
                     {menu.label}
                   </span>
-                  <div className="h-1 w-0 group-hover:w-full bg-kb-admin transition-all duration-200" />
+                  <div className="h-1 w-0 group-hover:w-full bg-daon-navy transition-all duration-200" />
                 </div>
               </Link>
             ))}
@@ -124,7 +124,7 @@ export default function DaonHomePage() {
               {NEWS_ITEMS.map((item, i) => (
                 <li key={i}>
                   <Link href="#"
-                    className="flex items-center gap-2 py-3 hover:bg-kb-beige-light px-1 -mx-1 transition-colors">
+                    className="flex items-center gap-2 py-3 hover:bg-daon-surface-light px-1 -mx-1 transition-colors">
                     <span className={`text-xs border px-1.5 py-0.5 rounded-md flex-shrink-0 font-medium
                       ${item.type === '새소식'
                         ? 'border-kb-red text-kb-red'
@@ -160,7 +160,7 @@ export default function DaonHomePage() {
           <div>
             <h2 className="text-2xl font-bold text-kb-text mb-6">고객센터</h2>
             <div>
-              <p className="text-xl font-bold" style={{ color: KB_GNB_BIZ_ACTIVE }}>1599·0000</p>
+              <p className="text-xl font-bold" style={{ color: DAON_NAVY }}>1599·0000</p>
               <p className="text-sm text-kb-text-body mt-1 mb-2">평일 08~22시 / 토·요일 09~14시</p>
               <p className="text-base font-bold text-kb-text">개인뱅킹서비스 1599-1111</p>
               <p className="text-sm text-kb-text-muted mt-1 mb-3">평일 09~18시</p>
@@ -169,7 +169,7 @@ export default function DaonHomePage() {
               <p className="text-base font-bold text-kb-text">B2B전자결제 1599-3333</p>
               <p className="text-sm text-kb-text-muted mt-1">평일 09~18시</p>
             </div>
-            <button className="mt-5 border border-kb-border px-3 py-1 text-xs text-kb-text-body bg-white hover:bg-kb-beige transition-colors flex items-center gap-1">
+            <button className="mt-5 border border-kb-border px-3 py-1 text-xs text-kb-text-body bg-white hover:bg-daon-surface transition-colors flex items-center gap-1">
               원격상담 바로가기 <span className="text-[10px]">↗</span>
             </button>
           </div>

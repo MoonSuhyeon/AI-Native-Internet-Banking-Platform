@@ -24,7 +24,7 @@ export default function OtherBankLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* 푸터 */}
-      <footer className="border-t border-kb-border bg-kb-beige-light">
+      <footer className="border-t border-kb-border bg-daon-surface-light">
         <div className="max-w-kb-container mx-auto px-6 py-5">
           <div className="flex flex-wrap gap-x-4 gap-y-1 mb-2">
             {FOOTER_LINKS_TOP.map((link) => (
@@ -48,7 +48,7 @@ export default function OtherBankLayout({ children }: { children: React.ReactNod
               {FOOTER_DROPDOWNS.map((label) => (
                 <button key={label}
                   className="flex items-center gap-1.5 border border-kb-border px-4 py-2
-                             text-sm text-kb-text-body bg-white hover:bg-kb-beige transition-colors">
+                             text-sm text-kb-text-body bg-white hover:bg-daon-surface transition-colors">
                   {label} <span className="text-xs text-kb-text-muted">▾</span>
                 </button>
               ))}
@@ -56,7 +56,7 @@ export default function OtherBankLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-2">
               {['f', '📷', '▶', 'B'].map((label) => (
                 <Link key={label} href="#"
-                  className="w-10 h-10 rounded-full border border-kb-border flex items-center justify-center text-base font-bold text-kb-text-muted hover:bg-kb-beige hover:text-kb-text transition-colors">
+                  className="w-10 h-10 rounded-full border border-kb-border flex items-center justify-center text-base font-bold text-kb-text-muted hover:bg-daon-surface hover:text-kb-text transition-colors">
                   {label}
                 </Link>
               ))}

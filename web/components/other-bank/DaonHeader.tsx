@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
+import { DAON_NAVY } from '@/lib/theme'
 
 type MenuItem = { label: string; arrow?: boolean; href?: string; active?: boolean }
 type MenuColumn = { header?: string; items: MenuItem[] }
@@ -175,9 +175,9 @@ export default function DaonHeader() {
       <div className="border-b border-kb-border bg-white">
         <div className="max-w-kb-container mx-auto px-6 flex items-center h-[70px]">
           <Link href="/other-bank" className="flex items-center gap-3">
-            <div className="w-[4px] self-stretch" style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }} />
+            <div className="w-[4px] self-stretch" style={{ backgroundColor: DAON_NAVY }} />
             <div className="flex flex-col leading-none gap-1.5">
-              <span className="text-[22px] font-bold tracking-[0.1em]" style={{ color: KB_GNB_BIZ_ACTIVE }}>다온은행</span>
+              <span className="text-[22px] font-bold tracking-[0.1em]" style={{ color: DAON_NAVY }}>다온은행</span>
               <span className="text-[14px] font-medium text-kb-text-body tracking-[0.18em]">DAON Bank</span>
             </div>
           </Link>
@@ -229,10 +229,10 @@ export default function DaonHeader() {
             <span className="text-[28px] font-bold text-kb-text pl-8">개인</span>
             <div className="flex items-center gap-2">
               <Link href="/other-bank/login"
-                className="px-3 py-1 border border-kb-border-dark text-sm text-kb-text-body hover:bg-kb-beige-light transition-colors rounded-lg">
+                className="px-3 py-1 border border-kb-border-dark text-sm text-kb-text-body hover:bg-daon-surface-light transition-colors rounded-lg">
                 로그인
               </Link>
-              <Link href="#" className="px-3 py-1 border border-kb-border-dark text-sm text-kb-text-body hover:bg-kb-beige-light transition-colors rounded-lg">
+              <Link href="#" className="px-3 py-1 border border-kb-border-dark text-sm text-kb-text-body hover:bg-daon-surface-light transition-colors rounded-lg">
                 인증센터
               </Link>
             </div>
@@ -257,7 +257,7 @@ export default function DaonHeader() {
                   className={`flex items-center justify-center w-full px-5
                     text-[19px] font-semibold transition-colors duration-kb whitespace-nowrap
                     ${activeMenu === menu.id
-                      ? 'bg-kb-gnb-biz-active text-white font-bold'
+                      ? 'bg-daon-navy text-white font-bold'
                       : 'text-kb-text hover:bg-kb-gnb-biz-hover'
                     }`}>
                   {menu.label}

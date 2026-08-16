@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { KB_BLUE, KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
+import { DAON_NAVY, KB_BLUE } from '@/lib/theme'
 
 type DaonLoginTab = '공동금융인증서' | 'daon인증서' | '간편로그인'
 
@@ -58,7 +58,7 @@ export default function DaonLoginPage() {
                     <button
                       onClick={handleLogin}
                       className="w-full py-3.5 text-base font-bold text-white transition-all hover:brightness-110"
-                      style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}
+                      style={{ backgroundColor: DAON_NAVY }}
                     >
                       공동인증서(구 공인인증서) 로그인
                     </button>
@@ -75,7 +75,7 @@ export default function DaonLoginPage() {
                     <button
                       onClick={handleLogin}
                       className="w-full py-3.5 text-base font-bold text-white transition-all hover:brightness-110"
-                      style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}
+                      style={{ backgroundColor: DAON_NAVY }}
                     >
                       금융인증서(브라우저인증서) 로그인
                     </button>
@@ -97,7 +97,7 @@ export default function DaonLoginPage() {
                   <button
                     onClick={handleLogin}
                     className="w-full max-w-[360px] py-3.5 text-base font-bold text-white transition-all hover:brightness-110"
-                    style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}
+                    style={{ backgroundColor: DAON_NAVY }}
                   >
                     다온인증서 로그인
                   </button>
@@ -128,7 +128,7 @@ export default function DaonLoginPage() {
                   <button
                     type="submit"
                     className="w-full max-w-[360px] py-3.5 text-base font-bold text-white transition-all hover:brightness-110"
-                    style={{ backgroundColor: KB_GNB_BIZ_ACTIVE }}
+                    style={{ backgroundColor: DAON_NAVY }}
                   >
                     로그인
                   </button>
@@ -153,7 +153,7 @@ export default function DaonLoginPage() {
                   <button
                     key={item.label}
                     className={`flex flex-col items-center gap-1.5 py-4 px-16 text-sm text-kb-text-body
-                                hover:bg-kb-beige-light transition-colors w-full
+                                hover:bg-daon-surface-light transition-colors w-full
                                 ${i > 0 ? 'border-l border-kb-border' : ''}`}
                   >
                     <span className="text-lg">{item.icon}</span>
@@ -196,7 +196,7 @@ function DaonTabButton({
                   flex items-center justify-center gap-1.5
         ${active
           ? 'bg-white text-kb-text border-b-2 border-kb-text'
-          : 'bg-kb-beige-light text-kb-text-muted hover:bg-kb-beige'
+          : 'bg-daon-surface-light text-kb-text-muted hover:bg-daon-surface'
         }`}
     >
       {children}
@@ -208,7 +208,7 @@ function DaonTabButton({
 function DaonShieldIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z" fill="#5a73a8" stroke="#1B3A6B" strokeWidth="1.5" />
+      <path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z" fill="#5A73A8" stroke="#1B3A6B" strokeWidth="1.5" />
       <text x="12" y="16" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#fff">D</text>
     </svg>
   )

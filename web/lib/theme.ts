@@ -54,3 +54,10 @@ export const KB_TEXT_LIGHT      = '#AAAAAA'
 export const KB_RED             = '#D0021B' // 에러·경고
 
 export const KB_BLUE            = '#0066CC' // 링크·정보
+
+// ── 다온은행(타행 시연) — AXful 팔레트와 분리 ──
+export const DAON_NAVY       = '#1B3A6B' // 다온 브랜드 네이비
+export const DAON_NAVY_MID   = '#384D84' // 그라디언트 중간
+export const DAON_NAVY_LIGHT = '#5A73A8' // 그라디언트 끝
+export const DAON_SURFACE       = '#F5F0E8'
+export const DAON_SURFACE_LIGHT = '#FAFAF7'

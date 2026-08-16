@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
+import { DAON_NAVY, DAON_NAVY_LIGHT, DAON_NAVY_MID } from '@/lib/theme'
 
 const SLIDES = [
   {
@@ -22,7 +22,7 @@ const SLIDES = [
   },
 ]
 
-const BADGE_BG = '#384d84'
+const BADGE_BG = DAON_NAVY_MID
 
 export default function DaonHeroCarousel() {
   const [current, setCurrent] = useState(0)
@@ -99,7 +99,7 @@ export default function DaonHeroCarousel() {
 
         {/* 이미지 영역 — 네이비 그라데이션 일러스트 */}
         <div className="relative flex-shrink-0 mr-52 rounded-2xl overflow-hidden flex items-center justify-center"
-          style={{ width: '400px', height: '330px', background: `linear-gradient(135deg, ${KB_GNB_BIZ_ACTIVE} 0%, #384d84 60%, #5a73a8 100%)` }}>
+          style={{ width: '400px', height: '330px', background: `linear-gradient(135deg, ${DAON_NAVY} 0%, ${DAON_NAVY_MID} 60%, ${DAON_NAVY_LIGHT} 100%)` }}>
           <div className="text-center text-white">
             <p className="text-[64px] font-extrabold tracking-tight leading-none">DAON</p>
             <p className="text-[18px] font-medium tracking-[0.3em] mt-2 text-white/80">PERSONAL BANK</p>

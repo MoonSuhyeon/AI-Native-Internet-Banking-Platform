@@ -38,7 +38,7 @@ export default function DaonMyMenu() {
       {/* 토글 탭 */}
       <button
         onClick={() => setOpen(!open)}
-        className="mt-14 w-6 h-16 bg-kb-admin flex items-center justify-center
+        className="mt-14 w-6 h-16 bg-daon-navy flex items-center justify-center
                    border border-kb-border border-r-0 rounded-l-lg shadow-sm hover:bg-[#14305a] transition-colors"
         style={{ writingMode: 'vertical-rl' }}
       >
@@ -86,9 +86,9 @@ export default function DaonMyMenu() {
           {/* 글자크기 */}
           <div className="px-5 pb-5 flex justify-center">
             <div className="flex items-center border border-kb-border rounded-full overflow-hidden text-sm">
-              <button onClick={decrease} className="px-3 py-1.5 text-kb-text-muted hover:bg-kb-beige transition-colors">−</button>
+              <button onClick={decrease} className="px-3 py-1.5 text-kb-text-muted hover:bg-daon-surface transition-colors">−</button>
               <span className="px-4 py-1.5 border-x border-kb-border text-kb-text-body">글자크기</span>
-              <button onClick={increase} className="px-3 py-1.5 text-kb-text-muted hover:bg-kb-beige transition-colors">+</button>
+              <button onClick={increase} className="px-3 py-1.5 text-kb-text-muted hover:bg-daon-surface transition-colors">+</button>
             </div>
           </div>
         </div>
