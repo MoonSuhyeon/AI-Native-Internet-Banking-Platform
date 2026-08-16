@@ -6,7 +6,7 @@ import HeroCarousel from './HeroCarousel'
 
 const QUICK_MENUS = [
   {
-    label: 'AI 상품 추천', href: '/products/deposit',
+    label: 'AI 상품 추천', href: '/products/deposit/list',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -46,7 +46,7 @@ const QUICK_MENUS = [
     ),
   },
   {
-    label: 'AI 24시간 상담', href: '/support/consultation/live-chat',
+    label: 'AI 24시간 상담', href: '/support/consultation/staff-chat',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>

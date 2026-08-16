@@ -102,7 +102,11 @@ const LOAN_CATEGORIES = [
   { no: '01', desc: '빠르고 간편하게 바로 지금',    label: '신용대출',    href: '/products/loan/credit',   key: '신용' },
   { no: '02', desc: '부동산을 활용한 합리적 금리',   label: '담보대출',    href: '/products/loan/mortgage', key: '담보' },
   { no: '03', desc: '내 집 마련의 첫걸음',          label: '전월세 대출', href: '/products/loan/jeonse',   key: '전월세' },
-  { no: '04', desc: '다양한 목적에 맞는 특화 상품', label: '기타 대출',   href: '/products/loan/other',    key: '기타' },
+  // '기타 대출' 이 /products/loan/other 를 가리켰는데 그 페이지가 없어 404 였다.
+  // 아래 셋은 페이지가 있는데 어디서도 링크되지 않았다. (products/loan/page.tsx 와 동일)
+  { no: '04', desc: '차량 구입 자금을 나누어',    label: '자동차대출',            href: '/products/loan/auto',  key: '자동차' },
+  { no: '05', desc: '입주 전 중도금과 이주 비용', label: '집단중도금·이주비대출', href: '/products/loan/group', key: '집단' },
+  { no: '06', desc: '주택도시기금을 재원으로',    label: '주택도시기금대출',      href: '/products/loan/khfc',  key: '기금' },
 ]
 
 type Tab = '수신' | '여신'

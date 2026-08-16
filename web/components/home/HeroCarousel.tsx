@@ -11,7 +11,7 @@ export const HERO_SLIDES = [
     badge: 'AI 예금 추천',
     title: 'AI가 분석한\n나만의 예금 전략',
     desc: '수천만 건의 금융 데이터로 학습한 AI가\n내 패턴에 딱 맞는 최적의 예금상품을 추천합니다',
-    href: '/products/deposit',
+    href: '/products/deposit/list',
     bg: '#E8F7F3',
     accent: KB_PRIMARY,
     tag: '수신 AI',

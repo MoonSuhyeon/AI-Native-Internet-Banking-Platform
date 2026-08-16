@@ -13,7 +13,7 @@ const NAV: SidebarItem[] = [
     label: '예금',
     expandable: true,
     children: [
-      { label: '예금 상품/가입', href: '/products/deposit' },
+      { label: '예금 상품/가입', href: '/products/deposit/list' },
       { label: '예금 리스트',   href: '/products/deposit/list' },
     ],
   },

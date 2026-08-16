@@ -8,7 +8,8 @@ const TRANSFER_SIDEBAR_TOP = [
 ]
 
 const AUTO_SERVICE_ITEMS = [
-  { label: '자동이체통합관리 서비스란?', href: '/transfer/auto-service' },
+  // '자동이체통합관리 서비스란?' 안내 화면이 없어 뺐다
+
   { label: '자동이체 계좌변경', href: '/transfer/auto-service/change', active: true },
   { label: '자동납부 계좌조회/출금계좌변경', href: '#' },
   { label: '자동납부 변경신청결과 조회', href: '#' },

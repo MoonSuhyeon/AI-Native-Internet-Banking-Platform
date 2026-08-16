@@ -158,22 +158,37 @@
 배포 전이라 급하지 않지만, 발견한 것을 남긴다. 셋 다 **화면은 멀쩡히 그려지는데
 동작만 없는** 종류라 눈으로는 안 보인다.
 
-### 죽은 링크 14곳 (그중 8곳이 홈)
+### 죽은 링크 — ✅ 해결 (14곳 → 0곳)
 
-| 링크 | 곳 | 어디 |
-|---|---:|---|
-| `/products/deposit` | 4 | 홈 히어로·캐러셀·예금 상세 |
-| `/support/consultation/live-chat` | 4 | **홈 AI 메뉴**·검색바 |
-| `/manage/certificates/year-end` | 4 | 홈 검색바 |
-| `/products/loan/other` | 1 | 홈 상품쇼케이스 |
-| `/transfer/auto-service` | 1 | 자동이체 변경 |
+| 링크 | 처리 |
+|---|---|
+| `/products/deposit` (4) | → `/products/deposit/list` |
+| `/support/consultation/live-chat` (4) | → `/support/consultation/staff-chat` |
+| `/products/loan/other` (1) | → 실제로 있는 대출 3종(자동차·집단중도금·주택도시기금) |
+| `/manage/certificates/year-end` (4) | 화면이 없어 항목 제거 — 연말정산증명서 발급은 신설 목록 |
+| `/transfer/auto-service` (1) | 안내 화면이 없어 항목 제거 |
 
-홈 상단 **AI 에이전트 메뉴 5개 중 2개가 404** 다 — `AI 상품 추천`·`AI 24시간 상담`.
-사용자가 가장 먼저 보는 화면이다.
+홈 상단 AI 메뉴 5개 중 2개가 404 였다 — `AI 상품 추천`·`AI 24시간 상담`.
 
 > **검사가 왜 못 잡았나.** 처음 만든 죽은 링크 검사가 `href="/x"` 형태만 봤다.
 > 이 메뉴들은 배열 객체(`{ label: 'AI 상품 추천', href: '/products/deposit' }`)로
 > 정의돼 있어 통째로 빠졌고, 그래서 "죽은 링크 0종" 이라고 잘못 보고했다.
+> 검사를 `href: '/x'`·`actionHref`·`listHref` 까지 보도록 고친 뒤 14곳이 나왔다.
+
+### `href="#"` 126곳 — 성격이 다르다
+
+404 가 아니라 **제자리에 머문다.** 대부분 사이드바·푸터의 메뉴 항목으로, 이 프로젝트
+범위 밖 화면(다계좌이체·잔액 모으기·손해금리비교 등)을 가리킨다.
+
+| 곳 | 파일 |
+|---:|---|
+| 17 | `app/biz/cert/layout.tsx` |
+| 11 | `app/(personal)/cert-biz/kb-cert-issue/page.tsx` |
+| 9 | `app/(personal)/transfer/other-bank/register/page.tsx` |
+| 8 | `app/other-bank/login/page.tsx` |
+
+지우면 사이트 구조가 허전해지고, 두면 눌러도 아무 일이 없다. 범위를 정하는 문제라
+일괄 처리하지 않고 남긴다.
 
 ### 하드코딩된 금리
 

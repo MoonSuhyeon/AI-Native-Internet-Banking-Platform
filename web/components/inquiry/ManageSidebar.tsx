@@ -13,7 +13,7 @@ const NAV: SidebarItem[] = [
     label: '제증명발급',
     expandable: true,
     children: [
-      { label: '연말정산증명서', href: '/manage/certificates/year-end' },
+      // 연말정산증명서: 발급 화면이 없어 뺐다 (백엔드 신설 목록)
     ],
   },
   {

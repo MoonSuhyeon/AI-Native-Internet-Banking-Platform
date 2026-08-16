@@ -11,7 +11,7 @@ import AutoBreadcrumb from '@/components/layout/AutoBreadcrumb'
 import { fetchDepositProduct, getDepositProductIdBySlug } from '@/lib/deposit-api'
 
 const DEPOSIT_SIDEBAR = [
-  { label: '예금 상품/가입', href: '/products/deposit', active: true },
+  { label: '예금 상품/가입', href: '/products/deposit/list', active: true },
   { label: '판매중지상품', href: '#' },
   { label: '예금 조회/해지', href: '/products/deposit/inquiry/new' },
   { label: '예금 가이드', href: '#' },

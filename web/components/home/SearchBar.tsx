@@ -60,9 +60,6 @@ const NAV_ITEMS = [
   { label: '대출 관리',             href: '/products/loan/manage/overview',           group: '대출' },
 
   // ── 뱅킹관리 ──
-  { label: '연말정산증명서',        href: '/manage/certificates/year-end',            group: '뱅킹관리' },
-  { label: '연말정산',              href: '/manage/certificates/year-end',            group: '뱅킹관리' },
-  { label: '소득공제',              href: '/manage/certificates/year-end',            group: '뱅킹관리' },
   { label: '첫 방문 고객을 위한 안내', href: '/banking/first-visit',                 group: '뱅킹관리' },
   { label: '인터넷뱅킹 가입',       href: '/banking/first-visit',                     group: '뱅킹관리' },
   { label: '이체한도 변경',         href: '/banking/transfer-limit',                  group: '뱅킹관리' },
@@ -92,9 +89,9 @@ const NAV_ITEMS = [
   { label: '영업점 상담',           href: '/support/consultation/branch',             group: '고객센터' },
   { label: '영업점',                href: '/support/consultation/branch',             group: '고객센터' },
   { label: '지점 찾기',             href: '/support/consultation/branch',             group: '고객센터' },
-  { label: '라이브 채팅',           href: '/support/consultation/live-chat',          group: '고객센터' },
-  { label: 'AI 챗봇',               href: '/support/consultation/live-chat',          group: '고객센터' },
-  { label: '채팅 상담',             href: '/support/consultation/live-chat',          group: '고객센터' },
+  { label: '라이브 채팅',           href: '/support/consultation/staff-chat',          group: '고객센터' },
+  { label: 'AI 챗봇',               href: '/support/consultation/staff-chat',          group: '고객센터' },
+  { label: '채팅 상담',             href: '/support/consultation/staff-chat',          group: '고객센터' },
   { label: '직원 채팅',             href: '/support/consultation/staff-chat',         group: '고객센터' },
   { label: '상담',                  href: '/support/consultation/staff-chat',         group: '고객센터' },
   { label: '온라인고객 신규가입',   href: '/support/customer-info/online-join',       group: '고객센터' },
@@ -119,6 +116,8 @@ const NAV_ITEMS = [
   { label: 'OTP',                  href: '/security-guide',                          group: '보안' },
 ]
 
+// 연말정산증명서(3건)를 뺐다 — /manage/certificates/year-end 화면이 없어
+// 검색에서 고르면 404 였다. 발급 기능이 생기면 되살린다.
 const SEARCH_ITEMS = [
   ...NAV_ITEMS,
   ...NEWS_ITEMS.map(n => ({ label: n.title, href: n.href, group: n.type })),
