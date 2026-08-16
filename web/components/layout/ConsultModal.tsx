@@ -1,4 +1,6 @@
 'use client'
+
+import Link from 'next/link'
 import { KB_MINT } from '@/lib/theme'
 
 type Props = {
@@ -106,9 +108,10 @@ export default function ConsultModal({ onClose }: Props) {
               문의하신 내용은 이메일로 답변드립니다.
             </p>
             <div className="pt-2 space-y-2">
-              <button className="block border border-kb-border px-5 py-2 text-[12px] text-kb-text-body hover:bg-kb-beige transition-colors w-full text-left">
+              <Link href="/support/faq" onClick={onClose}
+                className="block border border-kb-border px-5 py-2 text-[12px] text-kb-text-body hover:bg-kb-beige transition-colors w-full text-left">
                 고객상담 FAQ
-              </button>
+              </Link>
               <button className="block border border-kb-border px-5 py-2 text-[12px] text-kb-text-body hover:bg-kb-beige transition-colors w-full text-left">
                 이메일상담하기
               </button>

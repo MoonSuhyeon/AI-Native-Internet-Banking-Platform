@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import ConsultModal from '@/components/layout/ConsultModal'
 import { KB_GOLD } from '@/lib/theme'
 
 type Tab = '공동인증서' | '인터넷뱅킹' | '인증서로그인'
@@ -39,6 +40,7 @@ const FAQ_DATA: Record<Tab, { id: number; title: string; content: string }[]> = 
 }
 
 export default function FaqPage() {
+  const [showConsult, setShowConsult] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('공동인증서')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -151,10 +153,12 @@ export default function FaqPage() {
         <p className="text-[12px] text-kb-text-muted mb-3">
           원하시는 답변이 없을 경우나 더 자세한 사항 문의를 원하시면 상담원에게 문의해 주시기 바랍니다.
         </p>
-        <button className="border border-kb-border px-4 py-1.5 text-[12px] text-kb-text-body hover:bg-kb-beige-light">
+        <button onClick={() => setShowConsult(true)}
+          className="border border-kb-border px-4 py-1.5 text-[12px] text-kb-text-body hover:bg-kb-beige-light">
           상담하기
         </button>
       </div>
+      {showConsult && <ConsultModal onClose={() => setShowConsult(false)} />}
     </div>
   )
 }

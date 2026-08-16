@@ -187,10 +187,12 @@ export default function SecurityInstallPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <InstallButton installed={installed2} onInstall={() => setInstalled2(true)} />
-                <button className="py-2 text-[13px] rounded-lg border font-medium hover:bg-kb-primary-bg transition-colors"
-                  style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>FAQ</button>
-                <button className="py-2 text-[13px] rounded-lg border font-medium hover:bg-kb-primary-bg transition-colors"
-                  style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>이용안내</button>
+                <Link href="/security-faq"
+                  className="py-2 text-[13px] rounded-lg border font-medium hover:bg-kb-primary-bg transition-colors text-center"
+                  style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>FAQ</Link>
+                <Link href="/security-guide"
+                  className="py-2 text-[13px] rounded-lg border font-medium hover:bg-kb-primary-bg transition-colors text-center"
+                  style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>이용안내</Link>
               </div>
             </div>
           </div>

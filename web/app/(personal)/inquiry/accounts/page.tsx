@@ -263,8 +263,9 @@ export default function AccountsPage() {
                               style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                               조회
                             </Link>
-                            <button className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border transition-colors hover:bg-kb-primary-bg"
-                              style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>계좌관리</button>
+                            <Link href={`/accounts/${account.id}`}
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-kb-primary-bg"
+                              style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>계좌관리</Link>
                             <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                               className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-red-50"
                               style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
@@ -402,10 +403,13 @@ export default function AccountsPage() {
                     : subscriptionAccounts.map(account =>
                         accountCard(account,
                           <div className="grid grid-cols-2 gap-1">
-                            {['조회', '납입현황', '계좌관리'].map(label => (
-                              <button key={label} className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border transition-colors hover:bg-kb-primary-bg"
-                                style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>{label}</button>
-                            ))}
+                            <Link href="/inquiry/transactions"
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-kb-primary-bg"
+                              style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>조회</Link>
+                            <Link href={`/accounts/${account.id}`}
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-kb-primary-bg"
+                              style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>계좌관리</Link>
+                            {/* '납입현황' 은 납입 이력 API 가 없어 뺐다 — 백엔드 신설 목록에 있다 */}
                             <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                               className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-red-50"
                               style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
