@@ -1176,7 +1176,7 @@ function FinCertModal({ onClose }: { onClose: () => void }) {
           {/* 메인 컨텐츠 */}
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between px-3 py-1.5 bg-gray-100 border-b border-gray-200">
-              <button className="text-gray-500 hover:text-gray-700 text-sm px-1">−</button>
+              <span className="text-gray-500 text-sm px-1" aria-hidden="true">−</span>{/* 모의 창의 최소화 표시. 이 모달에 최소화는 뜻이 없어 누를 수 없게 둔다 */}
               <span className="text-[13px] font-medium text-gray-700">금융인증서</span>
               <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-sm px-1">✕</button>
             </div>

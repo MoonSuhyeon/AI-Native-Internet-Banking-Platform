@@ -141,6 +141,8 @@ function TermContent({ index }: { index: number }) {
   )
 }
 
+// ⓘ 는 툴팁 표시다. 툴팁 내용이 코드 어디에도 없어 <button> 이면 누를 수 있다고
+// 알리기만 하고 아무 일도 하지 않는다. 표시는 <span> 이 맞다.
 export default function OnlineJoinPage() {
   const [step, setStep] = useState(0)
 
@@ -355,7 +357,7 @@ export default function OnlineJoinPage() {
                     <tr className="border-b border-kb-border">
                       <td className="bg-kb-primary-bg border border-kb-border px-4 py-3 font-semibold text-kb-text whitespace-nowrap">
                         주민등록번호
-                        <button className="ml-1 text-kb-text-muted border border-kb-border rounded-full w-4 h-4 text-[10px] inline-flex items-center justify-center">ⓘ</button>
+                        <span className="ml-1 text-kb-text-muted border border-kb-border rounded-full w-4 h-4 text-[10px] inline-flex items-center justify-center">ⓘ</span>
                       </td>
                       <td className="border border-kb-border px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -375,7 +377,7 @@ export default function OnlineJoinPage() {
                     <tr>
                       <td className="bg-kb-primary-bg border border-kb-border px-4 py-3 font-semibold text-kb-text whitespace-nowrap align-top">
                         휴대폰 본인인증
-                        <button className="ml-1 text-kb-text-muted border border-kb-border rounded-full w-4 h-4 text-[10px] inline-flex items-center justify-center">ⓘ</button>
+                        <span className="ml-1 text-kb-text-muted border border-kb-border rounded-full w-4 h-4 text-[10px] inline-flex items-center justify-center">ⓘ</span>
                       </td>
                       <td className="border border-kb-border px-4 py-3">
                         <MobileAuthField
@@ -451,7 +453,7 @@ export default function OnlineJoinPage() {
                             className="border border-kb-border px-3 py-1.5 text-[12px] text-kb-text-body hover:bg-kb-primary-bg whitespace-nowrap">
                             ID중복확인 ↗
                           </button>
-                          <button className="text-kb-text-muted border border-kb-border rounded-full w-5 h-5 text-[10px] flex items-center justify-center flex-shrink-0">ⓘ</button>
+                          <span className="text-kb-text-muted border border-kb-border rounded-full w-5 h-5 text-[10px] flex items-center justify-center flex-shrink-0">ⓘ</span>
                         </div>
                         {idOk === true  && <p className="text-[12px] font-semibold mt-1" style={{ color: KB_PRIMARY }}>✓ 사용 가능한 아이디입니다.</p>}
                         {idOk === false && <p className="text-[12px] text-kb-red mt-1">이미 사용 중인 아이디입니다.</p>}
@@ -474,7 +476,7 @@ export default function OnlineJoinPage() {
                               }
                             </button>
                           </div>
-                          <button className="text-kb-text-muted border border-kb-border rounded-full w-5 h-5 text-[10px] flex items-center justify-center">ⓘ</button>
+                          <span className="text-kb-text-muted border border-kb-border rounded-full w-5 h-5 text-[10px] flex items-center justify-center">ⓘ</span>
                         </div>
                       </td>
                     </tr>

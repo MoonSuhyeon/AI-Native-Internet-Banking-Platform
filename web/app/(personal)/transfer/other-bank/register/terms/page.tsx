@@ -165,11 +165,6 @@ export default function OtherBankTermsPage() {
                             <span className="text-kb-text-muted text-[13px]">›</span>
                           </li>
                         ))}
-                        <li>
-                          <button className="w-full flex items-center gap-1 px-5 py-2 text-[12px] text-kb-text-muted hover:bg-kb-beige-light">
-                            동의 항목 ∨
-                          </button>
-                        </li>
                       </ul>
                     )}
                   </li>
