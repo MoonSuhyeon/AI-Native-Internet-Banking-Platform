@@ -94,7 +94,7 @@ export default function AdminCollateralPage() {
                   className="ml-2 border border-gray-300 rounded px-3 py-1.5 text-[13px] w-36 focus:outline-none" />
               </label>
               <button onClick={search} disabled={loading || !applId}
-                className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                 {loading ? '조회 중...' : '조회'}
               </button>
             </div>
@@ -155,7 +155,7 @@ export default function AdminCollateralPage() {
             <div className="flex justify-end gap-2">
               <button onClick={() => setEditing(null)} className="px-4 py-2 text-[13px] border border-gray-300 rounded hover:bg-gray-50">취소</button>
               <button onClick={saveEdit} disabled={busy || !editVal}
-                className="px-4 py-2 text-[13px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">저장</button>
+                className="px-4 py-2 text-[13px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50">저장</button>
             </div>
           </Modal>
         )}

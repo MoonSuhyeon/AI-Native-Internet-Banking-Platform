@@ -98,7 +98,7 @@ export default function AdminRagDocumentsPage() {
                 {loading ? '조회 중...' : '목록 조회'}
               </button>
               <button onClick={() => setShowUpload(v => !v)}
-                className="px-4 py-1.5 text-[13px] bg-[#1B3A6B] text-white rounded hover:opacity-90">
+                className="px-4 py-1.5 text-[13px] bg-kb-admin text-white rounded hover:opacity-90">
                 {showUpload ? '업로드 닫기' : '문서 업로드'}
               </button>
               <button onClick={handleBootstrap} disabled={busy}
@@ -130,7 +130,7 @@ export default function AdminRagDocumentsPage() {
                 </div>
                 <div className="flex justify-end">
                   <button onClick={handleUpload} disabled={busy || !uploadTitle || !uploadContent}
-                    className="px-6 py-2 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                    className="px-6 py-2 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                     {busy ? '업로드 중...' : '업로드'}
                   </button>
                 </div>

@@ -177,17 +177,17 @@ export default function LoanProductDetail({ listHref, listLabel }: Props) {
                 <span className="text-[13px] text-kb-text-muted font-bold">대출금액</span>
                 <input type="text" value={principal} onChange={e => setPrincipal(e.target.value)} placeholder="금액"
                   onFocus={() => setFocusedInput('principal')} onBlur={() => setFocusedInput(null)}
-                  className={`border px-3 py-1.5 w-24 outline-none text-right text-[13px] transition-colors ${focusedInput === 'principal' ? 'border-[#C09B3A] bg-[#C09B3A]/10' : 'border-kb-primary-border'}`} />
+                  className={`border px-3 py-1.5 w-24 outline-none text-right text-[13px] transition-colors ${focusedInput === 'principal' ? 'border-kb-gold bg-kb-gold/10' : 'border-kb-primary-border'}`} />
                 <span className="text-[13px] text-kb-text">만원을</span>
                 <span className="text-[13px] text-kb-text-muted font-bold ml-2">기간</span>
                 <input type="text" value={years} onChange={e => setYears(e.target.value)} placeholder="기간"
                   onFocus={() => setFocusedInput('years')} onBlur={() => setFocusedInput(null)}
-                  className={`border px-3 py-1.5 w-16 outline-none text-right text-[13px] transition-colors ${focusedInput === 'years' ? 'border-[#C09B3A] bg-[#C09B3A]/10' : 'border-kb-primary-border'}`} />
+                  className={`border px-3 py-1.5 w-16 outline-none text-right text-[13px] transition-colors ${focusedInput === 'years' ? 'border-kb-gold bg-kb-gold/10' : 'border-kb-primary-border'}`} />
                 <span className="text-[13px] text-kb-text">년 동안</span>
                 <span className="text-[13px] text-kb-text-muted font-bold ml-2">이자</span>
                 <input type="text" value={rate} onChange={e => setRate(e.target.value)} placeholder="금리"
                   onFocus={() => setFocusedInput('rate')} onBlur={() => setFocusedInput(null)}
-                  className={`border px-3 py-1.5 w-16 outline-none text-right text-[13px] transition-colors ${focusedInput === 'rate' ? 'border-[#C09B3A] bg-[#C09B3A]/10' : 'border-kb-primary-border'}`} />
+                  className={`border px-3 py-1.5 w-16 outline-none text-right text-[13px] transition-colors ${focusedInput === 'rate' ? 'border-kb-gold bg-kb-gold/10' : 'border-kb-primary-border'}`} />
                 <span className="text-[13px] text-kb-text">%로</span>
                 <button onClick={handleCalc}
                   className="ml-auto text-white text-[12px] font-bold px-5 py-1.5" style={{ backgroundColor: '#5A504A' }}>
@@ -218,7 +218,7 @@ export default function LoanProductDetail({ listHref, listLabel }: Props) {
                 <div className="mt-4 border border-kb-primary-border">
                   <table className="w-full text-[13px]">
                     <thead>
-                      <tr className="bg-[#F5F0E8]">
+                      <tr className="bg-kb-beige">
                         {calcTab === 2
                           ? <><th className="py-2 px-4 text-left font-bold text-kb-text">월 이자</th><th className="py-2 px-4 text-left font-bold text-kb-text">만기 상환원금</th></>
                           : <><th className="py-2 px-4 text-left font-bold text-kb-text">월 상환원금</th><th className="py-2 px-4 text-left font-bold text-kb-text">월 이자</th><th className="py-2 px-4 text-left font-bold text-kb-text">월 납부금액</th></>}

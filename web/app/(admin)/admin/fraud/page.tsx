@@ -109,7 +109,7 @@ export default function FraudInvestigationPage() {
                 {cases.map(c => (
                   <button key={c.name} onClick={() => investigate(c.name)} disabled={running}
                     className={`w-full text-left border rounded-lg p-3 transition-colors disabled:opacity-60
-                      ${selected === c.name ? 'border-[#1B3A6B] bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                      ${selected === c.name ? 'border-kb-admin bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[12px] font-bold text-gray-800 font-mono">{c.alert_id}</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
@@ -169,7 +169,7 @@ export default function FraudInvestigationPage() {
                   </p>
                   <div className="flex gap-2">
                     <button onClick={() => approve(true)} disabled={approving}
-                      className="px-5 py-1.5 text-[13px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">
+                      className="px-5 py-1.5 text-[13px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50">
                       {approving ? '처리 중...' : '승인 → 동작 실행'}
                     </button>
                     <button onClick={() => approve(false)} disabled={approving}

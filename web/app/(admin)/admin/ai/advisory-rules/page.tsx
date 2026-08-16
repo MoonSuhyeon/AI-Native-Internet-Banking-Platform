@@ -80,7 +80,7 @@ export default function AdminAdvisoryRulesPage() {
           <div className="flex items-center justify-between mb-5">
             <h1 className="text-lg font-bold text-gray-800">자문 규칙 (Advisory Rules)</h1>
             <button onClick={load} disabled={loading}
-              className="px-5 py-1.5 text-[13px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">
+              className="px-5 py-1.5 text-[13px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50">
               {loading ? '조회 중...' : '목록 조회'}
             </button>
           </div>
@@ -184,7 +184,7 @@ export default function AdminAdvisoryRulesPage() {
                       </div>
                       <div className="flex justify-end">
                         <button onClick={() => saveEdit(r.ruleId)} disabled={busy || !editForm.changeReasonCd}
-                          className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[12px] rounded hover:opacity-90 disabled:opacity-50">
+                          className="px-5 py-1.5 bg-kb-admin text-white text-[12px] rounded hover:opacity-90 disabled:opacity-50">
                           {busy ? '저장 중...' : '저장'}
                         </button>
                       </div>

@@ -7,12 +7,10 @@ const nextConfig = {
   // null 을 받아 1970년으로 계산되던 것이 빌드에서 한 번도 안 걸렸다. 그 화면의
   // "오래된거 정리" 는 대기 시각을 모르는 상담을 종료시키고 있었다.
   //
-  // eslint 는 아직 못 켠다 — 미사용 변수 11건이 남아 있고 그중 6건이
-  // components/chatbot/ChatbotWidget.tsx(팀원 작업물)라 임의로 지울 수 없다.
-  // 대신 CI 가 lint 를 돌려 눈에 보이게 한다.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // eslint 도 빌드를 막는다. 미사용 변수 11건이 남아 있어 못 켜고 있었는데,
+  // 그중 대부분이 도달 불가 코드였다 — ChatbotWidget 의 상담원 패널은 agentMode 가
+  // true 가 되는 곳이 없어 115줄이 한 번도 렌더되지 않았고, 그것을 받치던 state·
+  // 함수·import 가 미사용으로 남아 있던 것이다. 걷어내니 0건이 됐다.
   webpack: (config) => {
     // pdfjs-dist가 참조하는 canvas/encoding은 브라우저 환경에선 불필요
     config.resolve.alias.canvas = false

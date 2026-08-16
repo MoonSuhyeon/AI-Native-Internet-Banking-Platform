@@ -38,7 +38,7 @@ export default function DaonMyMenu() {
       {/* 토글 탭 */}
       <button
         onClick={() => setOpen(!open)}
-        className="mt-14 w-6 h-16 bg-[#1B3A6B] flex items-center justify-center
+        className="mt-14 w-6 h-16 bg-kb-admin flex items-center justify-center
                    border border-kb-border border-r-0 rounded-l-lg shadow-sm hover:bg-[#14305a] transition-colors"
         style={{ writingMode: 'vertical-rl' }}
       >

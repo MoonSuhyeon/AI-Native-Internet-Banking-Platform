@@ -70,7 +70,7 @@ export default function AdminRatePolicyPage() {
                   className="ml-2 border border-gray-300 rounded px-3 py-1.5 text-[13px] w-36 focus:outline-none" />
               </label>
               <button onClick={search} disabled={loading || !prodId}
-                className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                 {loading ? '조회 중...' : '조회'}
               </button>
             </div>
@@ -126,7 +126,7 @@ export default function AdminRatePolicyPage() {
                 </div>
                 <div className="flex justify-end">
                   <button onClick={add} disabled={busy || !policyName || !preferentialRateBps || !conditionCd}
-                    className="px-6 py-2 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                    className="px-6 py-2 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                     {busy ? '등록 중...' : '정책 등록'}
                   </button>
                 </div>

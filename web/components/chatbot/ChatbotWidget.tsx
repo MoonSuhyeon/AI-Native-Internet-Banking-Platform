@@ -21,17 +21,11 @@ import {
   executeChatbotTransfer,
   sendChatbotMessage,
   startChatbotConsultation,
-  agentLogin,
-  getAgentQueue,
-  connectAgent,
   sendChatMessage as sendAgentChatMessage,
   getChatMessages as getAgentChatMessages,
   endChat as endAgentChat,
   requestAgentChat,
   getChatConsultation,
-  type AgentLoginResponse,
-  type AgentQueueItem,
-  type ChatConsultation,
   type ChatMessage as AgentChatMessage,
 } from '@/lib/consultation-api'
 import {
@@ -41,7 +35,6 @@ import {
   fetchDepositInterestRates,
   fetchDepositRecommendAgent,
   terminateDepositContract,
-  getDepositSlugByProductId,
   type DepositProduct,
   type DepositProductType,
   type DepositRecommendProduct,
@@ -361,19 +354,7 @@ export default function ChatbotWidget() {
   ])
 
   // ── 상담원 모드 state ──────────────────────────────────────────────────────
-  const [agentMode, setAgentMode] = useState(false)
-  const [agentInfo, setAgentInfo] = useState<AgentLoginResponse | null>(null)
-  const [agentLoginId, setAgentLoginId] = useState('')
-  const [agentPassword, setAgentPassword] = useState('')
-  const [agentLoginErr, setAgentLoginErr] = useState('')
-  const [agentLoginLoading, setAgentLoginLoading] = useState(false)
-  const [agentQueue, setAgentQueue] = useState<AgentQueueItem[]>([])
-  const [agentQueueLoading, setAgentQueueLoading] = useState(false)
-  const [agentConsultation, setAgentConsultation] = useState<ChatConsultation | null>(null)
-  const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([])
-  const [agentInput, setAgentInput] = useState('')
-  const [agentSending, setAgentSending] = useState(false)
-  const agentBottomRef = useRef<HTMLDivElement>(null)
+  // 상담원 모드 state 는 패널과 함께 제거했다 — 설정되는 곳이 없어 전부 초기값에 고정돼 있었다.
 
   const hasStarted = chatbotConsultationId !== null
 
@@ -399,61 +380,11 @@ export default function ChatbotWidget() {
   const customerChatBottomRef = useRef<HTMLDivElement>(null)
 
   // ── 상담원 모드 함수 ──────────────────────────────────────────────────────
-  async function handleAgentLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setAgentLoginErr('')
-    setAgentLoginLoading(true)
-    try {
-      const info = await agentLogin(agentLoginId.trim(), agentPassword.trim())
-      setAgentInfo(info)
-    } catch (err: unknown) {
-      const e = err as { response?: { status?: number; data?: { detail?: string } }; message?: string }
-      if (e?.response?.status === 401) {
-        setAgentLoginErr('아이디 또는 비밀번호가 올바르지 않습니다.')
-      } else {
-        setAgentLoginErr(`오류: ${e?.response?.data?.detail ?? e?.message ?? String(err)}`)
-      }
-    } finally {
-      setAgentLoginLoading(false)
-    }
-  }
 
-  async function loadAgentQueue() {
-    setAgentQueueLoading(true)
-    try { setAgentQueue(await getAgentQueue()) } catch { /* ignore */ } finally { setAgentQueueLoading(false) }
-  }
 
-  async function handleAgentAccept(item: AgentQueueItem) {
-    if (!agentInfo) return
-    try {
-      const chat = await connectAgent(item.chat_consultation_id, agentInfo.employee_id)
-      setAgentConsultation(chat)
-      setAgentMessages(await getAgentChatMessages(chat.chat_consultation_id))
-    } catch { /* ignore */ }
-  }
 
-  async function handleAgentSend() {
-    if (!agentInput.trim() || !agentConsultation) return
-    setAgentSending(true)
-    try {
-      const msg = await sendAgentChatMessage(agentConsultation.chat_consultation_id, agentInput.trim(), 'AGENT')
-      setAgentMessages(prev => [...prev, msg])
-      setAgentInput('')
-    } catch { /* ignore */ } finally { setAgentSending(false) }
-  }
 
-  async function handleAgentEnd() {
-    if (!agentConsultation) return
-    const updated = await endAgentChat(agentConsultation.chat_consultation_id)
-    setAgentConsultation(updated)
-  }
 
-  useEffect(() => {
-    if (!agentInfo || !agentMode) return
-    loadAgentQueue()
-    const id = setInterval(loadAgentQueue, 5000)
-    return () => clearInterval(id)
-  }, [agentInfo, agentMode])
 
   // sessionStorage에서 고객 채팅 상태 복원
   useEffect(() => {
@@ -470,18 +401,6 @@ export default function ChatbotWidget() {
     setSatisfactionSubmitted(false)
     setSatisfactionScore(null)
   }, [customerChatId])
-
-  useEffect(() => {
-    if (!agentConsultation || agentConsultation.status === 'ENDED') return
-    const id = setInterval(async () => {
-      try { setAgentMessages(await getAgentChatMessages(agentConsultation.chat_consultation_id)) } catch { /* ignore */ }
-    }, 3000)
-    return () => clearInterval(id)
-  }, [agentConsultation])
-
-  useEffect(() => {
-    agentBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [agentMessages])
 
   // 고객 채팅 폴링: WAITING → CONNECTED 감지 + 메시지 갱신
   useEffect(() => {
@@ -739,277 +658,10 @@ export default function ChatbotWidget() {
     return buildFeatureResult('PRODUCT_GUIDE', `${label} 상품을 조회했습니다.`, await enrichWithPreferentialRates(rows))
   }
 
-  async function answerDepositSavingsFit(customerId: string): Promise<string> {
-    try {
-      let birthYear: number | undefined
-      try {
-        const meRes = await api.get<{ data: { birthDate?: string } }>('/api/v1/customers/me')
-        const birthDate = meRes.data?.data?.birthDate
-        if (birthDate) {
-          birthYear = parseInt(birthDate.replace(/-/g, '').slice(0, 4), 10)
-        }
-      } catch { /* 나이 미확인 시 필터 생략 */ }
-      const result = await fetchDepositRecommendAgent(customerId, 3, birthYear)
-      const products = result.recommendations ?? result.products ?? []
-      const rows = products.slice(0, 3).map((product, index) =>
-        productToRow(product, index, product.reason ?? '최근 현금흐름 기반 추천 상품입니다.'),
-      )
-      const enrichedRows = await enrichWithPreferentialRates(rows)
-      saveRecommendContext(buildFeatureResult('CASH_FLOW_RECOMMEND', '최근 현금흐름 기반 추천 상품입니다.', enrichedRows))
-      const firstDepositOrSavings = products.find((product) => {
-        const type = product.productType ?? product.product_type
-        return type === 'DEPOSIT' || type === 'SAVINGS'
-      })
-      const productType = firstDepositOrSavings?.productType ?? firstDepositOrSavings?.product_type
-      const productName = firstDepositOrSavings?.productName ?? firstDepositOrSavings?.product_name
-      const reason = firstDepositOrSavings?.reason
-      const netCashFlow = result.cashFlow?.netCashFlow
-      const estimatedSavings = result.cashFlow?.estimatedSavingsAmount
 
-      if (productType === 'DEPOSIT') {
-        return [
-          '고객님의 최근 현금흐름 기준으로는 적금보다 예금이 더 적절해 보여요.',
-          '',
-          netCashFlow != null ? `최근 순현금흐름은 약 ${Number(netCashFlow).toLocaleString()}원입니다.` : null,
-          '이미 운용할 수 있는 목돈이 있거나, 매달 추가 납입보다 일정 기간 묶어두는 방식이 더 맞을 때 예금이 유리합니다.',
-          productName ? `우선 검토할 상품: ${productName}` : null,
-          reason ? `판단 근거: ${reason}` : null,
-        ].filter(Boolean).join('\n')
-      }
 
-      if (productType === 'SAVINGS') {
-        return [
-          '고객님의 최근 현금흐름 기준으로는 예금보다 적금이 더 적절해 보여요.',
-          '',
-          estimatedSavings != null ? `매달 저축 여력은 약 ${Number(estimatedSavings).toLocaleString()}원으로 추정됩니다.` : null,
-          '목돈을 한 번에 맡기기보다 매달 꾸준히 모으는 패턴이면 적금이 더 잘 맞습니다.',
-          productName ? `우선 검토할 상품: ${productName}` : null,
-          reason ? `판단 근거: ${reason}` : null,
-        ].filter(Boolean).join('\n')
-      }
-    } catch {}
 
-    return [
-      '거래 내역을 충분히 확인하지 못해 일반 기준으로 안내드릴게요.',
-      '',
-      '- 이미 모아둔 목돈이 있으면 예금이 더 적절합니다.',
-      '- 매달 조금씩 모으고 싶으면 적금이 더 적절합니다.',
-      '- 당장 큰 금액을 묶기 어렵다면 소액 자유적금부터 시작하는 편이 좋습니다.',
-    ].join('\n')
-  }
-
-  async function executeDepositProductSearch(params: {
-    customerId: string
-    period?: number
-    amount?: number
-    productType?: DepositProductType
-    purpose?: 'lump_sum' | 'monthly' | null
-    minRate?: number
-  }) {
-    // ── 1. 고객 재정 데이터 수집 ──
-    let totalBalance = 0
-    let monthlySurplus = 0
-    let txFrequency = 0
-
-    try {
-      const accounts = await fetchDepositAccountViewModels(params.customerId)
-      totalBalance = accounts.reduce((s, a) => s + a.balance, 0)
-    } catch {}
-
-    try {
-      const rec = await fetchDepositRecommendAgent(params.customerId, 3)
-      const cf = rec.cashFlow
-      if (cf) {
-        monthlySurplus = Math.max(0, Number(cf.estimatedSavingsAmount ?? cf.netCashFlow ?? 0))
-        if (cf.totalInflow != null || cf.totalOutflow != null) txFrequency = 20
-      }
-    } catch {}
-
-    const isLowFrequency = txFrequency < 10
-    const investAmount = params.amount ?? ((params.purpose === 'monthly' ? monthlySurplus : totalBalance * 0.7) || 1_000_000)
-    const investPeriod = params.period ?? 12
-
-    // ── 2. 고객 만 나이 계산 ──
-    let customerAge: number | null = null
-    try {
-      const meRes = await api.get<{ data: { birthDate?: string } }>('/api/v1/customers/me')
-      const birthDate = meRes.data?.data?.birthDate // 'YYYY-MM-DD' 또는 'YYYYMMDD'
-      if (birthDate) {
-        const normalized = birthDate.replace(/-/g, '')
-        const byear = parseInt(normalized.slice(0, 4), 10)
-        const bmonth = parseInt(normalized.slice(4, 6), 10)
-        const bday = parseInt(normalized.slice(6, 8), 10)
-        const now = new Date()
-        customerAge = now.getFullYear() - byear -
-          (now.getMonth() + 1 < bmonth || (now.getMonth() + 1 === bmonth && now.getDate() < bday) ? 1 : 0)
-      }
-    } catch { /* 나이 조회 실패 시 키워드 fallback으로만 처리 */ }
-
-    // ── 3. 상품 후보 필터링 ──
-    const EXCLUDE = ['군인', '장병', '군무원', '사병', '병사']
-    const YOUTH_KEYWORDS = ['청년도약', '청년우대', '청년 우대', '청년주택', '청년 주택']
-    const allProducts = await fetchDepositProducts(params.productType ? { productType: params.productType } : undefined)
-    const baseFilter = (p: (typeof allProducts)[0]) => {
-      if (p.productStatus && p.productStatus !== 'SELLING') return false
-      if (p.productType === 'SUBSCRIPTION' && params.productType !== 'SUBSCRIPTION') return false
-      const nd = `${p.productName} ${p.description ?? ''}`
-      if (EXCLUDE.some(k => nd.includes(k))) return false
-
-      // 1순위: DB targetGroups의 minAge/maxAge로 나이 체크
-      const hasAgeRestriction = p.targetGroups?.some(tg => tg.minAge != null || tg.maxAge != null) ?? false
-      if (customerAge !== null && hasAgeRestriction) {
-        const eligible = p.targetGroups!.some(tg => {
-          if (tg.minAge == null && tg.maxAge == null) return true
-          const okMin = tg.minAge == null || customerAge! >= tg.minAge
-          const okMax = tg.maxAge == null || customerAge! <= tg.maxAge
-          return okMin && okMax
-        })
-        if (!eligible) return false
-      }
-      // 2순위: 키워드 fallback
-      if (YOUTH_KEYWORDS.some(k => nd.includes(k))) {
-        if (customerAge === null) return false
-        if (!hasAgeRestriction && customerAge > 34) return false
-      }
-
-      const minAmt = Number(p.minJoinAmount ?? 0)
-      if (minAmt > 0) {
-        if (p.productType === 'DEPOSIT' && totalBalance   > 0 && minAmt > totalBalance)       return false
-        if (p.productType === 'SAVINGS' && monthlySurplus > 0 && minAmt > monthlySurplus * 2) return false
-      }
-      return true
-    }
-    const baseProducts = allProducts.filter(baseFilter)
-    let rateFilterRelaxed = false
-    let candidates = params.minRate != null && params.minRate > 0
-      ? baseProducts.filter(p => Number(p.bestRate ?? p.baseInterestRate ?? 0) >= params.minRate!)
-      : baseProducts
-    // 금리 조건이 너무 엄격해 결과가 없으면 금리 필터 없이 재시도
-    if (candidates.length === 0 && params.minRate != null && params.minRate > 0) {
-      candidates = baseProducts
-      rateFilterRelaxed = true
-    }
-
-    const maxInterest = Math.max(1, ...candidates.map(p => {
-      const r = Number(p.bestRate ?? p.baseInterestRate ?? 0) / 100
-      return p.productType === 'SAVINGS'
-        ? investAmount * r * (investPeriod / 12) * 0.5
-        : investAmount * r * (investPeriod / 12)
-    }))
-
-    // ── 3. 채점 함수 (isAccumulateType 파라미터로 두 프로파일 모두 계산) ──
-    function scoreProducts(isAccumulateType: boolean) {
-      const profileLabel = isAccumulateType ? '저축성장형' : '목돈운용형'
-      const savingsCandidates = candidates.filter(p => p.productType === 'SAVINGS')
-      console.log(`[추천][${profileLabel}] 전체 후보=${candidates.length}개 / SAVINGS후보=${savingsCandidates.length}개`)
-      console.log(`[추천][${profileLabel}] 입력값: totalBalance=${totalBalance} monthlySurplus=${monthlySurplus} investAmount=${investAmount} investPeriod=${investPeriod} maxInterest=${maxInterest.toFixed(0)}`)
-
-      return candidates.map(p => {
-        const minAmt    = Number(p.minJoinAmount ?? 0)
-        const minPeriod = p.minPeriodMonth ?? 1
-        const maxPeriod = p.maxPeriodMonth ?? 60
-        const rate      = Number(p.bestRate ?? p.baseInterestRate ?? 0)
-
-        /* 재정 적합도 (40점) */
-        let financialScore = 20
-        let financialDetail = 'default'
-        if (p.productType === 'DEPOSIT' && totalBalance > 0 && minAmt > 0) {
-          const ratio = totalBalance / minAmt
-          financialScore = ratio >= 3 ? 40 : ratio >= 1.5 ? 30 : ratio >= 1 ? 20 : 10
-          financialDetail = `DEPOSIT ratio=${ratio.toFixed(2)}`
-        } else if (p.productType === 'SAVINGS') {
-          if (monthlySurplus > 0 && minAmt > 0) {
-            const ratio = monthlySurplus / (minAmt * 2)
-            let base = ratio >= 2 ? 40 : ratio >= 1 ? 30 : ratio >= 0.5 ? 20 : 10
-            const beforeBoost = base
-            if (isAccumulateType) base = Math.min(40, Math.round(base * 1.3))
-            financialScore = base
-            financialDetail = `SAVINGS ratio=${ratio.toFixed(2)} base=${beforeBoost}${isAccumulateType ? `→×1.3→${base}` : ''}`
-          } else {
-            financialScore = isAccumulateType ? 30 : 20
-            financialDetail = `SAVINGS monthlySurplus=0 fallback isAccumulate=${isAccumulateType}`
-          }
-        }
-
-        /* 예상 수익 (30점) */
-        const rateD = rate / 100
-        const interest = p.productType === 'SAVINGS'
-          ? investAmount * rateD * (investPeriod / 12) * 0.5
-          : investAmount * rateD * (investPeriod / 12)
-        const returnScore = Math.round((interest / maxInterest) * 30)
-
-        /* 유동성 매칭 (20점) */
-        const avgPeriod = (minPeriod + Math.min(maxPeriod, 36)) / 2
-        let liquidityScore = isLowFrequency
-          ? (avgPeriod >= 24 ? 20 : avgPeriod >= 12 ? 15 : avgPeriod >= 6 ? 10 : 5)
-          : (avgPeriod <= 6  ? 20 : avgPeriod <= 12 ? 15 : avgPeriod <= 24 ? 10 : 5)
-        if (params.period) {
-          const ok = params.period >= minPeriod && (!p.maxPeriodMonth || params.period <= maxPeriod)
-          if (!ok) liquidityScore = Math.max(0, liquidityScore - 8)
-        }
-
-        /* 부가 혜택 (10점) */
-        const desc = `${p.productName} ${p.description ?? ''}`.toLowerCase()
-        let benefitScore = 0
-        if (desc.includes('비과세') || desc.includes('세금우대'))        benefitScore += 5
-        if (desc.includes('중도해지') || desc.includes('수시입출'))       benefitScore += 3
-        if (desc.includes('우대금리') || desc.includes('preferential'))  benefitScore += 2
-        benefitScore = Math.min(10, benefitScore)
-
-        const totalScore = financialScore + returnScore + liquidityScore + benefitScore
-
-        /* 디버그: 적금 상품 또는 관심 상품 상세 출력 */
-        const isWatched = p.productName.includes('맑은하늘') || p.productName.includes('내맘대로')
-        if (p.productType === 'SAVINGS' || isWatched) {
-          console.log(
-            `[추천][${profileLabel}] ${p.productName} (${p.productType})` +
-            ` | rate=${rate}%(bestRate=${p.bestRate ?? 'N/A'} base=${p.baseInterestRate})` +
-            ` | 재정=${financialScore}(${financialDetail}) 수익=${returnScore}(interest=${interest.toFixed(0)}) 유동성=${liquidityScore} 혜택=${benefitScore}` +
-            ` | 합계=${totalScore}`
-          )
-        }
-
-        return {
-          product: p,
-          score: totalScore,
-          financialScore, returnScore, liquidityScore, benefitScore,
-        }
-      }).sort((a, b) => b.score - a.score)
-    }
-
-    // ── 4. 고객 유형 진단 후 해당 프로파일 top3만 계산 ──
-    const isAccumulateType = monthlySurplus > 0 && (monthlySurplus * 12) > totalBalance
-    const sorted = scoreProducts(isAccumulateType)
-    const profileLabel2 = isAccumulateType ? '저축 성장형' : '목돈 운용형'
-    console.log(`[추천][${profileLabel2}] Top5:`, sorted.slice(0, 5).map(s => `${s.product.productName}(${s.score}점)`).join(' / '))
-    const top3 = sorted.slice(0, 3)
-
-    const toRows = async (items: ReturnType<typeof scoreProducts>) => {
-      const rows = items.map((s, i) => productToRow(
-        s.product, i,
-        `재정 ${s.financialScore}/40 · 수익 ${s.returnScore}/30 · 유동성 ${s.liquidityScore}/20 · 혜택 ${s.benefitScore}/10 = ${s.score}점`,
-      ))
-      return enrichWithPreferentialRates(rows)
-    }
-
-    const resultRows = await toRows(top3)
-
-    const rateNote = rateFilterRelaxed ? `\n⚠️ 금리 ${params.minRate}% 이상 조건에 맞는 상품이 없어 전체 상품 중 추천합니다.` : ''
-    const diagnosisMsg = isAccumulateType
-      ? `📌 고객님 진단: 저축 성장형\n연 저축 가능액 ${Math.round(monthlySurplus * 12 / 10000)}만원 > 현재 잔액 ${Math.round(totalBalance / 10000)}만원으로, 목돈을 만드는 적금이 더 유리합니다.${rateNote}`
-      : `📌 고객님 진단: 목돈 운용형\n현재 잔액 ${Math.round(totalBalance / 10000)}만원으로 목돈을 안정적으로 굴리는 예금이 더 유리합니다.${rateNote}`
-
-    return {
-      ...buildFeatureResult('PRODUCT_SEARCH_COMPARE', diagnosisMsg, []),
-      compareData: { accumulate: isAccumulateType ? resultRows : [], lumpSum: isAccumulateType ? [] : resultRows, isAccumulateType },
-    }
-  }
-
-  function moneyText(value?: number) {
-    return value == null ? null : `${Number(value).toLocaleString()}원`
-  }
-
-  async function answerCashflowRecommend(customerId: string, userText: string): Promise<string> {
+  async function answerCashflowRecommend(customerId: string, _userText: string): Promise<string> {
     try {
       let birthYear: number | undefined
       try {
@@ -2124,7 +1776,7 @@ export default function ChatbotWidget() {
           >
             <header
               onPointerDown={startPanelDrag}
-              className="flex cursor-move select-none items-center justify-between border-b border-kb-border bg-[#2D6A4F] px-3 py-3 text-white"
+              className="flex cursor-move select-none items-center justify-between border-b border-kb-border bg-kb-chat px-3 py-3 text-white"
             >
               <div className="flex items-center gap-2">
                 <button
@@ -2161,7 +1813,7 @@ export default function ChatbotWidget() {
                 >
                   상담원
                 </a>
-                {isLoggedIn && !agentMode && (
+                {isLoggedIn && (
                   <button
                     type="button"
                     onPointerDown={(e) => e.stopPropagation()}
@@ -2199,126 +1851,15 @@ export default function ChatbotWidget() {
             </header>
 
             {/* ── 상담원 모드 패널 ─────────────────────────────────────── */}
-            {agentMode && (<>
-              {!agentInfo ? (
-                /* 상담원 로그인 폼 */
-                <div className="flex flex-1 items-center justify-center p-6">
-                  <form onSubmit={handleAgentLogin} className="w-full max-w-xs space-y-3">
-                    <div className="mb-4 text-center">
-                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#2D6A4F]/10 mb-2">
-                        <ArrowLeftRight className="h-5 w-5 text-[#2D6A4F]" />
-                      </div>
-                      <p className="text-sm font-bold text-gray-800">상담원 로그인</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">테스트: agent01 / 1234</p>
-                    </div>
-                    <input
-                      type="text"
-                      value={agentLoginId}
-                      onChange={e => setAgentLoginId(e.target.value)}
-                      placeholder="아이디"
-                      required
-                      className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-[#2D6A4F]"
-                    />
-                    <input
-                      type="password"
-                      value={agentPassword}
-                      onChange={e => setAgentPassword(e.target.value)}
-                      placeholder="비밀번호"
-                      required
-                      onKeyDown={e => e.key === 'Enter' && handleAgentLogin(e as unknown as React.FormEvent)}
-                      className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-[#2D6A4F]"
-                    />
-                    {agentLoginErr && <p className="text-[11px] text-red-500">{agentLoginErr}</p>}
-                    <button
-                      type="submit"
-                      disabled={agentLoginLoading}
-                      className="w-full rounded bg-[#2D6A4F] py-2 text-sm font-bold text-white hover:bg-[#24563F] disabled:opacity-60"
-                    >
-                      {agentLoginLoading ? '로그인 중…' : '로그인'}
-                    </button>
-                  </form>
-                </div>
-              ) : agentConsultation ? (
-                /* 활성 상담 채팅 */
-                <>
-                  <div className="flex items-center justify-between border-b border-kb-border px-4 py-2 bg-[#EAF4EF]">
-                    <button onClick={() => { setAgentConsultation(null); setAgentMessages([]) }} className="text-[11px] text-[#2D6A4F] hover:underline">← 목록</button>
-                    <span className="text-xs font-bold text-gray-700">{agentConsultation.consultation_id ? `상담 #${agentConsultation.chat_consultation_id}` : ''}</span>
-                    {agentConsultation.status !== 'ENDED' && (
-                      <button onClick={handleAgentEnd} className="text-[11px] text-red-500 hover:underline border border-red-300 rounded px-2 py-0.5">종료</button>
-                    )}
-                    {agentConsultation.status === 'ENDED' && <span className="text-[11px] text-gray-400">종료됨</span>}
-                  </div>
-                  <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-                    {agentMessages.map(m => {
-                      const isAgent = m.sender_type === 'AGENT'
-                      return (
-                        <div key={m.message_id} className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
-                          {!isAgent && <span className="mr-1 mt-1 text-[9px] text-gray-400 self-start">{m.sender_type === 'BOT' ? 'BOT' : '고객'}</span>}
-                          <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${isAgent ? 'bg-[#2D6A4F] text-white rounded-br-sm' : 'bg-white border border-kb-border text-gray-800 rounded-bl-sm'}`}>
-                            {m.message}
-                            <div className={`text-[9px] mt-0.5 ${isAgent ? 'text-white/60' : 'text-gray-400'}`}>{m.sent_at ? m.sent_at.slice(11, 16) : ''}</div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                    <div ref={agentBottomRef} />
-                  </div>
-                  <div className="border-t border-kb-border px-3 py-2 flex gap-2">
-                    <input
-                      value={agentInput}
-                      onChange={e => setAgentInput(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAgentSend() } }}
-                      disabled={agentConsultation.status === 'ENDED' || agentSending}
-                      placeholder={agentConsultation.status === 'ENDED' ? '상담 종료됨' : '메시지 입력 (Enter 전송)'}
-                      className="flex-1 h-9 rounded border border-kb-border px-2 text-xs outline-none focus:border-[#2D6A4F] disabled:bg-gray-50"
-                    />
-                    <button
-                      onClick={handleAgentSend}
-                      disabled={agentConsultation.status === 'ENDED' || agentSending || !agentInput.trim()}
-                      className="h-9 px-3 rounded bg-[#2D6A4F] text-white text-xs disabled:opacity-40"
-                    >
-                      <Send className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                /* 대기 목록 */
-                <>
-                  <div className="flex items-center justify-between border-b border-kb-border px-4 py-2 bg-[#EAF4EF]">
-                    <span className="text-xs font-bold text-gray-700">{agentInfo.name} <span className="text-[10px] text-gray-400">({agentInfo.role})</span></span>
-                    <div className="flex items-center gap-2">
-                      <button onClick={loadAgentQueue} disabled={agentQueueLoading} className="text-[11px] text-[#2D6A4F] hover:underline disabled:opacity-40">{agentQueueLoading ? '…' : '새로고침'}</button>
-                      <button onClick={() => { setAgentInfo(null); setAgentLoginId(''); setAgentPassword('') }} className="text-[11px] text-gray-400 hover:text-red-500">로그아웃</button>
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-y-auto">
-                    {agentQueue.length === 0 && !agentQueueLoading && (
-                      <p className="px-4 py-8 text-center text-xs text-gray-400">대기 중인 상담이 없습니다.</p>
-                    )}
-                    {agentQueue.map(item => (
-                      <div key={item.chat_consultation_id} className="flex items-center justify-between px-4 py-3 border-b border-kb-border hover:bg-[#F7F5EF]">
-                        <div>
-                          <p className="text-[13px] font-medium text-gray-800">{item.customer_no}</p>
-                          <p className="text-[10px] text-gray-400">대기 #{item.chat_consultation_id}</p>
-                        </div>
-                        <button
-                          onClick={() => handleAgentAccept(item)}
-                          className="text-xs bg-[#2D6A4F] text-white px-3 py-1.5 rounded hover:bg-[#24563F]"
-                        >
-                          수락
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </>)}
+            {/* 상담원 패널은 여기 있었다. agentMode 가 true 가 되는 곳이 없어
+                115줄이 한 번도 렌더되지 않았다 — 로그인 폼조차 화면에 없었다.
+                상담원 화면은 /admin/consultation/chat 이 담당한다. 위젯이 그 사본을
+                더 들고 있을 이유가 없어 걷어냈다. */}
 
             {/* ── 고객 상담사 채팅 패널 ─────────────────────────────── */}
-            {!agentMode && customerChatId && customerChatStatus !== null && (<>
-              <div className="flex items-center justify-between border-b border-kb-border px-4 py-2 bg-[#EAF4EF]">
-                <span className="text-xs font-bold text-[#2D6A4F]">
+            {customerChatId && customerChatStatus !== null && (<>
+              <div className="flex items-center justify-between border-b border-kb-border px-4 py-2 bg-kb-chat-bg">
+                <span className="text-xs font-bold text-kb-chat">
                   {customerChatStatus === 'WAITING' ? '⏳ 상담원 연결 대기 중...' : customerChatStatus === 'CONNECTED' ? '✅ 상담원 연결됨' : '상담 종료'}
                 </span>
                 {customerChatStatus === 'ENDED' && (
@@ -2336,7 +1877,7 @@ export default function ChatbotWidget() {
                   return (
                     <div key={m.message_id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                       {!isUser && <span className="mr-1 mt-1 text-[9px] text-gray-400 self-start">{m.sender_type === 'BOT' ? 'BOT' : '상담원'}</span>}
-                      <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${isUser ? 'bg-[#2D6A4F] text-white rounded-br-sm' : 'bg-white border border-kb-border text-gray-800 rounded-bl-sm'}`}>
+                      <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${isUser ? 'bg-kb-chat text-white rounded-br-sm' : 'bg-white border border-kb-border text-gray-800 rounded-bl-sm'}`}>
                         {m.message}
                         <div className={`text-[9px] mt-0.5 ${isUser ? 'text-white/60' : 'text-gray-400'}`}>{m.sent_at ? m.sent_at.slice(11, 16) : ''}</div>
                       </div>
@@ -2347,9 +1888,9 @@ export default function ChatbotWidget() {
 
                 {/* 상담 종료 후 만족도 평가 */}
                 {customerChatStatus === 'ENDED' && (
-                  <div className="mt-3 mx-1 rounded-xl border border-kb-border bg-[#F8FFFE] px-4 py-3 text-center">
+                  <div className="mt-3 mx-1 rounded-xl border border-kb-border bg-kb-primary-surface px-4 py-3 text-center">
                     {satisfactionSubmitted ? (
-                      <p className="text-xs text-[#2D6A4F] font-medium">⭐ 소중한 평가 감사합니다!</p>
+                      <p className="text-xs text-kb-chat font-medium">⭐ 소중한 평가 감사합니다!</p>
                     ) : (
                       <>
                         <p className="text-xs text-gray-600 mb-2 font-medium">상담은 어떠셨나요?</p>
@@ -2373,7 +1914,7 @@ export default function ChatbotWidget() {
                               // 실패 시 다시 시도할 수 있도록 그냥 넘김
                             }
                           }}
-                          className="px-4 py-1.5 text-xs font-medium rounded-full bg-[#2D6A4F] text-white disabled:opacity-30 hover:opacity-90"
+                          className="px-4 py-1.5 text-xs font-medium rounded-full bg-kb-chat text-white disabled:opacity-30 hover:opacity-90"
                         >
                           평가 제출
                         </button>
@@ -2390,12 +1931,12 @@ export default function ChatbotWidget() {
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCustomerChatSend() } }}
                     disabled={customerChatSending}
                     placeholder="메시지 입력 (Enter 전송)"
-                    className="flex-1 h-9 rounded border border-kb-border px-2 text-xs outline-none focus:border-[#2D6A4F]"
+                    className="flex-1 h-9 rounded border border-kb-border px-2 text-xs outline-none focus:border-kb-chat"
                   />
                   <button
                     onClick={handleCustomerChatSend}
                     disabled={customerChatSending || !customerChatInput.trim()}
-                    className="h-9 px-3 rounded bg-[#2D6A4F] text-white text-xs disabled:opacity-40"
+                    className="h-9 px-3 rounded bg-kb-chat text-white text-xs disabled:opacity-40"
                   >
                     <Send className="h-3.5 w-3.5" />
                   </button>
@@ -2403,7 +1944,7 @@ export default function ChatbotWidget() {
               )}
             </>)}
 
-            {!agentMode && customerChatStatus !== 'CONNECTED' && (transferState ? (<>
+            {customerChatStatus !== 'CONNECTED' && (transferState ? (<>
                 <div className="flex items-center justify-between border-b border-kb-border bg-white px-4 py-3">
                   <button
                     type="button"
@@ -2441,14 +1982,14 @@ export default function ChatbotWidget() {
                           <button
                             type="button"
                             onClick={() => setTransferState((s) => s && { ...s, toTab: 'my_accounts', toAccountNumber: '', toBank: '' })}
-                            className={`flex-1 py-1.5 text-xs font-bold transition ${transferState.toTab === 'my_accounts' ? 'bg-[#2D6A4F] text-white' : 'bg-white text-kb-text-muted hover:bg-kb-beige'}`}
+                            className={`flex-1 py-1.5 text-xs font-bold transition ${transferState.toTab === 'my_accounts' ? 'bg-kb-chat text-white' : 'bg-white text-kb-text-muted hover:bg-kb-beige'}`}
                           >
                             당행
                           </button>
                           <button
                             type="button"
                             onClick={() => setTransferState((s) => s && { ...s, toTab: 'direct', toAccountNumber: '', toBank: '' })}
-                            className={`flex-1 py-1.5 text-xs font-bold transition ${transferState.toTab === 'direct' ? 'bg-[#2D6A4F] text-white' : 'bg-white text-kb-text-muted hover:bg-kb-beige'}`}
+                            className={`flex-1 py-1.5 text-xs font-bold transition ${transferState.toTab === 'direct' ? 'bg-kb-chat text-white' : 'bg-white text-kb-text-muted hover:bg-kb-beige'}`}
                           >
                             타행
                           </button>
@@ -2468,7 +2009,7 @@ export default function ChatbotWidget() {
                                   onClick={() => setTransferState((s) => s && { ...s, toAccountNumber: acc.account_number })}
                                   className={`w-full rounded border px-3 py-2 text-left text-xs transition ${
                                     transferState.toAccountNumber === acc.account_number
-                                      ? 'border-[#2D6A4F] bg-[#EAF4EF]'
+                                      ? 'border-kb-chat bg-kb-chat-bg'
                                       : 'border-kb-border bg-[#F7F5EF] hover:bg-kb-beige'
                                   }`}
                                 >
@@ -2487,7 +2028,7 @@ export default function ChatbotWidget() {
                             <select
                               value={transferState.toBank}
                               onChange={(e) => setTransferState((s) => s && { ...s, toBank: e.target.value })}
-                              className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-[#2D6A4F] bg-white"
+                              className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-kb-chat bg-white"
                             >
                               <option value="">은행 선택</option>
                               {['국민은행','신한은행','우리은행','하나은행','농협은행','기업은행','카카오뱅크','케이뱅크','토스뱅크','SC제일은행','한국씨티은행','우체국','새마을금고','신협','수협은행','대구은행','부산은행'].map((b) => (
@@ -2499,7 +2040,7 @@ export default function ChatbotWidget() {
                               value={transferState.toAccountNumber}
                               onChange={(e) => setTransferState((s) => s && { ...s, toAccountNumber: e.target.value })}
                               placeholder="계좌번호 입력 (예: 12345678901234)"
-                              className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-[#2D6A4F]"
+                              className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-kb-chat"
                             />
                           </div>
                         )}
@@ -2515,7 +2056,7 @@ export default function ChatbotWidget() {
                             if (/^\d*$/.test(raw)) setTransferState((s) => s && { ...s, amount: raw })
                           }}
                           placeholder="금액 입력"
-                          className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-[#2D6A4F]"
+                          className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-kb-chat"
                         />
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {[10000, 50000, 100000, 500000].map((v) => (
@@ -2544,14 +2085,14 @@ export default function ChatbotWidget() {
                           value={transferState.memo}
                           onChange={(e) => setTransferState((s) => s && { ...s, memo: e.target.value })}
                           placeholder="이체"
-                          className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-[#2D6A4F]"
+                          className="w-full rounded border border-kb-border px-3 py-2 text-sm outline-none focus:border-kb-chat"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={confirmTransfer}
                         disabled={!transferState.toAccountNumber || !transferState.amount || (transferState.toTab === 'direct' && !transferState.toBank)}
-                        className="w-full rounded bg-[#2D6A4F] py-3 text-sm font-bold text-white hover:bg-[#24563F] disabled:bg-gray-300"
+                        className="w-full rounded bg-kb-chat py-3 text-sm font-bold text-white hover:bg-kb-chat-dark disabled:bg-gray-300"
                       >
                         다음
                       </button>
@@ -2589,7 +2130,7 @@ export default function ChatbotWidget() {
                         <button
                           type="button"
                           onClick={() => setTransferState((s) => s && { ...s, step: 'verify' })}
-                          className="flex-1 rounded bg-[#2D6A4F] py-3 text-sm font-bold text-white hover:bg-[#24563F]"
+                          className="flex-1 rounded bg-kb-chat py-3 text-sm font-bold text-white hover:bg-kb-chat-dark"
                         >
                           다음
                         </button>
@@ -2621,7 +2162,7 @@ export default function ChatbotWidget() {
                             </button>
                             <button type="button"
                               onClick={() => setTransferState((s) => s && { ...s, verifySubStep: 'cert-pin', certPin: '' })}
-                              className="flex-1 rounded bg-[#2D6A4F] py-2 text-xs font-bold text-white hover:bg-[#24563F]">
+                              className="flex-1 rounded bg-kb-chat py-2 text-xs font-bold text-white hover:bg-kb-chat-dark">
                               확인
                             </button>
                           </div>
@@ -2687,7 +2228,7 @@ export default function ChatbotWidget() {
                             </p>
                             <Link href="/cert/fin-cert-issue"
                               onClick={() => setOpen(false)}
-                              className="inline-block rounded bg-[#2D6A4F] px-4 py-2 text-xs font-bold text-white hover:bg-[#24563F]">
+                              className="inline-block rounded bg-kb-chat px-4 py-2 text-xs font-bold text-white hover:bg-kb-chat-dark">
                               금융인증서 발급하기
                             </Link>
                           </div>
@@ -2701,7 +2242,7 @@ export default function ChatbotWidget() {
                       <button
                         type="button"
                         onClick={() => setTransferState(null)}
-                        className="w-full rounded bg-[#2D6A4F] py-3 text-sm font-bold text-white hover:bg-[#24563F]"
+                        className="w-full rounded bg-kb-chat py-3 text-sm font-bold text-white hover:bg-kb-chat-dark"
                       >
                         닫기
                       </button>
@@ -2722,7 +2263,7 @@ export default function ChatbotWidget() {
                 <div className="rounded border border-kb-border bg-white p-3 text-xs space-y-1.5">
                   <div className="flex justify-between"><span className="text-kb-text-muted">상품명</span><span className="font-bold">{terminateState.productName}</span></div>
                   <div className="flex justify-between"><span className="text-kb-text-muted">계좌번호</span><span>{terminateState.accountNumber}</span></div>
-                  <div className="flex justify-between"><span className="text-kb-text-muted">해지금액</span><span className="font-bold text-[#E05555]">{terminateState.balance.toLocaleString()}원</span></div>
+                  <div className="flex justify-between"><span className="text-kb-text-muted">해지금액</span><span className="font-bold text-kb-danger">{terminateState.balance.toLocaleString()}원</span></div>
                 </div>
 
                 {terminateState.step === 'method' && (<>
@@ -2731,7 +2272,7 @@ export default function ChatbotWidget() {
                     {(['cash', 'own', 'other'] as const).map((m) => (
                       <button key={m} type="button"
                         onClick={() => setTerminateState(s => s && { ...s, method: m })}
-                        className={`w-full rounded border px-3 py-2 text-xs font-bold text-left transition ${terminateState.method === m ? 'border-[#E05555] bg-red-50 text-[#E05555]' : 'border-kb-border bg-white text-kb-text hover:bg-kb-beige'}`}>
+                        className={`w-full rounded border px-3 py-2 text-xs font-bold text-left transition ${terminateState.method === m ? 'border-kb-danger bg-red-50 text-kb-danger' : 'border-kb-border bg-white text-kb-text hover:bg-kb-beige'}`}>
                         {m === 'cash' ? '💵 현금 수령' : m === 'own' ? '🏦 당행 계좌 입금' : '🏛 타행 계좌 입금'}
                       </button>
                     ))}
@@ -2747,7 +2288,7 @@ export default function ChatbotWidget() {
                           {terminateState.checkingAccounts.map(acc => (
                             <button key={acc.account_id} type="button"
                               onClick={() => setTerminateState(s => s && { ...s, targetAccountId: String(acc.account_id) })}
-                              className={`w-full rounded border px-3 py-2 text-left text-xs transition ${terminateState.targetAccountId === String(acc.account_id) ? 'border-[#2D6A4F] bg-[#EAF4EF]' : 'border-kb-border bg-white hover:bg-kb-beige'}`}>
+                              className={`w-full rounded border px-3 py-2 text-left text-xs transition ${terminateState.targetAccountId === String(acc.account_id) ? 'border-kb-chat bg-kb-chat-bg' : 'border-kb-border bg-white hover:bg-kb-beige'}`}>
                               <p className="font-bold">{acc.account_number}</p>
                               <p className="text-kb-text-muted">{acc.balance.toLocaleString()}원</p>
                             </button>
@@ -2780,7 +2321,7 @@ export default function ChatbotWidget() {
                     if (terminateState.method === 'other' && (!terminateState.otherBank || !terminateState.otherAccount)) { alert('은행과 계좌번호를 입력해주세요.'); return }
                     setTerminateState(s => s && { ...s, step: 'verify-cert-info', certPin: '' })
                   }}
-                    className="w-full rounded bg-[#E05555] py-2 text-xs font-bold text-white hover:bg-red-700">
+                    className="w-full rounded bg-kb-danger py-2 text-xs font-bold text-white hover:bg-red-700">
                     해지 확인
                   </button>
                 </>)}
@@ -2807,7 +2348,7 @@ export default function ChatbotWidget() {
                       </button>
                       <button type="button"
                         onClick={() => setTerminateState(s => s && { ...s, step: 'verify-cert-pin', certPin: '' })}
-                        className="flex-1 rounded bg-[#E05555] py-2 text-xs font-bold text-white hover:bg-red-700">
+                        className="flex-1 rounded bg-kb-danger py-2 text-xs font-bold text-white hover:bg-red-700">
                         확인
                       </button>
                     </div>
@@ -2853,7 +2394,7 @@ export default function ChatbotWidget() {
                     <p className="text-sm font-bold text-kb-text">해지가 완료되었습니다.</p>
                     <p className="text-xs text-kb-text-muted">{terminateState.balance.toLocaleString()}원이 {terminateState.method === 'cash' ? '현금으로 수령' : terminateState.method === 'own' ? '당행 계좌로 입금' : `${terminateState.otherBank} ${terminateState.otherAccount}으로 입금`}됩니다.</p>
                     <button type="button" onClick={() => setTerminateState(null)}
-                      className="rounded bg-[#2D6A4F] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#24563F]">
+                      className="rounded bg-kb-chat px-4 py-1.5 text-xs font-bold text-white hover:bg-kb-chat-dark">
                       확인
                     </button>
                   </div>
@@ -2883,7 +2424,7 @@ export default function ChatbotWidget() {
                 {/* 진행 단계 표시 */}
                 <div className="flex gap-1">
                   {(['period','amount','type','rate','purpose'] as const).map((s, i) => (
-                    <div key={s} className={`flex-1 h-1 rounded-full ${(['period','amount','type','rate','purpose'] as const).indexOf(productSearchState.step as 'period'|'amount'|'type'|'rate'|'purpose') >= i ? 'bg-[#2D6A4F]' : 'bg-kb-border'}`} />
+                    <div key={s} className={`flex-1 h-1 rounded-full ${(['period','amount','type','rate','purpose'] as const).indexOf(productSearchState.step as 'period'|'amount'|'type'|'rate'|'purpose') >= i ? 'bg-kb-chat' : 'bg-kb-border'}`} />
                   ))}
                 </div>
 
@@ -2895,7 +2436,7 @@ export default function ChatbotWidget() {
                       {['6개월','12개월','24개월','36개월'].map(v => (
                         <button key={v} type="button"
                           onClick={() => setProductSearchState(s => s && { ...s, period: v.replace('개월',''), step: 'amount' })}
-                          className="rounded border border-kb-border py-1.5 text-[11px] hover:border-[#2D6A4F] hover:bg-[#EAF4EF]">
+                          className="rounded border border-kb-border py-1.5 text-[11px] hover:border-kb-chat hover:bg-kb-chat-bg">
                           {v}
                         </button>
                       ))}
@@ -2904,10 +2445,10 @@ export default function ChatbotWidget() {
                       value={productSearchState.period}
                       onChange={e => setProductSearchState(s => s && { ...s, period: e.target.value })}
                       onKeyDown={e => e.key === 'Enter' && productSearchState.period && setProductSearchState(s => s && { ...s, step: 'amount' })}
-                      className="w-full rounded border border-kb-border px-3 py-2 text-xs outline-none focus:border-[#2D6A4F]" />
+                      className="w-full rounded border border-kb-border px-3 py-2 text-xs outline-none focus:border-kb-chat" />
                     <button type="button" disabled={!productSearchState.period}
                       onClick={() => setProductSearchState(s => s && { ...s, step: 'amount' })}
-                      className="w-full rounded bg-[#2D6A4F] py-2 text-xs font-bold text-white hover:bg-[#24563F] disabled:opacity-40">
+                      className="w-full rounded bg-kb-chat py-2 text-xs font-bold text-white hover:bg-kb-chat-dark disabled:opacity-40">
                       다음
                     </button>
                   </div>
@@ -2921,7 +2462,7 @@ export default function ChatbotWidget() {
                       {['100만원','500만원','1000만원'].map(v => (
                         <button key={v} type="button"
                           onClick={() => setProductSearchState(s => s && { ...s, amount: v, step: 'type' })}
-                          className="rounded border border-kb-border py-1.5 text-[11px] hover:border-[#2D6A4F] hover:bg-[#EAF4EF]">
+                          className="rounded border border-kb-border py-1.5 text-[11px] hover:border-kb-chat hover:bg-kb-chat-bg">
                           {v}
                         </button>
                       ))}
@@ -2930,10 +2471,10 @@ export default function ChatbotWidget() {
                       value={productSearchState.amount}
                       onChange={e => setProductSearchState(s => s && { ...s, amount: e.target.value })}
                       onKeyDown={e => e.key === 'Enter' && productSearchState.amount && setProductSearchState(s => s && { ...s, step: 'type' })}
-                      className="w-full rounded border border-kb-border px-3 py-2 text-xs outline-none focus:border-[#2D6A4F]" />
+                      className="w-full rounded border border-kb-border px-3 py-2 text-xs outline-none focus:border-kb-chat" />
                     <button type="button" disabled={!productSearchState.amount}
                       onClick={() => setProductSearchState(s => s && { ...s, step: 'type' })}
-                      className="w-full rounded bg-[#2D6A4F] py-2 text-xs font-bold text-white hover:bg-[#24563F] disabled:opacity-40">
+                      className="w-full rounded bg-kb-chat py-2 text-xs font-bold text-white hover:bg-kb-chat-dark disabled:opacity-40">
                       다음
                     </button>
                   </div>
@@ -2973,7 +2514,7 @@ export default function ChatbotWidget() {
                             setProductSearchState(s => s && { ...s, productType: val as 'DEPOSIT' | 'SAVINGS', step: 'rate' })
                           }
                         }}
-                        className="w-full rounded border border-kb-border px-3 py-2 text-xs font-bold text-left hover:border-[#2D6A4F] hover:bg-[#EAF4EF]">
+                        className="w-full rounded border border-kb-border px-3 py-2 text-xs font-bold text-left hover:border-kb-chat hover:bg-kb-chat-bg">
                         {icon} {label}
                       </button>
                     ))}
@@ -2988,7 +2529,7 @@ export default function ChatbotWidget() {
                       {['1%','2%','3%','4%'].map(v => (
                         <button key={v} type="button"
                           onClick={() => setProductSearchState(s => s && { ...s, minRate: v.replace('%',''), step: 'purpose' })}
-                          className="rounded border border-kb-border py-1.5 text-[11px] hover:border-[#2D6A4F] hover:bg-[#EAF4EF]">
+                          className="rounded border border-kb-border py-1.5 text-[11px] hover:border-kb-chat hover:bg-kb-chat-bg">
                           {v} 이상
                         </button>
                       ))}
@@ -2997,7 +2538,7 @@ export default function ChatbotWidget() {
                       value={productSearchState.minRate}
                       onChange={e => setProductSearchState(s => s && { ...s, minRate: e.target.value })}
                       onKeyDown={e => e.key === 'Enter' && setProductSearchState(s => s && { ...s, step: 'purpose' })}
-                      className="w-full rounded border border-kb-border px-3 py-2 text-xs outline-none focus:border-[#2D6A4F]" />
+                      className="w-full rounded border border-kb-border px-3 py-2 text-xs outline-none focus:border-kb-chat" />
                     <div className="flex gap-2">
                       <button type="button"
                         onClick={() => setProductSearchState(s => s && { ...s, minRate: '', step: 'purpose' })}
@@ -3006,7 +2547,7 @@ export default function ChatbotWidget() {
                       </button>
                       <button type="button"
                         onClick={() => setProductSearchState(s => s && { ...s, step: 'purpose' })}
-                        className="flex-1 rounded bg-[#2D6A4F] py-2 text-xs font-bold text-white hover:bg-[#24563F]">
+                        className="flex-1 rounded bg-kb-chat py-2 text-xs font-bold text-white hover:bg-kb-chat-dark">
                         다음
                       </button>
                     </div>
@@ -3039,7 +2580,7 @@ export default function ChatbotWidget() {
                             pushMessages([{ id: messageId('error'), role: 'system', text: '조회 중 오류가 발생했습니다.' }])
                           } finally { setLoading(false) }
                         }}
-                        className="w-full rounded border border-kb-border px-3 py-2 text-xs font-bold text-left hover:border-[#2D6A4F] hover:bg-[#EAF4EF]">
+                        className="w-full rounded border border-kb-border px-3 py-2 text-xs font-bold text-left hover:border-kb-chat hover:bg-kb-chat-bg">
                         💰 목돈 굴리기
                       </button>
                     )}
@@ -3065,7 +2606,7 @@ export default function ChatbotWidget() {
                             pushMessages([{ id: messageId('error'), role: 'system', text: '조회 중 오류가 발생했습니다.' }])
                           } finally { setLoading(false) }
                         }}
-                        className="w-full rounded border border-kb-border px-3 py-2 text-xs font-bold text-left hover:border-[#2D6A4F] hover:bg-[#EAF4EF]">
+                        className="w-full rounded border border-kb-border px-3 py-2 text-xs font-bold text-left hover:border-kb-chat hover:bg-kb-chat-bg">
                         📅 매달 저축
                       </button>
                     )}
@@ -3074,8 +2615,8 @@ export default function ChatbotWidget() {
               </div>
             </>) : !isLoggedIn ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-[#FBFAF7] px-6 py-10 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EAF4EF]">
-                  <Bot className="h-8 w-8 text-[#2D6A4F]" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-kb-chat-bg">
+                  <Bot className="h-8 w-8 text-kb-chat" />
                 </div>
                 <div className="space-y-2">
                   <p className="text-base font-bold text-kb-text">로그인이 필요한 서비스입니다</p>
@@ -3083,7 +2624,7 @@ export default function ChatbotWidget() {
                 </div>
                 <a
                   href="/login"
-                  className="rounded-lg bg-[#2D6A4F] px-6 py-3 text-sm font-bold text-white hover:bg-[#245a42]"
+                  className="rounded-lg bg-kb-chat px-6 py-3 text-sm font-bold text-white hover:bg-[#245a42]"
                 >
                   로그인하기
                 </a>
@@ -3103,7 +2644,7 @@ export default function ChatbotWidget() {
                   <div
                     className={`max-w-[88%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
                       message.role === 'user'
-                        ? 'bg-[#2D6A4F] text-white'
+                        ? 'bg-kb-chat text-white'
                         : message.role === 'system'
                           ? 'border border-red-200 bg-red-50 text-red-700'
                           : 'border border-kb-border bg-white text-kb-text'
@@ -3139,7 +2680,7 @@ export default function ChatbotWidget() {
                                     <a
                                       href={`/products/deposit/join/product-${Number(row.product_id)}`}
                                       onClick={e => { e.stopPropagation(); setOpen(false) }}
-                                      className="flex-shrink-0 rounded border border-[#2D6A4F] bg-[#EAF4EF] px-2 py-0.5 text-[10px] font-bold text-[#2D6A4F] hover:bg-[#D0EBE0]"
+                                      className="flex-shrink-0 rounded border border-kb-chat bg-kb-chat-bg px-2 py-0.5 text-[10px] font-bold text-kb-chat hover:bg-[#D0EBE0]"
                                     >
                                       가입
                                     </a>
@@ -3197,13 +2738,13 @@ export default function ChatbotWidget() {
                               const step = Math.max(1, Math.floor(plan.length / 4))
                               const midPlan = plan.filter((_, i) => (i + 1) % step === 0).slice(0, 4)
                               return (
-                                <div key={index} className={`rounded border p-3 text-xs space-y-2 ${achievable ? 'border-[#2D6A4F] bg-[#EAF4EF]' : 'border-orange-300 bg-orange-50'}`}>
+                                <div key={index} className={`rounded border p-3 text-xs space-y-2 ${achievable ? 'border-kb-chat bg-kb-chat-bg' : 'border-orange-300 bg-orange-50'}`}>
                                   {/* 순위 + 상품명 + 가입하기 */}
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="flex-shrink-0 rounded bg-[#1a3a5c] px-2 py-0.5 text-[10px] font-bold text-white">
                                       {rankLabel[index] ?? `${index + 1}위`}
                                     </span>
-                                    <span className={`flex-shrink-0 rounded px-2 py-0.5 text-[10px] font-bold text-white ${achievable ? 'bg-[#2D6A4F]' : 'bg-orange-400'}`}>
+                                    <span className={`flex-shrink-0 rounded px-2 py-0.5 text-[10px] font-bold text-white ${achievable ? 'bg-kb-chat' : 'bg-orange-400'}`}>
                                       {achievable ? '✅ 달성 가능' : '⚠️ 달성 어려움'}
                                     </span>
                                     <p className="font-bold text-kb-text flex-1 text-[11px]">{String(row.product_name ?? '')}</p>
@@ -3216,9 +2757,9 @@ export default function ChatbotWidget() {
                                   </div>
                                   {/* 핵심 수치 */}
                                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
-                                    <span>금리 <span className="font-bold text-[#2D6A4F]">{String(row.base_interest_rate)}%</span></span>
+                                    <span>금리 <span className="font-bold text-kb-chat">{String(row.base_interest_rate)}%</span></span>
                                     <span>만기수령 <span className="font-bold text-kb-text">{Number(row.maturity_amount).toLocaleString()}원</span></span>
-                                    <span>이자 <span className="font-bold text-[#2D6A4F]">+{Number(row.interest_amount).toLocaleString()}원</span></span>
+                                    <span>이자 <span className="font-bold text-kb-chat">+{Number(row.interest_amount).toLocaleString()}원</span></span>
                                     {row.required_monthly != null && (
                                       <span>월납입 <span className="font-bold text-kb-text">{Number(row.required_monthly).toLocaleString()}원</span></span>
                                     )}
@@ -3230,7 +2771,7 @@ export default function ChatbotWidget() {
                                       <p className="text-[10px] text-kb-text-muted mb-1">납입 계획표</p>
                                       <div className="grid grid-cols-4 gap-1">
                                         {midPlan.map(pt => (
-                                          <div key={pt.month} className={`rounded p-1 text-center text-[10px] ${pt.on_track ? 'bg-[#2D6A4F]/10' : 'bg-orange-100'}`}>
+                                          <div key={pt.month} className={`rounded p-1 text-center text-[10px] ${pt.on_track ? 'bg-kb-chat/10' : 'bg-orange-100'}`}>
                                             <p className="text-kb-text-muted">{pt.month}개월</p>
                                             <p className="font-bold text-kb-text">{(pt.cumulative / 10000).toFixed(0)}만</p>
                                           </div>
@@ -3279,8 +2820,8 @@ export default function ChatbotWidget() {
                             ))}
                             {/* GPT 분석 */}
                             {analysis && (
-                              <div className="mt-2 rounded border border-[#2D6A4F] bg-[#EAF4EF] p-2 text-[11px] text-kb-text whitespace-pre-line">
-                                <p className="mb-1 text-[10px] font-bold text-[#2D6A4F]">💡 AI 분석</p>
+                              <div className="mt-2 rounded border border-kb-chat bg-kb-chat-bg p-2 text-[11px] text-kb-text whitespace-pre-line">
+                                <p className="mb-1 text-[10px] font-bold text-kb-chat">💡 AI 분석</p>
                                 {analysis}
                               </div>
                             )}
@@ -3298,7 +2839,7 @@ export default function ChatbotWidget() {
                             <div key={`${message.id}-${index}`} className="rounded border border-kb-border bg-white p-3 text-xs space-y-1">
                               <div className="flex items-center gap-2">
                                 {row.rank != null && (
-                                  <span className="flex-shrink-0 rounded bg-[#2D6A4F] px-2 py-0.5 text-[11px] font-bold text-white">
+                                  <span className="flex-shrink-0 rounded bg-kb-chat px-2 py-0.5 text-[11px] font-bold text-white">
                                     {String(row.rank)}위
                                   </span>
                                 )}
@@ -3315,12 +2856,12 @@ export default function ChatbotWidget() {
                                 )}
                               </div>
                               <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-kb-text-muted">
-                                <span>금리 <span className="font-bold text-[#2D6A4F]">{row.base_interest_rate != null ? `${row.base_interest_rate}%` : '-'}</span></span>
+                                <span>금리 <span className="font-bold text-kb-chat">{row.base_interest_rate != null ? `${row.base_interest_rate}%` : '-'}</span></span>
                                 <span>기간 {row.min_period_month != null ? `${row.min_period_month}${row.max_period_month != null && row.max_period_month !== row.min_period_month ? `~${row.max_period_month}` : ''}개월` : '-'}</span>
                                 {row.target_groups != null && <span>가입대상 {String(row.target_groups)}</span>}
                                 {row.description != null && <span>{String(row.description)}</span>}
                               </div>
-                              {row.reason != null && <p className="text-[11px] text-[#2D6A4F] font-medium">{String(row.reason)}</p>}
+                              {row.reason != null && <p className="text-[11px] text-kb-chat font-medium">{String(row.reason)}</p>}
                               {row.pref_condition != null && String(row.pref_condition).trim() !== '' && (
                                 <p className="text-[11px] text-orange-600 font-medium">
                                   ✦ 우대금리{row.pref_rate ? ` +${row.pref_rate}%` : ''} 조건: {String(row.pref_condition)}
@@ -3367,7 +2908,7 @@ export default function ChatbotWidget() {
                                     <a
                                       href={`/products/deposit/join/product-${Number(row.product_id)}`}
                                       onClick={e => { e.stopPropagation(); setOpen(false) }}
-                                      className="rounded border border-[#2D6A4F] bg-[#EAF4EF] px-2 py-0.5 text-[10px] font-bold text-[#2D6A4F] hover:bg-[#D0EBE0]"
+                                      className="rounded border border-kb-chat bg-kb-chat-bg px-2 py-0.5 text-[10px] font-bold text-kb-chat hover:bg-[#D0EBE0]"
                                     >
                                       가입
                                     </a>
@@ -3392,7 +2933,7 @@ export default function ChatbotWidget() {
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); startTerminate(row) }}
-                                      className="rounded border border-[#E05555] bg-white px-2 py-0.5 text-[10px] font-bold text-[#E05555] hover:bg-red-50"
+                                      className="rounded border border-kb-danger bg-white px-2 py-0.5 text-[10px] font-bold text-kb-danger hover:bg-red-50"
                                     >
                                       해지
                                     </button>
@@ -3400,7 +2941,7 @@ export default function ChatbotWidget() {
                                   <button
                                     type="button"
                                     onClick={() => setExpandedRow(isOpen ? null : { key: rowKey, title: summary.title, row })}
-                                    className="text-[11px] font-bold text-[#2D6A4F]"
+                                    className="text-[11px] font-bold text-kb-chat"
                                   >
                                     {TEXT.detail}
                                   </button>
@@ -3413,7 +2954,7 @@ export default function ChatbotWidget() {
                                     <button
                                       type="button"
                                       onClick={() => setExpandedRow(null)}
-                                      className="text-[11px] font-bold text-[#2D6A4F]"
+                                      className="text-[11px] font-bold text-kb-chat"
                                     >
                                       닫기
                                     </button>
@@ -3439,7 +2980,7 @@ export default function ChatbotWidget() {
                               type="button"
                               onClick={() => setMessagePage(message.id, Math.max(0, page - 1))}
                               disabled={page === 0}
-                              className="font-bold text-[#2D6A4F] disabled:text-gray-300"
+                              className="font-bold text-kb-chat disabled:text-gray-300"
                             >
                               {TEXT.prev}
                             </button>
@@ -3450,7 +2991,7 @@ export default function ChatbotWidget() {
                               type="button"
                               onClick={() => setMessagePage(message.id, Math.min(totalPages - 1, page + 1))}
                               disabled={page >= totalPages - 1}
-                              className="font-bold text-[#2D6A4F] disabled:text-gray-300"
+                              className="font-bold text-kb-chat disabled:text-gray-300"
                             >
                               {TEXT.next}
                             </button>
@@ -3467,7 +3008,7 @@ export default function ChatbotWidget() {
                             key={button.id}
                             type="button"
                             onClick={() => handleScenarioMessage(button.text, button.value)}
-                            className="rounded border border-[#2D6A4F] bg-white px-2.5 py-1 text-xs font-medium text-[#2D6A4F] hover:bg-[#EAF4EF]"
+                            className="rounded border border-kb-chat bg-white px-2.5 py-1 text-xs font-medium text-kb-chat hover:bg-kb-chat-bg"
                           >
                             {button.text}
                           </button>
@@ -3478,7 +3019,7 @@ export default function ChatbotWidget() {
                       <div className="mt-3">
                         <a
                           href={message.link.href}
-                          className="inline-flex items-center gap-1.5 rounded bg-[#2D6A4F] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#24563F]"
+                          className="inline-flex items-center gap-1.5 rounded bg-kb-chat px-3 py-1.5 text-xs font-bold text-white hover:bg-kb-chat-dark"
                         >
                           <ArrowLeftRight className="h-3 w-3" />
                           {message.link.text}
@@ -3584,11 +3125,11 @@ export default function ChatbotWidget() {
                     disabled={loading}
                     className={`flex min-h-9 items-center justify-center gap-1 rounded border px-2 text-xs font-bold transition disabled:opacity-60 ${
                       action.type === 'recommend'
-                        ? 'border-[#C09B3A] bg-[#FFF8DA] text-[#7A5200] hover:bg-[#FFEFA7]'
+                        ? 'border-kb-gold bg-[#FFF8DA] text-[#7A5200] hover:bg-[#FFEFA7]'
                         : action.type === 'consult'
-                          ? 'border-[#2D6A4F] bg-white text-[#2D6A4F] hover:bg-[#EAF4EF]'
+                          ? 'border-kb-chat bg-white text-kb-chat hover:bg-kb-chat-bg'
                           : action.type === 'my_products'
-                            ? 'border-[#2D6A4F] bg-[#EAF4EF] text-[#2D6A4F] hover:bg-[#D8EEE3]'
+                            ? 'border-kb-chat bg-kb-chat-bg text-kb-chat hover:bg-[#D8EEE3]'
                           : 'border-kb-border bg-[#F7F5EF] text-kb-text hover:bg-kb-beige'
                     }`}
                   >
@@ -3651,12 +3192,12 @@ export default function ChatbotWidget() {
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   placeholder={TEXT.inputPlaceholder}
-                  className="h-10 flex-1 rounded border border-kb-border px-3 text-sm outline-none focus:border-[#2D6A4F]"
+                  className="h-10 flex-1 rounded border border-kb-border px-3 text-sm outline-none focus:border-kb-chat"
                 />
                 <button
                   type="submit"
                   disabled={loading || !input.trim()}
-                  className="flex h-10 w-10 items-center justify-center rounded bg-[#2D6A4F] text-white transition hover:bg-[#24563F] disabled:bg-gray-300"
+                  className="flex h-10 w-10 items-center justify-center rounded bg-kb-chat text-white transition hover:bg-kb-chat-dark disabled:bg-gray-300"
                   aria-label={TEXT.sendMessage}
                 >
                   <Send className="h-4 w-4" />
@@ -3772,14 +3313,14 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
         <button
           type="button"
           onClick={() => switchTab('cert')}
-          className={`flex-1 py-1.5 text-[10px] font-bold transition-colors ${tab === 'cert' ? 'border-b-2 border-[#2D6A4F] text-[#2D6A4F]' : 'text-kb-text-muted'}`}
+          className={`flex-1 py-1.5 text-[10px] font-bold transition-colors ${tab === 'cert' ? 'border-b-2 border-kb-chat text-kb-chat' : 'text-kb-text-muted'}`}
         >
           금융인증서
         </button>
         <button
           type="button"
           onClick={() => switchTab('id')}
-          className={`flex-1 py-1.5 text-[10px] font-bold transition-colors ${tab === 'id' ? 'border-b-2 border-[#2D6A4F] text-[#2D6A4F]' : 'text-kb-text-muted'}`}
+          className={`flex-1 py-1.5 text-[10px] font-bold transition-colors ${tab === 'id' ? 'border-b-2 border-kb-chat text-kb-chat' : 'text-kb-text-muted'}`}
         >
           아이디 로그인
         </button>
@@ -3793,7 +3334,7 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className={`w-7 h-7 rounded flex items-center justify-center border ${i < pin.length ? 'bg-[#2D6A4F] border-[#2D6A4F]' : 'border-kb-border'}`}
+                className={`w-7 h-7 rounded flex items-center justify-center border ${i < pin.length ? 'bg-kb-chat border-kb-chat' : 'border-kb-border'}`}
               >
                 {i < pin.length && <span className="text-white text-[8px]">●</span>}
               </div>
@@ -3820,7 +3361,7 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
             type="button"
             onClick={handleCertLogin}
             disabled={loading || pin.length !== 6}
-            className="w-full rounded bg-[#2D6A4F] py-1.5 text-xs font-bold text-white hover:bg-[#24563F] disabled:opacity-60"
+            className="w-full rounded bg-kb-chat py-1.5 text-xs font-bold text-white hover:bg-kb-chat-dark disabled:opacity-60"
           >
             {loading ? '로그인 중...' : '확인'}
           </button>
@@ -3835,7 +3376,7 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
             placeholder="아이디"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
-            className="w-full rounded border border-kb-border px-2 py-1.5 text-xs outline-none focus:border-[#2D6A4F]"
+            className="w-full rounded border border-kb-border px-2 py-1.5 text-xs outline-none focus:border-kb-chat"
           />
           <input
             type="password"
@@ -3843,13 +3384,13 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleIdLogin()}
-            className="w-full rounded border border-kb-border px-2 py-1.5 text-xs outline-none focus:border-[#2D6A4F]"
+            className="w-full rounded border border-kb-border px-2 py-1.5 text-xs outline-none focus:border-kb-chat"
           />
           <button
             type="button"
             onClick={handleIdLogin}
             disabled={loading}
-            className="w-full rounded bg-[#2D6A4F] py-1.5 text-xs font-bold text-white hover:bg-[#24563F] disabled:opacity-60"
+            className="w-full rounded bg-kb-chat py-1.5 text-xs font-bold text-white hover:bg-kb-chat-dark disabled:opacity-60"
           >
             {loading ? '로그인 중...' : '로그인'}
           </button>

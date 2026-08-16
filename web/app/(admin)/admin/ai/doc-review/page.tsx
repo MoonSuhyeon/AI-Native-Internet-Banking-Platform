@@ -84,7 +84,7 @@ export default function AdminDocReviewPage() {
                   className="border border-gray-300 rounded px-2 py-1 text-[12px] w-28 focus:outline-none" />
               </label>
               <button onClick={load} disabled={loading}
-                className="px-5 py-1.5 text-[13px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">
+                className="px-5 py-1.5 text-[13px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50">
                 {loading ? '조회 중...' : '큐 조회'}
               </button>
             </div>
@@ -128,7 +128,7 @@ export default function AdminDocReviewPage() {
                       <button
                         onClick={() => setDecideTarget(s.submission_id)}
                         disabled={busy === s.submission_id}
-                        className="text-[11px] px-3 py-1 bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">
+                        className="text-[11px] px-3 py-1 bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50">
                         검토 결정
                       </button>
                     ) : (

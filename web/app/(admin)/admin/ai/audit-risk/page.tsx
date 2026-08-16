@@ -62,7 +62,7 @@ export default function AdminAuditRiskPage() {
           <div className="flex items-center justify-between mb-5">
             <h1 className="text-lg font-bold text-gray-800">AI 감사 · 심사관 리스크 대시보드</h1>
             <button onClick={load} disabled={loading}
-              className="px-5 py-1.5 text-[13px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">
+              className="px-5 py-1.5 text-[13px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50">
               {loading ? '조회 중...' : '전체 새로고침'}
             </button>
           </div>

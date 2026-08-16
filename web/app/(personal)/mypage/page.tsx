@@ -191,7 +191,7 @@ export default function MyKBPage() {
 
   if (error) return (
     <div className="max-w-kb-container mx-auto px-6 py-20 text-center">
-      <p className="text-[#E05555] mb-4">{error}</p>
+      <p className="text-kb-danger mb-4">{error}</p>
       <Link href="/login" style={{ color: KB_PRIMARY }} className="hover:underline">로그인 페이지로 이동</Link>
     </div>
   )
@@ -385,7 +385,7 @@ export default function MyKBPage() {
         <Link href="/support/customer-info/withdraw"
           className="rounded-xl p-6 flex items-center justify-between hover:bg-red-50 transition-colors group" style={{ border: '1px solid #E2F5EF' }}>
           <div>
-            <p className="text-[15px] font-bold text-kb-text group-hover:text-[#E05555]">회원탈퇴 &gt;</p>
+            <p className="text-[15px] font-bold text-kb-text group-hover:text-kb-danger">회원탈퇴 &gt;</p>
             <p className="text-[13px] text-kb-text-muted mt-1">인터넷뱅킹 이용을 중단하고 탈퇴합니다.</p>
           </div>
         </Link>

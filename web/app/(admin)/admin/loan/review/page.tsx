@@ -80,7 +80,7 @@ function ReviewTable({ items, emptyMsg }: { items: ReviewItem[]; emptyMsg: strin
               </td>
               <td className="px-4 py-3">
                 <Link href={`/admin/loan/review/${r.applId}`}
-                  className="px-3 py-1 text-[12px] bg-[#1B3A6B] text-white rounded hover:opacity-90">
+                  className="px-3 py-1 text-[12px] bg-kb-admin text-white rounded hover:opacity-90">
                   상세
                 </Link>
               </td>
@@ -117,7 +117,7 @@ function StatsPanel() {
         <input type="text" value={to} onChange={e => setTo(e.target.value)} placeholder="yyyyMMdd"
           className="border border-gray-300 px-3 py-1.5 text-[13px] rounded w-32 focus:outline-none" />
         <button onClick={load} disabled={loading}
-          className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+          className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
           {loading ? '조회 중...' : '조회'}
         </button>
       </div>
@@ -214,7 +214,7 @@ export default function LoanReviewListPage() {
           <div className="flex justify-between items-center mb-5">
             <h1 className="text-lg font-bold text-gray-800">본심사 관리</h1>
             <Link href="/admin/loan/review/new"
-              className="px-4 py-2 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90">
+              className="px-4 py-2 bg-kb-admin text-white text-[13px] rounded hover:opacity-90">
               + 신청 직접 심사
             </Link>
           </div>
@@ -224,7 +224,7 @@ export default function LoanReviewListPage() {
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`px-5 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
                   tab === t.id
-                    ? 'border-[#1B3A6B] text-[#1B3A6B]'
+                    ? 'border-kb-admin text-kb-admin'
                     : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                 {t.label}
               </button>

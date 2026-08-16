@@ -64,7 +64,7 @@ export default function AdminDocumentsPage() {
                   className="ml-2 border border-gray-300 rounded px-3 py-1.5 text-[13px] w-36 focus:outline-none" />
               </label>
               <button onClick={search} disabled={loading || !applId}
-                className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                 {loading ? '조회 중...' : '조회'}
               </button>
             </div>

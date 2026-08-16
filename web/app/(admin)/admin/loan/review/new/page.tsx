@@ -78,7 +78,7 @@ export default function AdminReviewNewPage() {
               </Link>
               {canRun ? (
                 <button onClick={submit} disabled={busy || !applId}
-                  className="flex-1 py-2.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                  className="flex-1 py-2.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                   {busy ? '처리 중...' : '심사 시작'}
                 </button>
               ) : (

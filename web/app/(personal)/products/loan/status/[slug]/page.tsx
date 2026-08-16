@@ -168,7 +168,7 @@ function ESignForm({ applId }: { applId: number | null }) {
     const appl = journey?.application
     return (
       <div className="max-w-lg">
-        <div className="bg-[#FFF9E6] border border-[#C09B3A] p-4 mb-5 text-[13px] text-kb-text-body">
+        <div className="bg-[#FFF9E6] border border-kb-gold p-4 mb-5 text-[13px] text-kb-text-body">
           <p className="font-bold mb-1">전자서명 완료 — 대출 실행 정보를 입력해 주세요.</p>
           <p>지정 계좌로 대출금이 즉시 지급됩니다.</p>
         </div>
@@ -211,7 +211,7 @@ function ESignForm({ applId }: { applId: number | null }) {
   return (
     <div className="max-w-lg">
       {!applId && <p className="text-[13px] text-kb-red mb-4">신청번호가 없습니다. 진행현황 페이지에서 다시 접근해주세요.</p>}
-      <div className="bg-[#FFF9E6] border border-[#C09B3A] p-4 mb-5 text-[13px] text-kb-text-body">
+      <div className="bg-[#FFF9E6] border border-kb-gold p-4 mb-5 text-[13px] text-kb-text-body">
         <p className="font-bold mb-1">전자서명 안내</p>
         <p>약정 체결을 위한 전자서명 후 지정 계좌로 대출금이 지급됩니다.</p>
       </div>

@@ -93,7 +93,7 @@ export default function AdminIdentityPage() {
               <button
                 onClick={handleSearch}
                 disabled={loading || !idvId}
-                className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
               >
                 {loading ? '조회 중...' : '조회'}
               </button>

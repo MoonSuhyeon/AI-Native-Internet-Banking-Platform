@@ -102,7 +102,7 @@ export default function DaonHomePage() {
                   <span className="text-lg text-kb-text-body group-hover:font-bold transition-all duration-150">
                     {menu.label}
                   </span>
-                  <div className="h-1 w-0 group-hover:w-full bg-[#1B3A6B] transition-all duration-200" />
+                  <div className="h-1 w-0 group-hover:w-full bg-kb-admin transition-all duration-200" />
                 </div>
               </Link>
             ))}

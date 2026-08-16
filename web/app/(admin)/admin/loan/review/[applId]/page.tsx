@@ -673,7 +673,7 @@ function Btn({ label, onClick, disabled, variant = 'primary' }: {
     ? 'bg-red-600 text-white hover:opacity-90'
     : variant === 'outline'
     ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-    : 'bg-[#1B3A6B] text-white hover:opacity-90'
+    : 'bg-kb-admin text-white hover:opacity-90'
   return (
     <button onClick={onClick} disabled={disabled}
       className={`px-4 py-1.5 text-[12px] rounded transition-all disabled:opacity-50 ${cls}`}>

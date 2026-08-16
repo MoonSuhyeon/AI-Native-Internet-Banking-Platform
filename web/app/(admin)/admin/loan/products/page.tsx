@@ -303,7 +303,7 @@ export default function AdminLoanProductsPage() {
                     취소
                   </button>
                   <button onClick={handleCreate} disabled={busy || !form.prodCd || !form.prodName}
-                    className="px-5 py-2 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                    className="px-5 py-2 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                     {busy ? '등록 중...' : '등록'}
                   </button>
                 </div>

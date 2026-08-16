@@ -38,6 +38,25 @@ const config: Config = {
         "kb-gnb-biz-hover":  "#D8D8D8",  // 기업 GNB 호버
         "kb-gnb-biz-active": "#1B3A6B",  // 기업 GNB active 네이비
 
+        // ── 챗봇 ──
+        //
+        // 위 kb-primary(#0D5C47)와는 다른 그린이다. 값이 달라 kb-primary 로 바꾸면
+        // 화면이 변한다. 이름을 따로 두고 값은 그대로 옮긴다.
+        "kb-chat":       "#2D6A4F",  // 챗봇 헤더·강조 그린
+        "kb-chat-dark":  "#24563F",  // 챗봇 그린 진한 단계(hover 등)
+        "kb-chat-bg":    "#EAF4EF",  // 챗봇 선택 배경
+
+        // ── 상태색 ──
+        "kb-danger":     "#E05555",  // 출금·오류 빨강
+        "kb-gold":       "#C09B3A",  // 강조 테두리 골드
+
+        // ── 직원용(admin) ──
+        //
+        // 값은 위 기업 GNB active 와 같지만 쓰임이 다르다. 어드민 화면 57곳이
+        // #1B3A6B 를 그대로 적고 있었는데, 기업 GNB 토큰을 빌려 쓰면 나중에 둘 중
+        // 하나만 바꾸고 싶을 때 갈라낼 수 없다. 이름을 따로 둔다.
+        "kb-admin":          "#1B3A6B",  // 어드민 기본 네이비
+
         // ── Border ──
         "kb-border":      "#C5D5CD",   // 민트 톤 보더
         "kb-border-dark": "#9AAEA4",

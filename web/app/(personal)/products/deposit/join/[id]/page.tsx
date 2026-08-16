@@ -468,14 +468,14 @@ export default function DepositJoinPage() {
                 <SectionHeader title="금융상품의 중요사항 안내" />
                 <AccItem title="우선설명 사항 확인" required
                   checked={termChecks.priority} onCheck={v => checkTerm('priority', v)}>
-                  <p className="text-[#E05555]">이자율(중도해지이율, 만기후이율) 및 산출근거</p>
+                  <p className="text-kb-danger">이자율(중도해지이율, 만기후이율) 및 산출근거</p>
                 </AccItem>
                 <AccItem title="부담정보 및 금융소비자의 권리 사항 확인" required
                   checked={termChecks.burden} onCheck={v => checkTerm('burden', v)}>
                   <ul className="space-y-1">
                     {['중도 해지에 따른 불이익', '금리변동형 상품 안내', '자료열람요구권 행사에 관한 사항', '위법계약해지권 행사에 관한 사항',
                       '금융상품 판매 전후 안내(만기 알림 서비스)', '예금자보호법에 관한 사항(예금자보호 여부 및 그 내용)', '민원처리 및 분쟁조정 절차'].map(item => (
-                      <li key={item} className="text-[#E05555] flex gap-1.5 before:content-['·'] before:flex-shrink-0">{item}</li>
+                      <li key={item} className="text-kb-danger flex gap-1.5 before:content-['·'] before:flex-shrink-0">{item}</li>
                     ))}
                   </ul>
                 </AccItem>
@@ -484,7 +484,7 @@ export default function DepositJoinPage() {
                   <ul className="space-y-1 mb-2">
                     {['예금상품의 내용(계약기간, 이자의 지급시기 및 지급제한 사유)', '계약의 해제·해지',
                       '연계·제휴 서비스의 내용, 제공받을 수 있는 요건, 제공기간 등을 사전에 알린다는 사실 및 알리는 방법'].map(item => (
-                      <li key={item} className="text-[#E05555] flex gap-1.5 before:content-['·'] before:flex-shrink-0">{item}</li>
+                      <li key={item} className="text-kb-danger flex gap-1.5 before:content-['·'] before:flex-shrink-0">{item}</li>
                     ))}
                   </ul>
                   <p className="text-kb-text-muted">※ 금융소비자는 해당 상품 또는 서비스에 대해 설명을 받을 권리가 있습니다. 궁금한 내용은 고객센터(☎1588-9999) 또는 영업점에 문의하시기 바랍니다.</p>
@@ -497,8 +497,8 @@ export default function DepositJoinPage() {
                   <input type="checkbox" checked={termChecks.final} onChange={e => checkTerm('final', e.target.checked)}
                     className="mt-0.5 w-4 h-4 accent-kb-primary" />
                   <div>
-                    <p className="text-[13px] font-semibold text-kb-text">본인은 위 예금상품의 약관과 상품설명서에 대해 중요사항을 충분히 이해하고 본 상품에 가입함을 확인합니다. <span className="text-[#E05555]">(필수)</span></p>
-                    <p className="text-[12px] text-[#E05555] mt-1">※ 설명내용을 제대로 이해하지 못하였음에도 이해했다는 확인을 하는 경우, 추후 권리구제가 어려울 수 있습니다.</p>
+                    <p className="text-[13px] font-semibold text-kb-text">본인은 위 예금상품의 약관과 상품설명서에 대해 중요사항을 충분히 이해하고 본 상품에 가입함을 확인합니다. <span className="text-kb-danger">(필수)</span></p>
+                    <p className="text-[12px] text-kb-danger mt-1">※ 설명내용을 제대로 이해하지 못하였음에도 이해했다는 확인을 하는 경우, 추후 권리구제가 어려울 수 있습니다.</p>
                   </div>
                 </label>
               </div>
@@ -530,7 +530,7 @@ export default function DepositJoinPage() {
                 {id === 'axful-soldier' && (
                   <>
                     <div className="bg-kb-primary-bg border border-kb-primary-border px-4 py-3 mb-3 text-[12px] text-kb-text-body rounded">
-                      <p className="font-semibold text-[#2D6A4F] mb-1">현역 복무 중인 장병만 가입 가능합니다.</p>
+                      <p className="font-semibold text-kb-chat mb-1">현역 복무 중인 장병만 가입 가능합니다.</p>
                       <p>· 군번 및 복무 정보는 병무청 데이터와 대조하여 확인됩니다.</p>
                       <p>· 허위 정보 입력 시 가입이 취소될 수 있습니다.</p>
                     </div>
@@ -706,7 +706,7 @@ export default function DepositJoinPage() {
                           : withdrawAccounts.map(a => <option key={a.id} value={a.id}>{a.number} ({a.name})</option>)}
                       </select>
                     </div>
-                    <p className="text-[12px]">출금가능금액 <span className="text-[#E05555] font-bold">{formatNumber(withdrawAccounts.find(a => a.id === transferAccount)?.availableBalance ?? 0)}</span>원</p>
+                    <p className="text-[12px]">출금가능금액 <span className="text-kb-danger font-bold">{formatNumber(withdrawAccounts.find(a => a.id === transferAccount)?.availableBalance ?? 0)}</span>원</p>
                   </FormRow>
                 )}
 
@@ -748,7 +748,7 @@ export default function DepositJoinPage() {
                         : withdrawAccounts.map(a => <option key={a.id} value={a.id}>{a.number} ({a.name})</option>)}
                     </select>
                   </div>
-                  <p className="text-[12px]">출금가능금액 <span className="text-[#E05555] font-bold">{formatNumber(withdrawAccounts.find(a => a.id === withdrawAccount)?.availableBalance ?? 0)}</span>원</p>
+                  <p className="text-[12px]">출금가능금액 <span className="text-kb-danger font-bold">{formatNumber(withdrawAccounts.find(a => a.id === withdrawAccount)?.availableBalance ?? 0)}</span>원</p>
                 </FormRow>
 
                 {/* 비밀번호 */}

@@ -241,7 +241,7 @@ export default function TransactionsPage() {
                                       <p key={t.transactionId} className="truncate" style={{ color: KB_PRIMARY }}>{formatNumber(Number(t.amount))}</p>
                                     ))}
                                     {dayTxs.filter(t => t.directionType === 'OUT').map(t => (
-                                      <p key={t.transactionId} className="truncate text-[#E05555]">{formatNumber(Number(t.amount))}</p>
+                                      <p key={t.transactionId} className="truncate text-kb-danger">{formatNumber(Number(t.amount))}</p>
                                     ))}
                                   </>
                                 )}
@@ -425,7 +425,7 @@ export default function TransactionsPage() {
                   {/* 합계 */}
                   <div className="flex justify-between text-[13px] text-kb-text-muted mb-3 px-1">
                     <span>총 입금 ({filteredTxs.filter(t=>t.directionType==='IN').length}건) <span className="font-semibold" style={{ color: KB_PRIMARY }}>{formatNumber(totalDeposit)}원</span></span>
-                    <span>총 출금 ({filteredTxs.filter(t=>t.directionType==='OUT').length}건) <span className="font-semibold text-[#E05555]">{formatNumber(totalWithdraw)}원</span></span>
+                    <span>총 출금 ({filteredTxs.filter(t=>t.directionType==='OUT').length}건) <span className="font-semibold text-kb-danger">{formatNumber(totalWithdraw)}원</span></span>
                   </div>
 
                   {/* 거래 테이블 */}

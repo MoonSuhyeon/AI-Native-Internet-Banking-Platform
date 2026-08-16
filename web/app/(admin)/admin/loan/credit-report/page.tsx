@@ -126,7 +126,7 @@ export default function AdminCreditReportPage() {
                             <button
                               onClick={() => handleRetry(r.crptId)}
                               disabled={busy === r.crptId}
-                              className="px-3 py-1 text-[11px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50"
+                              className="px-3 py-1 text-[11px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50"
                             >
                               재시도
                             </button>
@@ -167,7 +167,7 @@ export default function AdminCreditReportPage() {
             <div className="flex justify-end gap-2">
               <button onClick={() => setAckTarget(null)} className="px-4 py-2 text-[13px] border border-gray-300 rounded hover:bg-gray-50">취소</button>
               <button onClick={submitAck} disabled={!ackNo || busy === ackTarget}
-                className="px-4 py-2 text-[13px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">확인</button>
+                className="px-4 py-2 text-[13px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50">확인</button>
             </div>
           </div>
         </div>

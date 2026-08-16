@@ -117,7 +117,7 @@ export default function AdminCalendarPage() {
             <button
               onClick={load}
               disabled={loading}
-              className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
+              className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
             >
               {loading ? '조회 중...' : '조회'}
             </button>
@@ -171,7 +171,7 @@ export default function AdminCalendarPage() {
                           {editId === r.calId ? (
                             <>
                               <button onClick={() => saveEdit(r.calId)} disabled={busy}
-                                className="px-3 py-1 text-[11px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50">
+                                className="px-3 py-1 text-[11px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50">
                                 저장
                               </button>
                               <button onClick={() => setEditId(null)}
@@ -239,7 +239,7 @@ export default function AdminCalendarPage() {
               <button
                 onClick={handleCreate}
                 disabled={busy || !newDate}
-                className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
               >
                 {busy ? '등록 중...' : '등록'}
               </button>

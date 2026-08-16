@@ -39,7 +39,7 @@ export default function StaffCashFlowPanel() {
     <section className="mb-5 rounded-lg border border-kb-border bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded bg-[#EAF4EF] text-[#2D6A4F]">
+          <span className="flex h-10 w-10 items-center justify-center rounded bg-kb-chat-bg text-kb-chat">
             <BarChart3 className="h-5 w-5" />
           </span>
           <div>
@@ -55,7 +55,7 @@ export default function StaffCashFlowPanel() {
           <input
             value={customerNo}
             onChange={(event) => setCustomerNo(event.target.value)}
-            className="mt-1 h-10 w-full rounded border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-[#2D6A4F]"
+            className="mt-1 h-10 w-full rounded border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-kb-chat"
           />
         </label>
         <label className="text-xs font-medium text-gray-500">
@@ -63,13 +63,13 @@ export default function StaffCashFlowPanel() {
           <input
             value={staffId}
             onChange={(event) => setStaffId(event.target.value)}
-            className="mt-1 h-10 w-full rounded border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-[#2D6A4F]"
+            className="mt-1 h-10 w-full rounded border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-kb-chat"
           />
         </label>
         <button
           type="submit"
           disabled={loading || !customerNo.trim() || !staffId.trim()}
-          className="mt-5 flex h-10 items-center justify-center gap-2 rounded bg-[#2D6A4F] px-4 text-sm font-bold text-white transition hover:bg-[#24563F] disabled:bg-gray-300 md:mt-[19px]"
+          className="mt-5 flex h-10 items-center justify-center gap-2 rounded bg-kb-chat px-4 text-sm font-bold text-white transition hover:bg-kb-chat-dark disabled:bg-gray-300 md:mt-[19px]"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           조회

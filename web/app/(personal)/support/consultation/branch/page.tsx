@@ -163,7 +163,7 @@ export default function BranchConsultationPage() {
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-5" style={{ border: '1px solid #5BC9A820' }}>
                 <div className="px-6 py-4 border-b" style={{ borderColor: KB_PRIMARY_BORDER, backgroundColor: '#F8FDFB' }}>
                   <h2 className="text-[16px] font-bold text-kb-text">상담 예약 정보 입력</h2>
-                  <p className="text-[12px] text-[#E05555] mt-1">
+                  <p className="text-[12px] text-kb-danger mt-1">
                     <span className="text-kb-mint font-bold">★</span> 표시가 있는 항목은 반드시 입력해주세요.
                   </p>
                 </div>
@@ -214,8 +214,8 @@ export default function BranchConsultationPage() {
                             선택
                           </button>
                         </div>
-                        <p className="text-[12px] text-[#E05555] flex items-start gap-1">
-                          <span className="bg-[#E05555] text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">ⓘ</span>
+                        <p className="text-[12px] text-kb-danger flex items-start gap-1">
+                          <span className="bg-kb-danger text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">ⓘ</span>
                           입출금, 통장 재발행, 통장정리, 동전교환 등 단순 업무는 예약 대상이 아닙니다.
                         </p>
                       </td>

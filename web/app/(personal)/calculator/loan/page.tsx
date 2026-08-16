@@ -86,7 +86,7 @@ export default function LoanCalculatorPage() {
               <button onClick={() => { setCalcTab(i); setCalcResult(null); setTermTooltip(null) }}
                 className={`flex items-center gap-2 px-6 py-3 text-[13px] transition-colors border-b-2 -mb-px ${
                   calcTab === i
-                    ? 'border-[#C09B3A] font-bold text-kb-text bg-white'
+                    ? 'border-kb-gold font-bold text-kb-text bg-white'
                     : 'border-transparent text-kb-text-muted bg-kb-beige-light hover:text-kb-text'
                 }`}>
                 {t}

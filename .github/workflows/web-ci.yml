@@ -28,12 +28,10 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
 
-  # lint 는 아직 막지 않는다 — 미사용 변수 11건이 남아 있고 그중 6건이
-  # ChatbotWidget.tsx(팀원 작업물)라 협의 없이 지울 수 없다. 다만 보이지 않으면
-  # 줄지 않으므로 CI 에 띄우고, 다 정리되면 continue-on-error 를 뗀다.
+  # 미사용 변수 11건을 정리해 0건이 됐으므로 이제 막는다. 대부분은 스타일 문제가
+  # 아니라 도달 불가 코드였다 — 지우고 나서야 그 사실이 드러났다.
   lint:
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: web

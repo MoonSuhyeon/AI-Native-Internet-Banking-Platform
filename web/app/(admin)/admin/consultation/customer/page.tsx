@@ -127,10 +127,10 @@ export default function ConsultationCustomerPage() {
                 고객번호
                 <input value={customerNo} onChange={e => setCustomerNo(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') onSearch() }}
-                  className="mt-1 block h-9 w-48 rounded border border-gray-300 px-3 text-[13px] text-gray-800 focus:outline-none focus:border-[#1B3A6B]" />
+                  className="mt-1 block h-9 w-48 rounded border border-gray-300 px-3 text-[13px] text-gray-800 focus:outline-none focus:border-kb-admin" />
               </label>
               <button onClick={onSearch} disabled={loading}
-                className="h-9 px-6 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                className="h-9 px-6 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                 {loading ? '조회 중...' : '조회'}
               </button>
             </div>
@@ -146,7 +146,7 @@ export default function ConsultationCustomerPage() {
               <button key={t.id} onClick={() => onTabChange(t.id)}
                 className={`px-5 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
                   activeTab === t.id
-                    ? 'border-[#1B3A6B] text-[#1B3A6B]'
+                    ? 'border-kb-admin text-kb-admin'
                     : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                 {t.label}
               </button>

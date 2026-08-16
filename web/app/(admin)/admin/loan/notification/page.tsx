@@ -115,7 +115,7 @@ export default function AdminNotificationPage() {
               <button
                 onClick={handleLookup}
                 disabled={lookupLoading || !searchId}
-                className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
               >
                 {lookupLoading ? '조회 중...' : '조회'}
               </button>
@@ -152,7 +152,7 @@ export default function AdminNotificationPage() {
                   <button
                     onClick={() => handleRetry(detail.outboxId)}
                     disabled={busy === detail.outboxId}
-                    className="px-4 py-1.5 text-[12px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50"
+                    className="px-4 py-1.5 text-[12px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50"
                   >
                     재시도
                   </button>
@@ -190,7 +190,7 @@ export default function AdminNotificationPage() {
                             <button
                               onClick={() => handleRetry(r.outboxId)}
                               disabled={busy === r.outboxId}
-                              className="px-3 py-1 text-[11px] bg-[#1B3A6B] text-white rounded hover:opacity-90 disabled:opacity-50"
+                              className="px-3 py-1 text-[11px] bg-kb-admin text-white rounded hover:opacity-90 disabled:opacity-50"
                             >
                               재시도
                             </button>

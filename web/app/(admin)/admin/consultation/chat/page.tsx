@@ -195,8 +195,8 @@ export default function ConsultationChatPage() {
         <main className="flex-1 flex items-center justify-center">
           <div className="w-80 bg-white rounded-xl shadow-sm border border-gray-200 px-8 py-9">
             <div className="mb-6 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#1B3A6B]/10 mb-3">
-                <svg className="w-6 h-6 text-[#1B3A6B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-kb-admin/10 mb-3">
+                <svg className="w-6 h-6 text-kb-admin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
@@ -214,7 +214,7 @@ export default function ConsultationChatPage() {
                   onChange={e => setLoginId(e.target.value)}
                   autoComplete="username"
                   required
-                  className="w-full h-9 rounded-lg border border-gray-300 px-3 text-[13px] text-gray-800 focus:outline-none focus:border-[#1B3A6B]"
+                  className="w-full h-9 rounded-lg border border-gray-300 px-3 text-[13px] text-gray-800 focus:outline-none focus:border-kb-admin"
                 />
               </div>
               <div>
@@ -225,7 +225,7 @@ export default function ConsultationChatPage() {
                   onChange={e => setPassword(e.target.value)}
                   autoComplete="current-password"
                   required
-                  className="w-full h-9 rounded-lg border border-gray-300 px-3 text-[13px] text-gray-800 focus:outline-none focus:border-[#1B3A6B]"
+                  className="w-full h-9 rounded-lg border border-gray-300 px-3 text-[13px] text-gray-800 focus:outline-none focus:border-kb-admin"
                 />
               </div>
 
@@ -236,7 +236,7 @@ export default function ConsultationChatPage() {
               <button
                 type="submit"
                 disabled={loginLoading}
-                className="w-full h-10 mt-1 bg-[#1B3A6B] text-white text-[13px] font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
+                className="w-full h-10 mt-1 bg-kb-admin text-white text-[13px] font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
               >
                 {loginLoading ? '로그인 중…' : '로그인'}
               </button>
@@ -297,7 +297,7 @@ export default function ConsultationChatPage() {
                   loadQueue()
                 }} className="text-xs text-red-400 hover:underline">오래된거 정리</button>
                 <button onClick={loadQueue} disabled={queueLoading}
-                  className="text-xs text-[#1B3A6B] hover:underline disabled:opacity-40">
+                  className="text-xs text-kb-admin hover:underline disabled:opacity-40">
                   {queueLoading ? '갱신 중…' : '새로고침'}
                 </button>
               </div>
@@ -323,7 +323,7 @@ export default function ConsultationChatPage() {
                       <span className="text-[11px] text-blue-600 font-medium">진행 중</span>
                     ) : (
                       <button onClick={() => onAccept(item)}
-                        className="text-[12px] bg-[#1B3A6B] text-white px-3 py-1 rounded hover:opacity-90">
+                        className="text-[12px] bg-kb-admin text-white px-3 py-1 rounded hover:opacity-90">
                         수락
                       </button>
                     )}
@@ -384,7 +384,7 @@ export default function ConsultationChatPage() {
                         )}
                         <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl text-[13px] leading-relaxed ${
                           isAgent
-                            ? 'bg-[#1B3A6B] text-white rounded-br-sm'
+                            ? 'bg-kb-admin text-white rounded-br-sm'
                             : isBot
                             ? 'bg-gray-100 text-gray-600 rounded-bl-sm'
                             : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
@@ -408,10 +408,10 @@ export default function ConsultationChatPage() {
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend() } }}
                     disabled={isEnded || sending}
                     placeholder={isEnded ? '상담이 종료되었습니다.' : '메시지를 입력하세요 (Enter 전송)'}
-                    className="flex-1 h-10 rounded border border-gray-300 px-3 text-[13px] focus:outline-none focus:border-[#1B3A6B] disabled:bg-gray-50 disabled:text-gray-400"
+                    className="flex-1 h-10 rounded border border-gray-300 px-3 text-[13px] focus:outline-none focus:border-kb-admin disabled:bg-gray-50 disabled:text-gray-400"
                   />
                   <button onClick={onSend} disabled={isEnded || sending || !input.trim()}
-                    className="h-10 px-5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-40">
+                    className="h-10 px-5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-40">
                     {sending ? '전송 중…' : '전송'}
                   </button>
                 </div>

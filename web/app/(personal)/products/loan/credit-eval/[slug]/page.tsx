@@ -176,7 +176,7 @@ function FatiSubmitForm({ applId }: { applId: number | null }) {
 
   return (
     <div className="max-w-lg">
-      <div className="bg-[#FFF9E6] border border-[#C09B3A] p-4 mb-5 text-[13px] text-kb-text-body">
+      <div className="bg-[#FFF9E6] border border-kb-gold p-4 mb-5 text-[13px] text-kb-text-body">
         <p className="font-bold mb-1">FATI (Financial and Tax Information) 제출 안내</p>
         <p>여신심사를 위해 재무제표, 세무자료 등을 제출합니다. 파일은 PDF 또는 Excel 형식만 업로드 가능합니다.</p>
       </div>

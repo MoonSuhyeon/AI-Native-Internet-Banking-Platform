@@ -123,11 +123,11 @@ export default function LoanEodPage() {
                       className="ml-2 border border-gray-300 rounded px-3 py-1.5 text-[13px] w-32 focus:outline-none" />
                   </label>
                   <button onClick={() => run('run')} disabled={busy}
-                    className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                    className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                     {busy ? '처리 중...' : '배치 실행'}
                   </button>
                   <button onClick={() => run('restart')} disabled={busy}
-                    className="px-5 py-1.5 border border-[#1B3A6B] text-[#1B3A6B] text-[13px] rounded hover:bg-blue-50 disabled:opacity-50">
+                    className="px-5 py-1.5 border border-kb-admin text-kb-admin text-[13px] rounded hover:bg-blue-50 disabled:opacity-50">
                     실패 잡 재처리
                   </button>
                 </div>
@@ -177,7 +177,7 @@ export default function LoanEodPage() {
                             <td className="px-4 py-3">
                               {h.steps?.length > 0 && (
                                 <button onClick={() => setOpenId(openId === h.jobExecutionId ? null : h.jobExecutionId)}
-                                  className="text-[12px] text-[#1B3A6B] hover:underline">
+                                  className="text-[12px] text-kb-admin hover:underline">
                                   스텝 {openId === h.jobExecutionId ? '▴' : '▾'}
                                 </button>
                               )}

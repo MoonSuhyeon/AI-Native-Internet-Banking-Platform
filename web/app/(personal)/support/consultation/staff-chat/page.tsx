@@ -226,7 +226,7 @@ export default function StaffChatPage() {
                 <span className="ml-3">상담 ID: #{chatConsultationId}</span>
               </div>
               <button onClick={handleEnd}
-                className="border border-[#E05555] px-4 py-1.5 text-[12px] text-[#E05555] hover:bg-red-50 transition-colors">
+                className="border border-kb-danger px-4 py-1.5 text-[12px] text-kb-danger hover:bg-red-50 transition-colors">
                 상담 종료
               </button>
             </div>

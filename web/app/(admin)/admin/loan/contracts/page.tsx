@@ -107,7 +107,7 @@ export default function AdminLoanContractsPage() {
             </div>
             <button
               onClick={handleSearch}
-              className="px-4 py-1 text-[12px] bg-[#1B3A6B] text-white rounded hover:opacity-90"
+              className="px-4 py-1 text-[12px] bg-kb-admin text-white rounded hover:opacity-90"
             >
               조회
             </button>

@@ -659,7 +659,7 @@ function TaxResidencyTab() {
                 placeholder="납세자번호 (선택)" className={inputCls + ' flex-1 max-w-sm'} style={inputStyle} />
             </div>
             <div className="flex items-center gap-3">
-              <label className="text-[13px] font-medium w-28 flex-shrink-0">확인일자 <span className="text-[#E05555]">*</span></label>
+              <label className="text-[13px] font-medium w-28 flex-shrink-0">확인일자 <span className="text-kb-danger">*</span></label>
               <input value={form.taxResidencyConfirmDate} onChange={e => setForm(p => ({ ...p, taxResidencyConfirmDate: e.target.value }))}
                 placeholder="20260601" maxLength={8} className={inputCls + ' w-36'} style={inputStyle} />
               <span className="text-[11px] text-kb-text-muted">YYYYMMDD</span>

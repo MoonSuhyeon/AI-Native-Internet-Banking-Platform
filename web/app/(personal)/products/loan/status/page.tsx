@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<string, string> = {
   APPROVED: '승인', REJECTED: '거절', CANCELLED: '취소', EXPIRED: '만료',
 }
 const STATUS_COLOR: Record<string, string> = {
-  SUBMITTED: 'text-kb-primary', PRESCREENED: 'text-kb-primary', REVIEWING: 'text-[#C09B3A]',
+  SUBMITTED: 'text-kb-primary', PRESCREENED: 'text-kb-primary', REVIEWING: 'text-kb-gold',
   APPROVED: 'text-green-600', REJECTED: 'text-red-500', CANCELLED: 'text-kb-text-muted', EXPIRED: 'text-kb-text-muted',
 }
 

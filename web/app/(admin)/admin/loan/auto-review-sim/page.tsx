@@ -141,7 +141,7 @@ export default function AutoReviewSimPage() {
               </FormCard>
 
               <button onClick={run} disabled={loading || !form.age}
-                className="w-full py-2.5 bg-[#1B3A6B] text-white text-[13px] font-semibold rounded hover:opacity-90 disabled:opacity-50">
+                className="w-full py-2.5 bg-kb-admin text-white text-[13px] font-semibold rounded hover:opacity-90 disabled:opacity-50">
                 {loading ? '평가 중...' : '자동심사 평가 실행'}
               </button>
             </div>

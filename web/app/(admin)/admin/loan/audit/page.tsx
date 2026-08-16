@@ -113,7 +113,7 @@ export default function LoanAuditPage() {
                 ] as const).map(t => (
                   <button key={t.id} onClick={() => { setTab(t.id); setRows([]) }}
                     className={`px-5 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
-                      tab === t.id ? 'border-[#1B3A6B] text-[#1B3A6B]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                      tab === t.id ? 'border-kb-admin text-kb-admin' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                     {t.label}
                   </button>
                 ))}
@@ -127,7 +127,7 @@ export default function LoanAuditPage() {
                       className="ml-2 border border-gray-300 rounded px-3 py-1.5 text-[13px] w-32 focus:outline-none" />
                   </label>
                   <button onClick={loadBreakGlass} disabled={loading}
-                    className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                    className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                     {loading ? '조회 중...' : '조회'}
                   </button>
                 </div>
@@ -144,7 +144,7 @@ export default function LoanAuditPage() {
                       className="ml-2 border border-gray-300 rounded px-3 py-1.5 text-[13px] w-32 focus:outline-none" />
                   </label>
                   <button onClick={loadByTarget} disabled={loading}
-                    className="px-5 py-1.5 bg-[#1B3A6B] text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
+                    className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50">
                     {loading ? '조회 중...' : '조회'}
                   </button>
                 </div>

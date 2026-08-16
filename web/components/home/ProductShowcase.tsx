@@ -277,7 +277,7 @@ export default function ProductShowcase() {
                   }`}>
                   <div className="flex items-start gap-4">
                     <span className={`text-[22px] font-bold leading-none mt-0.5 ${
-                      isActive ? 'text-white/70' : 'text-[#C09B3A]'
+                      isActive ? 'text-white/70' : 'text-kb-gold'
                     }`}>{cat.no}</span>
                     <div>
                       <p className={`text-[11px] leading-relaxed ${isActive ? 'text-white/80' : 'text-kb-text-muted'}`}>
