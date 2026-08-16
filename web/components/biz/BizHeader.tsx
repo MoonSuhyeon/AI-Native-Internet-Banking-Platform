@@ -4,6 +4,15 @@ import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
+/** 기업 사이트에 실제로 있는 화면. 없는 것을 넣으면 다시 죽은 링크가 된다. */
+const BIZ_SERVICES = [
+  { label: '기업 로그인',            href: '/biz/login' },
+  { label: '금융인증서 발급',        href: '/biz/cert/fin-cert-issue' },
+  { label: '금융인증서 관리',        href: '/biz/cert/fin-cert-management' },
+  { label: '공동인증서 발급',        href: '/biz/cert/joint-cert-issue' },
+  { label: '공동인증서 관리',        href: '/biz/cert/joint-cert-management' },
+]
+
 type MenuItem = { label: string; arrow?: boolean; href?: string; active?: boolean }
 type MenuColumn = { header?: string; items: MenuItem[] }
 
@@ -179,6 +188,7 @@ const BIZ_GNB_MENUS: {
 
 export default function BizHeader() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
+  const [allServicesOpen, setAllServicesOpen] = useState(false)
   const currentMenu = BIZ_GNB_MENUS.find((m) => m.id === activeMenu)
   const pathname = usePathname()
   const isLoginPage = pathname === '/biz/login'
@@ -229,12 +239,29 @@ export default function BizHeader() {
               </Link>
             ))}
             <span className="text-kb-border text-[15px] mx-1">|</span>
-            <button className="text-[15px] text-kb-text-muted px-2 hover:text-kb-text flex items-center gap-0.5">
-              전체서비스 <span className="text-[10px]">▾</span>
-            </button>
-            <button className="text-[15px] text-kb-text-muted px-2 hover:text-kb-text flex items-center gap-0.5">
-              GLOBAL <span className="text-[10px]">▾</span>
-            </button>
+            {/* 전체서비스 — 기업 사이트에 실제로 있는 화면만 넣는다.
+                예전에는 ▾ 만 있고 열릴 메뉴가 없었다. */}
+            <div className="relative">
+              <button onClick={() => setAllServicesOpen(v => !v)}
+                aria-expanded={allServicesOpen}
+                className="text-[15px] text-kb-text-muted px-2 hover:text-kb-text flex items-center gap-0.5">
+                전체서비스 <span className="text-[10px]">{allServicesOpen ? '▴' : '▾'}</span>
+              </button>
+              {allServicesOpen && (
+                <div className="absolute right-0 top-full mt-2 w-[220px] bg-white border border-kb-border rounded-lg shadow-lg py-1.5 z-50">
+                  {BIZ_SERVICES.map(item => (
+                    <Link key={item.href} href={item.href}
+                      onClick={() => setAllServicesOpen(false)}
+                      className="block px-4 py-2 text-[13px] text-kb-text-body hover:bg-kb-beige-light transition-colors">
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* GLOBAL 은 언어 전환인데 이 레포에 i18n 이 없다. 메뉴를 만들면
+                고를 언어가 없어 또 하나의 빈 약속이 된다. ▾ 를 떼고 표시로 둔다. */}
+            <span className="text-[15px] text-kb-text-muted px-2">GLOBAL</span>
           </nav>
           <div className="flex items-center gap-2 ml-3">
             <button className="text-kb-text-muted hover:text-kb-text">

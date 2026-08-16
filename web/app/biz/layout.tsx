@@ -1,6 +1,7 @@
 import BizHeader from '@/components/biz/BizHeader'
 import BizMyMenu from '@/components/biz/BizMyMenu'
 import Link from 'next/link'
+import FooterConsultButton from '@/components/layout/FooterConsultButton'
 
 const FOOTER_LINKS_TOP = [
   '보호금융상품등록부', '전자민원접수', '전자금융거래기본약관',
@@ -10,9 +11,8 @@ const FOOTER_LINKS_BOTTOM = [
   '이용상담', '보안프로그램', '사고신고', '그룹 내 고객정보 제공안내',
   '스튜어드십 코드', 'AXful인증서 제류문의', 'AXful 뱅킹 Ads',
 ]
-const FOOTER_DROPDOWNS = [
-  'AXful금융그룹네트워크', '대표전화 1588-0000', '챗봇/채팅/이메일상담(24시간)', '비교조회서비스',
-]
+/** 펼칠 내용이 없는 것들. ▾ 를 붙이면 열린다고 약속하는 셈이라 표시로만 둔다. */
+const FOOTER_INFO = ['AXful금융그룹네트워크', '비교조회서비스']
 
 export default function BizLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -45,12 +45,20 @@ export default function BizLayout({ children }: { children: React.ReactNode }) {
         <div>
           <div className="max-w-kb-container mx-auto px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {FOOTER_DROPDOWNS.map((label) => (
-                <button key={label}
+              {/* 전화는 걸면 되고, 상담은 모달이 이미 있다. 나머지 둘은 들어갈
+                  화면이 없어 ▾ 를 떼고 표시로 둔다. */}
+              <a href="tel:15880000"
+                className="flex items-center gap-1.5 border border-kb-border px-4 py-2
+                           text-sm text-kb-text-body bg-white hover:bg-kb-beige transition-colors">
+                대표전화 1588-0000
+              </a>
+              <FooterConsultButton />
+              {FOOTER_INFO.map((label) => (
+                <span key={label}
                   className="flex items-center gap-1.5 border border-kb-border px-4 py-2
-                             text-sm text-kb-text-body bg-white hover:bg-kb-beige transition-colors">
-                  {label} <span className="text-xs text-kb-text-muted">▾</span>
-                </button>
+                             text-sm text-kb-text-muted bg-white">
+                  {label}
+                </span>
               ))}
             </div>
             <div className="flex items-center gap-2">
