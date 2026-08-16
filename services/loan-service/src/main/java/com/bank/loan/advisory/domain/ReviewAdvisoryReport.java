@@ -16,6 +16,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 
 /**
  * 어드바이저리 리포트 본체. ERD REVIEW_ADVISORY_REPORT 매핑.
@@ -91,6 +92,18 @@ public class ReviewAdvisoryReport extends BaseEntity {
     @Column(name = "quarantined_at")
     private OffsetDateTime quarantinedAt;
 
+    @Column(name = "quarantine_disposition_cd", length = 50)
+    private String quarantineDispositionCd;
+
+    @Column(name = "quarantine_disposed_at")
+    private OffsetDateTime quarantineDisposedAt;
+
+    @Column(name = "quarantine_disposed_by")
+    private Long quarantineDisposedBy;
+
+    @Column(name = "quarantine_disposition_note", columnDefinition = "text")
+    private String quarantineDispositionNote;
+
     public boolean isCritical() {
         return SEVERITY_CRITICAL.equals(severityCd);
     }
@@ -124,5 +137,67 @@ public class ReviewAdvisoryReport extends BaseEntity {
     public void markQuarantined(OffsetDateTime at) {
         this.advrStatusCd = STATUS_QUARANTINE;
         this.quarantinedAt = at;
+    }
+
+    // ── 격리 처분 ────────────────────────────────────────────────────────────
+
+    /** 정상 판정 — AI 가 의심했으나 문제가 없었다. 격리를 푼다. */
+    public static final String DISPOSITION_RELEASED = "RELEASED";
+    /** 재심사 배정 — 판단을 미루지 않고 다시 본다. */
+    public static final String DISPOSITION_REVIEW_REASSIGNED = "REVIEW_REASSIGNED";
+    /** 감사부 조사 의뢰 — 사람 손을 떠나 정식 조사로 넘긴다. */
+    public static final String DISPOSITION_AUDIT_REFERRED = "AUDIT_REFERRED";
+
+    private static final Set<String> DISPOSITIONS = Set.of(
+            DISPOSITION_RELEASED, DISPOSITION_REVIEW_REASSIGNED, DISPOSITION_AUDIT_REFERRED);
+
+    public boolean isQuarantined() {
+        return STATUS_QUARANTINE.equals(advrStatusCd);
+    }
+
+    public boolean isDisposed() {
+        return quarantineDispositionCd != null;
+    }
+
+    /**
+     * 격리를 처분한다. <b>격리 상태에서만, 한 번만</b> 가능하다.
+     *
+     * <p>규칙을 서비스가 아니라 여기 두는 이유는, 처분 경로가 나중에 하나 더 생겨도
+     * (배치·관리자 도구) 같은 규칙을 지나게 하기 위해서다. 서비스에 두면 새 경로가
+     * 검사를 건너뛸 수 있고, 그 순간 격리가 조용히 풀린다.
+     *
+     * <p>행위자({@code disposedBy})는 게이트웨이가 검증한 값이어야 한다. 요청 본문에서
+     * 온 값을 넣으면 "누가 풀었는가" 가 자칭이 되어 감사 기록의 신뢰도가 그 수준으로
+     * 떨어진다.
+     */
+    public void dispose(String dispositionCd, Long disposedBy, String note, OffsetDateTime at) {
+        if (!isQuarantined()) {
+            throw new IllegalStateException(
+                    "격리 상태가 아니다: advrStatusCd=" + advrStatusCd);
+        }
+        if (isDisposed()) {
+            throw new IllegalStateException(
+                    "이미 처분됐다: " + quarantineDispositionCd + " at " + quarantineDisposedAt);
+        }
+        if (!DISPOSITIONS.contains(dispositionCd)) {
+            throw new IllegalArgumentException("알 수 없는 처분: " + dispositionCd);
+        }
+        if (disposedBy == null) {
+            throw new IllegalArgumentException("행위자가 없다 — 누가 풀었는지 남지 않는다");
+        }
+        if (note == null || note.isBlank()) {
+            throw new IllegalArgumentException("처분 사유가 없다 — 판단의 근거가 남지 않는다");
+        }
+
+        this.quarantineDispositionCd = dispositionCd;
+        this.quarantineDisposedBy = disposedBy;
+        this.quarantineDispositionNote = note.strip();
+        this.quarantineDisposedAt = at;
+
+        // 정상 판정만 격리를 끝낸다. 재심사·조사 의뢰는 아직 열려 있는 사안이라
+        // 상태를 RESOLVED 로 바꾸면 "처리됐다" 로 집계돼 놓치게 된다.
+        if (DISPOSITION_RELEASED.equals(dispositionCd)) {
+            markResolved(at);
+        }
     }
 }

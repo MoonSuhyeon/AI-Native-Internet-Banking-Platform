@@ -2,13 +2,18 @@ package com.bank.loan.advisory.controller;
 
 import com.bank.common.web.ApiResponse;
 import com.bank.loan.advisory.dto.AiAuditOpinionResponse;
+import com.bank.loan.advisory.dto.QuarantineDispositionRequest;
 import com.bank.loan.advisory.dto.QuarantineReportResponse;
 import com.bank.loan.advisory.dto.ReviewerRiskScoreResponse;
 import com.bank.loan.advisory.service.AdvisoryRoleGuard;
 import com.bank.loan.advisory.service.AuditOpinionQueryService;
+import com.bank.loan.advisory.service.QuarantineDispositionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,6 +30,7 @@ import java.util.List;
 public class AuditOpinionController {
 
     private final AuditOpinionQueryService queryService;
+    private final QuarantineDispositionService dispositionService;
     private final AdvisoryRoleGuard roleGuard;
 
     @Operation(summary = "리포트별 LLM 감사 의견 조회",
@@ -87,5 +93,23 @@ public class AuditOpinionController {
     public ApiResponse<List<QuarantineReportResponse>> quarantinedReports() {
         roleGuard.requireAuditorOrAdmin();
         return ApiResponse.ok(queryService.quarantinedReports());
+    }
+
+    /**
+     * 격리 처분.
+     *
+     * <p>이 자리가 없어서 격리가 영구였다. 조회만 있고 되돌리는 길이 없었다.
+     *
+     * <p>행위자는 본문에서 받지 않는다 — 게이트웨이가 검증한 신원만 쓴다.
+     */
+    @Operation(summary = "격리 처분",
+            description = "RELEASED(정상 판정) · REVIEW_REASSIGNED(재심사 배정) · "
+                    + "AUDIT_REFERRED(감사부 조사 의뢰). 사유 필수. auditor/admin 권한. "
+                    + "격리 상태에서 한 번만 가능하며, 이미 처분됐으면 409.")
+    @PostMapping("/quarantine/{advrId}/disposition")
+    public ApiResponse<QuarantineReportResponse> disposeQuarantine(
+            @PathVariable Long advrId,
+            @Valid @RequestBody QuarantineDispositionRequest request) {
+        return ApiResponse.ok(dispositionService.dispose(advrId, request));
     }
 }

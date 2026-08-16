@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import { AdminUser } from '@/lib/admin-mock-data'
-import { fetchQuarantineReports, QuarantineReportDto } from '@/lib/audit-api'
+import { disposeQuarantine, fetchQuarantineReports,
+         QuarantineDisposition, QuarantineReportDto } from '@/lib/audit-api'
 
 type FilterType = 'ALL' | 'BIAS_DETECTION' | 'COMPLIANCE_VERIFICATION'
 type FilterSev  = 'ALL' | 'WARN' | 'CRITICAL'
@@ -16,6 +17,32 @@ export default function QuarantinePage() {
   const [filterType,  setFilterType]  = useState<FilterType>('ALL')
   const [filterSev,   setFilterSev]   = useState<FilterSev>('ALL')
   const [selected,    setSelected]    = useState<QuarantineReportDto | null>(null)
+  const [note,        setNote]        = useState('')
+  const [disposing,   setDisposing]   = useState<QuarantineDisposition | null>(null)
+  const [disposeErr,  setDisposeErr]  = useState('')
+
+  // 격리를 푸는 것은 감사 대상이라 사유가 필수다. 서버도 빈 사유를 400 으로 막는다 —
+  // 화면에서 미리 막지 않으면 눌러 보고 나서야 알게 된다.
+  async function handleDispose(disposition: QuarantineDisposition) {
+    if (!selected || !note.trim()) { setDisposeErr('처분 사유를 적어주세요.'); return }
+    setDisposing(disposition)
+    setDisposeErr('')
+    try {
+      await disposeQuarantine(selected.advrId, disposition, note.trim())
+      // 정상 판정은 격리가 끝나 목록에서 빠지고, 재심사·조사 의뢰는 남는다.
+      const next = await fetchQuarantineReports()
+      setReports(next)
+      setSelected(next.find(r => r.advrId === selected.advrId) ?? null)
+      setNote('')
+    } catch (e: unknown) {
+      const err = e as { response?: { status?: number; data?: { message?: string } } }
+      setDisposeErr(err.response?.status === 409
+        ? '이미 처분된 리포트입니다.'
+        : err.response?.data?.message ?? '처분에 실패했습니다.')
+    } finally {
+      setDisposing(null)
+    }
+  }
 
   useEffect(() => {
     try {
@@ -197,14 +224,35 @@ export default function QuarantinePage() {
 
                 <div className="border-t border-gray-100 pt-4 space-y-2">
                   <p className="text-xs font-medium text-gray-500 mb-2">처리 액션</p>
-                  <button className="w-full text-xs py-2 px-3 rounded border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors">
-                    재심사 배정
+
+                  {/* 사유가 먼저다. 격리를 푼 근거가 남지 않으면 통제가 아니라
+                      그냥 상태 변경이다. */}
+                  <textarea
+                    value={note}
+                    onChange={e => setNote(e.target.value)}
+                    rows={2}
+                    placeholder="처분 사유 (필수)"
+                    className="w-full text-xs px-2 py-1.5 rounded border border-kb-border outline-none focus:border-kb-mint resize-none"
+                  />
+                  {disposeErr && <p className="text-[11px] text-kb-danger">{disposeErr}</p>}
+
+                  <button
+                    onClick={() => handleDispose('REVIEW_REASSIGNED')}
+                    disabled={disposing !== null || !note.trim()}
+                    className="w-full text-xs py-2 px-3 rounded border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40">
+                    {disposing === 'REVIEW_REASSIGNED' ? '처리 중…' : '재심사 배정'}
                   </button>
-                  <button className="w-full text-xs py-2 px-3 rounded border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors">
-                    감사부 조사 의뢰
+                  <button
+                    onClick={() => handleDispose('AUDIT_REFERRED')}
+                    disabled={disposing !== null || !note.trim()}
+                    className="w-full text-xs py-2 px-3 rounded border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors disabled:opacity-40">
+                    {disposing === 'AUDIT_REFERRED' ? '처리 중…' : '감사부 조사 의뢰'}
                   </button>
-                  <button className="w-full text-xs py-2 px-3 rounded border border-green-200 text-green-600 hover:bg-green-50 transition-colors">
-                    정상 판정 (격리 해제)
+                  <button
+                    onClick={() => handleDispose('RELEASED')}
+                    disabled={disposing !== null || !note.trim()}
+                    className="w-full text-xs py-2 px-3 rounded border border-green-200 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-40">
+                    {disposing === 'RELEASED' ? '처리 중…' : '정상 판정 (격리 해제)'}
                   </button>
                 </div>
               </div>
