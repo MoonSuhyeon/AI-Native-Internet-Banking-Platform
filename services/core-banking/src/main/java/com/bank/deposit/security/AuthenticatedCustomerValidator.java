@@ -84,6 +84,27 @@ public class AuthenticatedCustomerValidator {
         }
     }
 
+    /**
+     * 계약에 딸린 계좌의 소유자 검증 — 신원을 필수로 요구한다.
+     *
+     * <p>해지는 되돌릴 수 없다. 계약 아이디는 연속된 숫자라, 검증이 없으면 유효한
+     * 토큰만 있으면 남의 예적금을 해지할 수 있었다.
+     *
+     * <p>계좌 기준 검증과 달리 신원 없는 호출을 허용하지 않는다 — 계약 해지를 부르는
+     * 서비스 간 호출이 없기 때문이다.
+     */
+    public void requireContractOwner(String authenticatedCustomerId, Long contractId) {
+        if (authenticatedCustomerId == null || authenticatedCustomerId.isBlank()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "인증된 고객 ID가 필요합니다.");
+        }
+        String owner = accountRepository.findByContractId(contractId)
+                .map(Account::getCustomerId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+        if (!authenticatedCustomerId.equals(owner)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "다른 고객의 계약에는 접근할 수 없습니다.");
+        }
+    }
+
     /** 거래가 속한 계좌의 소유자 검증 — 신원이 실려 왔을 때만. */
     public void validateTransactionOwner(String authenticatedCustomerId, Long transactionId) {
         if (authenticatedCustomerId == null || authenticatedCustomerId.isBlank()) {

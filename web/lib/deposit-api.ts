@@ -645,3 +645,33 @@ export async function fetchSavingsPaymentStatus(accountId: number): Promise<Savi
   const { data } = await depositApi.get<SavingsPaymentStatus>(`/payment-schedules/accounts/${accountId}`)
   return data
 }
+
+/* ── 해지 예상 명세 ── */
+
+export type EarlyTerminationEstimate = {
+  accountId: number
+  accountNumber: string
+  /** 어느 날짜 기준인지. 하루만 지나도 금액이 달라진다. */
+  estimatedOn: string
+  earlyTermination: boolean
+  terminable: boolean
+  contractRate: number
+  appliedRate: number
+  rateDescription: string
+  startedAt: string
+  maturityAt: string | null
+  principal: number
+  interestBeforeTax: number
+  taxRate: number
+  taxAmount: number
+  netAmount: number
+  interestIfHeldToMaturity: number
+  /** 만기까지 갔다면 더 받았을 이자. */
+  forgoneInterest: number
+}
+
+/** 해지상세조회. 아무것도 바꾸지 않는 읽기 전용 조회다. */
+export async function fetchTerminationEstimate(accountId: number): Promise<EarlyTerminationEstimate> {
+  const { data } = await depositApi.get<EarlyTerminationEstimate>(`/accounts/${accountId}/termination-estimate`)
+  return data
+}

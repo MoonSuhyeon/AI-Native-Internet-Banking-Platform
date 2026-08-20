@@ -152,12 +152,47 @@ class ContractControllerTest {
                 .contractStatus(ContractStatus.TERMINATED)
                 .build();
         given(contractService.terminate(eq(1L), any(), isNull())).willReturn(terminated);
+        given(accountRepository.findByContractId(1L))
+                .willReturn(java.util.Optional.of(accountOf("CUST-001")));
 
         mockMvc.perform(patch("/contracts/1/terminate")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"terminationReason\": \"고객 요청\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contractStatus").value("TERMINATED"));
+    }
+
+    @Test
+    @DisplayName("남의 계약은 해지할 수 없다")
+    void terminateOtherCustomerContract() throws Exception {
+        // 해지는 되돌릴 수 없다. 계약 아이디는 연속된 숫자라, 검증이 없으면 유효한
+        // 토큰만 있으면 남의 예적금을 해지할 수 있었다.
+        given(accountRepository.findByContractId(1L))
+                .willReturn(java.util.Optional.of(accountOf("CUST-001")));
+
+        mockMvc.perform(patch("/contracts/1/terminate")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"terminationReason\": \"고객 요청\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("신원 없는 해지 요청은 거절한다")
+    void terminateWithoutIdentity() throws Exception {
+        // 계약 해지를 부르는 서비스 간 호출은 없다. 헤더 없는 요청을 통과시키면
+        // 헤더만 빼고 부르는 것으로 검증을 우회할 수 있다.
+        mockMvc.perform(patch("/contracts/1/terminate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"terminationReason\": \"고객 요청\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    private static com.bank.deposit.domain.entity.Account accountOf(String customerId) {
+        return com.bank.deposit.domain.entity.Account.builder()
+                .customerId(customerId)
+                .build();
     }
 
     @Test

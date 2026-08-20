@@ -13,6 +13,7 @@ import {
   terminateDepositContract,
 } from '@/lib/deposit-api'
 import MouseNumKeypad from '@/components/ui/MouseNumKeypad'
+import TerminationEstimateModal from '@/components/accounts/TerminationEstimateModal'
 
 type ReceiveMethod = 'internal' | 'external' | 'cash'
 
@@ -33,6 +34,8 @@ function TerminatePageInner() {
 
   const [step, setStep] = useState<Step>(preselectedId ? 2 : 1)
   const [selected, setSelected] = useState<DepositViewAccount | null>(null)
+  // 해지상세조회 — 중도해지는 되돌릴 수 없는데 결과를 미리 볼 수 없었다.
+  const [estimateFor, setEstimateFor] = useState<DepositViewAccount | null>(null)
   const [joinedAccounts, setJoinedAccounts] = useState<DepositViewAccount[]>([])
   const [password, setPassword] = useState('')
   const [mouseInput, setMouseInput] = useState(false)
@@ -139,7 +142,11 @@ function TerminatePageInner() {
               style={{ backgroundColor: KB_PRIMARY }}>
               해지
             </button>
-            <button className="px-4 py-1.5 text-[12px] font-medium rounded-lg border transition-colors hover:bg-kb-primary-bg"
+            <button
+              onClick={() => setEstimateFor(acc)}
+              disabled={!acc.apiAccountId}
+              title={acc.apiAccountId ? undefined : '가입 직후에는 잠시 뒤 조회할 수 있습니다.'}
+              className="px-4 py-1.5 text-[12px] font-medium rounded-lg border transition-colors hover:bg-kb-primary-bg disabled:opacity-40"
               style={{ borderColor: KB_PRIMARY_BORDER, color: KB_PRIMARY }}>
               해지상세조회
             </button>
@@ -463,6 +470,14 @@ function TerminatePageInner() {
           )}
         </main>
       </div>
+
+      {estimateFor?.apiAccountId && (
+        <TerminationEstimateModal
+          accountId={estimateFor.apiAccountId}
+          accountName={`${estimateFor.name} · ${estimateFor.number}`}
+          onClose={() => setEstimateFor(null)}
+        />
+      )}
     </div>
   )
 }

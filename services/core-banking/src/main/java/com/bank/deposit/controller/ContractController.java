@@ -60,8 +60,18 @@ public class ContractController {
         return contractService.changeStatus(contractId, req.contractStatus());
     }
 
+    /**
+     * 계약 해지.
+     *
+     * <p>소유자 검증이 없었다. 계약 아이디는 연속된 숫자라, 유효한 토큰만 있으면
+     * 남의 예적금을 해지할 수 있었다 — 되돌릴 수 없는 조작이다.
+     */
     @PatchMapping("/contracts/{contractId}/terminate")
-    public Contract terminate(@PathVariable Long contractId, @RequestBody ContractTerminateRequest req) {
+    public Contract terminate(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, required = false) String authenticatedCustomerId,
+            @PathVariable Long contractId,
+            @RequestBody ContractTerminateRequest req) {
+        customerValidator.requireContractOwner(authenticatedCustomerId, contractId);
         return contractService.terminate(contractId, req.terminationReason(), req.targetAccountId());
     }
 

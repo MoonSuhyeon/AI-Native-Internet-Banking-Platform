@@ -43,6 +43,9 @@ class AccountControllerTest {
     @MockBean
     private AccountService accountService;
 
+    @MockBean
+    private com.bank.deposit.service.EarlyTerminationService earlyTerminationService;
+
     // 소유권 검증기가 계좌↔고객 매핑을 조회한다. 슬라이스에는 리포지토리가 없으므로 mock 으로 채운다.
     @MockBean
     private AccountRepository accountRepository;

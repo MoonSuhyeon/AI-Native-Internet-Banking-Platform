@@ -5,7 +5,9 @@ import com.bank.deposit.dto.request.AccountAliasUpdateRequest;
 import com.bank.deposit.dto.request.AccountCreateRequest;
 import com.bank.deposit.dto.request.AccountLimitUpdateRequest;
 import com.bank.deposit.dto.request.AccountStatusUpdateRequest;
+import com.bank.deposit.dto.response.EarlyTerminationEstimateResponse;
 import com.bank.deposit.security.AuthenticatedCustomerValidator;
+import com.bank.deposit.service.EarlyTerminationService;
 import com.bank.deposit.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.List;
 public class AccountController {
 
     private final AccountService accountService;
+    private final EarlyTerminationService earlyTerminationService;
     private final AuthenticatedCustomerValidator customerValidator;
 
     @PostMapping
@@ -39,6 +42,23 @@ public class AccountController {
             @RequestParam String customerId) {
         customerValidator.validate(authenticatedCustomerId, customerId);
         return accountService.findByCustomer(customerId);
+    }
+
+    /**
+     * 해지 예상 명세 — "해지상세조회".
+     *
+     * <p>아무것도 바꾸지 않는다. 조회가 상태를 건드리면 "확인만 해 봤는데 해지됐다"
+     * 가 가능해진다.
+     *
+     * <p>신원을 필수로 요구한다. 이건 고객 화면 전용 경로이고, 남의 계좌의 잔액·이자를
+     * 계산해 볼 수 있게 두면 조회만으로 자산 규모가 새어 나간다.
+     */
+    @GetMapping("/{accountId}/termination-estimate")
+    public EarlyTerminationEstimateResponse terminationEstimate(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, required = false) String authenticatedCustomerId,
+            @PathVariable Long accountId) {
+        customerValidator.requireAccountOwner(authenticatedCustomerId, accountId);
+        return earlyTerminationService.estimate(accountId, java.time.LocalDate.now());
     }
 
     @GetMapping("/{accountId}")
