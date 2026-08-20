@@ -4,7 +4,16 @@ import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BORDER } from '@/lib/theme'
 /* eslint-disable @typescript-eslint/no-unused-vars -- 예약 폼 미사용 state, 추후 기능 연결 예정 (빌드 차단 방지) */
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+
+import BranchSearchModal from '@/components/support/BranchSearchModal'
+import {
+  cancelBranchReservation,
+  fetchMyBranchReservations,
+  reserveBranchConsultation,
+  type Branch,
+  type BranchReservation,
+} from '@/lib/banking-api'
 
 
 const CONTENT_TYPES = [
@@ -18,11 +27,19 @@ const CONTENT_TYPES = [
   '기타',
 ]
 
-const MONTHS = Array.from({ length: 3 }, (_, i) => {
-  const d = new Date()
-  d.setMonth(d.getMonth() + i)
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월`
-})
+/** 화면 문구 ↔ 저장 코드. 문구만 바꿔도 집계가 끊기지 않게 코드를 따로 둔다. */
+const TOPIC_CODES: Record<string, string> = {
+  '예금/적금': 'DEPOSIT',
+  '대출': 'LOAN',
+  '펀드/신탁': 'FUND',
+  '카드': 'CARD',
+  '보험': 'INSURANCE',
+  '외환': 'FX',
+  '기타': 'ETC',
+}
+
+const TOPIC_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(TOPIC_CODES).map(([label, code]) => [code, label]))
 
 const TIMES = [
   '선택', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -33,16 +50,62 @@ export default function BranchConsultationPage() {
   const [pageTab, setPageTab] = useState<'apply' | 'history'>('apply')
   const [branch, setBranch] = useState('')
   const [contentType, setContentType] = useState('선택')
-  const [month, setMonth] = useState('선택')
   const [time, setTime] = useState('선택')
   const [reserveType, setReserveType] = useState<'auto' | 'manual'>('auto')
   const [staffSelect, setStaffSelect] = useState('선택')
   const [memo, setMemo] = useState('')
 
-  function handleSubmit() {
-    if (!branch) { alert('상담 지점을 입력해주세요.'); return }
+  // 예전에는 이 화면이 통째로 흉내였다 — 지점검색은 핸들러가 없었고 예약 버튼은
+  // alert 만 띄우고 아무것도 저장하지 않았다. 고객은 예약됐다고 믿고 지점에 갔을 것이다.
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [date, setDate] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [reservations, setReservations] = useState<BranchReservation[]>([])
+
+  const loadReservations = useCallback(async () => {
+    // 로그인 전이면 403 이다. 예약 신청 화면 자체가 막히면 안 되므로 비워 둔다.
+    try { setReservations(await fetchMyBranchReservations()) } catch { setReservations([]) }
+  }, [])
+
+  useEffect(() => { loadReservations() }, [loadReservations])
+
+  async function handleCancel(reservationId: number) {
+    try {
+      await cancelBranchReservation(reservationId)
+      await loadReservations()
+    } catch {
+      alert('취소하지 못했습니다.')
+    }
+  }
+
+  async function handleSubmit() {
+    if (!selectedBranch) { alert('상담 지점을 검색해 선택해주세요.'); return }
     if (contentType === '선택') { alert('상담 내용을 선택해주세요.'); return }
-    alert('상담 예약이 완료되었습니다.\n카카오톡 또는 문자로 안내드리겠습니다.')
+    if (!date || time === '선택') { alert('상담 일시를 선택해주세요.'); return }
+    if (!contactPhone.trim()) { alert('연락받을 번호를 입력해주세요.'); return }
+
+    setSubmitting(true)
+    try {
+      // 로컬 시각으로 만든다 — UTC 로 만들면 지점 영업시간 검사가 아홉 시간 어긋난다.
+      const reservedAt = new Date(`${date}T${time}:00`).toISOString()
+      await reserveBranchConsultation({
+        branchId: selectedBranch.branchId,
+        reservedAt,
+        topicCd: TOPIC_CODES[contentType] ?? 'ETC',
+        memo: memo.trim() || undefined,
+        contactPhone: contactPhone.trim(),
+      })
+      await loadReservations()
+      setPageTab('history')
+      alert('상담 예약이 접수되었습니다.')
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+      alert(msg ?? '예약하지 못했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -177,14 +240,18 @@ export default function BranchConsultationPage() {
                       </td>
                       <td className="border border-kb-primary-border px-4 py-3.5">
                         <div className="flex items-center gap-2">
+                          {/* 손으로 치면 존재하지 않는 지점으로도 예약이 된다.
+                              검색으로 고른 것만 받는다. */}
                           <input
                             type="text"
+                            readOnly
                             value={branch}
-                            onChange={e => setBranch(e.target.value)}
-                            placeholder="지점명 입력"
-                            className="border border-kb-primary-border rounded-lg px-3 py-1.5 text-[13px] w-48 outline-none focus:border-kb-mint transition-colors"
+                            placeholder="지점검색으로 선택"
+                            onClick={() => setSearchOpen(true)}
+                            className="border border-kb-primary-border rounded-lg px-3 py-1.5 text-[13px] w-48 outline-none focus:border-kb-mint transition-colors cursor-pointer bg-white"
                           />
-                          <button className="border-2 rounded-lg px-4 py-1.5 text-[12px] font-semibold hover:bg-kb-primary-bg transition-colors flex items-center gap-1"
+                          <button onClick={() => setSearchOpen(true)}
+                            className="border-2 rounded-lg px-4 py-1.5 text-[12px] font-semibold hover:bg-kb-primary-bg transition-colors flex items-center gap-1"
                             style={{ borderColor: KB_PRIMARY, color: KB_PRIMARY }}>
                             지점검색
                             <svg viewBox="0 0 16 16" fill="none" className="w-3 h-3" stroke="currentColor" strokeWidth="2">
@@ -224,19 +291,28 @@ export default function BranchConsultationPage() {
                       </td>
                       <td className="border border-kb-primary-border px-4 py-3.5">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <select value={month} onChange={e => setMonth(e.target.value)}
-                            className="border border-kb-primary-border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white focus:border-kb-mint transition-colors">
-                            <option>선택</option>
-                            {MONTHS.map(m => <option key={m}>{m}</option>)}
-                          </select>
+                          {/* 예전에는 '월' 만 골랐다. 날짜가 없으면 예약 시각을 만들 수 없다. */}
+                          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                            min={new Date().toISOString().slice(0, 10)}
+                            className="border border-kb-primary-border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white focus:border-kb-mint transition-colors" />
                           <select value={time} onChange={e => setTime(e.target.value)}
                             className="border border-kb-primary-border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white focus:border-kb-mint transition-colors">
                             {TIMES.map(t => <option key={t}>{t}</option>)}
                           </select>
                         </div>
+                        {/* 연락처 칸이 없었다. 화면은 "문자로 안내드리겠습니다" 라고 약속하는데
+                            보낼 곳을 묻지 않았다 — 서버도 같은 이유로 빈 값을 거절한다. */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[12px] text-kb-text-muted">연락처</span>
+                          <input value={contactPhone} onChange={e => setContactPhone(e.target.value)}
+                            placeholder="010-0000-0000"
+                            className="border border-kb-primary-border rounded-lg px-3 py-1.5 text-[13px] w-44 outline-none focus:border-kb-mint transition-colors" />
+                        </div>
                         <p className="text-[12px] text-kb-text-muted flex items-start gap-1">
                           <span className="bg-kb-text-muted text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">ⓘ</span>
-                          상담 예약은 같은 날짜에 1회만 신청할 수 있으며, 예약 상황에 따라 일부 시간대는 신청이 어려울 수 있습니다.
+                          {selectedBranch
+                            ? `${selectedBranch.branchName} 영업시간 ${selectedBranch.openTime}~${selectedBranch.closeTime} 안에서 예약할 수 있습니다.`
+                            : '상담 예약은 같은 날짜에 1회만 신청할 수 있으며, 예약 상황에 따라 일부 시간대는 신청이 어려울 수 있습니다.'}
                         </p>
                       </td>
                     </tr>
@@ -328,28 +404,72 @@ export default function BranchConsultationPage() {
 
               {/* 버튼 */}
               <div className="flex items-center gap-3">
-                <button className="px-6 py-2.5 text-[14px] font-semibold rounded-lg border-2 hover:bg-kb-primary-bg transition-colors"
+                {/* 안내문이 "[내 정보 수정]에서 할 수 있습니다" 라고 가리키는 화면이
+                    실제로 있다(/settings). 버튼만 연결돼 있지 않았다. */}
+                <Link href="/settings"
+                  className="px-6 py-2.5 text-[14px] font-semibold rounded-lg border-2 hover:bg-kb-primary-bg transition-colors"
                   style={{ borderColor: KB_PRIMARY, color: KB_PRIMARY }}>
                   내 정보 수정
-                </button>
+                </Link>
                 <button
                   onClick={handleSubmit}
-                  className="px-8 py-2.5 text-[14px] font-bold text-white rounded-lg hover:opacity-85 transition-opacity"
+                  disabled={submitting}
+                  className="px-8 py-2.5 text-[14px] font-bold text-white rounded-lg hover:opacity-85 transition-opacity disabled:opacity-50"
                   style={{ backgroundColor: KB_PRIMARY }}
                 >
-                  상담 예약
+                  {submitting ? '접수 중…' : '상담 예약'}
                 </button>
               </div>
             </>
           )}
 
           {pageTab === 'history' && (
-            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-[14px] text-kb-text-muted" style={{ border: `1px solid ${KB_MINT}20` }}>
-              예약 현황이 없습니다.
-            </div>
+            reservations.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-[14px] text-kb-text-muted" style={{ border: `1px solid ${KB_MINT}20` }}>
+                예약 현황이 없습니다.
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {reservations.map(r => (
+                  <li key={r.reservationId}
+                    className="bg-white rounded-2xl shadow-sm px-5 py-4 flex items-center justify-between gap-4"
+                    style={{ border: `1px solid ${KB_MINT}20` }}>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-bold text-kb-text">{r.branchName}</p>
+                      <p className="text-[13px] text-kb-text-muted mt-0.5">
+                        {r.reservedAt.slice(0, 16).replace('T', ' ')} · {TOPIC_LABELS[r.topicCd] ?? r.topicCd}
+                      </p>
+                      {r.memo && <p className="text-[12px] text-kb-text-muted mt-0.5">{r.memo}</p>}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-[12px] font-semibold"
+                        style={{ color: r.statusCd === 'CANCELLED' ? '#9CA3AF' : KB_PRIMARY }}>
+                        {r.statusCd === 'RESERVED' ? '예약완료'
+                          : r.statusCd === 'CANCELLED' ? '취소됨'
+                          : r.statusCd === 'COMPLETED' ? '상담완료' : '미방문'}
+                      </span>
+                      {r.statusCd === 'RESERVED' && (
+                        <button onClick={() => handleCancel(r.reservationId)}
+                          className="border rounded-lg px-3 py-1 text-[12px] text-kb-text-body hover:bg-kb-primary-bg transition-colors"
+                          style={{ borderColor: KB_PRIMARY_BORDER }}>
+                          예약 취소
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )
           )}
         </main>
       </div>
+
+      {searchOpen && (
+        <BranchSearchModal
+          onSelect={b => { setSelectedBranch(b); setBranch(b.branchName); setSearchOpen(false) }}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
     </div>
   )
 }

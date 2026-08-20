@@ -41,6 +41,9 @@ const FIELDS: DetailField[] = [
 ]
 
 export default function AdminIdentityPage() {
+  // 본인인증은 신청 건에 딸려 있다. 예전에는 idvId 만 받아 부르는 경로가 서버에
+  // 없어 늘 404 였고, 화면은 그것을 "조회 결과가 없습니다" 로 보여 줬다.
+  const [applId, setApplId] = useState('')
   const [idvId, setIdvId] = useState('')
   const [result, setResult] = useState<any>(null)
   const [notFound, setNotFound] = useState(false)
@@ -50,13 +53,13 @@ export default function AdminIdentityPage() {
   function fail(m: string) { setErr(m); setTimeout(() => setErr(''), 3000) }
 
   async function handleSearch() {
-    if (!idvId) return
+    if (!applId || !idvId) return
     setLoading(true)
     setResult(null)
     setNotFound(false)
     setErr('')
     try {
-      const { data: res } = await identityVerificationApi.get(Number(idvId))
+      const { data: res } = await identityVerificationApi.get(Number(applId), Number(idvId))
       setResult(res.data ?? res)
     } catch (e: any) {
       const status = e?.response?.status
@@ -81,6 +84,15 @@ export default function AdminIdentityPage() {
           {/* 검색 */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 mb-5">
             <div className="flex gap-3 items-center">
+              <label className="text-[12px] text-gray-600">applId</label>
+              <input
+                type="number"
+                value={applId}
+                onChange={e => setApplId(e.target.value)}
+                placeholder="신청 ID 입력"
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                className="border border-gray-300 rounded px-3 py-1.5 text-[13px] w-40 focus:outline-none"
+              />
               <label className="text-[12px] text-gray-600">idvId</label>
               <input
                 type="number"
@@ -92,7 +104,7 @@ export default function AdminIdentityPage() {
               />
               <button
                 onClick={handleSearch}
-                disabled={loading || !idvId}
+                disabled={loading || !applId || !idvId}
                 className="px-5 py-1.5 bg-kb-admin text-white text-[13px] rounded hover:opacity-90 disabled:opacity-50"
               >
                 {loading ? '조회 중...' : '조회'}

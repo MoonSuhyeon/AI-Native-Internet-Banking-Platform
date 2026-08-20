@@ -57,10 +57,19 @@ spring:
             - Path=/api/v1/mobile-auth/**
 
         # 고객 도메인 (JWT 필요)
+        #
+        # /api/v1/banking/** 이 빠져 있었다. 출금계좌 관리 화면이 그 경로를 부르는데
+        # 라우트가 없어 게이트웨이에서 404 였다 — 컨트롤러도 화면도 멀쩡했고, 목록이
+        # 늘 비어 보일 뿐이었다. 즐겨찾기(자주쓰는계좌·단축이체)가 같은 접두사를 쓴다.
+        #
+        # /api/v1/notifications/** 는 입금통보 신청·알림함이다. 대출 쪽의
+        # /api/notifications/** 와 이름이 비슷하지만 v1 유무로 갈리는 다른 경로다.
+        #
+        # /api/v1/branches/** 는 영업점 조회와 지점 상담 예약이다.
         - id: customer
           uri: http://${CUSTOMER_SERVICE_HOST:localhost}:${CUSTOMER_SERVICE_PORT:8081}
           predicates:
-            - Path=/api/v1/customers/**
+            - Path=/api/v1/customers/**,/api/v1/banking/**,/api/v1/notifications/**,/api/v1/branches/**,/api/v1/cert/**
 
         # 직원용 내부 API (JWT 필요 — customer-service가 X-User-Role로 역할 게이팅)
         # customer 소유 하위경로만 한정 라우팅 → 타 서비스가 미래에 /api/v1/internal/* 를 써도 충돌 없음.
@@ -97,7 +106,7 @@ spring:
         - id: loan
           uri: http://${LOAN_SERVICE_HOST:localhost}:${LOAN_SERVICE_PORT:8083}
           predicates:
-            - Path=/api/loan-applications/**,/api/loan-products/**,/api/loan-contracts/**,/api/collaterals/**,/api/credit-info-reports/**,/api/credit-score/**,/api/loan-certificates/**,/api/loan-documents/**,/api/loan-reviews/**,/api/loans/**,/api/business-calendar/**,/api/notifications/**,/api/status-history/**,/api/admin/loan-contracts/**,/api/audit/**,/api/break-glass/**,/api/advisory/**,/api/internal/advisory/**
+            - Path=/api/loan-applications/**,/api/loan-products/**,/api/loan-contracts/**,/api/collaterals/**,/api/credit-info-reports/**,/api/credit-score/**,/api/loan-certificates/**,/api/loan-documents/**,/api/loan-reviews/**,/api/loans/**,/api/business-calendar/**,/api/notifications/**,/api/status-history/**,/api/admin/loan-contracts/**,/api/audit/**,/api/break-glass/**,/api/advisory/**,/api/internal/advisory/**,/api/internal/eod/**
 
         # 지급·이체 도메인 (JWT 필요)
         - id: payment

@@ -65,7 +65,15 @@ tasks.named('test') {
         // 다온은행 화면(DaonPaletteIsolationTest).
         include 'web/app/other-bank/**/*.tsx'
         include 'web/components/other-bank/*.tsx'
+        // 프론트가 부르는 경로 ↔ 게이트웨이 라우트 대조(GatewayRouteCoverageTest).
+        // 화면 어디서든 새 /api 경로를 부를 수 있으므로 web 전체를 본다.
+        include 'web/app/**/*.ts'
+        include 'web/app/**/*.tsx'
+        include 'web/components/**/*.tsx'
+        include 'services/api-gateway/src/main/resources/application.yml'
         exclude '**/build/**'
+        exclude 'web/node_modules/**'
+        exclude 'web/.next/**'
     }).withPropertyName('dockerfilesAndBuildScripts')
             .withPathSensitivity(PathSensitivity.RELATIVE)
 }

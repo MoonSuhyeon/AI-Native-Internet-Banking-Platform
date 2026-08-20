@@ -119,7 +119,13 @@ public enum CustomerErrorCode implements ErrorCode {
     // 입금통보 (170-179)
     CUST_170(HttpStatus.NOT_FOUND,  "입금통보 신청 내역을 찾을 수 없습니다."),
     CUST_171(HttpStatus.CONFLICT,   "이미 신청된 계좌입니다."),
-    CUST_172(HttpStatus.BAD_REQUEST,"통보받을 연락처를 입력해주세요.");
+    CUST_172(HttpStatus.BAD_REQUEST,"통보받을 연락처를 입력해주세요."),
+
+    // 지점 상담 예약 (180-189)
+    CUST_180(HttpStatus.NOT_FOUND,  "영업점을 찾을 수 없습니다."),
+    CUST_181(HttpStatus.NOT_FOUND,  "예약 내역을 찾을 수 없습니다."),
+    CUST_182(HttpStatus.BAD_REQUEST,"예약할 수 없는 시간입니다."),
+    CUST_183(HttpStatus.CONFLICT,   "같은 시간에 이미 예약이 있습니다.");
 
     private final HttpStatus status;
     private final String message;

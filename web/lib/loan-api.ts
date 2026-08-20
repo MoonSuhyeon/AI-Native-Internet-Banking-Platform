@@ -596,10 +596,11 @@ export const notificationOutboxApi = {
 // ─── 본인인증 ─────────────────────────────────────────────────
 
 export const identityVerificationApi = {
-  get: (idvId: number) =>
-    // ⚠ 스펙의 경로는 /api/loan-applications/{applId}/identity-verifications/{idvId} 다.
-    //   이 경로로는 404 다.
-    api.get<any>(`/api/identity-verifications/${idvId}`),
+  // 본인인증은 신청 건에 딸려 있다. applId 없이 idvId 만으로 부르는 경로는 서버에
+  // 없어서 늘 404 였다 — 화면은 "조회 결과가 없습니다" 를 보여 주므로, 없는 건인지
+  // 경로가 틀린 건지 구분되지 않았다.
+  get: (applId: number, idvId: number) =>
+    api.get<any>(`/api/loan-applications/${applId}/identity-verifications/${idvId}`),
 };
 
 export function getCustomerId(): number | null {

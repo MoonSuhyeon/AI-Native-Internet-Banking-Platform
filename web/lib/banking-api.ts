@@ -83,3 +83,55 @@ export async function subscribeDepositAlert(req: {
 export async function unsubscribeDepositAlert(subscriptionId: number): Promise<void> {
   await api.delete(`/api/v1/notifications/deposit-alerts/${subscriptionId}`)
 }
+
+/* ── 영업점 · 지점 상담 예약 ── */
+
+export type Branch = {
+  branchId: number
+  branchCode: string
+  branchName: string
+  branchType: 'BRANCH' | 'CORPORATE' | 'PB'
+  region: string
+  address: string
+  phone: string | null
+  openTime: string
+  closeTime: string
+}
+
+export type BranchReservation = {
+  reservationId: number
+  branchId: number
+  branchName: string
+  reservedAt: string
+  topicCd: string
+  memo: string | null
+  contactPhone: string
+  statusCd: 'RESERVED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
+}
+
+/** 지점검색. 지점명·지역 어느 쪽으로 쳐도 찾는다. */
+export async function searchBranches(keyword: string): Promise<Branch[]> {
+  const { data } = await api.get('/api/v1/branches', { params: { keyword } })
+  return data.data ?? []
+}
+
+export async function reserveBranchConsultation(req: {
+  branchId: number
+  /** ISO 8601. 서버가 지점 영업시간 안인지 확인한다. */
+  reservedAt: string
+  topicCd: string
+  memo?: string
+  contactPhone: string
+}): Promise<BranchReservation> {
+  const { data } = await api.post('/api/v1/branches/reservations', req)
+  return data.data
+}
+
+export async function fetchMyBranchReservations(): Promise<BranchReservation[]> {
+  const { data } = await api.get('/api/v1/branches/reservations')
+  return data.data ?? []
+}
+
+export async function cancelBranchReservation(reservationId: number): Promise<void> {
+  await api.delete(`/api/v1/branches/reservations/${reservationId}`)
+}

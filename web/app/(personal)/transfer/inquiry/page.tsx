@@ -388,14 +388,21 @@ export default function TransferInquiryPage() {
                   style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                   {issuing === 'one' ? '발급 중…' : '이체확인증 건별 출력'}
                 </button>
-                <button className="border rounded-xl px-5 py-2 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors flex items-center gap-1"
+                <button onClick={() => issueCertificates('batch')}
+                  disabled={issuing !== null}
+                  className="border rounded-xl px-5 py-2 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors flex items-center gap-1 disabled:opacity-40"
                   style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                   {issuing === 'batch' ? '발급 중…' : '이체확인증 일괄 출력'}
                   <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3" stroke="currentColor" strokeWidth="1.5">
                     <path d="M2 10L10 2M10 2H5M10 2v5"/>
                   </svg>
                 </button>
-                <button className="border rounded-xl px-5 py-2 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors"
+                {/* 이체결과 전송: 밖으로 내보낼 통로(SMTP·SMS)가 이 시스템에 아직 없다.
+                    눌러도 아무 일이 없던 버튼을 그대로 두면 고객은 보냈다고 믿는다 —
+                    보내지 못한다는 것을 말해 주는 편이 낫다. docs/OPEN_ITEMS.md 참조. */}
+                <button disabled
+                  title="이체결과를 문자·이메일로 보내는 기능은 준비 중입니다."
+                  className="border rounded-xl px-5 py-2 text-[13px] font-medium opacity-40 cursor-not-allowed"
                   style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                   이체결과 전송
                 </button>
