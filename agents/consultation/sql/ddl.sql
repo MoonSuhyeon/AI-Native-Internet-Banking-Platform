@@ -283,4 +283,35 @@ CREATE TABLE IF NOT EXISTS chatbot_document (
     updated_by        BIGINT
 );
 
+-- 이메일상담 접수.
+--
+-- 상담 모달과 FAQ 화면에 "이메일상담하기" 버튼이 있었지만 핸들러가 없었다. 눌러도
+-- 아무 일이 없었으니 24시간 접수한다고 써 놓고 접수할 곳이 없었던 셈이다.
+--
+-- **왜 consultation 만으로는 부족한가.** consultation 은 상담 한 건의 요약을 담는
+-- 표라 content_summary 가 200자다. 이메일 문의는 본문이 그보다 길고, 답변을 보낼
+-- 주소가 있어야 하는데 그 자리가 없다. 요약 칸에 이메일을 밀어 넣으면 나중에 읽는
+-- 사람이 그 값을 요약으로 읽는다.
+CREATE TABLE IF NOT EXISTS email_inquiry (
+    inquiry_id      BIGSERIAL PRIMARY KEY,
+    consultation_id BIGINT       NOT NULL REFERENCES consultation(consultation_id),
+    customer_no     VARCHAR(30)  NOT NULL,
+    -- 답변을 보낼 곳. 가입 이메일과 다를 수 있어 따로 받는다.
+    reply_email     VARCHAR(255) NOT NULL,
+    title           VARCHAR(200) NOT NULL,
+    content         TEXT         NOT NULL,
+    answered_at     TIMESTAMPTZ,
+    answer_content  TEXT,
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ix_email_inquiry_customer
+    ON email_inquiry (customer_no, created_at DESC);
+
+-- 답변했다면 내용이 있어야 한다. 시각만 남으면 "답변함" 인데 무엇을 보냈는지 모른다.
+ALTER TABLE email_inquiry DROP CONSTRAINT IF EXISTS ck_email_inquiry_answer;
+ALTER TABLE email_inquiry ADD CONSTRAINT ck_email_inquiry_answer
+    CHECK (answered_at IS NULL
+           OR (answer_content IS NOT NULL AND length(btrim(answer_content)) > 0));
+
 COMMIT;

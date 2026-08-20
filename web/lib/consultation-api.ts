@@ -361,3 +361,35 @@ export async function uploadDocument(
   })
   return data
 }
+
+/* ── 이메일상담 ── */
+
+export type EmailInquiry = {
+  inquiry_id: number
+  consultation_id: number
+  reply_email: string
+  title: string
+  created_at: string
+  answered_at: string | null
+  answer_content: string | null
+}
+
+/**
+ * 이메일상담 접수.
+ *
+ * 고객번호를 보내지 않는다 — 게이트웨이가 토큰에서 꺼내 넣는다. 화면이 실어 보내면
+ * 값을 바꿔 남의 이름으로 문의를 남길 수 있다.
+ */
+export async function createEmailInquiry(payload: {
+  reply_email: string
+  title: string
+  content: string
+}): Promise<EmailInquiry> {
+  const { data } = await consultationApi.post<EmailInquiry>('/email-inquiries', payload)
+  return data
+}
+
+export async function fetchEmailInquiries(): Promise<EmailInquiry[]> {
+  const { data } = await consultationApi.get<EmailInquiry[]>('/email-inquiries')
+  return data
+}

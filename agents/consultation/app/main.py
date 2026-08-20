@@ -55,11 +55,17 @@ from app.schemas import (
     ChatMessageHistoryResponse,
     ChatSendMessageRequest,
     DocumentUploadResponse,
+    EmailInquiryRequest,
+    EmailInquiryResponse,
     FileAnalyzeRequest,
     FileAnalyzeResponse,
     ScenarioSeedResponse,
 )
 from app.services import (
+    CODE_INQUIRY_ETC,
+    CODE_RECEPTION_CHANNEL_EMAIL,
+    CODE_RECEPTION_METHOD_EMAIL,
+    CODE_CONSULTATION_STATUS_OPEN,
     CODE_SENDER_AGENT,
     CODE_SENDER_USER,
     ChatbotService,
@@ -864,3 +870,105 @@ async def upload_document(
         status=doc.status,
         message="서류가 성공적으로 제출되었습니다. 영업일 기준 1~3일 내 처리될 예정입니다.",
     )
+
+
+# ── 이메일상담 ───────────────────────────────────────────────────────────────
+
+@app.post(
+    "/email-inquiries",
+    response_model=EmailInquiryResponse,
+    status_code=201,
+    summary="이메일상담 접수",
+    description=(
+        "고객이 이메일로 답변받을 문의를 남긴다. 상담 모달과 FAQ 화면의 "
+        "'이메일상담하기' 버튼이 여기로 온다."
+    ),
+)
+def create_email_inquiry(
+    request: Request,
+    payload: EmailInquiryRequest,
+    db: Session = Depends(get_db),
+) -> EmailInquiryResponse:
+    """이메일상담 접수.
+
+    고객번호는 게이트웨이가 주입한 신원에서만 가져온다 — 본문으로 받으면 남의
+    이름으로 문의를 남길 수 있다.
+
+    ``consultation`` 행을 함께 만든다. 상담 이력이 한 곳으로 모이지 않으면
+    "이 고객이 몇 번 문의했는가" 를 채널마다 따로 세어야 한다.
+    """
+    from app.models import Consultation, EmailInquiry
+
+    customer_no = identity.require_customer(request)
+
+    consultation = Consultation(
+        customer_no=customer_no,
+        reception_method_code_id=CODE_RECEPTION_METHOD_EMAIL,
+        inquiry_type_code_id=CODE_INQUIRY_ETC,
+        reception_channel_code_id=CODE_RECEPTION_CHANNEL_EMAIL,
+        content_summary=payload.title[:200],
+        status_code_id=CODE_CONSULTATION_STATUS_OPEN,
+        active_yn=True,
+    )
+    db.add(consultation)
+    db.flush()
+
+    inquiry = EmailInquiry(
+        consultation_id=consultation.consultation_id,
+        customer_no=customer_no,
+        reply_email=payload.reply_email,
+        title=payload.title,
+        content=payload.content,
+    )
+    db.add(inquiry)
+    db.commit()
+    db.refresh(inquiry)
+
+    return EmailInquiryResponse(
+        inquiry_id=inquiry.inquiry_id,
+        consultation_id=inquiry.consultation_id,
+        reply_email=inquiry.reply_email,
+        title=inquiry.title,
+        created_at=inquiry.created_at,
+        answered_at=inquiry.answered_at,
+        answer_content=inquiry.answer_content,
+    )
+
+
+@app.get(
+    "/email-inquiries",
+    response_model=list[EmailInquiryResponse],
+    summary="내 이메일상담 내역",
+)
+def list_email_inquiries(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> list[EmailInquiryResponse]:
+    """본인이 남긴 문의만 돌려준다.
+
+    고객번호를 쿼리로 받지 않는 이유다 — 받으면 값을 바꿔 남의 문의를 읽을 수 있고,
+    문의 본문에는 계좌·거래 이야기가 그대로 적혀 있다.
+    """
+    from sqlalchemy import select
+
+    from app.models import EmailInquiry
+
+    customer_no = identity.require_customer(request)
+    rows = db.scalars(
+        select(EmailInquiry)
+        .where(EmailInquiry.customer_no == customer_no)
+        .order_by(EmailInquiry.inquiry_id.desc())
+    ).all()
+
+    return [
+        EmailInquiryResponse(
+            inquiry_id=r.inquiry_id,
+            consultation_id=r.consultation_id,
+            reply_email=r.reply_email,
+            title=r.title,
+            created_at=r.created_at,
+            answered_at=r.answered_at,
+            answer_content=r.answer_content,
+        )
+        for r in rows
+    ]

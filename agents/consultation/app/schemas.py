@@ -225,3 +225,26 @@ class ChatRequestResponse(BaseModel):
     consultation_id: int
     status: str
     agent_requested_at: str | None
+
+
+class EmailInquiryRequest(BaseModel):
+    """이메일상담 접수.
+
+    고객번호를 받지 않는다 — 게이트웨이가 주입한 신원으로 정한다. 본문에 넣게 두면
+    남의 이름으로 문의를 남길 수 있다.
+    """
+
+    # EmailStr 을 쓰지 않는다 — email-validator 의존을 이 하나 때문에 더하지 않는다.
+    reply_email: str = Field(min_length=5, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    title: str = Field(min_length=1, max_length=200)
+    content: str = Field(min_length=1, max_length=5000)
+
+
+class EmailInquiryResponse(BaseModel):
+    inquiry_id: int
+    consultation_id: int
+    reply_email: str
+    title: str
+    created_at: datetime
+    answered_at: datetime | None = None
+    answer_content: str | None = None

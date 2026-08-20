@@ -1,6 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+
 import Link from 'next/link'
+import EmailInquiryModal from '@/components/layout/EmailInquiryModal'
 import { KB_MINT } from '@/lib/theme'
 
 type Props = {
@@ -33,6 +36,9 @@ function IconMail() {
 }
 
 export default function ConsultModal({ onClose }: Props) {
+  // 이메일상담 접수. 버튼이 있는데 접수할 곳이 없었다.
+  const [emailOpen, setEmailOpen] = useState(false)
+
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
@@ -112,7 +118,8 @@ export default function ConsultModal({ onClose }: Props) {
                 className="block border border-kb-border px-5 py-2 text-[12px] text-kb-text-body hover:bg-kb-beige transition-colors w-full text-left">
                 고객상담 FAQ
               </Link>
-              <button className="block border border-kb-border px-5 py-2 text-[12px] text-kb-text-body hover:bg-kb-beige transition-colors w-full text-left">
+              <button onClick={() => setEmailOpen(true)}
+                className="block border border-kb-border px-5 py-2 text-[12px] text-kb-text-body hover:bg-kb-beige transition-colors w-full text-left">
                 이메일상담하기
               </button>
             </div>
@@ -129,6 +136,8 @@ export default function ConsultModal({ onClose }: Props) {
           </button>
         </div>
       </div>
+
+      {emailOpen && <EmailInquiryModal onClose={() => setEmailOpen(false)} />}
     </div>
   )
 }

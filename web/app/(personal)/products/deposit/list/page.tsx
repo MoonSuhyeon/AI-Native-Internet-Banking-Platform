@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import CartModal from '@/components/products/CartModal'
+import CompareModal from '@/components/products/CompareModal'
 import DepositSidebar from '@/components/products/DepositSidebar'
 import AutoBreadcrumb from '@/components/layout/AutoBreadcrumb'
 import { fetchDepositProducts, toDepositProductCard } from '@/lib/deposit-api'
@@ -318,6 +319,10 @@ function DepositListPageInner() {
   const [joinPeriod, setJoinPeriod] = useState('전체')
   const [searchName, setSearchName] = useState('')
   const [cartProduct, setCartProduct] = useState<string | null>(null)
+  // 비교하기 — 챗봇에는 비교 기능이 있었지만, 상품을 눈앞에 두고 고르는 화면에서는
+  // 쓸 수 없었다. 셋까지만 받는다 — 그 이상은 표가 가로로 넘쳐 읽기 어려워진다.
+  const [compareIds, setCompareIds] = useState<string[]>([])
+  const [compareOpen, setCompareOpen] = useState(false)
 
   const productsMap: Record<Tab, Product[]> = {
     '예금': DEPOSIT_PRODUCTS,
@@ -333,8 +338,20 @@ function DepositListPageInner() {
   const showProductTypeFilter = tab === '예금'
   const showHousingNote = tab === '주택청약'
 
+  const MAX_COMPARE = 3
+  const compareProducts = compareIds
+    .map(id => products.find(p => p.id === id))
+    .filter((p): p is Product => Boolean(p))
+
+  function toggleCompare(id: string) {
+    setCompareIds(prev => prev.includes(id)
+      ? prev.filter(x => x !== id)
+      : prev.length >= MAX_COMPARE ? prev : [...prev, id])
+  }
+
   function handleTabChange(t: Tab) {
     setTab(t)
+    setCompareIds([])
     setProductType('전체')
     setJoinMethod('전체')
     setJoinPeriod('전체')
@@ -345,6 +362,13 @@ function DepositListPageInner() {
     <>
     {cartProduct && (
       <CartModal productName={cartProduct} onClose={() => setCartProduct(null)} />
+    )}
+    {compareOpen && compareProducts.length > 0 && (
+      <CompareModal
+        products={compareProducts}
+        onRemove={id => setCompareIds(prev => prev.filter(x => x !== id))}
+        onClose={() => setCompareOpen(false)}
+      />
     )}
     <div className="max-w-kb-container mx-auto px-6">
       <div className="flex">
@@ -489,9 +513,16 @@ function DepositListPageInner() {
                     >
                       🛒
                     </button>
-                    <button className="border rounded-lg px-4 py-1.5 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors"
-                      style={{ borderColor: KB_PRIMARY_BORDER, color: KB_PRIMARY }}>
-                      비교하기
+                    <button
+                      onClick={() => toggleCompare(product.id)}
+                      disabled={!compareIds.includes(product.id) && compareIds.length >= MAX_COMPARE}
+                      title={compareIds.length >= MAX_COMPARE && !compareIds.includes(product.id)
+                        ? `한 번에 ${MAX_COMPARE}개까지 비교할 수 있습니다.` : undefined}
+                      className="border rounded-lg px-4 py-1.5 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors disabled:opacity-40"
+                      style={compareIds.includes(product.id)
+                        ? { borderColor: KB_PRIMARY, backgroundColor: KB_PRIMARY_BG, color: KB_PRIMARY, fontWeight: 700 }
+                        : { borderColor: KB_PRIMARY_BORDER, color: KB_PRIMARY }}>
+                      {compareIds.includes(product.id) ? '비교 담김' : '비교하기'}
                     </button>
                     {product.canApply && (
                       <Link href={`/products/deposit/join/${product.id}`}
@@ -521,6 +552,26 @@ function DepositListPageInner() {
           </div>
         </main>
       </div>
+
+      {/* 비교함. 담기만 하고 열 곳이 없으면 담은 것이 어디 갔는지 알 수 없다. */}
+      {compareIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] flex items-center gap-3
+                        rounded-xl px-5 py-3 shadow-xl bg-white"
+          style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
+          <span className="text-[13px] text-kb-text">
+            비교함 <b style={{ color: KB_PRIMARY }}>{compareIds.length}</b>/{MAX_COMPARE}
+          </span>
+          <button onClick={() => setCompareOpen(true)}
+            className="rounded-lg px-4 py-1.5 text-[13px] font-bold text-white hover:opacity-85 transition-opacity"
+            style={{ backgroundColor: KB_PRIMARY }}>
+            비교하기
+          </button>
+          <button onClick={() => { setCompareIds([]); setCompareOpen(false) }}
+            className="text-[13px]" style={{ color: KB_TEXT_LIGHT }}>
+            비우기
+          </button>
+        </div>
+      )}
     </div>
     </>
   )

@@ -55,6 +55,11 @@ CODE_PROCESS_LLM = 2
 CODE_SENDER_USER = 1
 CODE_SENDER_BOT = 2
 CODE_MESSAGE_TYPE_TEXT = 1
+# 이메일 접수. 코드 마스터가 검증에 쓰이지 않아 여기 상수가 정본이다
+# (docs — code_master 는 seed 만 있고 참조가 없다).
+CODE_RECEPTION_METHOD_EMAIL = 2
+CODE_RECEPTION_CHANNEL_EMAIL = 2
+CODE_INQUIRY_ETC = 9
 
 
 class ChatbotService:

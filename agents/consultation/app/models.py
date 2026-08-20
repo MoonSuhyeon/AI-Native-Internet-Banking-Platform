@@ -225,3 +225,32 @@ class ChatbotDocument(AuditMixin, Base):
     doc_type: Mapped[str] = mapped_column(String(50), nullable=False)
     file_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
     status: Mapped[str] = mapped_column(String(20), default="UPLOADED", nullable=False)
+
+
+class EmailInquiry(Base):
+    """이메일상담 접수.
+
+    상담 모달과 FAQ 화면의 "이메일상담하기" 버튼에 핸들러가 없었다. 24시간 접수한다고
+    써 놓고 접수할 곳이 없었다.
+
+    ``consultation`` 만으로는 부족하다 — 그 표는 상담 한 건의 *요약*을 담는 곳이라
+    ``content_summary`` 가 200자이고, 답변을 보낼 주소를 둘 자리가 없다. 요약 칸에
+    이메일을 밀어 넣으면 나중에 읽는 사람이 그 값을 요약으로 읽는다.
+    """
+
+    __tablename__ = "email_inquiry"
+
+    inquiry_id: Mapped[int] = mapped_column(ID_TYPE, primary_key=True, autoincrement=True)
+    consultation_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("consultation.consultation_id"), nullable=False
+    )
+    customer_no: Mapped[str] = mapped_column(String(30), nullable=False)
+    #: 답변을 보낼 곳. 가입 이메일과 다를 수 있어 따로 받는다.
+    reply_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    answer_content: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
