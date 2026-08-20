@@ -169,9 +169,11 @@ export default function DaonHomePage() {
               <p className="text-base font-bold text-kb-text">B2B전자결제 1599-3333</p>
               <p className="text-sm text-kb-text-muted mt-1">평일 09~18시</p>
             </div>
-            <button className="mt-5 border border-kb-border px-3 py-1 text-xs text-kb-text-body bg-white hover:bg-daon-surface transition-colors flex items-center gap-1">
-              원격상담 바로가기 <span className="text-[10px]">↗</span>
-            </button>
+            {/* 원격상담 창구가 다온 데모에는 없다. AXful 쪽 상담과 헷갈리지 않도록
+                표시로 둔다. */}
+            <span className="mt-5 inline-block border border-kb-border px-3 py-1 text-xs text-kb-text-muted bg-white hover:bg-daon-surface transition-colors flex items-center gap-1">
+              원격상담 바로가기
+            </span>
           </div>
         </div>
       </section>

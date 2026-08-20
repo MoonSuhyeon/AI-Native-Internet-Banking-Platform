@@ -120,7 +120,12 @@ export default function OtherBankRegisterPage() {
                 <p className="text-[12px] text-kb-text-muted text-center leading-relaxed mb-6">
                   등록된 카드사의 정보를<br />확인 할 수 있어요.
                 </p>
-                <button className="w-full py-2.5 bg-kb-yellow text-[13px] font-bold text-kb-text text-center hover:brightness-95 transition-all">
+                {/* 카드사·선불기관 연동은 마이데이터 사업자 연계로 동작한다. 이
+                    시스템에 그 연계가 없다(docs/OPEN_ITEMS.md). 은행/증권 계좌등록만
+                    실제 화면이 있다. */}
+                <button disabled
+                  title="카드사 연동은 마이데이터 연계가 필요합니다. 준비 중입니다."
+                  className="w-full py-2.5 bg-kb-yellow text-[13px] font-bold text-kb-text text-center opacity-40 cursor-not-allowed">
                   카드 한번에 불러오기
                 </button>
               </div>
@@ -140,7 +145,9 @@ export default function OtherBankRegisterPage() {
                 <p className="text-[12px] text-kb-text-muted text-center leading-relaxed mb-6">
                   등록된 선불기관의 잔액과<br />거래내역을 조회 할 수 있어요.
                 </p>
-                <button className="w-full py-2.5 bg-kb-yellow text-[13px] font-bold text-kb-text text-center hover:brightness-95 transition-all">
+                <button disabled
+                  title="선불기관 연동은 마이데이터 연계가 필요합니다. 준비 중입니다."
+                  className="w-full py-2.5 bg-kb-yellow text-[13px] font-bold text-kb-text text-center opacity-40 cursor-not-allowed">
                   선불기관 직접 선택하기
                 </button>
               </div>

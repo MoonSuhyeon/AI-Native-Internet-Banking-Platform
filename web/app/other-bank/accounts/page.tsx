@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { fetchInboundPayments, InboundPayment } from '@/lib/other-bank-api'
 import { DAON_NAVY, DAON_NAVY_MID } from '@/lib/theme'
 
@@ -48,12 +48,15 @@ export default function DaonAccountsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadInbound = useCallback(() => {
+    setLoading(true)
     fetchInboundPayments(DAON_ACCOUNT.number)
-      .then(data => setInboundList(data))
+      .then(data => { setInboundList(data); setError(null) })
       .catch(() => setError('입금내역을 불러오지 못했습니다.'))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => { loadInbound() }, [loadInbound])
 
   const latestDeposit = inboundList[0] ?? null
 
@@ -132,15 +135,17 @@ export default function DaonAccountsPage() {
 
         {/* 계좌 액션 버튼 */}
         <div className="flex gap-2 mt-4 pt-4 border-t border-kb-border">
-          <button className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body hover:bg-white transition-colors">
-            이체
-          </button>
-          <button className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body hover:bg-white transition-colors">
-            계좌관리
-          </button>
-          <button className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body hover:bg-white transition-colors">
-            입금통보 신청
-          </button>
+          {/* 다온은행은 오픈뱅킹 상대 은행을 흉내 낸 데모 화면이다. 이 화면의 몫은
+              "AXful 에서 보낸 돈이 도착했는가" 를 보여 주는 것까지이고, 다온 자체의
+              뱅킹 기능(이체·계좌관리·입금통보)은 이 레포에 없다. 눌러도 아무 일이
+              없는 버튼을 그대로 두면 되는 줄 알고 눌러 본다. */}
+          {['이체', '계좌관리', '입금통보 신청'].map(label => (
+            <button key={label} disabled
+              title="다온은행 데모 화면입니다. 해당 기능은 제공되지 않습니다."
+              className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body opacity-40 cursor-not-allowed">
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -194,7 +199,9 @@ export default function DaonAccountsPage() {
               placeholder="거래 내용을 입력하세요"
               className="border border-kb-border px-3 py-1.5 text-[13px] w-60 focus:outline-none"
             />
-            <button className="px-5 py-1.5 text-[12px] font-bold text-white hover:brightness-110" style={{ backgroundColor: DAON_NAVY }}>
+            {/* 이 화면의 목적은 "AXful 에서 보낸 돈이 도착했는가" 를 확인하는 것이라
+                다시 읽어 오는 버튼이 실제로 쓸모 있다. */}
+            <button onClick={loadInbound} className="px-5 py-1.5 text-[12px] font-bold text-white hover:brightness-110" style={{ backgroundColor: DAON_NAVY }}>
               조회
             </button>
           </div>

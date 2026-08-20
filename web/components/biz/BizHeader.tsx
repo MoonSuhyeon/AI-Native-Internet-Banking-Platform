@@ -264,16 +264,10 @@ export default function BizHeader() {
             <span className="text-[15px] text-kb-text-muted px-2">GLOBAL</span>
           </nav>
           <div className="flex items-center gap-2 ml-3">
-            <button className="text-kb-text-muted hover:text-kb-text">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-            </button>
-            <button className="text-kb-text-muted hover:text-kb-text ml-1">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-              </svg>
-            </button>
+            {/* 검색·전체메뉴 아이콘이 있었지만 뒤에 아무것도 없었다. 검색 색인은
+                개인 사이트 메뉴만 담고 있고, 전체 내비게이션은 이 헤더에 이미 펼쳐져
+                있어 햄버거로 열 것이 없다. 아무 데도 가지 않는 아이콘은 눌러 보고
+                나서야 안다는 것을 알리므로 뺀다(docs/OPEN_ITEMS.md). */}
           </div>
         </div>
       </div>

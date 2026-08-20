@@ -341,11 +341,13 @@ function BizFinCertFlow({ onClose }: { onClose: () => void }) {
                   자동로그인
                 </label>
 
+                {/* 휴대폰 인증 API(/api/v1/mobile-auth/send)는 있지만 기업 로그인
+                    흐름에 연결돼 있지 않다(docs/OPEN_ITEMS.md). 인증번호를 받을 곳도
+                    화면에 없어, 지금 연결하면 절반만 도는 흐름이 된다. */}
                 <button
-                  disabled={!bizNo || !phone}
-                  className="w-full py-2.5 text-[14px] font-bold transition-colors
-                    disabled:bg-gray-200 disabled:text-gray-400
-                    enabled:bg-kb-yellow enabled:text-kb-text enabled:hover:brightness-95"
+                  disabled
+                  title="휴대폰 문자인증은 준비 중입니다. 인증서 로그인을 이용해 주세요."
+                  className="w-full py-2.5 text-[14px] font-bold bg-gray-200 text-gray-400 cursor-not-allowed"
                 >
                   휴대폰 문자인증
                 </button>
@@ -576,7 +578,11 @@ function KBBizCertModal({ onClose }: { onClose: () => void }) {
 
           {/* 버튼 */}
           <div className="flex flex-col items-center gap-3 pt-2">
-            <button className="px-14 py-2.5 bg-kb-yellow text-body font-bold text-kb-text hover:brightness-95 transition-all">
+            {/* 사업자등록번호로 인증하는 기업 인증서 로그인 API 가 없다 —
+                개인 인증서는 loginId/password 로 발급·로그인한다(docs/OPEN_ITEMS.md). */}
+            <button disabled
+              title="기업 인증서 로그인은 준비 중입니다."
+              className="px-14 py-2.5 bg-kb-yellow text-body font-bold text-kb-text opacity-40 cursor-not-allowed">
               확인
             </button>
             <Link href="#" className="text-caption text-kb-blue hover:underline">

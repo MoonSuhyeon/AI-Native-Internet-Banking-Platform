@@ -402,16 +402,19 @@ export default function DepositJoinPage() {
           <div className="flex items-center justify-between mb-5">
             <h1 className="text-[20px] font-bold text-kb-text">{productName}</h1>
             <div className="flex gap-1">
+              {/* 지금 어디인지 보여 주는 표시다. <button> 이면 눌러서 단계를 건너뛸 수
+                  있다고 알리는 셈이 되는데, 가입 절차는 순서를 건너뛸 수 없다. */}
               {STEP_LABELS.map((s, i) => (
-                <button key={s}
-                  className={`px-4 py-1.5 text-[12px] rounded-lg transition-colors ${
+                <span key={s}
+                  aria-current={i + 1 === step ? 'step' : undefined}
+                  className={`px-4 py-1.5 text-[12px] rounded-lg ${
                     i + 1 === step
                       ? 'font-bold text-white'
                       : 'text-kb-text-body border border-kb-border bg-white'
                   }`}
                   style={i + 1 === step ? { backgroundColor: KB_PRIMARY } : {}}>
                   {i + 1}. {s}
-                </button>
+                </span>
               ))}
             </div>
           </div>
@@ -439,13 +442,18 @@ export default function DepositJoinPage() {
                 <SectionHeader title="약관 및 상품설명서" />
                 <div>
                   <AccItem title="약관 열람">
+                    {/* 약관 원문 데이터가 아직 없다 — deposit_special_terms 표는 있으나
+                        내용이 비어 있다(docs/OPEN_ITEMS.md). 원문 없이 열람 버튼만 두면
+                        눌러 보고 나서야 알게 되므로, 적용되는 약관의 목록으로 둔다. */}
                     {terms.map(t => (
-                      <button key={t}
-                        className="flex items-center justify-between w-full py-2 border-b border-kb-border last:border-0 hover:text-kb-blue transition-colors">
+                      <div key={t}
+                        className="flex items-center justify-between w-full py-2 border-b border-kb-border last:border-0">
                         <span>{t}</span>
-                        <span className="text-xs text-kb-text-muted">›</span>
-                      </button>
+                      </div>
                     ))}
+                    <p className="pt-2 text-[11px] text-kb-text-muted">
+                      약관 원문은 가입 완료 후 &apos;계약서류&apos;에서 확인하실 수 있습니다.
+                    </p>
                   </AccItem>
                 </div>
               </div>
@@ -731,7 +739,11 @@ export default function DepositJoinPage() {
                         className="w-4 h-4 accent-kb-primary" />
                       비과세종합저축 적용
                     </label>
-                    <button className="text-[12px] text-kb-blue hover:underline">자세히보기 ›</button>
+                    {/* '자세히보기' 가 갈 곳이 없었다. 안내 화면을 새로 만들기보다
+                        한 줄로 답이 되는 내용이라 그 자리에 둔다. */}
+                    <span className="text-[12px] text-kb-text-muted">
+                      만 65세 이상·장애인 등 대상자에 한해 이자소득세가 면제됩니다.
+                    </span>
                   </div>
                 </FormRow>
 
@@ -882,7 +894,7 @@ export default function DepositJoinPage() {
               </table>
 
               <div className="text-[12px] text-kb-text-muted mb-5 space-y-1">
-                <p>※ 본 상품정보 교회를 이용하실 시 상품 이전을 참조하기 위한 것입니다. 자세한 내용은 <button className="text-kb-blue hover:underline">상품설명서 ›</button>를 참조하시기 바랍니다.</p>
+                <p>※ 본 상품정보 교회를 이용하실 시 상품 이전을 참조하기 위한 것입니다. 자세한 내용은 상품설명서를 참조하시기 바랍니다.</p>
                 <p>※ 가입 후에는 &apos;계약서류&apos; 관련 약관을 통해 상품설명문서를 확인할 수 있습니다.</p>
               </div>
 

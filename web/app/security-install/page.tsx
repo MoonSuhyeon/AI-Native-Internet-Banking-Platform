@@ -198,12 +198,15 @@ export default function SecurityInstallPage() {
           </div>
 
           <div className="border-t flex justify-center py-4" style={{ borderColor: KB_PRIMARY_BORDER }}>
-            <button className="text-[14px] text-kb-text-muted flex items-center gap-1.5 hover:text-kb-text transition-colors">
+            {/* ▾ 는 펼칠 것이 있다는 표시인데 펼칠 내용이 없었다. 보안 프로그램
+                설명은 이용안내 화면에 있다. */}
+            <Link href="/security-guide"
+              className="text-[14px] text-kb-text-muted flex items-center gap-1.5 hover:text-kb-text transition-colors">
               자세히보기
               <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="2">
                 <path d="M5 8l5 5 5-5"/>
               </svg>
-            </button>
+            </Link>
           </div>
         </div>
 

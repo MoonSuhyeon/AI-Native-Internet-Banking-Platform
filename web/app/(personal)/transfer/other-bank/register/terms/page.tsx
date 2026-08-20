@@ -260,7 +260,12 @@ export default function OtherBankTermsPage() {
             >
               취소
             </button>
-            <button className="px-14 py-3 bg-kb-yellow text-[14px] font-bold text-kb-text hover:brightness-95">
+            {/* 동의 다음 단계인 '계좌 불러오기' 는 금융결제원 오픈뱅킹 연계로
+                동작한다. 그 연계가 없어 여기서 멈춘다(docs/OPEN_ITEMS.md).
+                눌러도 아무 일이 없던 버튼을 그대로 두면 등록됐다고 믿는다. */}
+            <button disabled
+              title="계좌 불러오기는 금융결제원 오픈뱅킹 연계가 필요합니다. 준비 중입니다."
+              className="px-14 py-3 bg-kb-yellow text-[14px] font-bold text-kb-text opacity-40 cursor-not-allowed">
               확인
             </button>
           </div>

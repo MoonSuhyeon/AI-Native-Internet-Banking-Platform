@@ -2,6 +2,7 @@
 import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BORDER,KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import Link from 'next/link'
+import SearchBar from '@/components/home/SearchBar'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
@@ -320,6 +321,12 @@ export default function Header() {
         {/* 우측: 사용자 영역 */}
         {!isLoginPage && (
           <div className="flex items-center gap-2 text-[14px]">
+            {/* SearchBar 는 만들어져 있었지만 어디에도 마운트돼 있지 않았다 —
+                컴포넌트도 테스트도 멀쩡한데 화면에서 닿을 길이 없는 상태였다.
+                메뉴가 100개 가까이 되는 사이트에서 검색이 없으면 못 찾는다. */}
+            <div className="hidden lg:block w-[220px]">
+              <SearchBar />
+            </div>
             <Link href="/admin/login"
               className="px-3 py-1 text-[12px] font-semibold rounded-full border border-gray-300 text-gray-400 transition-colors hover:bg-gray-50">
               관리자

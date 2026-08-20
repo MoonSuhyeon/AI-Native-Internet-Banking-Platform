@@ -150,15 +150,15 @@ export default function DaonLoginPage() {
                   { icon: '🔒', label: '인증센터' },
                   { icon: '⚙️', label: '로그인 설정' },
                 ].map((item, i) => (
-                  <button
+                  /* 다온은행 데모에는 인증센터·로그인 설정 화면이 없다. 표시로 둔다. */
+                  <div
                     key={item.label}
-                    className={`flex flex-col items-center gap-1.5 py-4 px-16 text-sm text-kb-text-body
-                                hover:bg-daon-surface-light transition-colors w-full
-                                ${i > 0 ? 'border-l border-kb-border' : ''}`}
+                    className={`flex flex-col items-center gap-1.5 py-4 px-16 text-sm text-kb-text-muted
+                                w-full ${i > 0 ? 'border-l border-kb-border' : ''}`}
                   >
                     <span className="text-lg">{item.icon}</span>
                     <span>{item.label}</span>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>

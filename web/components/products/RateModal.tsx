@@ -100,9 +100,8 @@ export default function RateModal({ productName, rates, onClose }: Props) {
               defaultValue={productName}>
               <option>{productName}</option>
             </select>
-            <button className="border border-kb-border bg-white px-4 py-1 text-[13px] hover:bg-kb-beige-light">
-              조회
-            </button>
+            {/* 셀렉트에 지금 보는 상품 하나뿐이라 고를 것이 없고, 이율은 열 때 이미
+                받아 온 값이다. 누를 이유가 없는 버튼을 두면 눌러 보고 나서야 안다. */}
           </div>
 
           {/* 이율 유형 링크 */}
