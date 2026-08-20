@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { formatNumber } from '@/lib/mock-data'
+import AccountSettingsModal from '@/components/accounts/AccountSettingsModal'
 import DepositAlertModal from '@/components/accounts/DepositAlertModal'
 import {
   fetchDepositAccountViewModels,
@@ -37,6 +38,8 @@ export default function AccountDetailPage() {
   // 적금 납입 모달
   const [payOpen, setPayOpen] = useState(false)
   const [alertOpen, setAlertOpen] = useState(false)
+  // 계좌 설정 API 는 이미 있었고(별칭·한도·상태) 화면에서 닿을 길이 없었다.
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [payAmount, setPayAmount] = useState('')
   const [paying, setPaying] = useState(false)
   // 거래 취소
@@ -197,7 +200,10 @@ export default function AccountDetailPage() {
               적금 납입
             </button>
           )}
-          <button className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body hover:bg-white transition-colors">
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body hover:bg-white transition-colors"
+          >
             계좌관리
           </button>
           <button
@@ -277,7 +283,10 @@ export default function AccountDetailPage() {
               placeholder="거래 내용을 입력하세요"
               className="border border-kb-border px-3 py-1.5 text-[13px] w-60 focus:outline-none focus:border-kb-taupe"
             />
-            <button className="bg-kb-yellow px-5 py-1.5 text-[12px] font-bold text-kb-text hover:brightness-95">
+            {/* 목록은 입력하는 대로 걸러진다. 이 버튼은 서버에서 다시 읽어 온다 —
+                거래가 방금 일어났을 때 눌러야 할 것이 있어야 한다. */}
+            <button onClick={() => loadData()}
+              className="bg-kb-yellow px-5 py-1.5 text-[12px] font-bold text-kb-text hover:brightness-95">
               조회
             </button>
           </div>
@@ -446,6 +455,16 @@ export default function AccountDetailPage() {
 
       {alertOpen && account && (
         <DepositAlertModal accountNumber={account.number} onClose={() => setAlertOpen(false)} />
+      )}
+
+      {settingsOpen && account?.apiAccountId && (
+        <AccountSettingsModal
+          accountId={account.apiAccountId}
+          accountNumber={account.number}
+          currentAlias={account.name}
+          onClose={() => setSettingsOpen(false)}
+          onSaved={loadData}
+        />
       )}
     </div>
   )

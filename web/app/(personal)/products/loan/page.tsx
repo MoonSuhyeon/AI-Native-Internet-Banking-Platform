@@ -3,6 +3,7 @@ import { KB_GOLD, KB_PRIMARY, KB_PRIMARY_BORDER, KB_TEXT_BODY } from '@/lib/them
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import LoanSidebar from '@/components/inquiry/LoanSidebar'
 
 const CATEGORIES = [
@@ -81,6 +82,14 @@ const SLIDES = [
 type CalcResult = { principal: number; interest: number; total: number }
 
 export default function LoanMainPage() {
+  const router = useRouter()
+  const [loanQuery, setLoanQuery] = useState('')
+
+  function searchLoans() {
+    const q = loanQuery.trim()
+    router.push(q ? `/products/loan/credit?q=${encodeURIComponent(q)}` : '/products/loan/credit')
+  }
+
   const [slide, setSlide] = useState(0)
   const [calcTab, setCalcTab] = useState(0)
   const [principal, setPrincipal] = useState('')
@@ -252,8 +261,15 @@ export default function LoanMainPage() {
       <div className="bg-kb-primary-bg px-10 py-5 flex items-center gap-4">
         <p className="text-[20px] font-bold text-kb-text whitespace-nowrap">원하시는 대출을 찾아보세요.</p>
         <div className="flex-1 flex items-center border border-kb-primary-border bg-white rounded-full overflow-hidden">
-          <input type="text" placeholder="대출상품명을 입력하세요." className="flex-1 px-5 py-2.5 text-[20px] outline-none bg-transparent" />
-          <button className="px-5 py-2.5 text-kb-text-muted hover:text-kb-text">
+          {/* 아이콘만 있고 핸들러가 없었다 — 상품명을 쳐도 아무 일이 없었다.
+              이 화면에는 목록이 없으므로 검색어를 들고 신용대출 목록으로 간다. */}
+          <input type="text" placeholder="대출상품명을 입력하세요."
+            value={loanQuery}
+            onChange={e => setLoanQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && searchLoans()}
+            className="flex-1 px-5 py-2.5 text-[20px] outline-none bg-transparent" />
+          <button type="button" aria-label="대출상품 검색" onClick={searchLoans}
+            className="px-5 py-2.5 text-kb-text-muted hover:text-kb-text">
             <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="2">
               <circle cx="9" cy="9" r="6"/><line x1="14" y1="14" x2="18" y2="18"/>
             </svg>

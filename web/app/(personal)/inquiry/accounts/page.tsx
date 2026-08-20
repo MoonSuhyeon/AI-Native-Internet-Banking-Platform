@@ -10,7 +10,19 @@ import SavingsPaymentStatusModal from '@/components/accounts/SavingsPaymentStatu
 
 const ACCOUNT_TABS = ['예금', '대출', '전체계좌']
 
-const MANAGEMENT_ITEMS = ['계좌별명관리', '계좌개설확인서', '출금계좌등록/삭제', '한도제한해제 신청']
+/**
+ * 계좌관리 드롭다운.
+ *
+ * 갈 곳이 있는 것과 없는 것을 나눈다. 예전에는 넷 다 <button> 이었고 아무 데도
+ * 가지 않았다 — 누를 수 있다고 알리기만 하고 아무 일도 하지 않는 것이, 없는 것보다
+ * 나쁘다. 아직 화면이 없는 둘은 그렇다고 말한다(docs/OPEN_ITEMS.md).
+ */
+const MANAGEMENT_ITEMS: { label: string; href?: string; note?: string }[] = [
+  { label: '계좌별명관리',    href: '/accounts' },
+  { label: '출금계좌등록/삭제', href: '/banking/withdrawal-account' },
+  { label: '한도제한해제 신청', note: '영업점 방문 또는 서류 제출이 필요합니다.' },
+  { label: '계좌개설확인서',   note: '준비 중입니다.' },
+]
 
 function EmptyState({ message, subMessage, actionHref, actionLabel }: {
   message: string
@@ -338,9 +350,12 @@ export default function AccountsPage() {
                               style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                               조회
                             </Link>
+                            {/* 입금(적금 납입)과 계좌관리는 계좌 상세에서 한다.
+                                여기에 같은 기능을 또 만들면 한쪽만 고치게 된다. */}
                             {['입금', '계좌관리'].map(label => (
-                              <button key={label} className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border transition-colors hover:bg-kb-primary-bg"
-                                style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>{label}</button>
+                              <Link key={label} href={`/accounts/${account.id}`}
+                                className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-kb-primary-bg"
+                                style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>{label}</Link>
                             ))}
                             <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                               className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-red-50"
@@ -390,10 +405,17 @@ export default function AccountsPage() {
                         </button>
                         {mgmtOpen === account.id && (
                           <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg z-50 w-[180px] py-1.5 overflow-hidden" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
-                            {MANAGEMENT_ITEMS.map(item => (
-                              <button key={item} className="block w-full text-left px-4 py-2 text-[12px] text-kb-text-body hover:bg-kb-primary-bg">
-                                {item}
-                              </button>
+                            {MANAGEMENT_ITEMS.map(item => item.href ? (
+                              <Link key={item.label}
+                                href={item.label === '계좌별명관리' ? `/accounts/${account.id}` : item.href}
+                                className="block w-full text-left px-4 py-2 text-[12px] text-kb-text-body hover:bg-kb-primary-bg">
+                                {item.label}
+                              </Link>
+                            ) : (
+                              <span key={item.label} title={item.note}
+                                className="block w-full text-left px-4 py-2 text-[12px] text-kb-text-muted cursor-default">
+                                {item.label}
+                              </span>
                             ))}
                           </div>
                         )}

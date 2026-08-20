@@ -117,7 +117,12 @@ export default function AutoServiceChangePage() {
                 개인이 수취인의 계좌를 지정하여 매월 일정액을 자동 이체하는 서비스입니다.
                 정기적으로 송금해야 하는 용돈, 생활비 등을 편리하게 이체할 수 있습니다.
               </p>
-              <button className="w-full bg-kb-yellow py-2.5 text-[14px] font-bold text-kb-text hover:bg-kb-yellow-dark">
+              {/* 계좌이동서비스는 금융결제원(payinfo) 연계로 동작한다. 이 시스템에는
+                  그 연계가 없다(docs/OPEN_ITEMS.md). 눌러도 아무 일이 없던 버튼을
+                  그대로 두면 고객은 신청됐다고 믿는다. */}
+              <button disabled
+                title="계좌이동서비스는 금융결제원 연계가 필요합니다. 준비 중입니다."
+                className="w-full bg-kb-yellow py-2.5 text-[14px] font-bold text-kb-text opacity-40 cursor-not-allowed">
                 자동송금 계좌변경하기
               </button>
             </div>
@@ -127,7 +132,9 @@ export default function AutoServiceChangePage() {
                 요금청구기관의 청구에 의해 자동으로 납부되는 서비스입니다.
                 공과금, 보험료, 통신요금 등의 자동이체 출금계좌를 AXful Bank으로 변경할 수 있습니다.
               </p>
-              <button className="w-full bg-kb-yellow py-2.5 text-[14px] font-bold text-kb-text hover:bg-kb-yellow-dark">
+              <button disabled
+                title="계좌이동서비스는 금융결제원 연계가 필요합니다. 준비 중입니다."
+                className="w-full bg-kb-yellow py-2.5 text-[14px] font-bold text-kb-text opacity-40 cursor-not-allowed">
                 자동납부 계좌변경하기
               </button>
             </div>

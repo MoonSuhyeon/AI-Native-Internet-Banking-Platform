@@ -164,9 +164,11 @@ export default function KBCertBizIssuePage() {
                   ※ 법인·고유번호/납세번호가 있는 단체의 경우 영업점 1회 신청전로 필요
                 </p>
               </div>
-              <button className="btn-primary w-full py-3 text-base font-bold">
+              {/* 발급 화면은 하나다. 카드마다 화면을 따로 만들면 한쪽만 고치게 된다. */}
+              <Link href="/cert/axful-cert-issue"
+                className="btn-primary w-full py-3 text-base font-bold text-center">
                 인증서 발급
-              </button>
+              </Link>
             </div>
 
             {/* 카드 2: 1회용 영업점 신청 번호 */}
@@ -178,9 +180,10 @@ export default function KBCertBizIssuePage() {
                   간편하게 인증서를 발급받을 수 있어요.
                 </p>
               </div>
-              <button className="btn-primary w-full py-3 text-base font-bold">
+              <Link href="/cert/axful-cert-issue"
+                className="btn-primary w-full py-3 text-base font-bold text-center">
                 인증서 발급
-              </button>
+              </Link>
             </div>
           </div>
         </main>

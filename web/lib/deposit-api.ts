@@ -710,3 +710,15 @@ export async function fetchInterestIncomeStatement(taxYear: number): Promise<Int
   })
   return data
 }
+
+/* ── 계좌 설정 ── */
+
+/**
+ * 계좌 별칭 변경.
+ *
+ * 계좌가 여럿이면 번호만으로는 구분이 안 된다. 별칭은 그 화면에서 고객이 붙이는
+ * 이름이고, 이체·조회 화면 모두 이 값을 보여 준다.
+ */
+export async function updateAccountAlias(accountId: number, accountAlias: string): Promise<void> {
+  await depositApi.patch(`/accounts/${accountId}/alias`, { accountAlias })
+}

@@ -2,7 +2,7 @@
 import { KB_BORDER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_LIGHT } from '@/lib/theme'
 
 import Link from 'next/link'
-import { useState, useEffect, Suspense } from 'react'
+import { useCallback, useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import CartModal from '@/components/products/CartModal'
 import CompareModal from '@/components/products/CompareModal'
@@ -271,12 +271,10 @@ function DepositListPageInner() {
     if (nextTab) setTab(nextTab)
   }, [searchParams])
 
-  useEffect(() => {
-    let cancelled = false
-    async function loadProducts() {
+  const reloadProducts = useCallback(async () => {
+    {
       try {
         const products = await fetchDepositProducts({ productStatus: 'SELLING' })
-        if (cancelled) return
 
         const next: Partial<Record<Tab, Product[]>> = {
           '예금': [],
@@ -308,12 +306,11 @@ function DepositListPageInner() {
         setApiProductsMap({})
       }
     }
-
-    loadProducts()
-    return () => {
-      cancelled = true
-    }
   }, [])
+
+  useEffect(() => {
+    reloadProducts()
+  }, [reloadProducts])
   const [productType, setProductType] = useState('전체')
   const [joinMethod, setJoinMethod] = useState('전체')
   const [joinPeriod, setJoinPeriod] = useState('전체')
@@ -454,7 +451,10 @@ function DepositListPageInner() {
               )}
             </div>
             <div className="flex justify-center mt-4">
-              <button className="px-16 py-2.5 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity"
+              {/* 목록은 고르는 대로 걸러진다. 이 버튼은 서버 목록을 다시 읽어 온다 —
+                  금리가 바뀌었을 때 눌러야 할 것이 있어야 한다. */}
+              <button onClick={() => reloadProducts()}
+                className="px-16 py-2.5 text-[14px] font-bold text-white rounded-xl hover:opacity-85 transition-opacity"
                 style={{ backgroundColor: KB_PRIMARY }}>
                 조회
               </button>

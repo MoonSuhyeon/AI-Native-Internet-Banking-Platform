@@ -1,4 +1,6 @@
 'use client'
+
+import Link from 'next/link'
 import { KB_BORDER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE } from '@/lib/theme'
 
 import { useState } from 'react'
@@ -148,8 +150,9 @@ export default function TerminateResultPage() {
                     <td className="px-4 py-3.5 text-center text-kb-text">{row.type}</td>
                     <td className="px-4 py-3.5 text-right font-semibold pr-5" style={{ color: KB_PRIMARY }}>{row.amount}원</td>
                     <td className="px-4 py-3.5 text-center">
-                      <button className="px-4 py-1 text-[12px] font-medium rounded-lg border transition-colors hover:bg-kb-primary-bg"
-                        style={{ borderColor: KB_PRIMARY_BORDER, color: KB_PRIMARY }}>조회</button>
+                      <Link href="/inquiry/transactions"
+                        className="inline-block px-4 py-1 text-[12px] font-medium rounded-lg border transition-colors hover:bg-kb-primary-bg"
+                        style={{ borderColor: KB_PRIMARY_BORDER, color: KB_PRIMARY }}>조회</Link>
                     </td>
                   </tr>
                 )) : (

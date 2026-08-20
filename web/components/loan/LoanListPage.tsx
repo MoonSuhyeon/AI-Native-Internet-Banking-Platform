@@ -3,7 +3,8 @@ import { KB_PRIMARY,KB_PRIMARY_BORDER } from '@/lib/theme'
 import type { Loan } from '@/lib/generated'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
 import LoanSidebar from '@/components/inquiry/LoanSidebar'
 import { loanProductApi, bpsToRate, formatAmount } from '@/lib/loan-api'
 
@@ -29,10 +30,23 @@ interface Props {
   activeHref: string
 }
 
-export default function LoanListPage({ loanTypeCd, pageTitle, activeHref }: Props) {
+/**
+ * useSearchParams 를 쓰는 부분을 Suspense 로 감싼다.
+ *
+ * Next 14 는 이 훅이 정적 렌더링을 막는다고 보고 빌드를 세운다 — 경계가 없으면
+ * 배포 빌드에서 터진다. 타입 검사만으로는 드러나지 않는다.
+ */
+export default function LoanListPage(props: Props) {
+  return <Suspense><LoanListPageInner {...props} /></Suspense>
+}
+
+function LoanListPageInner({ loanTypeCd, pageTitle, activeHref }: Props) {
   const [productType, setProductType] = useState('전체')
   const [joinMethod,  setJoinMethod]  = useState('전체')
-  const [searchName,  setSearchName]  = useState('')
+  // 대출 랜딩의 검색창이 ?q= 로 검색어를 들고 온다. 초기값으로 받지 않으면
+  // 검색해서 왔는데 전체 목록이 나온다.
+  const searchParams = useSearchParams()
+  const [searchName,  setSearchName]  = useState(searchParams.get('q') ?? '')
   const [sortBy,      setSortBy]      = useState('판매순')
   const [page,        setPage]        = useState(0)
   const [products,    setProducts]    = useState<Product[]>([])

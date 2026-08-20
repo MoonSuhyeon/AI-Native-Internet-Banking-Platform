@@ -1,5 +1,5 @@
 ﻿'use client'
-import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_DARK, KB_PRIMARY_SURFACE } from '@/lib/theme'
+import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_DARK, KB_PRIMARY_SURFACE, KB_TEXT_MUTED } from '@/lib/theme'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -1068,7 +1068,9 @@ function KBStarModal({ onClose }: { onClose: () => void }) {
           <div className="text-[11px] text-gray-400">
             <span>CertGate 2.2.0 (221025)</span>
             <br />
-            <button className="text-red-500 hover:underline">처음 이용하신다면</button>
+            {/* 인증서 이용 안내 화면이 있다. 로그인 흐름을 끊지 않도록 새 탭으로 연다. */}
+            <a href="/banking/first-visit" target="_blank" rel="noopener noreferrer"
+              className="text-red-500 hover:underline">처음 이용하신다면</a>
           </div>
           <button
             onClick={onClose}
@@ -1090,6 +1092,12 @@ function shufflePad(): string[] {
 /* ── 금융인증서 모달 ── */
 function FinCertModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<'confirm' | 'yeskey'>('confirm')
+  // 안내 패널을 접었는지. 브라우저에 기억해 다음 로그인에서도 접힌 채로 연다.
+  const [guideHidden, setGuideHidden] = useState(false)
+
+  useEffect(() => {
+    try { if (localStorage.getItem('hideFinCertGuide') === '1') setGuideHidden(true) } catch {}
+  }, [])
   const [pin, setPin] = useState('')
   const [pad, setPad] = useState<string[]>(shufflePad)
   const [attemptsLeft, setAttemptsLeft] = useState(10)
@@ -1206,7 +1214,8 @@ function FinCertModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* 우: 이용안내 패널 */}
-        <div className="w-[200px] bg-white border-l border-gray-200 flex flex-col" style={{ minHeight: 360 }}>
+        <div className={`w-[200px] bg-white border-l border-gray-200 flex-col ${guideHidden ? 'hidden' : 'flex'}`}
+          style={{ minHeight: 360 }}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
             <span className="text-[12px] font-bold text-gray-700">금융인증서 이용안내</span>
             <span className="text-xl">☁️</span>
@@ -1233,7 +1242,16 @@ function FinCertModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
           <div className="px-4 py-3 border-t border-gray-200">
-            <button className="text-[11px] text-kb-primary hover:underline">다시 보지않기</button>
+            {/* 눌러도 아무 일이 없었다. 안내를 접고, 접었다는 사실을 기억한다 —
+                기억하지 않으면 다음 로그인에서 또 뜨고 "다시 보지않기" 가 거짓말이 된다. */}
+            <button
+              onClick={() => {
+                try { localStorage.setItem('hideFinCertGuide', '1') } catch {}
+                setGuideHidden(true)
+              }}
+              className="text-[11px] text-kb-primary hover:underline">
+              다시 보지않기
+            </button>
           </div>
         </div>
       </div>
@@ -1281,9 +1299,11 @@ function FinCertModal({ onClose }: { onClose: () => void }) {
                   ))}
                 </div>
 
-                <button className="text-[12px] hover:underline" style={{ color: KB_PRIMARY }}>
-                  비밀번호를 잊으셨나요?
-                </button>
+                {/* 온라인 비밀번호 재설정 경로가 아직 없다(docs/OPEN_ITEMS.md).
+                    갈 곳 없는 버튼을 두면 눌러 보고 나서야 알게 된다. */}
+                <p className="text-[12px]" style={{ color: KB_TEXT_MUTED }}>
+                  비밀번호 재설정은 고객센터 또는 영업점에서 가능합니다.
+                </p>
                 {loading && (
                   <p className="text-[12px] font-medium" style={{ color: KB_PRIMARY }}>
                     로그인 확인 중입니다...

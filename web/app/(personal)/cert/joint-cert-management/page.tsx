@@ -126,12 +126,16 @@ export default function JointCertManagementPage() {
             <h3 className="text-body font-bold text-kb-text">{card.title}</h3>
             <p className="text-caption text-kb-text-muted leading-relaxed">{card.desc}</p>
             <div className="flex gap-2 pt-1">
-              <button className="flex-1 py-2 border border-kb-border text-caption text-kb-text hover:bg-kb-beige-light transition-colors rounded-lg">
+              <Link href="/banking/first-visit"
+                className="flex-1 py-2 border border-kb-border text-caption text-kb-text text-center hover:bg-kb-beige-light transition-colors rounded-lg">
                 이용 안내
-              </button>
-              <button className="flex-1 py-2 text-caption font-bold text-white hover:opacity-90 transition-all rounded-lg" style={{ backgroundColor: KB_PRIMARY }}>
+              </Link>
+              {/* 가져오기·내보내기 같은 실제 조작은 인증서 관리 화면 한 곳에 모아 둔다. */}
+              <Link href="/cert/cert-management"
+                className="flex-1 py-2 text-caption font-bold text-white text-center hover:opacity-90 transition-all rounded-lg"
+                style={{ backgroundColor: KB_PRIMARY }}>
                 {card.actionLabel}
-              </button>
+              </Link>
             </div>
           </div>
         ))}

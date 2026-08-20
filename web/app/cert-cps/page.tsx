@@ -345,7 +345,7 @@ const SECTIONS = [
     content: (
       <div className="space-y-4 text-[14px] text-kb-text-body leading-relaxed">
         <div className="overflow-x-auto" style={{ border: `1px solid ${KB_PRIMARY_BORDER}`, borderRadius: 8 }}>
-          <table className="w-full border-collapse text-[13px]">
+          <table id="cps-revisions" className="w-full border-collapse text-[13px]">
             <thead>
               <tr style={{ backgroundColor: KB_PRIMARY_BG }}>
                 {['버전', '개정일', '주요 내용'].map(h => (
@@ -392,11 +392,14 @@ export default function CertCpsPage() {
       {/* 제목 + 버전 */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-[26px] font-bold text-kb-text">AXful인증서 인증업무준칙(CPS)</h1>
-        <button className="flex items-center gap-2 border rounded-lg px-4 py-2 text-[13px] font-medium transition-colors hover:bg-kb-primary-bg flex-shrink-0"
+        {/* ▼ 는 고를 것이 있다는 표시인데 목록이 없었다. 개정 이력 표가 이 페이지
+            안에 있으므로 그리로 보낸다 — 버전을 확인하려는 사람이 찾는 것이 그 표다. */}
+        <a href="#cps-revisions"
+          className="flex items-center gap-2 border rounded-lg px-4 py-2 text-[13px] font-medium transition-colors hover:bg-kb-primary-bg"
           style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
           인증업무준칙 (Ver.1.0.14)
-          <span className="text-[10px]">▼</span>
-        </button>
+          <span className="text-[10px]">▾ 개정 이력</span>
+        </a>
       </div>
 
       {/* 목차 */}
