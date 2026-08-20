@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { formatNumber } from '@/lib/mock-data'
+import DepositAlertModal from '@/components/accounts/DepositAlertModal'
 import {
   fetchDepositAccountViewModels,
   getCurrentDepositCustomerId,
@@ -35,6 +36,7 @@ export default function AccountDetailPage() {
 
   // 적금 납입 모달
   const [payOpen, setPayOpen] = useState(false)
+  const [alertOpen, setAlertOpen] = useState(false)
   const [payAmount, setPayAmount] = useState('')
   const [paying, setPaying] = useState(false)
   // 거래 취소
@@ -198,7 +200,10 @@ export default function AccountDetailPage() {
           <button className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body hover:bg-white transition-colors">
             계좌관리
           </button>
-          <button className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body hover:bg-white transition-colors">
+          <button
+            onClick={() => setAlertOpen(true)}
+            className="border border-kb-border px-5 py-1.5 text-[12px] text-kb-text-body hover:bg-white transition-colors"
+          >
             입금통보 신청
           </button>
         </div>
@@ -437,6 +442,10 @@ export default function AccountDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {alertOpen && account && (
+        <DepositAlertModal accountNumber={account.number} onClose={() => setAlertOpen(false)} />
       )}
     </div>
   )

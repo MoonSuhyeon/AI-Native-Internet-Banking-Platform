@@ -109,7 +109,17 @@ public enum CustomerErrorCode implements ErrorCode {
     // 이체한도 (150-159)
     CUST_150(HttpStatus.BAD_REQUEST,"이체한도는 온라인에서 감액만 가능합니다. 증액은 영업점 방문 또는 본인인증이 필요합니다."),
     CUST_151(HttpStatus.BAD_REQUEST,"이체한도는 0보다 큰 금액으로 입력해 주세요."),
-    CUST_152(HttpStatus.BAD_REQUEST,"1회 이체한도는 1일 이체한도를 초과할 수 없습니다.");
+    CUST_152(HttpStatus.BAD_REQUEST,"1회 이체한도는 1일 이체한도를 초과할 수 없습니다."),
+
+    // 이체 즐겨찾기 (160-169) — 자주쓰는계좌·단축이체
+    CUST_160(HttpStatus.NOT_FOUND,  "등록된 즐겨찾기를 찾을 수 없습니다."),
+    CUST_161(HttpStatus.CONFLICT,   "이미 등록된 계좌입니다."),
+    CUST_162(HttpStatus.BAD_REQUEST,"단축이체는 금액을 입력해야 합니다."),
+
+    // 입금통보 (170-179)
+    CUST_170(HttpStatus.NOT_FOUND,  "입금통보 신청 내역을 찾을 수 없습니다."),
+    CUST_171(HttpStatus.CONFLICT,   "이미 신청된 계좌입니다."),
+    CUST_172(HttpStatus.BAD_REQUEST,"통보받을 연락처를 입력해주세요.");
 
     private final HttpStatus status;
     private final String message;

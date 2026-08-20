@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { MOCK_BANKS, formatNumber } from '@/lib/mock-data'
 import TransferSidebar from '@/components/inquiry/TransferSidebar'
+import FavoriteManageModal from '@/components/transfer/FavoriteManageModal'
+import { fetchFavorites, type FavoriteTransfer, type FavoriteType } from '@/lib/banking-api'
 import { fetchDepositAccountViewModels, getCurrentDepositCustomerId, DepositViewAccount, fetchTransactions, DepositTransaction } from '@/lib/deposit-api'
 
 const AMOUNT_SHORTCUTS = ['100만', '50만', '10만', '5만', '1만', '전액', '정결']
@@ -31,6 +33,13 @@ export default function TransferAccountPage() {
   const [accounts, setAccounts] = useState<DepositViewAccount[]>([])
   const [recentAccounts, setRecentAccounts] = useState<{ bank: string; name: string; number: string }[]>([])
   const [validationMessage, setValidationMessage] = useState('')
+
+  // 이체 즐겨찾기 — 자주쓰는계좌·단축이체. 등록/삭제 버튼에 핸들러가 없어
+  // 두 탭 모두 영원히 "등록되어 있지 않습니다" 였다.
+  const [favorites, setFavorites] = useState<Record<FavoriteType, FavoriteTransfer[]>>({
+    FAVORITE_ACCOUNT: [], QUICK_TRANSFER: [],
+  })
+  const [favoriteModal, setFavoriteModal] = useState<FavoriteType | null>(null)
 
   useEffect(() => {
     const to   = searchParams.get('to')
@@ -86,6 +95,23 @@ export default function TransferAccountPage() {
     }
     load()
   }, [requestedFromAccount])
+
+  async function loadFavorites() {
+    // 로그인 전이거나 서버가 없으면 빈 목록으로 둔다 — 이체 화면 자체가 막히면 안 된다.
+    try {
+      const [fav, quick] = await Promise.all([
+        fetchFavorites('FAVORITE_ACCOUNT'),
+        fetchFavorites('QUICK_TRANSFER'),
+      ])
+      setFavorites({ FAVORITE_ACCOUNT: fav, QUICK_TRANSFER: quick })
+    } catch {
+      setFavorites({ FAVORITE_ACCOUNT: [], QUICK_TRANSFER: [] })
+    }
+  }
+
+  useEffect(() => {
+    loadFavorites()
+  }, [])
 
   // 입출금(이체 가능) 계좌만 출금계좌로 노출
   const transferableAccounts = accounts.filter(a => a.type === '입출금')
@@ -204,9 +230,17 @@ export default function TransferAccountPage() {
             )}
 
             {activeRecipientTab === '자주쓰는계좌' && (
-              <div className="p-8 flex flex-col items-center gap-3">
-                <p className="text-[13px] text-kb-text-muted">자주쓰는계좌가 등록되어 있지 않습니다.</p>
-                <button className="mt-2 border rounded-lg px-6 py-2 text-[12px] transition-colors hover:bg-kb-primary-bg"
+              <div className="p-4 flex flex-col items-center gap-3">
+                {favorites.FAVORITE_ACCOUNT.length === 0 ? (
+                  <p className="text-[13px] text-kb-text-muted pt-4">자주쓰는계좌가 등록되어 있지 않습니다.</p>
+                ) : (
+                  <div className="flex gap-3 flex-wrap self-stretch">
+                    {favorites.FAVORITE_ACCOUNT.map(f =>
+                      recipientCard({ bank: f.bankName, name: f.alias, number: f.accountNumber }))}
+                  </div>
+                )}
+                <button onClick={() => setFavoriteModal('FAVORITE_ACCOUNT')}
+                  className="mt-2 border rounded-lg px-6 py-2 text-[12px] transition-colors hover:bg-kb-primary-bg"
                   style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                   자주쓰는계좌 등록/삭제
                 </button>
@@ -225,9 +259,39 @@ export default function TransferAccountPage() {
             )}
 
             {activeRecipientTab === '단축이체' && (
-              <div className="p-8 flex flex-col items-center gap-3">
-                <p className="text-[13px] text-kb-text-muted">단축이체가 등록되어 있지 않습니다.</p>
-                <button className="mt-2 border rounded-lg px-6 py-2 text-[12px] transition-colors hover:bg-kb-primary-bg"
+              <div className="p-4 flex flex-col items-center gap-3">
+                {favorites.QUICK_TRANSFER.length === 0 ? (
+                  <p className="text-[13px] text-kb-text-muted pt-4">단축이체가 등록되어 있지 않습니다.</p>
+                ) : (
+                  <div className="flex gap-3 flex-wrap self-stretch">
+                    {favorites.QUICK_TRANSFER.map(f => {
+                      const selected = toAccount === f.accountNumber
+                      return (
+                        <button key={f.favoriteId}
+                          onClick={() => {
+                            // 단축이체는 금액까지 미리 정해 둔 것이라 금액도 같이 채운다.
+                            setToBank(f.bankName)
+                            setToAccount(f.accountNumber)
+                            if (f.amount != null) setAmount(String(f.amount))
+                          }}
+                          className="border rounded-xl px-4 py-3 text-left text-[12px] transition-colors"
+                          style={{
+                            minWidth: 160,
+                            borderColor: selected ? KB_PRIMARY : KB_PRIMARY_BORDER,
+                            backgroundColor: selected ? KB_PRIMARY_BG : 'white',
+                          }}>
+                          <p className="font-semibold text-kb-text">{f.alias}</p>
+                          <p className="text-kb-text-muted mt-0.5">{f.bankName} {f.accountNumber}</p>
+                          <p className="font-semibold" style={{ color: KB_PRIMARY }}>
+                            {formatNumber(f.amount ?? 0)}원
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                <button onClick={() => setFavoriteModal('QUICK_TRANSFER')}
+                  className="mt-2 border rounded-lg px-6 py-2 text-[12px] transition-colors hover:bg-kb-primary-bg"
                   style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                   단축이체 등록/삭제
                 </button>
@@ -420,6 +484,14 @@ export default function TransferAccountPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {favoriteModal && (
+        <FavoriteManageModal
+          type={favoriteModal}
+          onClose={() => setFavoriteModal(null)}
+          onChanged={loadFavorites}
+        />
       )}
     </div>
   )
