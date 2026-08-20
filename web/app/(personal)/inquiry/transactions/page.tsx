@@ -5,7 +5,10 @@ import Link from 'next/link'
 import { Fragment, useState, useEffect } from 'react'
 import InquirySidebar from '@/components/inquiry/InquirySidebar'
 import { formatNumber } from '@/lib/mock-data'
-import { fetchDepositAccountViewModels, getCurrentDepositCustomerId, fetchTransactions, DepositViewAccount, DepositTransaction } from '@/lib/deposit-api'
+import { fetchDepositAccountViewModels, getCurrentDepositCustomerId, fetchTransactions,
+         issueTransactionCertificate,
+         DepositViewAccount, DepositTransaction, type TransactionCertificate } from '@/lib/deposit-api'
+import CertificateModal from '@/components/transactions/CertificateModal'
 
 const PERIOD_BUTTONS = ['당일', '1주일', '1개월', '3개월', '6개월', '1년']
 const YEARS  = ['2026', '2025', '2024']
@@ -22,6 +25,24 @@ export default function TransactionsPage() {
   const [searched, setSearched]   = useState(false)
   const [calSearched, setCalSearched] = useState(false)
   const [expandedTxId, setExpandedTxId] = useState<number | null>(null)
+  const [receipt, setReceipt] = useState<TransactionCertificate[] | null>(null)
+  const [issuingTxId, setIssuingTxId] = useState<number | null>(null)
+  const [receiptError, setReceiptError] = useState('')
+
+  // 영수증은 이체가 아닌 거래에도 발급된다 — "내 계좌에서 무슨 일이 있었나" 라서
+  // 상대가 없어도 문서가 성립한다.
+  async function issueReceipt(transactionId: number) {
+    setIssuingTxId(transactionId)
+    setReceiptError('')
+    try {
+      setReceipt([await issueTransactionCertificate(transactionId, 'RECEIPT')])
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } }
+      setReceiptError(err.response?.data?.message ?? '영수증 발급에 실패했습니다.')
+    } finally {
+      setIssuingTxId(null)
+    }
+  }
   const [txType, setTxType]     = useState<'전체' | '입금' | '출금'>('전체')
   const [sortOrder, setSortOrder] = useState<'최근' | '과거'>('최근')
   const [memoFilter, setMemoFilter] = useState('')
@@ -504,9 +525,12 @@ export default function TransactionsPage() {
                                         ))}
                                       </div>
                                       <div className="ml-auto flex items-start gap-2 pt-1">
-                                        <button className="border rounded-lg px-3 py-1 text-[12px] transition-colors hover:bg-kb-primary-bg"
+                                        <button
+                                          onClick={() => issueReceipt(tx.transactionId)}
+                                          disabled={issuingTxId !== null}
+                                          className="border rounded-lg px-3 py-1 text-[12px] transition-colors hover:bg-kb-primary-bg disabled:opacity-40"
                                           style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
-                                          거래영수증
+                                          {issuingTxId === tx.transactionId ? '발급 중…' : '거래영수증'}
                                         </button>
                                         <button className="border rounded-lg px-3 py-1 text-[12px] transition-colors hover:bg-kb-primary-bg"
                                           style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
@@ -529,6 +553,12 @@ export default function TransactionsPage() {
           )}
         </main>
       </div>
+      {receiptError && (
+        <p className="text-center text-[12px] text-kb-danger py-2">{receiptError}</p>
+      )}
+      {receipt && (
+        <CertificateModal certificates={receipt} onClose={() => setReceipt(null)} />
+      )}
     </div>
   )
 }

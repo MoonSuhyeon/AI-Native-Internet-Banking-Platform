@@ -541,3 +541,49 @@ export async function fetchDepositAccountViewModels(customerId: string): Promise
       }
     })
 }
+
+// ── 거래 증빙 ────────────────────────────────────────────────────────────────
+//
+// 화면에 "거래영수증"·"이체확인증 건별/일괄 출력" 버튼이 있었지만 부를 곳이 없었다.
+// 발급 대상은 보내지 않는다 — 게이트웨이가 검증한 고객번호로 서버가 정한다.
+
+export type CertificateType = 'RECEIPT' | 'TRANSFER_CONFIRMATION'
+
+export type TransactionCertificate = {
+  certificateNo: string
+  certificateType: CertificateType
+  issuedAt: string
+  transactionNumber: string
+  transactionAt: string
+  transactionType: string | null
+  amount: number
+  feeAmount: number
+  balanceAfter: number
+  transactionMemo: string | null
+  /** 이체확인증에만 있다. 영수증은 상대가 없어도 성립한다. */
+  counterpartyBankName: string | null
+  counterpartyAccountNo: string | null
+  counterpartyName: string | null
+}
+
+/** 단건 발급. 재발급하면 새 번호가 붙고 이력이 쌓인다. */
+export async function issueTransactionCertificate(
+  transactionId: number,
+  type: CertificateType,
+): Promise<TransactionCertificate> {
+  const { data } = await depositApi.post<TransactionCertificate>(
+    `/transactions/${transactionId}/certificates`, null, { params: { type } },
+  )
+  return data
+}
+
+/** 일괄 발급. 한 건이라도 발급할 수 없으면 전부 실패한다. */
+export async function issueTransactionCertificatesBatch(
+  transactionIds: number[],
+  type: CertificateType,
+): Promise<TransactionCertificate[]> {
+  const { data } = await depositApi.post<TransactionCertificate[]>(
+    '/transactions/certificates/batch', transactionIds, { params: { type } },
+  )
+  return data
+}

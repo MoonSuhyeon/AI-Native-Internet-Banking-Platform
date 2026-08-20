@@ -5,7 +5,10 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import DatePickerButton from '@/components/ui/DatePickerButton'
 import { formatNumber } from '@/lib/mock-data'
-import { fetchDepositAccountViewModels, fetchTransactions, getCurrentDepositCustomerId, type DepositViewAccount } from '@/lib/deposit-api'
+import { fetchDepositAccountViewModels, fetchTransactions, getCurrentDepositCustomerId,
+         issueTransactionCertificate, issueTransactionCertificatesBatch,
+         type DepositViewAccount, type TransactionCertificate } from '@/lib/deposit-api'
+import CertificateModal from '@/components/transactions/CertificateModal'
 import TransferSidebar from '@/components/inquiry/TransferSidebar'
 
 const TABS = ['즉시이체 결과조회', '예약이체 조회', '연락이체 조회', '지연이체 조회']
@@ -22,6 +25,39 @@ export default function TransferInquiryPage() {
   const [useCounter, setUseCounter] = useState(false)
   const [searched, setSearched] = useState(false)
   const [page, setPage] = useState(1)
+  const [certificates, setCertificates] = useState<TransactionCertificate[] | null>(null)
+  const [issuing, setIssuing] = useState<'one' | 'batch' | null>(null)
+  const [certError, setCertError] = useState('')
+
+  // 이체확인증은 "누구에게 보냈다" 를 증명하는 문서라 이체 거래에만 발급된다.
+  // 서버도 막지만, 화면에서 고른 행이 몇 건인지는 여기서만 알 수 있다.
+  async function issueCertificates(mode: 'one' | 'batch') {
+    const ids = mode === 'batch'
+      ? displayResults.filter(r => checkedRows.has(r.id)).map(r => Number(r.id))
+      : [Number(Array.from(checkedRows)[0])]
+
+    if (ids.length === 0 || Number.isNaN(ids[0])) {
+      setCertError('확인증을 발급할 거래를 선택해주세요.')
+      return
+    }
+    if (mode === 'one' && checkedRows.size !== 1) {
+      setCertError('건별 출력은 한 건만 선택해주세요.')
+      return
+    }
+    setIssuing(mode)
+    setCertError('')
+    try {
+      const issued = mode === 'batch'
+        ? await issueTransactionCertificatesBatch(ids, 'TRANSFER_CONFIRMATION')
+        : [await issueTransactionCertificate(ids[0], 'TRANSFER_CONFIRMATION')]
+      setCertificates(issued)
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } }
+      setCertError(err.response?.data?.message ?? '확인증 발급에 실패했습니다.')
+    } finally {
+      setIssuing(null)
+    }
+  }
   const [checkedRows, setCheckedRows] = useState<Set<string>>(new Set())
   const [localResults, setLocalResults] = useState<ResultRow[]>([])
   const [accounts, setAccounts] = useState<InquiryAccount[]>([])
@@ -334,20 +370,27 @@ export default function TransferInquiryPage() {
 
               {/* 하단 버튼 */}
               <div className="flex justify-center gap-2">
-                <button className="border rounded-xl px-5 py-2 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors flex items-center gap-1"
+                <button onClick={() => issueCertificates('batch')}
+                  disabled={issuing !== null}
+                  className="border rounded-xl px-5 py-2 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors flex items-center gap-1"
                   style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                   <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" stroke="currentColor" strokeWidth="1.5">
                     <rect x="2" y="2" width="12" height="12" rx="1"/><line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/>
                   </svg>
                   저장
                 </button>
-                <button className="border rounded-xl px-5 py-2 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors"
+                {certError && (
+                  <p className="w-full text-center text-[12px] text-kb-danger mb-1">{certError}</p>
+                )}
+                <button onClick={() => issueCertificates('one')}
+                  disabled={issuing !== null}
+                  className="border rounded-xl px-5 py-2 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors disabled:opacity-40"
                   style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
-                  이체확인증 건별 출력
+                  {issuing === 'one' ? '발급 중…' : '이체확인증 건별 출력'}
                 </button>
                 <button className="border rounded-xl px-5 py-2 text-[13px] font-medium hover:bg-kb-primary-bg transition-colors flex items-center gap-1"
                   style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
-                  이체확인증 일괄 출력
+                  {issuing === 'batch' ? '발급 중…' : '이체확인증 일괄 출력'}
                   <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3" stroke="currentColor" strokeWidth="1.5">
                     <path d="M2 10L10 2M10 2H5M10 2v5"/>
                   </svg>
@@ -361,6 +404,9 @@ export default function TransferInquiryPage() {
           )}
         </main>
       </div>
+      {certificates && (
+        <CertificateModal certificates={certificates} onClose={() => setCertificates(null)} />
+      )}
     </div>
   )
 }
