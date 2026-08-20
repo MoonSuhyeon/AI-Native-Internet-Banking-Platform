@@ -83,8 +83,13 @@ public class Transaction extends BaseEntity {
     @Column(name = "transaction_location", length = 100)
     private String transactionLocation;
 
+    /** 통장표시내용. 거래 시점에 함께 보낸 문구라 사후에 바꾸지 않는다. */
     @Column(name = "transaction_memo", length = 255)
     private String transactionMemo;
+
+    /** 고객이 나중에 붙이는 개인 메모. 거래 사실이 아니라 본인 기록이라 수정할 수 있다. */
+    @Column(name = "customer_memo", length = 255)
+    private String customerMemo;
 
     @Column(name = "transaction_summary", length = 100)
     private String transactionSummary;
@@ -190,4 +195,30 @@ public class Transaction extends BaseEntity {
         this.status = TransactionStatus.CANCELED;
         this.canceledAt = OffsetDateTime.now(clock);
     }
+    /** 메모 최대 길이. 컬럼과 같은 값이라 여기서 자르면 DB 가 거절하지 않는다. */
+    public static final int MEMO_MAX_LEN = 255;
+
+    /**
+     * 개인 메모를 고쳐 쓴다.
+     *
+     * <p><b>통장표시내용은 건드리지 않는다.</b> {@code transactionMemo} 는 이체할 때
+     * 함께 보낸 문구이고 받는 쪽 통장에 이미 찍혔다. 사후에 바꾸면 실제로 보낸 내용과
+     * 기록이 달라진다 — 메모 수정이 기록의 위조가 되어서는 안 된다.
+     *
+     * <p>빈 문자열은 지운 것으로 본다. 화면에서 내용을 다 지우고 저장하는 것이
+     * "메모 삭제" 이므로, 그때 빈 문자열이 남으면 "메모 있음" 으로 걸러진다.
+     */
+    public void updateCustomerMemo(String memo) {
+        if (memo == null || memo.isBlank()) {
+            this.customerMemo = null;
+            return;
+        }
+        String trimmed = memo.strip();
+        if (trimmed.length() > MEMO_MAX_LEN) {
+            throw new IllegalArgumentException(
+                    "메모는 " + MEMO_MAX_LEN + "자를 넘을 수 없다: " + trimmed.length() + "자");
+        }
+        this.customerMemo = trimmed;
+    }
+
 }

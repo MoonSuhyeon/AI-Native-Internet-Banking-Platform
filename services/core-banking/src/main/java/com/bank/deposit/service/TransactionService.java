@@ -318,4 +318,22 @@ public class TransactionService {
         return prefix + "-" + LocalDate.now(clock).format(DATE_FMT) + "-"
                 + UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
+    /**
+     * 개인 메모를 고쳐 쓴다.
+     *
+     * <p>통장표시내용({@code transactionMemo})은 건드리지 않는다 — 이체할 때 함께
+     * 보낸 문구라 사후에 바꾸면 기록이 실제와 달라진다.
+     */
+    @Transactional
+    public Transaction updateCustomerMemo(Long transactionId, String memo) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRANSACTION_NOT_FOUND));
+        try {
+            transaction.updateCustomerMemo(memo);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.INVALID_STATUS, e.getMessage());
+        }
+        return transaction;
+    }
+
 }

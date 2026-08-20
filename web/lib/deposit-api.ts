@@ -382,7 +382,10 @@ export type DepositTransaction = {
   status: string
   transactionAt: string
   transactionSummary?: string
+  /** 통장표시내용. 거래 시점에 함께 보낸 문구라 바꿀 수 없다. */
   transactionMemo?: string
+  /** 고객 개인 메모. 나중에 붙이고 고칠 수 있다. */
+  customerMemo?: string | null
   counterpartyAccountNo?: string
   counterpartyBankName?: string
   counterpartyName?: string
@@ -584,6 +587,22 @@ export async function issueTransactionCertificatesBatch(
 ): Promise<TransactionCertificate[]> {
   const { data } = await depositApi.post<TransactionCertificate[]>(
     '/transactions/certificates/batch', transactionIds, { params: { type } },
+  )
+  return data
+}
+
+/**
+ * 개인 메모 수정.
+ *
+ * 통장표시내용(transactionMemo)은 바꾸지 않는다 — 이체할 때 함께 보낸 문구라
+ * 사후에 고치면 실제로 보낸 내용과 기록이 달라진다. 내용을 비우면 메모가 지워진다.
+ */
+export async function updateTransactionMemo(
+  transactionId: number,
+  memo: string,
+): Promise<DepositTransaction> {
+  const { data } = await depositApi.patch<DepositTransaction>(
+    `/transactions/${transactionId}/memo`, { memo },
   )
   return data
 }

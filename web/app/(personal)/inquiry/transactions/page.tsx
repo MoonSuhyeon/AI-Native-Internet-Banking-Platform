@@ -6,7 +6,7 @@ import { Fragment, useState, useEffect } from 'react'
 import InquirySidebar from '@/components/inquiry/InquirySidebar'
 import { formatNumber } from '@/lib/mock-data'
 import { fetchDepositAccountViewModels, getCurrentDepositCustomerId, fetchTransactions,
-         issueTransactionCertificate,
+         issueTransactionCertificate, updateTransactionMemo,
          DepositViewAccount, DepositTransaction, type TransactionCertificate } from '@/lib/deposit-api'
 import CertificateModal from '@/components/transactions/CertificateModal'
 
@@ -26,6 +26,30 @@ export default function TransactionsPage() {
   const [calSearched, setCalSearched] = useState(false)
   const [expandedTxId, setExpandedTxId] = useState<number | null>(null)
   const [receipt, setReceipt] = useState<TransactionCertificate[] | null>(null)
+  const [memoTx, setMemoTx] = useState<DepositTransaction | null>(null)
+  const [memoDraft, setMemoDraft] = useState('')
+  const [memoSaving, setMemoSaving] = useState(false)
+
+  function openMemoEditor(tx: DepositTransaction) {
+    setMemoTx(tx)
+    // 통장표시내용이 아니라 개인 메모를 고친다. 처음이면 비어 있다.
+    setMemoDraft(tx.customerMemo ?? '')
+  }
+
+  async function saveMemo() {
+    if (!memoTx) return
+    setMemoSaving(true)
+    try {
+      const updated = await updateTransactionMemo(memoTx.transactionId, memoDraft)
+      setAllTransactions(prev => prev.map(t =>
+        t.transactionId === updated.transactionId ? { ...t, customerMemo: updated.customerMemo } : t))
+      setMemoTx(null)
+    } catch {
+      setReceiptError('메모 저장에 실패했습니다.')
+    } finally {
+      setMemoSaving(false)
+    }
+  }
   const [issuingTxId, setIssuingTxId] = useState<number | null>(null)
   const [receiptError, setReceiptError] = useState('')
 
@@ -515,7 +539,10 @@ export default function TransactionsPage() {
                                       <div className="space-y-1.5">
                                         {[
                                           ['적요', tx.transactionSummary || tx.transactionType],
-                                          tx.transactionMemo ? ['메모', tx.transactionMemo] : null,
+                                          // 통장표시내용은 이미 보낸 문구라 바꿀 수 없다.
+                                          // 아래 "내 메모" 와 다른 값이므로 나눠 보여준다.
+                                          tx.transactionMemo ? ['통장표시내용', tx.transactionMemo] : null,
+                                          tx.customerMemo ? ['내 메모', tx.customerMemo] : null,
                                           ['거래유형', tx.transactionType],
                                         ].filter(Boolean).map(row => (
                                           <div key={row![0]} className="flex gap-3">
@@ -532,7 +559,9 @@ export default function TransactionsPage() {
                                           style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                                           {issuingTxId === tx.transactionId ? '발급 중…' : '거래영수증'}
                                         </button>
-                                        <button className="border rounded-lg px-3 py-1 text-[12px] transition-colors hover:bg-kb-primary-bg"
+                                        <button
+                                          onClick={() => openMemoEditor(tx)}
+                                          className="border rounded-lg px-3 py-1 text-[12px] transition-colors hover:bg-kb-primary-bg"
                                           style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                                           메모 수정
                                         </button>
@@ -558,6 +587,50 @@ export default function TransactionsPage() {
       )}
       {receipt && (
         <CertificateModal certificates={receipt} onClose={() => setReceipt(null)} />
+      )}
+      {memoTx && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setMemoTx(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[420px]"
+            onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-3 rounded-t-xl" style={{ backgroundColor: KB_PRIMARY }}>
+              <span className="text-[15px] font-bold text-white">메모 수정</span>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              {/* 이미 보낸 문구는 참고로만 보여준다. 여기서 고치는 것이 아니다. */}
+              {memoTx.transactionMemo && (
+                <p className="text-[12px]" style={{ color: KB_TEXT_MUTED }}>
+                  통장표시내용 <span className="text-kb-text">{memoTx.transactionMemo}</span>
+                  <span className="ml-1">(수정 불가)</span>
+                </p>
+              )}
+              <textarea
+                value={memoDraft}
+                onChange={e => setMemoDraft(e.target.value)}
+                maxLength={255}
+                rows={3}
+                placeholder="이 거래에 남길 내 메모 (비우면 삭제)"
+                className="w-full text-[13px] px-3 py-2 rounded-lg border outline-none focus:border-kb-mint resize-none"
+                style={{ borderColor: KB_BORDER }}
+              />
+              <p className="text-[11px] text-right" style={{ color: KB_TEXT_MUTED }}>
+                {memoDraft.length}/255
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-3 border-t" style={{ borderColor: KB_BORDER }}>
+              <button onClick={() => setMemoTx(null)}
+                className="border rounded-lg px-4 py-1.5 text-[13px]"
+                style={{ borderColor: KB_BORDER }}>
+                취소
+              </button>
+              <button onClick={saveMemo} disabled={memoSaving}
+                className="rounded-lg px-4 py-1.5 text-[13px] text-white disabled:opacity-40"
+                style={{ backgroundColor: KB_PRIMARY }}>
+                {memoSaving ? '저장 중…' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -125,4 +125,20 @@ public class TransactionController {
         customerValidator.validateTransactionOwner(authenticatedCustomerId, transactionId);
         return transactionService.reversal(transactionId, null);
     }
+    /**
+     * 개인 메모 수정.
+     *
+     * <p>통장표시내용은 바꾸지 않는다 — 이체할 때 함께 보낸 문구라 사후에 고치면
+     * 실제로 보낸 내용과 기록이 달라진다. 여기서 고치는 것은 고객 본인의 메모다.
+     */
+    @PatchMapping("/{transactionId}/memo")
+    public Transaction updateMemo(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER,
+                    required = false) String authenticatedCustomerId,
+            @PathVariable Long transactionId,
+            @Valid @RequestBody MemoUpdateRequest request) {
+        customerValidator.validateTransactionOwner(authenticatedCustomerId, transactionId);
+        return transactionService.updateCustomerMemo(transactionId, request.memo());
+    }
+
 }
