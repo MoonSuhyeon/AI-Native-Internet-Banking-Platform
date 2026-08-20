@@ -606,3 +606,42 @@ export async function updateTransactionMemo(
   )
   return data
 }
+
+/* ── 적금 납입현황 ── */
+
+export type SavingsPaymentRound = {
+  paymentRound: number
+  scheduledDate: string
+  scheduledAmount: number
+  status: 'PENDING' | 'PAID' | 'OVERDUE' | 'FAILED' | 'SUSPENDED'
+  paidAt: string | null
+  actualAmount: number | null
+  autoTransfer: boolean
+}
+
+export type SavingsPaymentStatus = {
+  accountId: number
+  contractId: number
+  contractNumber: string
+  monthlyAmount: number
+  totalRounds: number
+  paidRounds: number
+  /** 예정일이 지났는데 아직 안 낸 회차. 당일은 세지 않는다. */
+  missedRounds: number
+  totalPaidAmount: number
+  startedAt: string
+  maturityAt: string | null
+  nextScheduledDate: string | null
+  rounds: SavingsPaymentRound[]
+}
+
+/**
+ * 적금 납입현황.
+ *
+ * 계좌 아이디로 부른다 — 고객이 아는 것은 계좌이지 계약이 아니다. 서버가 소유자를
+ * 확인하므로 고객번호를 실어 보내지 않는다.
+ */
+export async function fetchSavingsPaymentStatus(accountId: number): Promise<SavingsPaymentStatus> {
+  const { data } = await depositApi.get<SavingsPaymentStatus>(`/payment-schedules/accounts/${accountId}`)
+  return data
+}

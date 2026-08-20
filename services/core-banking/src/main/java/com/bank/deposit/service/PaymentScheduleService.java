@@ -8,6 +8,7 @@ import com.bank.deposit.exception.ErrorCode;
 import com.bank.deposit.repository.AccountRepository;
 import com.bank.deposit.repository.ContractRepository;
 import com.bank.deposit.repository.PaymentScheduleRepository;
+import com.bank.deposit.dto.response.SavingsPaymentStatusResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,35 @@ public class PaymentScheduleService {
 
     public List<PaymentSchedule> findByContractAndStatus(Long contractId, PaymentStatus status) {
         return scheduleRepository.findByContractIdAndStatus(contractId, status);
+    }
+
+    /**
+     * 적금 납입현황.
+     *
+     * <p>계좌 화면의 "납입현황" 버튼이 여기로 온다. 계좌 아이디로 받는 이유는, 고객이
+     * 아는 것은 계좌이지 계약이 아니어서다 — 화면이 계약 아이디를 알아내려고 한 번 더
+     * 부르게 하면 그 사이 값이 어긋날 수 있다.
+     *
+     * <p>계약과 스케줄을 한 응답에 함께 담는다. 따로 부르면 두 호출 사이에 납입이
+     * 일어났을 때 회차 수와 계약 기간이 맞지 않는 화면이 그려진다.
+     */
+    public SavingsPaymentStatusResponse getPaymentStatus(Long accountId) {
+        var account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        Long contractId = account.getContractId();
+        if (contractId == null) {
+            // 적금이 아닌 계좌다. 화면이 이 버튼을 적금에만 붙이지만, 아이디를 바꿔
+            // 부르면 여기로 온다.
+            throw new BusinessException(ErrorCode.CONTRACT_NOT_FOUND);
+        }
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTRACT_NOT_FOUND));
+
+        return SavingsPaymentStatusResponse.of(
+                accountId, contract, account.getTotalPaidAmount(),
+                scheduleRepository.findByContractIdOrderByPaymentRound(contractId),
+                LocalDate.now());
     }
 
     /**

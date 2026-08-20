@@ -2,6 +2,8 @@ package com.bank.deposit.controller;
 
 import com.bank.deposit.domain.entity.PaymentSchedule;
 import com.bank.deposit.domain.enums.PaymentStatus;
+import com.bank.deposit.dto.response.SavingsPaymentStatusResponse;
+import com.bank.deposit.security.AuthenticatedCustomerValidator;
 import com.bank.deposit.service.PaymentScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,23 @@ import java.util.List;
 public class PaymentScheduleController {
 
     private final PaymentScheduleService paymentScheduleService;
+    private final AuthenticatedCustomerValidator customerValidator;
+
+    /**
+     * 적금 납입현황 — 계좌 기준.
+     *
+     * <p>계약 기준 조회({@code /contracts/{id}})와 달리 <b>소유자 검증을 요구한다</b>.
+     * 이건 고객 화면이 부르는 경로라 서비스 간 호출이 없고, 아이디는 연속된 숫자라
+     * 검증이 없으면 남의 납입 내역을 세어 볼 수 있다.
+     */
+    @GetMapping("/accounts/{accountId}")
+    public ResponseEntity<SavingsPaymentStatusResponse> getPaymentStatus(
+            @RequestHeader(value = AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, required = false)
+            String authenticatedCustomerId,
+            @PathVariable Long accountId) {
+        customerValidator.requireAccountOwner(authenticatedCustomerId, accountId);
+        return ResponseEntity.ok(paymentScheduleService.getPaymentStatus(accountId));
+    }
 
     /** 계약별 납입 스케줄 전체 조회 */
     @GetMapping("/contracts/{contractId}")

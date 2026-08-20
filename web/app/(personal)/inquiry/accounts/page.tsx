@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { formatNumber, type Account } from '@/lib/mock-data'
 import InquirySidebar from '@/components/inquiry/InquirySidebar'
-import { fetchDepositAccountViewModels, getCurrentDepositCustomerId } from '@/lib/deposit-api'
+import { fetchDepositAccountViewModels, getCurrentDepositCustomerId, type DepositViewAccount } from '@/lib/deposit-api'
+import SavingsPaymentStatusModal from '@/components/accounts/SavingsPaymentStatusModal'
 
 const ACCOUNT_TABS = ['예금', '대출', '전체계좌']
 
@@ -85,6 +86,8 @@ export default function AccountsPage() {
   const [activeTab, setActiveTab] = useState('예금')
   const [balanceVisible, setBalanceVisible] = useState(true)
   const [mgmtOpen, setMgmtOpen] = useState<string | null>(null)
+  // 납입현황 — 회차별 스케줄은 이미 쌓이고 있었는데 볼 길이 없었다.
+  const [paymentStatusFor, setPaymentStatusFor] = useState<DepositViewAccount | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
   const [checkingOpen, setCheckingOpen] = useState(true)
   const [regularSavingsOpen, setRegularSavingsOpen] = useState(true)
@@ -97,7 +100,7 @@ export default function AccountsPage() {
   const [etcLoanOpen, setEtcLoanOpen]           = useState(true)
   const [allDepOpen, setAllDepOpen] = useState(true)
   const [allLoanAllOpen, setAllLoanAllOpen] = useState(true)
-  const [joinedAccounts, setJoinedAccounts] = useState<Account[]>([])
+  const [joinedAccounts, setJoinedAccounts] = useState<DepositViewAccount[]>([])
   const [accountOverrides, setAccountOverrides] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -105,11 +108,11 @@ export default function AccountsPage() {
       const stored = localStorage.getItem('user')
       if (stored) setUserName(JSON.parse(stored).name)
     } catch {}
-    let fallbackAccounts: Account[] = []
+    let fallbackAccounts: DepositViewAccount[] = []
     try {
       const raw = localStorage.getItem('joinedAccounts')
       if (raw) {
-        const parsed = (JSON.parse(raw) as Account[]).map(a => ({ ...a, type: normalizeAccountType(a) }))
+        const parsed = (JSON.parse(raw) as DepositViewAccount[]).map(a => ({ ...a, type: normalizeAccountType(a) }))
         fallbackAccounts = parsed
         localStorage.setItem('joinedAccounts', JSON.stringify(parsed))
       }
@@ -158,7 +161,7 @@ export default function AccountsPage() {
 
   const bal = (n: number) => balanceVisible ? formatNumber(n) : '●●●●●●●'
 
-  const accountCard = (account: Account, buttons: React.ReactNode) => (
+  const accountCard = (account: DepositViewAccount, buttons: React.ReactNode) => (
     <div key={account.id} className="rounded-xl p-5 mb-3 bg-white shadow-sm" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -294,10 +297,19 @@ export default function AccountsPage() {
                               style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
                               조회
                             </Link>
-                            {['납입현황', '계좌관리'].map(label => (
-                              <button key={label} className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border transition-colors hover:bg-kb-primary-bg"
-                                style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>{label}</button>
-                            ))}
+                            <button
+                              onClick={() => setPaymentStatusFor(account)}
+                              disabled={!account.apiAccountId}
+                              title={account.apiAccountId ? undefined : '가입 직후에는 잠시 뒤 조회할 수 있습니다.'}
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border transition-colors hover:bg-kb-primary-bg disabled:opacity-40"
+                              style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
+                              납입현황
+                            </button>
+                            <Link href={`/accounts/${account.id}`}
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-kb-primary-bg"
+                              style={{ borderColor: KB_MINT, color: KB_PRIMARY }}>
+                              계좌관리
+                            </Link>
                             <Link href={`/products/deposit/inquiry/terminate?accountId=${account.id}`}
                               className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border text-center transition-colors hover:bg-red-50"
                               style={{ borderColor: KB_DANGER, color: KB_DANGER }}>
@@ -499,6 +511,14 @@ export default function AccountsPage() {
 
         </main>
       </div>
+
+      {paymentStatusFor?.apiAccountId && (
+        <SavingsPaymentStatusModal
+          accountId={paymentStatusFor.apiAccountId}
+          accountName={`${paymentStatusFor.name} · ${paymentStatusFor.number}`}
+          onClose={() => setPaymentStatusFor(null)}
+        />
+      )}
     </div>
   )
 }
