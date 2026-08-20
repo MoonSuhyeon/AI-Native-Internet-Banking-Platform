@@ -1,5 +1,12 @@
 # PD 라벨 데이터 확보 — 큰 그림
 
+<!-- plan-status -->
+> **상태: 📐 설계만 — 코드 없음** — 문서 스스로 `design draft`. 12개월 디폴트 추적 데이터가 없다
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-22
 > Status: design draft (HMDA 한계 — `action_taken` 만 보유, 12개월 디폴트 추적 X — 해소 위한 1차 안)
 > 선행 문서: `docs/plan/banking-review-llm.md` §4·§10, `docs/plan/hmda-localization.md` §3.1·§10

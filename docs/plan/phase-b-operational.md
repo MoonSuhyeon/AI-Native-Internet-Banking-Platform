@@ -1,5 +1,12 @@
 # Phase B — 운영 준비 (Operational Readiness) 실행 계획
 
+<!-- plan-status -->
+> **상태: 🔨 진행 중** — 미완 체크 31개. 관측·배치 일부만
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-26 (v1.0)
 > 선행 완료: Phase A (A0 ~ A10) — Pre-Review Agent, Rejection Reason Agent
 > 패키지 루트: `com.bank.ai`

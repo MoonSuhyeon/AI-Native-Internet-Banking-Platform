@@ -1,5 +1,12 @@
 # 챗봇 UI 실행 계획
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — `web/components/chatbot/ChatbotWidget.tsx` · `agents/consultation`
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 ## 목표
 
 고객과 직원이 웹 화면에서 상담 챗봇을 사용할 수 있도록 UI를 구현한다.

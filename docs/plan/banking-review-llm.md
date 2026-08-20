@@ -1,5 +1,12 @@
 # 대출 심사원 보조 자동 대출 심사 — 큰 그림
 
+<!-- plan-status -->
+> **상태: 🔨 진행 중** — Phase 1.5·1.6 완료, 1.7(RAG) 보류. 문서 머리말이 스스로 밝힌다
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-26
 > Status: Phase 1.5/1.6 완료, Phase 1.7 RAG 보류, Pre-Review Agent (A4~A9) 완료
 > Owner: ai-service 팀

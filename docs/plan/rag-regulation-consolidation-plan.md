@@ -1,5 +1,12 @@
 # 공통 규정 RAG 통합 + Elasticsearch 하이브리드 검색 계획 (doc-agent)
 
+<!-- plan-status -->
+> **상태: 🔨 진행 중** — `agents/auto-loan-review/.../rag/es/` 존재
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > 작성일: 2026-05-29
 > 상태: design draft
 > 배경: **doc-agent 에 Elasticsearch 를 도입**(목적 = 규정 검색 품질 향상)하는 시점에,

@@ -120,13 +120,23 @@
 
 ## 계획서 (`plan/`)
 
-32건이 있고 **27건이 완료 표시를 달고 있다.** 진행 중인 것과 섞여 있어,
-계획서를 읽을 때는 맨 위의 상태 표시와 최종 수정일을 함께 볼 것.
+33건이 있다. **어느 것이 구현됐고 어느 것이 설계만인지는 상태별 색인에서 본다** —
+[`plan/README.md`](plan/README.md).
 
-주요 진행 중:
-- [`plan/fds-realtime-detection.md`](plan/fds-realtime-detection.md) — 실시간 이상거래 탐지
-- 소득 안정화 오케스트레이터 — 기획서가 마크다운으로 없다. [`assets/portfolio/income-orchestrator.pdf`](assets/portfolio/income-orchestrator.pdf) 만 있어 검색·리뷰가 안 된다
-- [`plan/transfer-step-up-auth.md`](plan/transfer-step-up-auth.md) — 이체 추가인증
+| 상태 | 건수 | 읽는 법 |
+|---|---:|---|
+| ✅ 구현됨 | 17 | 코드가 있다. 문서는 왜 그렇게 만들었는지의 기록 |
+| 🔨 진행 중 | 11 | 일부만 있다. 무엇이 남았는지 각 문서가 적는다 |
+| 📐 설계만 | 3 | 코드가 없다. **읽고 붙이면 안 된다** |
+| 🗑 폐기 | 2 | 전제가 무너졌다. **따르지 말 것** |
+
+> 예전에는 이 자리가 "27건이 완료 표시를 달고 있다" 였다. 표시가 제각각이라 —
+> `- [x]` · ✅ · 머리말 "상태:" 줄 · 아무것도 — 구분이 안 됐고, 문서가 코드와 어긋난
+> 것도 둘 있었다. 지금은 상태 어휘가 넷뿐이고 `PlanStatusTest` 가 형식을 지킨다.
+
+마크다운으로 없는 기획도 하나 있다 — 소득 안정화 오케스트레이터는
+[`assets/portfolio/income-orchestrator.pdf`](assets/portfolio/income-orchestrator.pdf)
+만 있어 검색·리뷰가 안 된다.
 
 ---
 

@@ -1,5 +1,12 @@
 # 자동 심사 시스템 — 다음 단계 로드맵
 
+<!-- plan-status -->
+> **상태: 🔨 진행 중** — 로드맵. 링크 중 `phase-e-elasticsearch.md` 는 **없는 문서**다
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-29
 > 선행 문서: `banking-review-llm.md`, `pre-review-agent-plan.md`
 > 현재 완료: Phase 1.5 · 1.6 · 1.6.1 · 1.8 (LLM 파이프라인 + Pre-Review Agent 전체)

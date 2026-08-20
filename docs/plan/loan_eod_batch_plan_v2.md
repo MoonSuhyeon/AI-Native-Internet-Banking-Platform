@@ -1,5 +1,12 @@
 # EOD 배치 확장 계획 (v2)
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — `EodBatchController` 확장분
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 ## Context
 
 v1(`loan_eod_batch_plan.md`)에서 핵심 EOD 잡(이자발생 → 자동이체 → 연체롤오버 → 연체이자 → 승인만료)을 구축했다.

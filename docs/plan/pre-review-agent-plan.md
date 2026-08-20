@@ -1,5 +1,12 @@
 # 사전 심사 에이전트 (Pre-Review Agent) — 실행 계획
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — `PreReviewAgentService` · `AgentToolRegistry`
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-26 (v1.1 — 운영 대비책 보강, A0.5 신설)
 > Status: A0 — 계획 확정. A0.5~A10 실행 대기.
 > 호스팅: **Google AI Studio (Gemini 2.5 Flash) 무료 API** (OpenAI 호환 endpoint)

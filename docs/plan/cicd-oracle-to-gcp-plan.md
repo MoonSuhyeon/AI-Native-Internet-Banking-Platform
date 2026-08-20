@@ -1,5 +1,12 @@
 # CI/CD 구축 계획 — Oracle Cloud 1대 배포 → GCP 확장
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — 1단계만. `.github/workflows/` 17개로 실제 배포 중. GCP 확장(2단계)은 안 함
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 ## 목표
 
 - **1단계**: GitHub Actions 기반 CI/CD로 Oracle Cloud Free Tier 1대(ARM 4코어/24GB RAM)에 전체 마이크로서비스 배포

@@ -1,5 +1,12 @@
 # 관측 일원화 — 성능은 Prometheus, 품질은 Phoenix
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — Phase 0~4 전부. `agents/harness-core/python/harness_core/tracing.py`·`pii.py`
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > 에이전트가 **왜 그렇게 판단했는지**를 남기고 채점하는 일. 성능·비용·에러율은
 > 이미 Prometheus·Grafana·Loki 가 보고 있으므로 여기서 다루지 않는다.
 

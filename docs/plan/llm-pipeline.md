@@ -1,5 +1,12 @@
 # LLM 보강·리포트 파이프라인 — 큰 그림
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — `PurposeAnalysisTool` · `RejectionNoticeService`. 문서 안 미완 체크 7개는 Phase 1.7(RAG) 몫
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-23
 > Status: Phase 1.5 + 1.6 완료 (L1~L11) — PurposeAnalysis·ReviewReport·비동기 파이프라인·E2E smoke 3케이스 PASS. L9(StatementInconsistency)는 거래내역 요약 의존으로 후순위 보류.
 > 선행 문서: `docs/plan/banking-review-llm.md` §5·§10, `docs/plan/pd-label-acquisition.md` §5

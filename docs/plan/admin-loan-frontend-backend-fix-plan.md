@@ -1,5 +1,12 @@
 # Admin Loan 기능 프론트↔백엔드 계약 정합화 계획
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — 문서 자체가 해소 내역을 기술한다
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 작성일: 2026-06-05
 대상: `web/app/(admin)/admin/loan/**` 페이지 + `web/lib/loan-api.ts` ↔ `services/loan-service`
 

@@ -1,5 +1,12 @@
 # 14. 공통 계층(common_db) 확장 + loan-service 연결
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — `com.bank.commonaccount.*` 패키지
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > 선행: `project_common_db_initiative` (common_db 신설 Phase 1 완료 — common_account + 시스템계좌 seed)
 > 본 문서: common_db 에 **공통 부모 테이블**을 추가하고(Part 1), loan-service 를 거래원장까지 연결한다(Part 2, 깊이 D).
 > 작성 기준: loan 브랜치. **deposit-service / payment-service 코드·스키마는 손대지 않는다** (deposit 는 Phase 2 에서 자기 테이블을 common_db 참조로 전환 — 핸드오프).

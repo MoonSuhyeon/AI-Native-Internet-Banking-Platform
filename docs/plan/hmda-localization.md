@@ -1,5 +1,12 @@
 # HMDA → 한국 자동심사 학습 데이터 변환 큰 그림
 
+<!-- plan-status -->
+> **상태: 📐 설계만 — 코드 없음** — 문서 스스로 `design draft`. 코드에 HMDA 변환 경로 없음
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-20
 > Status: design draft (페르소나 풀 폐기 + HMDA 도입 결정 후 1차 안)
 > 선행 문서: `docs/plan/banking-review-llm.md`

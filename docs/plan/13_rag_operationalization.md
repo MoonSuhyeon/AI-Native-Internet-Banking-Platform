@@ -1,5 +1,12 @@
 # 13. RAG 운영 전환 plan
 
+<!-- plan-status -->
+> **상태: 🔨 진행 중** — ES 하이브리드 코드는 있고(`EsHybridSearchService`) 실측이 없다 — OPEN_ITEMS §3
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > **선행**: Phase 1.7 (Agentic RAG 전체 흐름) — 2026-05-28 완료
 > **목적**: 현재 stub 임베딩 + 합성 시드로 동작하는 RAG 를 실 임베딩 모델 + 정책 시드 + 합성 케이스 백필 기반으로 전환하고, 장기적으로 `advisory-service` 자체 RAG 를 `ai-service` RAG 로 통합
 > **범위**: `advisory-service` + `ai-service` 양쪽. 시나리오 δ — ai-service 가 최종 단일 RAG 진실, advisory 는 클라이언트로 수렴

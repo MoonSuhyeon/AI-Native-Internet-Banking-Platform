@@ -1,5 +1,12 @@
 # loan-service ↔ AI 서비스 연결 가이드
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — 연동 가이드. AI 서비스 호출 경로가 코드에 있다
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > 작성일: 2026-05-28
 > 대상 브랜치: `auto-loan-review`
 

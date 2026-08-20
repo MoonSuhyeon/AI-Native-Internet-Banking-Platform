@@ -76,6 +76,9 @@ tasks.named('test') {
         include 'docs/api-spec.md'
         include 'services/*/src/main/java/**/*Controller.java'
         include 'agents/*/src/main/java/**/*Controller.java'
+        // 계획 문서 상태 줄(PlanStatusTest). 선언하지 않으면 계획서를 추가해도
+        // 검사가 UP-TO-DATE 로 안 돌아, 상태 없는 문서가 통과한다.
+        include 'docs/plan/*.md'
         exclude '**/build/**'
         exclude 'web/node_modules/**'
         exclude 'web/.next/**'

@@ -1,5 +1,12 @@
 # Phase C — ML 파이프라인 완성 구현 계획
 
+<!-- plan-status -->
+> **상태: 📐 설계만 — 코드 없음** — 문서 스스로 `design draft`. PD 라벨이 선행인데 그것도 설계만이다
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-26
 > Status: design draft
 > 선행 문서: `docs/plan/pd-label-acquisition.md`, `docs/plan/hmda-localization.md`,

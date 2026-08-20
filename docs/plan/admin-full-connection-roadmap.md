@@ -1,5 +1,12 @@
 # 담당 도메인 Admin/User 페이지 연결 로드맵
 
+<!-- plan-status -->
+> **상태: 🔨 진행 중** — Phase 0~2 중 일부. 후속이 `admin-full-recovery-plan.md`
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 작성일: 2026-06-07 (개정: 담당 범위로 재정렬)
 담당 서비스: **loan-service / auto-loan-review / advisory-service / doc-agent**
 선행 문서: `plan/admin-loan-frontend-backend-fix-plan.md`(로안 한정, 2026-06-05)

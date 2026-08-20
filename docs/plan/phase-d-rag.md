@@ -1,5 +1,12 @@
 # Phase D — RAG 도입 계획
 
+<!-- plan-status -->
+> **상태: 🗑 폐기 — 따르지 말 것** — 문서가 `phase-e-elasticsearch.md` 로 대체됐다고 적었는데 **그 문서가 없다**. 실제 RAG 는 `13_rag_operationalization.md` 계열로 갔다
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-29
 > **Status: ⚠️ SUPERSEDED — [`phase-e-elasticsearch.md`](phase-e-elasticsearch.md) 로 대체됨 (2026-05-29)**
 > 본 문서의 pgvector + PostgreSQL FTS 가중합 방안은 Phase E (Elasticsearch 하이브리드 검색) 로 교체.

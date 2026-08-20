@@ -1,5 +1,12 @@
 # Phase E — 심사원 대시보드 (Reviewer Dashboard Frontend) 실행 계획
 
+<!-- plan-status -->
+> **상태: 🗑 폐기 — 따르지 말 것** — `services/reviewer-dashboard/`(React+Vite)를 전제하는데 그 디렉터리가 없다. 프론트는 `web/`(Next.js) 하나로 갔다
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 > Last updated: 2026-05-26 (v1.0)
 > 선행 완료: Phase A (A0~A10), Phase B (B1~B5 구현 완료 전제)
 > 기술 스택: React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS + Zustand + TanStack Query v5 + SSE (native EventSource)

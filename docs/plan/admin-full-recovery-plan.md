@@ -1,5 +1,12 @@
 # admin/user 화면 전면 복구 계획
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — admin 화면 복구분
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 작성일: 2026-06-08
 선행 문서: `plan/admin-full-connection-roadmap.md`(Phase 0~2 연결 로드맵)
 

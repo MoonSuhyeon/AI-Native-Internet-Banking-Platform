@@ -1,5 +1,12 @@
 # EOD 배치 구현 계획
 
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — `EodBatchController`
+>
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+
 ## Context
 
 대출(여신계)은 시간이 지나면 상태가 자동으로 변하는 금융 상품이다.
