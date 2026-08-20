@@ -365,9 +365,10 @@ export default function CertManagementPage() {
                 <h3 className="text-[14px] font-bold text-kb-text">{card.title}</h3>
                 <p className="text-[12px] text-kb-text-muted leading-relaxed">{card.desc}</p>
                 <div className="flex gap-2 pt-1">
-                  <button className="flex-1 py-2 border border-kb-border text-[12px] text-kb-text hover:bg-kb-primary-bg transition-colors rounded">
+                  <Link href="/banking/first-visit"
+                    className="flex-1 py-2 border border-kb-border text-[12px] text-kb-text hover:bg-kb-primary-bg transition-colors rounded text-center">
                     이용 안내
-                  </button>
+                  </Link>
                   <button
                     onClick={() => !disabled && openModal(card.id)}
                     disabled={disabled}

@@ -105,6 +105,20 @@ public class AuthenticatedCustomerValidator {
         }
     }
 
+    /**
+     * 신원을 요구하고 그대로 돌려준다.
+     *
+     * <p>"내 것" 만 보는 조회에 쓴다. 고객번호를 쿼리로 받아 대조하는 대신 신원에서
+     * 직접 꺼내는 편이 안전하다 — 받아서 대조하는 코드는 대조를 빠뜨렸을 때 조용히
+     * 남의 데이터를 내준다.
+     */
+    public String requireCustomer(String authenticatedCustomerId) {
+        if (authenticatedCustomerId == null || authenticatedCustomerId.isBlank()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "인증된 고객 ID가 필요합니다.");
+        }
+        return authenticatedCustomerId;
+    }
+
     /** 거래가 속한 계좌의 소유자 검증 — 신원이 실려 왔을 때만. */
     public void validateTransactionOwner(String authenticatedCustomerId, Long transactionId) {
         if (authenticatedCustomerId == null || authenticatedCustomerId.isBlank()) {

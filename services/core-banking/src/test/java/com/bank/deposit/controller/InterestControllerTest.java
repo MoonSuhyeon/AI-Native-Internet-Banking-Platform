@@ -30,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // (실제 인증은 게이트웨이가 JWT 로 처리하고, 백엔드 체인은 permitAll 이다.)
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(InterestController.class)
+@org.springframework.context.annotation.Import(
+        com.bank.deposit.security.AuthenticatedCustomerValidator.class)
 @DisplayName("InterestController")
 class InterestControllerTest {
 
@@ -38,6 +40,22 @@ class InterestControllerTest {
 
     @MockBean
     private InterestService interestService;
+
+    // 소유권 검증기가 계좌↔고객 매핑을 조회한다. 슬라이스에는 리포지토리가 없다.
+    @MockBean
+    private com.bank.deposit.repository.AccountRepository accountRepository;
+
+    @MockBean
+    private com.bank.deposit.repository.TransactionRepository transactionRepository;
+
+    @Test
+    @DisplayName("신원 없는 원천징수영수증 조회는 거절한다")
+    void incomeStatementRequiresIdentity() throws Exception {
+        // 신원 없이 통과시키면 taxYear 만 바꿔 가며 아무나 조회할 수 있다.
+        // 그 해에 이자를 얼마 받았는지는 자산 규모를 짐작하게 하는 값이다.
+        mockMvc.perform(get("/interests/income-statement").param("taxYear", "2026"))
+                .andExpect(status().isForbidden());
+    }
 
     @Test
     @DisplayName("이자를 계산하고 지급한다")

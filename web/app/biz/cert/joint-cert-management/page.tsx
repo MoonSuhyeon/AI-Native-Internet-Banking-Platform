@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 
 const MANAGEMENT_CARDS = [
   {
@@ -128,12 +130,16 @@ export default function BizJointCertManagementPage() {
             <h3 className="text-body font-bold text-kb-text">{card.title}</h3>
             <p className="text-caption text-kb-text-muted leading-relaxed">{card.desc}</p>
             <div className="flex gap-2 pt-1">
-              <button className="flex-1 py-2 border border-kb-border text-caption text-kb-text hover:bg-kb-beige-light transition-colors">
+              <Link href="/banking/first-visit"
+                className="flex-1 py-2 border border-kb-border text-caption text-kb-text hover:bg-kb-beige-light transition-colors text-center">
                 이용 안내
-              </button>
-              <button className="flex-1 py-2 bg-kb-yellow text-caption font-bold text-kb-text hover:brightness-95 transition-all">
+              </Link>
+              {/* 가져오기·내보내기는 인증서 관리 화면에서 한다. 여기서는 안내만 하고
+                  실제 조작은 한 곳에 모아 둔다 — 두 곳에 두면 한쪽만 고치게 된다. */}
+              <Link href="/cert/cert-management"
+                className="flex-1 py-2 bg-kb-yellow text-caption font-bold text-kb-text hover:brightness-95 transition-all text-center">
                 {card.actionLabel}
-              </button>
+              </Link>
             </div>
           </div>
         ))}

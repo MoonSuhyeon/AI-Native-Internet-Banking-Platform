@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 const MANAGEMENT_ITEMS = [
   {
     title: '인증서 비밀번호 변경',
@@ -61,9 +63,12 @@ export default function BizFinCertManagementPage() {
 
       {/* 버튼 */}
       <div className="flex justify-center pt-4">
-        <button className="px-14 py-3 bg-kb-yellow text-body font-bold text-kb-text hover:brightness-95 transition-all">
+        {/* 안내문이 "금융인증서비스 화면으로 이동합니다" 라고 말하는데 버튼이
+            아무 데도 가지 않았다. 인증서 목록·비밀번호 변경·폐기는 그 화면에 있다. */}
+        <Link href="/cert/cert-management"
+          className="px-14 py-3 bg-kb-yellow text-body font-bold text-kb-text hover:brightness-95 transition-all">
           금융인증서 관리
-        </button>
+        </Link>
       </div>
     </div>
   )

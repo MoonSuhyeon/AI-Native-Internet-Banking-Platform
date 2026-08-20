@@ -116,9 +116,15 @@ const NAV_ITEMS = [
   { label: 'OTP',                  href: '/security-guide',                          group: '보안' },
 ]
 
-// 연말정산증명서(3건)를 뺐다 — /manage/certificates/year-end 화면이 없어
-// 검색에서 고르면 404 였다. 발급 기능이 생기면 되살린다.
+// 연말정산증명서. 화면이 없던 동안은 검색에서 고르면 404 라 빼 두었다.
+const YEAR_END_ITEMS = [
+  { label: '연말정산증명서',       href: '/manage/certificates/year-end', group: '뱅킹관리' },
+  { label: '이자소득 원천징수영수증', href: '/manage/certificates/year-end', group: '뱅킹관리' },
+  { label: '소득공제',            href: '/manage/certificates/year-end', group: '뱅킹관리' },
+]
+
 const SEARCH_ITEMS = [
+  ...YEAR_END_ITEMS,
   ...NAV_ITEMS,
   ...NEWS_ITEMS.map(n => ({ label: n.title, href: n.href, group: n.type })),
 ]

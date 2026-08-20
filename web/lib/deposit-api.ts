@@ -675,3 +675,38 @@ export async function fetchTerminationEstimate(accountId: number): Promise<Early
   const { data } = await depositApi.get<EarlyTerminationEstimate>(`/accounts/${accountId}/termination-estimate`)
   return data
 }
+
+/* ── 이자소득 원천징수영수증(연말정산증명서) ── */
+
+export type InterestIncomeStatement = {
+  taxYear: number
+  totalInterestBeforeTax: number
+  totalIncomeTax: number
+  totalLocalIncomeTax: number
+  /** 소득세 + 지방소득세. 원천징수영수증이 둘을 나눠 적어 따로도 준다. */
+  totalTaxAmount: number
+  totalInterestAfterTax: number
+  accounts: {
+    accountId: number
+    accountNumber: string
+    accountAlias: string | null
+    interestBeforeTax: number
+    incomeTax: number
+    localIncomeTax: number
+    interestAfterTax: number
+    paymentCount: number
+  }[]
+}
+
+/**
+ * 연말정산증명서(이자소득 원천징수영수증).
+ *
+ * 고객번호를 보내지 않는다 — 서버가 신원에서 직접 꺼낸다. 그 해에 이자를 얼마
+ * 받았는지는 자산 규모를 짐작하게 하는 값이다.
+ */
+export async function fetchInterestIncomeStatement(taxYear: number): Promise<InterestIncomeStatement> {
+  const { data } = await depositApi.get<InterestIncomeStatement>('/interests/income-statement', {
+    params: { taxYear },
+  })
+  return data
+}

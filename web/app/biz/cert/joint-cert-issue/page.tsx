@@ -26,6 +26,7 @@ const STEPS = [
 export default function BizJointCertIssuePage() {
   const router = useRouter()
   const [showPopup, setShowPopup] = useState(true)
+  const [stepError, setStepError] = useState('')
   const [expandedTerms, setExpandedTerms] = useState<Set<number>>(new Set())
   const [checkedTerms, setCheckedTerms] = useState<Set<number>>(new Set())
   const [allChecked, setAllChecked] = useState(false)
@@ -36,6 +37,23 @@ export default function BizJointCertIssuePage() {
   const [rrnFront, setRrnFront] = useState('')
   const [mouseInput, setMouseInput] = useState(false)
   const [rrnBack, setRrnBack] = useState('')
+
+  /**
+   * 약관 동의·본인확인 단계를 마치고 발급 화면으로 넘긴다.
+   *
+   * 예전에는 이 버튼에 핸들러가 없어 눌러도 아무 일이 없었다 — 단계 표시는
+   * 여섯 칸인데 첫 칸에서 멈춰 있었고, 고객은 무엇이 잘못됐는지 알 수 없었다.
+   *
+   * 발급 자체는 개인·기업이 같은 API 를 쓴다(로그인 아이디로 발급한다).
+   * 화면을 두 벌 만들면 한쪽만 고치는 일이 생기므로 발급 단계는 공용 화면으로
+   * 보낸다.
+   */
+  function handleNext() {
+    if (!allChecked) { setStepError('필수 약관에 모두 동의해 주세요.'); return }
+    if (!userId.trim()) { setStepError('사용자 ID를 입력해 주세요.'); return }
+    setStepError('')
+    router.push('/cert/joint-cert-issue?corporate=1')
+  }
 
   function toggleTerm(i: number) {
     setExpandedTerms(prev => {
@@ -279,7 +297,9 @@ export default function BizJointCertIssuePage() {
           >
             취소
           </Link>
-          <button className="px-14 py-3 bg-kb-yellow text-body font-bold text-kb-text hover:brightness-95 transition-all">
+          {stepError && <p className="w-full text-center text-[12px] text-kb-red mb-2">{stepError}</p>}
+        <button onClick={handleNext}
+          className="px-14 py-3 bg-kb-yellow text-body font-bold text-kb-text hover:brightness-95 transition-all">
             약관 동의/본인확인
           </button>
         </div>
