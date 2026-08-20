@@ -41,12 +41,15 @@
 - [`customer_ddl_design.md`](customer_ddl_design.md) · [`auth_security_ddl_design.md`](auth_security_ddl_design.md) — 스키마 설계
 
 ### 수신·결제계 (core-banking)
-- [`deposit-service-api-spec.md`](deposit-service-api-spec.md) — 수신 API ⚠️
-- [`payment-service-api-spec.md`](payment-service-api-spec.md) · [`deposit-payment-api-spec.md`](deposit-payment-api-spec.md) — 결제 API ⚠️
+- [`core-banking-deposit-api-spec.md`](core-banking-deposit-api-spec.md) — 수신 도메인 API
+- [`core-banking-payment-api-spec.md`](core-banking-payment-api-spec.md) — 이체 도메인 API
+- [`deposit-payment-api-spec.md`](deposit-payment-api-spec.md) — 두 도메인 사이의 내부 v1 API
 - [`plan/transfer-step-up-auth.md`](plan/transfer-step-up-auth.md) — 이체 추가인증 설계
 
-> ⚠️ 이 세 문서는 **병합 전 기준**이다. 각 문서 맨 위에 무엇이 바뀌었는지 적어 뒀다 —
-> **엔드포인트 경로는 그대로**이고 서비스 정체와 포트만 달라졌다(`core-banking`, 8082).
+> `deposit-service` 와 `payment-service` 는 `core-banking` 한 서비스로 합쳐졌다
+> ([결정](decisions/core-banking-merge.md)). **엔드포인트 경로는 그대로**이고 서비스
+> 정체와 포트만 달라졌다(`core-banking`, 8082). 문서 이름도 그에 맞게 바꿨다 —
+> 파일 이름이 없는 서비스를 가리키면 목록만 보고도 잘못 읽는다.
 
 ### 여신계
 - [`loan-guide.md`](loan-guide.md) — 전반
@@ -58,7 +61,7 @@
 
 ### 공통
 - [`data_dictionary.md`](data_dictionary.md) — **타입 규약의 정본**(금액=BIGINT 등)
-- [`api-spec.md`](api-spec.md) — 통합 API ⚠️ (병합 전 기준)
+- [`api-spec.md`](api-spec.md) — 통합 API 경로 인벤토리. `scripts/extract_api_spec.py` 가 소스에서 뽑아 쓴다
 - [`misc-services-api-spec.md`](misc-services-api-spec.md) — 기타 서비스
 
 ---

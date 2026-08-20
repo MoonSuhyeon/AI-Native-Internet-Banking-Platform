@@ -1,24 +1,20 @@
-# payment-service API 명세서
+# core-banking — 이체 도메인 API 명세서
 
-> ## ⚠️ 이 문서는 서비스 병합 전에 쓰였다
+> **`core-banking` 의 이체 도메인**(`com.bank.payment` 패키지) API 명세다.
 >
-> `deposit-service` 와 `payment-service` 는 **`core-banking` 한 서비스로 합쳐졌다**
-> ([결정 문서](decisions/core-banking-merge.md)). 자행이체를 로컬 트랜잭션으로 끝내기
-> 위한 선택이고, 타행이체 Saga 는 그대로 남아 있다.
+> 예전에는 `payment-service` 라는 별도 서비스(8080)였다. `deposit-service` 와 함께
+> `core-banking` 으로 합쳐졌다([결정 문서](decisions/core-banking-merge.md)).
 >
-> **엔드포인트 경로는 바뀌지 않았다.** 이 문서의 요청·응답 규약은 지금도 유효하다.
-> 달라진 것은 어디에 붙느냐다.
->
-> | | 문서 기준 | 현재 |
+> | | 예전 | 지금 |
 > |---|---|---|
-> | 서비스 | `deposit-service` / `payment-service` | **`core-banking`** |
-> | 포트 | 8082 / 8080 | **8082** |
-> | 모듈 | `services/deposit-service` / `services/payment-service` | `services/core-banking` (`com.bank.deposit` · `com.bank.payment` 패키지) |
+> | 서비스 | `payment-service` | `core-banking` |
+> | 포트 | 8080 | **8082** |
+> | 모듈 | `services/payment-service` | `services/core-banking` |
+> | 수신계 호출 | HTTP (`DepositBalanceClient`) | 같은 프로세스 (`LocalLedgerAdapter`) |
 >
-> 문서에서 두 서비스를 <b>서로 호출하는 것처럼</b> 설명한 부분은 지금은 같은 프로세스
-> 안의 호출이다. 특히 이체 잔액 반영은 HTTP 가 아니라 `LocalLedgerAdapter` 를 탄다.
->
-> 본문 갱신은 [`OPEN_ITEMS.md`](OPEN_ITEMS.md) 에 남겨 둔 후속 작업이다.
+> **엔드포인트 경로와 요청·응답 규약은 바뀌지 않았다.** 문서에서 두 서비스를
+> *서로 호출하는 것처럼* 설명한 부분은 지금은 같은 프로세스 안의 호출이다.
+> 경로 전체 목록은 [api-spec.md](api-spec.md) 가 소스에서 뽑아 유지한다.
 
 
 

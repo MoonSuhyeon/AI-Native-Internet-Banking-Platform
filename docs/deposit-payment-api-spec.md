@@ -1,7 +1,21 @@
-# deposit-service ↔ payment-service API 명세
+# core-banking 내부 v1 API 명세 (이체계 ↔ 수신계)
 
-payment-service(이체계)가 deposit-service(수신계)에 요구하는 API 전체 목록.  
-**deposit-service 담당자가 이 명세를 기준으로 구현한다.**
+> **이 명세는 살아 있다. 다만 두 서비스 사이가 아니다.**
+>
+> 원래 `payment-service`(이체계)가 `deposit-service`(수신계)를 HTTP 로 부르기 위한
+> 계약이었고, 문서가 "**deposit-service 담당자가 이 명세를 기준으로 구현한다**" 로
+> 시작했다 — 경계가 트랜잭션 요구가 아니라 **담당자 분담**을 따라 그어졌다는 흔적이다
+> ([결정 문서](decisions/core-banking-merge.md)가 이 문장을 근거로 인용한다).
+>
+> 둘은 `core-banking` 으로 합쳐졌다. 여기 적힌 `/api/v1/**` 엔드포인트는 그대로
+> 존재하며(`AccountV1Controller`·`BalanceV1Controller`), 이제 **같은 프로세스 안의
+> 내부 API** 다. 자행이체 잔액 반영은 이 HTTP 경로가 아니라 `LocalLedgerAdapter` 를
+> 탄다 — 그래서 출금과 입금이 한 트랜잭션에서 끝난다.
+>
+> `X-Caller-Service: payment-service` 헤더 요구와 A-1·B-3 같은 협상 번호는 그 시절의
+> 흔적이다. 코드가 아직 그 헤더를 요구하므로 명세에서 지우지 않는다.
+
+payment 도메인이 deposit 도메인에 요구하는 API 전체 목록.
 
 ---
 

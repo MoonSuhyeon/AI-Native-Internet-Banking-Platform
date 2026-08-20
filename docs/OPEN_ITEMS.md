@@ -148,8 +148,52 @@
 
 | 문서 | 문제 |
 |---|---|
-| `api-spec.md`, `deposit-service-api-spec.md`, `payment-service-api-spec.md` | **`deposit-service`·`payment-service` 를 별도 서비스로 설명한다.** 둘은 `core-banking` 으로 병합됐다([결정 문서](decisions/core-banking-merge.md)) |
+| ~~`api-spec.md` 외 API 명세 4종~~ | **해결.** 아래 참조 |
 | `docs/plan/*` 32건 | 27건이 완료 표시를 달고 있으나 진행 중인 것과 섞여 있다 |
+
+### API 명세의 병합 반영 — ✅ 해결
+
+문서를 보고 붙이면 **없는 서비스를 부르게** 되는 상태였다. 세 가지가 겹쳐 있었다.
+
+| 문서가 말하던 것 | 실제 |
+|---|---|
+| `deposit-service`(8082) · `payment-service`(8080) | `core-banking` 하나 (8082) |
+| `advisory-service` (엔드포인트 27개) | loan-service 안의 `com.bank.loan.advisory.*` 패키지 |
+| `master-service` (엔드포인트 5개) | **레포에 존재한 적이 없다.** `CodeMasterController` 가 코드에 없다 |
+
+엔드포인트 수도 어긋나 있었다 — 문서 372개, 실제 463개. **91개가 문서에 없었다.**
+
+#### 한 일
+
+1. **추출기를 만들었다** (`scripts/extract_api_spec.py`). 문서는 원래 "소스 컨트롤러에서
+   자동 추출" 이라고 적혀 있었지만 추출기가 레포에 없었다. 그래서 손으로 관리됐고,
+   손으로 관리되니 병합을 못 따라갔다. **문서를 한 번 더 손으로 맞추면 다음 병합
+   때 또 어긋난다** — 그래서 뽑는 방법 자체를 남겼다.
+2. **파일 이름을 사실에 맞췄다.** `deposit-service-api-spec.md` →
+   `core-banking-deposit-api-spec.md`, `payment-service-api-spec.md` →
+   `core-banking-payment-api-spec.md`. 파일 이름이 없는 서비스를 가리키면 목록만
+   보고도 잘못 읽는다.
+3. **`deposit-payment-api-spec.md` 는 이름을 유지했다.** 두 *도메인* 이름이고 둘 다
+   패키지로 살아 있다. 다만 "deposit-service 담당자가 이 명세를 기준으로 구현한다"
+   라는 머리말은 지금 사실이 아니라 고쳤다 — 그 문장은 경계가 트랜잭션 요구가 아니라
+   담당자 분담을 따라 그어졌다는 흔적이라, [결정 문서](decisions/core-banking-merge.md)가
+   근거로 인용한다. 그래서 지우지 않고 인용으로 옮겼다.
+4. **`master-service` 절을 실제 상태로 바꿨다.** 없는 엔드포인트 5개를 지우고, 그
+   자리에 있는 것(`code_master` 테이블과 시드, 검증에 안 쓰임)을 적었다.
+
+#### 다시 어긋나지 않게
+
+`ApiSpecFreshnessTest` 가 두 가지를 본다.
+
+- 문서가 **없는 서비스**를 절·목차로 소개하지 않는가
+- 소스의 컨트롤러 경로가 문서에 **빠져 있지 않은가**
+
+반대 방향(문서에만 있고 소스에 없는 경로)은 보지 않는다. 문서에는 설명용 예시 경로가
+섞이므로 그쪽까지 막으면 거짓 경보가 난다. 빠뜨리는 쪽이 실제로 사람을 헛수고시킨다.
+
+> Gradle 입력 선언을 잊으면 이 검사가 UP-TO-DATE 로 조용히 안 돈다. 이 레포에서
+> 다섯 번 겪은 함정이라 `common/build.gradle` 에 `docs/api-spec.md` 와
+> `**/*Controller.java` 를 함께 선언해 뒀다.
 
 ---
 
@@ -442,7 +486,10 @@ ident = state.alert.account if tool in ACCOUNT_TOOLS else state.alert.customer_i
 
 1. ~~사망 플래그·비밀번호 변경 이력 연동~~ — **해결.** 둘 다 데이터와 조회 메서드가
    이미 있었고 컨트롤러에서 하드코딩된 `false` 만 남아 있었다.
-2. **API 스펙의 병합 반영** — 지금 스펙을 보고 붙이면 없는 서비스를 부르게 된다.
+2. ~~API 스펙의 병합 반영~~ — **해결.** 없는 서비스가 셋이었고(`deposit-service`·
+   `payment-service`·`advisory-service`), 하나는 존재한 적도 없었다(`master-service`).
+   엔드포인트도 91개가 문서에 빠져 있었다. 추출기를 만들어 뽑고 `ApiSpecFreshnessTest`
+   로 못 박았다 — 손으로 관리되던 것이 원인이라 문서만 고치면 다음에 또 어긋난다.
 3. ~~검색 품질 측정~~ — **해결.** 남은 것은 주기 실행과 ES 하이브리드 실측이다.
 4. ~~관리자 화면 직원 ID~~ — **해결.** 끊긴 곳이 다섯 군데였다. 화면 입력칸, 토큰
    미첨부, 프록시의 헤더 제거, 토큰 없을 때의 body 폴백, 그리고 틀린 클레임 이름

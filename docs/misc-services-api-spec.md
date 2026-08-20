@@ -1,8 +1,12 @@
 # 소규모 서비스 API 명세서 (통합)
 
-advisory-service · auto-loan-review · doc-agent · master-service · review-ai-gateway 의 REST 엔드포인트 상세 명세를 한 문서로 묶었다. 컨트롤러·DTO 소스에서 추출해 정리한다.
+auto-loan-review · doc-agent · review-ai-gateway 와, loan-service 안에 있는 advisory 도메인의 REST 엔드포인트 상세 명세를 한 문서로 묶었다. 컨트롤러·DTO 소스에서 추출해 정리한다.
 
-> 대형 서비스는 개별 문서 참조: [loan](loan-service-api-spec.md) · [customer](customer-service-api-spec.md) · [deposit](deposit-service-api-spec.md) · [payment](payment-service-api-spec.md).
+> **`master-service` 는 이 레포에 존재한 적이 없다.** 예전 이 문서가 공통코드 서비스로
+> 소개했지만 `CodeMasterController` 는 코드에 없다. 아래 그 자리에 무엇이 실제로
+> 있는지 적어 뒀다.
+
+> 대형 서비스는 개별 문서 참조: [loan](loan-service-api-spec.md) · [customer](customer-service-api-spec.md) · [deposit](core-banking-deposit-api-spec.md) · [payment](core-banking-payment-api-spec.md).
 > 엔드포인트 전체 목록은 [api-spec.md](api-spec.md) 참조.
 
 ## 공통 사항
@@ -14,80 +18,18 @@ advisory-service · auto-loan-review · doc-agent · master-service · review-ai
 
 ---
 
-## master-service (공통코드)
+## 공통코드 — 서비스가 아니다
 
-공통코드 마스터 CRUD. 공통 `ApiResponse` envelope 사용. Security 는 `anyRequest().permitAll()`(게이트웨이 신뢰).
+예전 이 문서는 `master-service` 라는 공통코드 서비스와 `CodeMasterController` 의
+엔드포인트 5개를 소개했다. **둘 다 코드에 없다.** 그 명세를 보고 붙이면 존재하지
+않는 주소를 부르게 된다.
 
-**엔드포인트 5개 / 컨트롤러 1개**
+실제로 있는 것은 `code_master`·`cust_code_master` **테이블과 시드 데이터**뿐이다.
+검증에 쓰이지 않는다 — `@ValidCode` 같은 애너테이션이 0건이고, 코드값의 정본은
+각 도메인의 상수(`BankRole`, `ReviewAdvisoryReport.STATUS_*` 등)다.
 
-### CodeMasterController
-
-`base: /api/codes`
-
-#### `GET` `/api/codes`
-
-**Query/Form 파라미터**
-
-| 이름 | 타입 | 필수 |
-|---|---|---|
-| `group` | `String` | O |
-
-**응답**: `List<CodeDto>`
-
-#### `POST` `/api/codes`
-
-**요청 본문**: `CreateCodeRequest`
-
-| 필드 | 타입 | 제약 |
-|---|---|---|
-| `groupCd` | `String` | 필수(공백불가) |
-| `codeCd` | `String` | 필수(공백불가) |
-| `codeName` | `String` |  |
-| `codeDesc` | `String` |  |
-| `sortNo` | `Integer` |  |
-| `activeYn` | `String` |  |
-
-**응답**: `CodeDto`
-
-#### `DELETE` `/api/codes/{codeId}`
-
-**Path 파라미터**
-
-| 이름 | 타입 |
-|---|---|
-| `codeId` | `Long` |
-
-**응답**: `Void`
-
-#### `PUT` `/api/codes/{codeId}`
-
-**Path 파라미터**
-
-| 이름 | 타입 |
-|---|---|
-| `codeId` | `Long` |
-
-**요청 본문**: `UpdateCodeRequest`
-
-| 필드 | 타입 | 제약 |
-|---|---|---|
-| `codeName` | `String` |  |
-| `codeDesc` | `String` |  |
-| `sortNo` | `Integer` |  |
-| `activeYn` | `String` |  |
-
-**응답**: `CodeDto`
-
-#### `GET` `/api/codes/{groupCd}/{codeCd}`
-
-**Path 파라미터**
-
-| 이름 | 타입 |
-|---|---|
-| `groupCd` | `String` |
-| `codeCd` | `String` |
-
-**응답**: `CodeDto`
+공통코드를 실제로 쓰려면 서비스가 아니라 **검증 지점**부터 정해야 한다.
+[`OPEN_ITEMS.md` §5](OPEN_ITEMS.md) 의 "마스터 코드 연동" 항목이 그 자리다.
 
 ---
 
@@ -236,9 +178,17 @@ advisory-service · auto-loan-review · doc-agent · master-service · review-ai
 
 ---
 
-## advisory-service (심사 자문 RAG)
+## advisory — loan-service 안의 도메인 (심사 자문 RAG)
 
-본사 심사 자문 리포트·규칙·통계·RAG. 공통 `ApiResponse` envelope 사용. 인가는 게이트웨이 + (loan-service 측 `/api/advisory/**`·`/api/internal/advisory/**` 라우팅 권한)에 의존.
+> **별도 서비스가 아니다.** `com.bank.loan.advisory.*` 패키지로 loan-service 안에
+> 있다. 예전에는 `agents/advisory-service` 가 별도 서비스처럼 보였지만 **빌드에
+> 포함된 적이 없었다** — settings.gradle·build.gradle·Dockerfile·compose 정의가
+> 전부 없었고 메인 클래스도 없었다([결정 문서](decisions/core-banking-merge.md) 계열의
+> 정리). 지금 `agents/advisory-service/src` 는 비어 있다.
+
+본사 심사 자문 리포트·규칙·통계·RAG. 공통 `ApiResponse` envelope 사용. 인가는
+게이트웨이가 주입한 `X-User-Role` 로 판정한다(`/api/advisory/**`·
+`/api/internal/advisory/**` 둘 다 게이트웨이 라우트가 있다).
 
 **엔드포인트 27개 / 컨트롤러 8개**
 

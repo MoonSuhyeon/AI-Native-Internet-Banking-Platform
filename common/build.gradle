@@ -71,6 +71,11 @@ tasks.named('test') {
         include 'web/app/**/*.tsx'
         include 'web/components/**/*.tsx'
         include 'services/api-gateway/src/main/resources/application.yml'
+        // API 명세 ↔ 컨트롤러 대조(ApiSpecFreshnessTest). 선언하지 않으면 컨트롤러를
+        // 추가해도 검사가 UP-TO-DATE 로 안 돌아, 문서에 빠진 채로 통과한다.
+        include 'docs/api-spec.md'
+        include 'services/*/src/main/java/**/*Controller.java'
+        include 'agents/*/src/main/java/**/*Controller.java'
         exclude '**/build/**'
         exclude 'web/node_modules/**'
         exclude 'web/.next/**'
