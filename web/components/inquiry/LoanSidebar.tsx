@@ -47,6 +47,33 @@ const NAV: SidebarItem[] = [
       { label: '보증보험 발급/조회',                                   href: '/products/loan/manage/guarantee-insurance' },
     ],
   },
+  // 아래 둘은 상단 대출 메뉴(GNB_MENUS)에 있는데 사이드바에는 없었다.
+  // 드롭다운으로 들어오면 사이드바가 "지금 어디인지" 를 못 보여 줬다.
+  // 두 목록이 손으로 관리되는 별개의 배열이라 어긋난 것이고,
+  // LoanNavConsistencyTest 가 이제 그 어긋남을 잡는다.
+  {
+    label: '대출 가이드',
+    expandable: true,
+    children: [
+      { label: '가계대출금리',                        href: '/products/loan/guide/rate' },
+      { label: '대출관련 수수료',                     href: '/products/loan/guide/fee' },
+      { label: '금리인하요구권',                      href: '/products/loan/guide/rate-cut' },
+      { label: '대출연체시 지연배상금액 예시',         href: '/products/loan/guide/late-fee' },
+      { label: '채무조정 지원제도 안내',              href: '/products/loan/guide/debt-adjustment' },
+      { label: '부가서비스',                          href: '/products/loan/guide/benefits' },
+      { label: '내용증명 우편미수신 주요정보 안내',    href: '/products/loan/guide/notice' },
+      { label: '추심관련 권리의무 및 권리구제방법',    href: '/products/loan/guide/rights' },
+    ],
+  },
+  {
+    label: '여신심사 자료제출',
+    expandable: true,
+    children: [
+      { label: '업체현황 및 사업계획서',   href: '/products/loan/credit-eval/biz-plan' },
+      { label: 'FATI 제출',               href: '/products/loan/credit-eval/fati-submit' },
+      { label: 'FATI 제출내역조회',        href: '/products/loan/credit-eval/fati-history' },
+    ],
+  },
 ]
 
 function getDefaultOpen(pathname: string): string[] {
