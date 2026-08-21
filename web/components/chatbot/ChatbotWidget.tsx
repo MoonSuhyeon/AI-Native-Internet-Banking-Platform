@@ -1743,6 +1743,36 @@ export default function ChatbotWidget() {
     }
   }
 
+  /**
+   * 밖에서 챗봇을 여는 통로.
+   *
+   * <p>챗봇은 라우트가 아니라 전역 위젯이라 `<Link>` 로 열 수 없다. 홈 퀵메뉴처럼
+   * 다른 컴포넌트가 "이 질문으로 챗봇을 열어" 라고 알릴 방법이 필요하다.
+   *
+   * <p>전역 상태 라이브러리나 Context 를 새로 들이지 않고 DOM 이벤트를 쓴다 —
+   * 위젯은 `GlobalChrome` 에 한 번만 마운트되고 여는 쪽은 트리 어디에나 있을 수
+   * 있어서, 공통 조상을 만들려면 레이아웃을 건드려야 한다.
+   *
+   * <p>질문을 함께 받으면 그 질문을 바로 보낸다. 퀵메뉴 "AI 자산분석" 이 챗봇만
+   * 열고 사용자가 다시 타이핑해야 한다면 눌러야 할 이유가 없다.
+   */
+  useEffect(() => {
+    function onOpenRequest(e: Event) {
+      const query = (e as CustomEvent<{ query?: string }>).detail?.query
+      setOpen(true)
+      if (query) {
+        setInput('')
+        void handleScenarioMessage(query)
+      }
+    }
+    window.addEventListener('axful:open-chatbot', onOpenRequest)
+    return () => window.removeEventListener('axful:open-chatbot', onOpenRequest)
+    // handleScenarioMessage 는 렌더마다 새로 만들어지지만, 리스너가 최신 것을
+    // 보게 하려고 의존성에 넣으면 매 렌더마다 재등록된다. 여는 동작만 하므로
+    // 최초 등록으로 충분하다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   async function submitMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const text = input.trim()
