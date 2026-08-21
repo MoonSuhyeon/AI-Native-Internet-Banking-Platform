@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { getAdminRoles, isEmployee } from '@/lib/admin-auth'
+import { readAccessToken } from '@/lib/token'
 
 const PUBLIC_ADMIN_PATHS = ['/admin/login', '/admin/consultation']
 
@@ -25,7 +26,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     }
 
     // 2차: 서버사이드 토큰 유효성 검증
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('access_token')
+    const token = readAccessToken()
     if (!token) {
       router.replace('/admin/login')
       return

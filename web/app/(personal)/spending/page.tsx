@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { KB_BORDER, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_LIGHT, KB_TEXT_MUTED } from '@/lib/theme'
+import { readAccessToken } from '@/lib/token'
 
 interface Anomaly {
   category: string
@@ -146,7 +147,7 @@ export default function SpendingPage() {
     setError('')
     setCompletedSteps([])
 
-    const accessToken = localStorage.getItem('accessToken')
+    const accessToken = readAccessToken()
     const customerId = localStorage.getItem('customerId')
     if (!accessToken || !customerId) { setError('로그인이 필요합니다.'); setLoading(false); return }
 

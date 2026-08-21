@@ -1,3 +1,4 @@
+import { readAccessToken } from '@/lib/token'
 /**
  * 어드민 목업 세션 → loan-service 게이트웨이 헤더 변환 유틸
  *
@@ -40,7 +41,7 @@ export function getAdminGatewayHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {}
 
   // JWT가 있으면 게이트웨이 헤더 불필요 (JwtFallbackAuthFilter 가 처리)
-  if (localStorage.getItem('accessToken')) return {}
+  if (readAccessToken()) return {}
 
   const adminUserJson = localStorage.getItem('admin_user')
   if (!adminUserJson) return {}

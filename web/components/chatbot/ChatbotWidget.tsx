@@ -42,6 +42,7 @@ import {
 } from '@/lib/deposit-api'
 import ConsultModal from '@/components/layout/ConsultModal'
 import { KB_CHAT } from '@/lib/theme'
+import { readAccessToken } from '@/lib/token'
 
 type ChatMessage = {
   id: string
@@ -310,7 +311,7 @@ function rowSummary(row: Record<string, unknown>, index: number) {
 }
 
 function addFeatureResult(result: ChatbotFeatureExecuteResponse & { compareData?: { accumulate: Record<string, unknown>[]; lumpSum: Record<string, unknown>[] } }): ChatMessage {
-  const needLogin = result.requires_auth && !localStorage.getItem('access_token') && !localStorage.getItem('accessToken')
+  const needLogin = result.requires_auth && !readAccessToken()
   return {
     id: messageId(result.feature_code),
     role: 'bot',
@@ -455,7 +456,7 @@ export default function ChatbotWidget() {
     if (!open) return
     // Header와 동일한 기준: localStorage 'user' 키 존재 여부로 로그인 상태 판단
     const userRaw = localStorage.getItem('user')
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('access_token')
+    const token = readAccessToken()
     if (!userRaw || !token) {
       setIsLoggedIn(false)
       setCustomerNo('')

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { Account } from '@/lib/mock-data'
+import { readAccessToken } from '@/lib/token'
 
 // 게이트웨이를 거친다. 수신 경로(/api/accounts·/api/contracts 등)는 게이트웨이가
 // 라우팅하므로 서비스 주소를 직접 가리킬 이유가 없다 — 직접 가리키면 검증된 신원
@@ -19,7 +20,7 @@ const depositApi = axios.create({
 depositApi.interceptors.request.use((config) => {
   if (typeof window === 'undefined') return config
 
-  const token = localStorage.getItem('accessToken')
+  const token = readAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }

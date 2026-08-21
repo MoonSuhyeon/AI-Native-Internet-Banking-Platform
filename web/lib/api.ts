@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { readAccessToken } from "@/lib/token";
 
 export const api = axios.create({
   // 게이트웨이. 예전 기본값 8080 은 로컬에서 payment-service-a 가 물고 있어,
@@ -12,7 +13,10 @@ export const api = axios.create({
 // 요청 인터셉터 — 토큰 자동 첨부
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("accessToken");
+    // JWT 가 아닌 값은 여기서 걸러진다(readAccessToken 이 지우고 null 을 준다).
+    // 가짜 토큰을 실어 보내면 게이트웨이가 401 을 주고, 화면은 로그인 상태로
+    // 남아 원인을 찾기 어려워진다.
+    const token = readAccessToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
     const customerId = localStorage.getItem("customerId");
     if (customerId && !config.headers["X-Customer-Id"]) {

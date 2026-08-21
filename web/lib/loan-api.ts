@@ -2,6 +2,7 @@
 import axios from "axios";
 import { getAdminGatewayHeaders } from "@/lib/admin-loan-auth";
 import type { Loan } from "@/lib/generated";
+import { readAccessToken } from '@/lib/token'
 
 // loan-service 전용 axios 인스턴스.
 // 인증·고객 API(@/lib/api)는 customer-service를 가리키지만, 대출 엔드포인트는
@@ -29,7 +30,7 @@ api.interceptors.request.use((config) => {
     if (Object.keys(adminHeaders).length > 0) {
       Object.assign(config.headers, adminHeaders);
     } else {
-      const token = localStorage.getItem("accessToken");
+      const token = readAccessToken();
       if (token) config.headers.Authorization = `Bearer ${token}`;
     }
   }

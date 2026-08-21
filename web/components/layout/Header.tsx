@@ -6,6 +6,7 @@ import SearchBar from '@/components/home/SearchBar'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import { readAccessToken } from '@/lib/token'
 
 // ============================================================
 // GNB 메뉴 데이터
@@ -133,7 +134,9 @@ const SESSION_SECONDS = 10 * 60 // 10분
 const SESSION_MS = SESSION_SECONDS * 1000
 
 function getStoredToken() {
-  return localStorage.getItem('accessToken') || localStorage.getItem('access_token')
+  // JWT 가 아닌 값(예전 mock 라우트가 내주던 `mock.…`)이 남아 있으면 지운다.
+  // 남겨 두면 헤더는 로그인으로 표시하고 API 는 전부 401 인 상태가 된다.
+  return readAccessToken()
 }
 
 function renewLocalSession() {
@@ -163,7 +166,7 @@ export default function Header() {
   useEffect(() => {
     // sessionExpiry 체크: 만료됐으면 로그아웃, 없으면 토큰 있을 때 세션 복원
     const expiry = localStorage.getItem('sessionExpiry')
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('access_token')
+    const token = readAccessToken()
     if (expiry && parseInt(expiry, 10) <= Date.now()) {
       // 명시적으로 만료된 세션만 강제 로그아웃
       localStorage.removeItem('accessToken')
@@ -180,7 +183,7 @@ export default function Header() {
       // sessionExpiry 없지만 토큰 있으면 30분 세션 복원 (로그인 중 페이지 이동 대응)
       localStorage.setItem('sessionExpiry', String(Date.now() + 30 * 60 * 1000))
     }
-    setAuthed(!!(localStorage.getItem('accessToken') || localStorage.getItem('access_token')))
+    setAuthed(!!readAccessToken())
     if (pathname.startsWith('/logout')) {
       setUser(null)
       return
@@ -291,7 +294,9 @@ export default function Header() {
       localStorage.setItem('sessionExpiry', String(newExpiry))
       setRemaining(SESSION_SECONDS)
     } catch {
-      if (localStorage.getItem('accessToken') || localStorage.getItem('access_token')) {
+      // 갱신은 실패했지만 아직 쓸 수 있는 토큰이 있으면 화면 세션만 연장한다.
+      // 여기서도 JWT 인지 보지 않으면, 가짜 토큰을 든 채 세션만 계속 늘어난다.
+      if (readAccessToken()) {
         const newExpiry = Date.now() + SESSION_SECONDS * 1000
         localStorage.setItem('sessionExpiry', String(newExpiry))
         setRemaining(SESSION_SECONDS)

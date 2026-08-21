@@ -93,6 +93,8 @@ tasks.named('test') {
         include 'web/components/inquiry/LoanSidebar.tsx'
         // 'AI' 퀵메뉴 ↔ 실제 에이전트 대조(AiMenuBackingTest).
         include 'web/components/home/HeroWithQuickMenu.tsx'
+        // 토큰을 검증 없이 직접 읽는 곳이 없는지(TokenReadPathTest).
+        include 'web/lib/*.ts'
         // 프론트 라우트가 토큰을 스스로 만들지 않는지(NoMockAuthRouteTest).
         // web/app/api/**/route.ts 는 위에서 이미 선언돼 있다.
         exclude '**/build/**'

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
+import { readAccessToken } from '@/lib/token'
 
 interface GradeInfo {
   previousGradeCode: string | null
@@ -118,7 +119,7 @@ export default function MyKBPage() {
   const [pwError, setPwError] = useState('')
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
+    const token = readAccessToken()
     if (!token) { router.replace('/login'); return }
 
     api.get('/api/v1/customers/me')

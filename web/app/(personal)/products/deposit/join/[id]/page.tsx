@@ -9,11 +9,12 @@ import AutoBreadcrumb from '@/components/layout/AutoBreadcrumb'
 import { createDepositContract, getCurrentDepositCustomerId, fetchDepositAccountViewModels, fetchDepositProduct, DepositViewAccount } from '@/lib/deposit-api'
 import { formatNumber } from '@/lib/mock-data'
 import MouseNumKeypad from '@/components/ui/MouseNumKeypad'
+import { readAccessToken } from '@/lib/token'
 
 const SESSION_EXTENSION_MS = 10 * 60 * 1000
 
 function extendLocalSessionAfterAuthenticatedAction() {
-  const token = localStorage.getItem('accessToken') || localStorage.getItem('access_token')
+  const token = readAccessToken()
   if (!token) return
   localStorage.setItem('sessionExpiry', String(Date.now() + SESSION_EXTENSION_MS))
 }

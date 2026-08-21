@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getAdminGatewayHeaders } from '@/lib/admin-loan-auth'
+import { readAccessToken } from '@/lib/token'
 
 // 자문 호출도 게이트웨이를 거친다.
 //
@@ -16,7 +17,7 @@ const advisoryApi = axios.create({
 
 advisoryApi.interceptors.request.use((config) => {
   if (typeof window === 'undefined') return config
-  const token = localStorage.getItem('accessToken')
+  const token = readAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   } else {

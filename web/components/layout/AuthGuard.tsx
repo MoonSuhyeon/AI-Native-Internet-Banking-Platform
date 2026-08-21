@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { readAccessToken } from '@/lib/token'
 
 // 로그인 없이 접근 가능한 경로 prefix
 const PUBLIC_PREFIXES = [
@@ -28,14 +29,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       return
     }
     // accessToken(ID 로그인) 또는 access_token(인증서 로그인) 둘 다 허용
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('access_token')
+    const token = readAccessToken()
     if (!token) {
       router.replace('/login')
     } else {
-      // 두 키를 통일 — 이후 api.ts 인터셉터가 accessToken만 읽으므로 보정
-      if (!localStorage.getItem('accessToken') && localStorage.getItem('access_token')) {
-        localStorage.setItem('accessToken', localStorage.getItem('access_token')!)
-      }
+      // 두 키를 통일한다. readAccessToken 이 이미 검증한 값이라 그대로 쓴다 —
+      // 여기서 localStorage 를 다시 읽으면 검증을 건너뛴 값이 들어올 수 있다.
+      localStorage.setItem('accessToken', token)
       setAuthorized(true)
     }
   }, [pathname, isPublic, router])

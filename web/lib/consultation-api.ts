@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { readAccessToken } from '@/lib/token'
 
 export type ChatbotButton = {
   id: number
@@ -63,7 +64,7 @@ const consultationApi = axios.create({
 })
 
 consultationApi.interceptors.request.use(config => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+  const token = typeof window !== 'undefined' ? readAccessToken() : null
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
@@ -111,7 +112,7 @@ const staffConsultationApi = axios.create({
 })
 
 staffConsultationApi.interceptors.request.use(config => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+  const token = typeof window !== 'undefined' ? readAccessToken() : null
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })

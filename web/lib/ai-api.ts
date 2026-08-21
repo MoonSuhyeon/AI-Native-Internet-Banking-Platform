@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getAdminGatewayHeaders } from '@/lib/admin-loan-auth'
+import { readAccessToken } from '@/lib/token'
 
 // advisory RAG 관리 API — loan-service(8083)에 advisory-service 소스셋이 흡수되어 동작.
 // 폐기된 ai-service(8086) 경로를 advisory RAG 경로(/api/internal/advisory/*)로 교체.
@@ -12,7 +13,7 @@ const aiApi = axios.create({
 
 aiApi.interceptors.request.use((config) => {
   if (typeof window === 'undefined') return config
-  const token = localStorage.getItem('accessToken')
+  const token = readAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   } else {

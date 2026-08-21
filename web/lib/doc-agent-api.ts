@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { readAccessToken } from '@/lib/token'
 
 // 서류심사 호출도 게이트웨이를 거친다.
 //
@@ -15,7 +16,7 @@ const docAgentApi = axios.create({
 
 docAgentApi.interceptors.request.use((config) => {
   if (typeof window === 'undefined') return config
-  const token = localStorage.getItem('accessToken')
+  const token = readAccessToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })

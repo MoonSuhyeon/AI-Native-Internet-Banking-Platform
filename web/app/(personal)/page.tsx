@@ -9,6 +9,7 @@ import ProductShowcase from '@/components/home/ProductShowcase'
 import { formatNumber } from '@/lib/mock-data'
 import { fetchDepositAccountViewModels, getCurrentDepositCustomerId, fetchTransactions, type DepositViewAccount, type DepositTransaction } from '@/lib/deposit-api'
 import { NEWS_ITEMS } from '@/lib/news-data'
+import { readAccessToken } from '@/lib/token'
 
 interface StoredUser { name: string; email: string }
 
@@ -120,7 +121,7 @@ export default function HomePage() {
   const [recentTransfers, setRecentTransfers] = useState<RecentTransfer[]>([])
 
   useEffect(() => {
-    setAuthed(!!localStorage.getItem('accessToken'))
+    setAuthed(!!readAccessToken())
     try {
       const raw = localStorage.getItem('user')
       if (raw) setUser(JSON.parse(raw))
