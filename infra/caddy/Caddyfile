@@ -1,0 +1,59 @@
+# 리버스 프록시 + HTTPS.
+#
+# **왜 Caddy 인가.** 인증서 발급·갱신을 스스로 한다. nginx + certbot 조합은
+# 갱신 크론과 재로드를 따로 돌봐야 하고, 그 갱신이 조용히 멎으면 90일 뒤에
+# 사이트가 통째로 죽는다 — 이 레포에서 반복해 다룬 "조용한 실패" 와 같은 모양이다.
+#
+# **왜 한 오리진인가.** /api 를 같은 도메인에서 게이트웨이로 넘긴다.
+# 그러면 브라우저에게 프론트와 API 가 같은 출처라 **CORS 가 아예 필요 없다.**
+# 도메인마다 허용 오리진을 게이트웨이에 등록하던 일도 사라진다.
+#
+#     https://example.com/          → web:3000        (Next)
+#     https://example.com/api/...   → api-gateway:8080
+#
+# 프론트의 NEXT_PUBLIC_API_URL 을 비워 두면 상대경로가 되어 그대로 맞물린다.
+# NEXT_PUBLIC_* 은 빌드 시점에 번들에 박히므로, 도메인을 몰라도 되는 이 구조가
+# 이미지를 도메인과 무관하게 만든다.
+
+{
+	# 인증서 발급 실패 알림을 받을 주소. 없으면 Let's Encrypt 가 만료 경고를
+	# 보낼 곳이 없다.
+	email {$ACME_EMAIL}
+}
+
+{$SITE_DOMAIN} {
+	encode gzip
+
+	# API — 게이트웨이가 유일한 진입점이다. 서비스로 직접 넘기는 경로를 여기에
+	# 만들면 게이트웨이의 신원 검증·헤더 주입을 건너뛴다.
+	handle /api/* {
+		reverse_proxy api-gateway:8080
+	}
+
+	# actuator 는 밖으로 내보내지 않는다. 헬스체크는 서버 안에서 본다.
+	handle /actuator/* {
+		respond 404
+	}
+
+	# 그 외 전부 프론트
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		# HTTPS 를 강제한다. 한 번 방문한 브라우저는 http 로 돌아가지 않는다.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# 서버 종류를 굳이 알릴 이유가 없다.
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 10mb
+			roll_keep 3
+		}
+	}
+}

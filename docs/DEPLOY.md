@@ -24,19 +24,36 @@ push(main)
 
 서버에서 실제로 도는 정의는 `infra/docker/docker-compose.prod.yml` 하나다.
 
+### 외부에 열리는 것은 Caddy 뿐
+
+```
+인터넷 ─── :443 ─── Caddy ─┬─ /api/*  → api-gateway:8080
+                           └─ /*      → web:3000
+```
+
+게이트웨이는 **호스트 포트를 열지 않는다.** 밖에 직접 노출하면 HTTPS 를 우회해
+평문으로 부를 수 있는 길이 남는다.
+
+`/api` 를 같은 도메인에서 넘기므로 브라우저에게 프론트와 API 가 같은 출처다 —
+**CORS 설정이 아예 필요 없고**, 프론트 이미지가 도메인을 몰라도 된다
+(`NEXT_PUBLIC_*` 은 빌드 시점에 번들에 박히므로 이 점이 중요하다).
+
 ### 서비스별 워크플로
 
 | 워크플로 | 대상 | test 잡 |
 |---|---|---|
 | `deploy-api-gateway.yml` | api-gateway | ✅ |
 | `deploy-customer-service.yml` | customer-service | ✅ |
-| `deploy-deposit-service.yml` | deposit-service | ✅ |
-| `deploy-payment-service.yml` | payment-service | ✅ |
+| `deploy-core-banking.yml` | core-banking (수신+이체 병합) | ✅ |
+| `deploy-loan-service.yml` | loan-service | ✅ |
 | `deploy-review-ai-gateway.yml` | review-ai-gateway | ✅ |
 | `deploy-consultation-service.yml` | consultation-service (Python) | — |
-| `deploy-infra.yml` | compose · prometheus · grafana 파일 SCP 동기화 | — |
+| `deploy-web.yml` | web (Next.js) | 타입·린트 |
+| `deploy-infra.yml` | compose · Caddyfile · prometheus · grafana 파일 SCP 동기화 | — |
 
-> ⚠️ **loan-service 전용 배포 워크플로가 없다.** 새 서버 구축 시 추가 필요.
+> 이 표가 오래 낡아 있었다. `deploy-deposit-service.yml`·`deploy-payment-service.yml`
+> 을 적어 뒀지만 둘은 병합돼 `deploy-core-banking.yml` 하나가 됐고,
+> "loan-service 워크플로가 없다" 고 적혀 있었지만 실제로는 있었다.
 
 ### 트리거 경로 함정
 
@@ -67,6 +84,26 @@ push(main)
 
 ## 3. 새 배포 서버 붙이는 절차
 
+### 3-0. 도메인을 먼저 붙인다
+
+Caddy 가 Let's Encrypt 에서 인증서를 받으려면 **도메인이 이미 이 서버를 가리켜야
+한다.** 순서를 바꾸면 발급 검증이 실패하고, 반복 실패는 도메인당 주 5회 한도에
+걸려 그 주 내내 HTTPS 를 못 켠다.
+
+```
+A 레코드   example.com       → <VM 외부 IP>
+A 레코드   www.example.com   → <VM 외부 IP>   (쓸 경우)
+```
+
+전파를 확인한 뒤 다음 단계로 간다.
+
+```bash
+dig +short example.com        # VM IP 가 나와야 한다
+```
+
+방화벽은 **80·443 만** 연다. 80 은 Let's Encrypt 검증에 필요하다(Caddy 가 443 으로
+넘긴다). 8080 을 열 이유는 없다 — 게이트웨이는 Caddy 뒤에 있다.
+
 ### 3-1. 서버 사전 준비
 
 ```bash
@@ -81,7 +118,21 @@ vi .env.prod
 ```
 
 `.env.prod` 에는 각 DB 비밀번호, `JWT_SECRET`, `CRYPTO_KEY_BASE64`,
-`GITHUB_OWNER`, 서비스별 `*_IMAGE_TAG` 가 들어간다.
+`GITHUB_OWNER`, 서비스별 `*_IMAGE_TAG`, 그리고 도메인 관련 값
+(`SITE_DOMAIN`·`ACME_EMAIL`)이 들어간다. `.env.prod.sample` 이 정본이다.
+
+한 줄로 생성할 수 있는 것들:
+
+```bash
+{
+  echo "JWT_SECRET=$(openssl rand -base64 48)"
+  echo "RRN_CRYPTO_KEY=$(openssl rand -base64 48)"
+  echo "IDENTITY_CI_SECRET=$(openssl rand -base64 48)"
+  echo "CRYPTO_KEY_BASE64=$(openssl rand -base64 32)"
+  echo "CONSULTATION_GATEWAY_SHARED_SECRET=$(openssl rand -hex 24)"
+  echo "AGENT_PII_SALT=$(openssl rand -hex 16)"
+} >> .env.prod
+```
 
 ### 3-2. compose 파일 배치 후 최초 기동
 
@@ -98,18 +149,14 @@ docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod up -
 2. Variables 에 `DEPLOY_ENABLED = true` 등록
 3. 다음 push 부터 deploy 잡이 활성화된다
 
-### 3-4. 확인
-
-```bash
-docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod ps
-curl -fsS http://<host>:8080/actuator/health
-```
-
 ---
 
-## 3-4. 배포 전 체크리스트 (첫 배포·재배포 공통)
+## 4. 배포 전 체크리스트 (첫 배포·재배포 공통)
 
-아래 넷은 **빠지면 서비스가 뜨지 않거나 기능이 조용히 멎는다.** 순서대로 확인한다.
+아래 다섯은 **빠지면 서비스가 뜨지 않거나 기능이 조용히 멎는다.** 순서대로 확인한다.
+
+> 절 번호가 `3-4` 로 둘 있었고 그중 하나("확인")는 아래 "배포 직후 확인" 과 같은
+> 내용이었다. 합쳤다.
 
 ### ① 시크릿 세 개 — 없으면 customer-service 가 기동을 거부한다
 
@@ -163,21 +210,47 @@ grep CONSULTATION_HARNESS_AUDIT_SPOOL_PATH .env.prod
 **컨테이너에 볼륨이 붙어 있어야 한다** — 없으면 재시작과 함께 스풀도 사라져 복구 장치가
 있으나 마나가 된다.
 
+### ⑤ 도메인 · 인증서 — Caddy
+
+```bash
+grep -E "SITE_DOMAIN|ACME_EMAIL" .env.prod
+docker logs ib-caddy --tail 30
+```
+
+| 로그에 보이는 것 | 뜻 |
+|---|---|
+| `certificate obtained successfully` | 정상 |
+| `no such host` · `DNS problem` | DNS 가 아직 이 서버를 안 가리킨다. §3-0 |
+| `too many certificates already issued` | 발급 한도(주 5회). **그 주에는 못 켠다** — 스테이징 발급기로 먼저 시험할 것 |
+| `connection refused` on :80 | 방화벽이 80 을 막고 있다. 검증에 필요하다 |
+
+인증서는 `caddy-data` 볼륨에 남는다. **볼륨을 지우면 재발급을 시도하다 한도에
+걸린다** — `docker compose down -v` 를 함부로 쓰지 말 것.
+
 ### 배포 직후 확인
 
 ```bash
 docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod ps
-curl -fsS http://<host>:8080/actuator/health
+
+# 밖에서 — HTTPS 와 프론트
+curl -fsS https://<도메인>/ -o /dev/null -w '%{http_code}
+'
+
+# 안에서 — 게이트웨이는 호스트 포트를 열지 않으므로 컨테이너 망으로 본다
+docker exec ib-caddy wget -qO- http://api-gateway:8080/actuator/health
 
 # 이체 한 번 돌려보고 게이트 로그 확인
 docker logs ib-core-banking --since 10m | grep "승인 토큰"
 ```
 
+> `curl http://<host>:8080/...` 은 이제 **연결되지 않는 것이 정상이다.**
+> 게이트웨이를 Caddy 뒤로 넣으면서 호스트 포트를 닫았다.
+
 "승인 토큰 없이 처리됨" 이 보이면 토큰을 안 보내는 경로가 남아 있다는 뜻이다.
 
 ---
 
-## 4. 운영 메모
+## 5. 운영 메모
 
 ### 리소스 상한
 `infra/docker/docker-compose.prod.yml` 의 `mem_limit` 값은 **Oracle Cloud Free Tier
@@ -198,7 +271,7 @@ docker volume rm <name>
 
 ---
 
-## 5. 이력
+## 6. 이력
 
 - **NCP(네이버 클라우드) 배포 세트 제거 (2026-08-04)** — 서버에서 `git pull` 후
   직접 빌드하는 방식이었다. GHCR 방식과 중복이고 test 잡 · 이미지 태그 · 롤백이

@@ -1,0 +1,54 @@
+name: Deploy web
+
+# 프론트(Next.js). 예전에는 이미지를 만드는 워크플로가 아예 없어서,
+# 운영 compose 에도 web 서비스가 없었고 배포하면 백엔드만 떴다.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/deploy-web.yml'
+      - '.github/workflows/reusable-docker-publish.yml'
+      - '.github/workflows/reusable-deploy-ssh.yml'
+  workflow_dispatch:
+
+jobs:
+  # 타입·린트가 깨진 채로 이미지를 만들지 않는다. Next 빌드는 타입 오류를
+  # 무시하지 않도록 next.config.js 에서 ignoreBuildErrors 를 이미 껐다.
+  check:
+    name: Typecheck & lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npx tsc --noEmit
+        working-directory: web
+      - run: npx next lint --max-warnings=100
+        working-directory: web
+
+  publish:
+    needs: check
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/reusable-docker-publish.yml
+    with:
+      service-name: web
+      build-context: web
+      dockerfile-path: web/Dockerfile
+
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true'
+    needs: publish
+    permissions: {}
+    uses: ./.github/workflows/reusable-deploy-ssh.yml
+    with:
+      service-name: web
+      image-tag: ${{ needs.publish.outputs.image-tag }}
+    secrets: inherit

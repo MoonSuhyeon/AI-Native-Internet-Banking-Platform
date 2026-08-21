@@ -359,8 +359,10 @@ services:
       PAYMENT_SERVICE_PORT: 8084
       # AI(auto-loan-review)·상담은 게이트웨이 미경유 구조 → 라우트 없음(의도적).
       # redis 는 api-gateway 가 사용하지 않음 → 미설정.
-    ports:
-      - "${GATEWAY_PUBLIC_PORT:-8080}:8080"   # 외부 노출 (Oracle 방화벽 룰 — 포트 8080 그대로 재사용)
+    # 호스트 포트를 열지 않는다. Caddy 가 유일한 외부 진입점이고, 게이트웨이를
+    # 밖에 직접 노출하면 HTTPS 를 우회해 평문으로 부를 수 있는 길이 남는다.
+    expose:
+      - "8080"
     mem_limit: 512m
     depends_on:
       - customer-service
@@ -401,7 +403,63 @@ services:
     volumes:
       - data-tools-output:/app/data
 
+  # ===========================================================================
+  # 프론트 · 리버스 프록시
+  # ===========================================================================
+
+  # 프론트(Next.js). 예전에는 prod compose 에 아예 없어서 백엔드만 떴다.
+  #
+  # NEXT_PUBLIC_* 은 빌드 시점에 번들에 박히므로 이미지는 도메인을 모른다.
+  # Caddy 가 같은 오리진에서 /api 를 게이트웨이로 넘기기 때문에 상대경로면 충분하다.
+  # 서버측 프록시(app/api/**)가 쓰는 주소는 런타임 환경변수라 여기서 준다.
+  web:
+    image: ghcr.io/${GITHUB_OWNER}/web:${WEB_IMAGE_TAG:-latest}
+    container_name: ib-web
+    <<: *default-restart
+    logging: *default-logging
+    environment:
+      CUSTOMER_API_URL: http://api-gateway:8080
+      CONSULTATION_API_URL: http://consultation-service:8087
+    expose:
+      - "3000"
+    mem_limit: 512m
+    depends_on:
+      - api-gateway
+
+  # HTTPS 종단 + 리버스 프록시. 인증서 발급·갱신을 스스로 한다.
+  #
+  # nginx + certbot 조합을 쓰지 않는 이유: 갱신 크론과 재로드를 따로 돌봐야 하고,
+  # 그 갱신이 조용히 멎으면 90일 뒤 사이트가 통째로 죽는다.
+  #
+  # SITE_DOMAIN·ACME_EMAIL 이 .env.prod 에 있어야 한다. 도메인이 실제로 이 서버를
+  # 가리키기 전에 띄우면 Let's Encrypt 검증이 실패한다 — DNS 를 먼저 붙일 것.
+  caddy:
+    image: caddy:2-alpine
+    container_name: ib-caddy
+    <<: *default-restart
+    logging: *default-logging
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # 발급받은 인증서. 볼륨이 없으면 재시작마다 재발급을 시도하다
+      # Let's Encrypt 발급 한도(주당 5회)에 걸린다.
+      - caddy-data:/data
+      - caddy-config:/config
+      - caddy-logs:/var/log/caddy
+    mem_limit: 128m
+    depends_on:
+      - web
+      - api-gateway
+
 volumes:
+  caddy-data:
+  caddy-config:
+  caddy-logs:
   customer-db-data:
   core-banking-db-data:
   loan-db-data:

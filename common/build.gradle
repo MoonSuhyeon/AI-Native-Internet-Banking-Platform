@@ -85,6 +85,9 @@ tasks.named('test') {
         // compose 가 요구하는 변수 ↔ 샘플 대조(EnvSampleCoverageTest).
         // 이 줄을 빠뜨려 변이 검증이 통과했다 — 이 레포에서 여섯 번째다.
         include '.env.sample'
+        // 배포 문서 ↔ 워크플로 파일 대조(DeployDocFreshnessTest).
+        include 'docs/DEPLOY.md'
+        include '.github/workflows/deploy-*.yml'
         // 상단 대출 메뉴 ↔ 대출 사이드바 대조(LoanNavConsistencyTest).
         include 'web/components/layout/Header.tsx'
         include 'web/components/inquiry/LoanSidebar.tsx'
