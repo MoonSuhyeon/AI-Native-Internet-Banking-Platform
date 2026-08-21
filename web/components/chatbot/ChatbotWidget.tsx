@@ -149,8 +149,9 @@ const TEXT = {
   won: '\uC6D0',
   count: '\uAC74',
   item: '\uD56D\uBAA9',
-  // 은행 이름은 'AXful Bank' 로 통일한다. 예전에는 이 줄만 한글 음차가 깨져
-  // 있었고, 예금 가입 화면은 'AX풀뱅크' 라 같은 화면에서 표기가 갈렸다.
+  // 예전 값이 유니코드 이스케이프로 적힌 오타였다(= AX + 풀댜크).
+  // 'AX풀뱅크' 같은 한글 음차는 오타가 아니라 정당한 표기라 손대지 않는다 —
+  // 여기만 '댜크' 로 깨져 있었다.
   title: 'AXful Bank \uC0C1\uB2F4 \uCC57\uBD07',
   subtitle: '\uD604\uAE08 \uD750\uB984 \uBD84\uC11D\uACFC \uC0C1\uD488 \uCD94\uCC9C',
   openChat: '\uCC57\uBD07 \uC0C1\uB2F4 \uC5F4\uAE30',

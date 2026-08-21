@@ -467,7 +467,7 @@ export default function DepositJoinPage() {
                 </AccItem>
                 <AccItem title="예금자보호법 설명 확인" required
                   checked={termChecks.protection} onCheck={v => checkTerm('protection', v)}>
-                  본인은 AXful Bank로부터 가입하는 금융상품의 예금자보호여부(보호 또는 비보호) 및 보호한도에 대하여 설명 받고 이해하였음을 확인합니다.
+                  본인은 AX풀뱅크로부터 가입하는 금융상품의 예금자보호여부(보호 또는 비보호) 및 보호한도에 대하여 설명 받고 이해하였음을 확인합니다.
                 </AccItem>
               </div>
 
@@ -705,7 +705,7 @@ export default function DepositJoinPage() {
                   <FormRow label="자동이체 출금계좌">
                     <div className="flex items-center gap-2 mb-1">
                       <select className="border border-kb-border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white">
-                        <option>AXful Bank</option>
+                        <option>AX풀뱅크</option>
                       </select>
                       <select value={transferAccount} onChange={e => setTransferAccount(e.target.value)}
                         className="border border-kb-border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white flex-1 max-w-[280px]">
@@ -751,7 +751,7 @@ export default function DepositJoinPage() {
                 <FormRow label="출금계좌번호">
                   <div className="flex items-center gap-2 mb-1">
                     <select className="border border-kb-border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white">
-                      <option>AXful Bank</option>
+                      <option>AX풀뱅크</option>
                     </select>
                     <select value={withdrawAccount} onChange={e => setWithdrawAccount(e.target.value)}
                       className="border border-kb-border rounded-lg px-3 py-1.5 text-[13px] outline-none bg-white flex-1 max-w-[280px]">
@@ -871,7 +871,7 @@ export default function DepositJoinPage() {
                       { label: '자동이체 여부', value: autoTransfer === 'yes' ? '신청' : '미신청' },
                       ...(autoTransfer === 'yes' ? [
                         { label: '자동이체일', value: `매월 ${transferDay}일` },
-                        { label: '자동이체 출금계좌', value: `AXful Bank ${withdrawAccounts.find(a => a.id === transferAccount)?.number ?? '-'}` },
+                        { label: '자동이체 출금계좌', value: `AX풀뱅크 ${withdrawAccounts.find(a => a.id === transferAccount)?.number ?? '-'}` },
                       ] : []),
                     ] : []),
                     { label: isFreeStyleSavings ? '납입방식' : isRegularSavings ? '월 이체금액' : isChecking ? '초기 입금금액' : '가입금액',
@@ -879,7 +879,7 @@ export default function DepositJoinPage() {
                     ...(!isChecking ? [{ label: '이자지급방법', value: isSavings ? '만기일시지급식' : '만기일시지급식' }] : []),
                     { label: '적용금리', value: PRODUCT_RATES[id] ?? (isChecking ? '연 0.1%' : '연 2.4%') },
                     { label: '적용과세', value: taxExempt ? '비과세' : '일반' },
-                    { label: '출금계좌', value: `AXful Bank ${withdrawAccounts.find(a => a.id === withdrawAccount)?.number ?? '-'}` },
+                    { label: '출금계좌', value: `AX풀뱅크 ${withdrawAccounts.find(a => a.id === withdrawAccount)?.number ?? '-'}` },
                     ...(!isChecking ? [{ label: '상품만기알림(LMS) 서비스 신청', value: lms === 'yes' ? '신청' : '미신청' }] : []),
                     { label: '연계·제류서비스', value: '해당사항 없음' },
                   ].map(row => (
