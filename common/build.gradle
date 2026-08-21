@@ -79,6 +79,9 @@ tasks.named('test') {
         // 계획 문서 상태 줄(PlanStatusTest). 선언하지 않으면 계획서를 추가해도
         // 검사가 UP-TO-DATE 로 안 돌아, 상태 없는 문서가 통과한다.
         include 'docs/plan/*.md'
+        // 개발 스크립트 ↔ Gradle 모듈 대조(DevScriptModuleTest).
+        include 'scripts/*.ps1'
+        include 'settings.gradle'
         exclude '**/build/**'
         exclude 'web/node_modules/**'
         exclude 'web/.next/**'

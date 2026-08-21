@@ -18,8 +18,10 @@ Start-Process powershell -ArgumentList "-NoProfile -Command `"cd '$root'; .\grad
 
 Start-Sleep -Seconds 2
 
-Write-Host "[4/5] Deposit Service (8082) starting..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoProfile -Command `"cd '$root'; .\gradlew.bat :services:deposit-service:bootRun`"" -WindowStyle Normal
+Write-Host "[4/5] Core Banking (8082, 수신+이체) starting..." -ForegroundColor Yellow
+# deposit-service + payment-service 는 core-banking 하나로 합쳐졌다.
+# 예전 모듈명으로는 gradle 이 "project not found" 로 죽는다.
+Start-Process powershell -ArgumentList "-NoProfile -Command `"cd '$root'; .\gradlew.bat :services:core-banking:bootRun`"" -WindowStyle Normal
 
 Start-Sleep -Seconds 2
 
