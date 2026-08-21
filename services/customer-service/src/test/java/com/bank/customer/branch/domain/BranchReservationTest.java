@@ -74,6 +74,28 @@ class BranchReservationTest {
     }
 
     @Test
+    @DisplayName("UTC 로 정규화돼 들어와도 영업시간을 한국 기준으로 잰다")
+    void businessHoursAreMeasuredInBankZone() {
+        // 이 테스트가 없어서 실제로 뒤집혀 있었다. Jackson 이 역직렬화하면서
+        // OffsetDateTime 을 UTC 로 정규화하면 `toLocalTime()` 이 아홉 시간 밀린다.
+        // 14시 예약이 "영업시간 밖" 으로 거절되고 19시가 통과했다.
+        //
+        // 기존 테스트들은 ZoneOffset.ofHours(9) 로 객체를 직접 만들어서 정규화를
+        // 거치지 않았고, 그래서 전부 통과했다.
+        OffsetDateTime twoPmKstAsUtc = at(14, 0).withOffsetSameInstant(ZoneOffset.UTC);
+        OffsetDateTime sevenPmKstAsUtc = at(19, 0).withOffsetSameInstant(ZoneOffset.UTC);
+
+        assertThat(reserve(twoPmKstAsUtc).getStatusCd())
+                .as("한국 시간 14시는 영업시간(09~16) 안이다")
+                .isEqualTo(BranchConsultationReservation.STATUS_RESERVED);
+
+        assertThatThrownBy(() -> reserve(sevenPmKstAsUtc))
+                .as("한국 시간 19시는 영업시간 밖이다")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("영업시간");
+    }
+
+    @Test
     @DisplayName("지난 시각으로는 예약할 수 없다")
     void rejectsPast() {
         OffsetDateTime yesterday = NOW.minusDays(1).withHour(14).withMinute(0);

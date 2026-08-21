@@ -18,6 +18,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.lang.reflect.Field;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,6 +81,84 @@ class EntitySchemaConsistencyTest {
                 .as("엔티티가 쓰는 테이블을 만드는 마이그레이션이 없다. "
                         + "컴파일과 기동은 통과하고 그 기능을 실제로 써 봐야 드러난다")
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("모든 @Entity 의 컬럼이 마이그레이션 결과에 존재한다")
+    void everyEntityFieldHasAColumn() throws Exception {
+        Map<String, Set<String>> actual = actualColumns();
+        List<String> missing = new ArrayList<>();
+
+        for (Class<?> entity : entityClasses()) {
+            String table = tableNameOf(entity).toLowerCase();
+            Set<String> columns = actual.get(table);
+            if (columns == null) {
+                // 테이블 자체가 없는 것은 위 테스트가 잡는다. 여기서 또 세지 않는다.
+                continue;
+            }
+            for (String column : columnNamesOf(entity)) {
+                if (!columns.contains(column.toLowerCase())) {
+                    missing.add(entity.getSimpleName() + "." + column + " → " + table);
+                }
+            }
+        }
+
+        assertThat(missing)
+                .as("엔티티가 읽는 컬럼을 만드는 마이그레이션이 없다. "
+                        + "단위 테스트는 H2 가 **엔티티에서** 스키마를 만들어 언제나 통과하고, "
+                        + "실제로는 그 기능을 처음 부르는 순간 500 이 난다. "
+                        + "상속(BaseEntity)으로 들어오는 감사 컬럼이 특히 잘 빠진다")
+                .isEmpty();
+    }
+
+    /**
+     * 엔티티가 실제로 매핑하는 컬럼 이름.
+     *
+     * <p>상속 계층을 끝까지 올라간다 — {@code BaseEntity} 의 감사 컬럼
+     * ({@code created_by}·{@code version} 등)이 여기서 들어오고, 실제로 그것들이
+     * 빠져서 목록 조회가 500 이 났다.
+     *
+     * <p>연관 필드({@code @OneToMany}·{@code @ManyToMany})와 {@code @Transient} 는
+     * 컬럼이 아니므로 뺀다. {@code @ManyToOne} 은 조인 컬럼을 만들지만 이름 규칙이
+     * 갈려 여기서는 보지 않는다 — 놓치는 쪽이 거짓 경보보다 낫다.
+     */
+    private List<String> columnNamesOf(Class<?> entity) {
+        List<String> names = new ArrayList<>();
+        for (Class<?> c = entity; c != null && c != Object.class; c = c.getSuperclass()) {
+            for (Field f : c.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())
+                        || f.isAnnotationPresent(jakarta.persistence.Transient.class)
+                        || f.isAnnotationPresent(jakarta.persistence.OneToMany.class)
+                        || f.isAnnotationPresent(jakarta.persistence.ManyToMany.class)
+                        || f.isAnnotationPresent(jakarta.persistence.ManyToOne.class)
+                        || f.isAnnotationPresent(jakarta.persistence.OneToOne.class)
+                        || f.isSynthetic()) {
+                    continue;
+                }
+                jakarta.persistence.Column col = f.getAnnotation(jakarta.persistence.Column.class);
+                if (col != null && !col.name().isBlank()) {
+                    names.add(col.name());
+                } else {
+                    names.add(f.getName().replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase());
+                }
+            }
+        }
+        return names;
+    }
+
+    private Map<String, Set<String>> actualColumns() throws Exception {
+        Map<String, Set<String>> byTable = new LinkedHashMap<>();
+        try (Connection conn = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             ResultSet rs = conn.createStatement().executeQuery(
+                     "SELECT table_name, column_name FROM information_schema.columns "
+                             + "WHERE table_schema = 'public'")) {
+            while (rs.next()) {
+                byTable.computeIfAbsent(rs.getString(1).toLowerCase(), k -> new LinkedHashSet<>())
+                        .add(rs.getString(2).toLowerCase());
+            }
+        }
+        return byTable;
     }
 
     /** {@code @Table(name=...)} 이 없으면 JPA 기본 규칙(클래스명 → snake_case)을 따른다. */

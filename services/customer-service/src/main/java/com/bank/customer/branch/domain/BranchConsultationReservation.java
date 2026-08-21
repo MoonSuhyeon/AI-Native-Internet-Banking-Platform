@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 /**
  * 지점 상담 예약.
@@ -22,6 +23,23 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Builder
 public class BranchConsultationReservation {
+
+    /**
+     * 영업시간을 재는 기준 시간대.
+     *
+     * <p><b>왜 필요한가.</b> 예전에는 {@code reservedAt.toLocalTime()} 을 그대로 썼다.
+     * 그 값은 <b>요청에 실려 온 오프셋 기준</b>이고, Jackson 이 역직렬화하면서 UTC 로
+     * 정규화하면 아홉 시간이 밀린다. 실제로 14시 예약이 "영업시간 밖" 으로 거절되고
+     * 19시 예약이 통과했다.
+     *
+     * <p>단위 테스트는 못 잡았다 — 테스트가 {@code ZoneOffset.ofHours(9)} 로 객체를
+     * 직접 만들어서 정규화를 거치지 않았기 때문이다. <b>HTTP 로 실제 요청을 태워
+     * 봐야 드러나는 종류</b>다.
+     *
+     * <p>지점마다 시간대를 두지 않는 것은 지금 지점망이 전부 국내라서다. 해외 지점이
+     * 생기면 이 상수가 아니라 {@code branch} 의 컬럼이 되어야 한다.
+     */
+    private static final ZoneId BANK_ZONE = ZoneId.of("Asia/Seoul");
 
     public static final String STATUS_RESERVED = "RESERVED";
     public static final String STATUS_CANCELLED = "CANCELLED";
@@ -66,7 +84,7 @@ public class BranchConsultationReservation {
         if (reservedAt.isBefore(now)) {
             throw new IllegalArgumentException("지난 시각으로는 예약할 수 없다");
         }
-        if (!branch.isOpenAt(reservedAt.toLocalTime())) {
+        if (!branch.isOpenAt(reservedAt.atZoneSameInstant(BANK_ZONE).toLocalTime())) {
             throw new IllegalArgumentException(
                     "영업시간(" + branch.getOpenTime() + "~" + branch.getCloseTime() + ") 밖이다");
         }
