@@ -575,8 +575,15 @@ services:
       GOAL_AGENT_ENABLED: ${GOAL_AGENT_ENABLED:-true}
       GOAL_AGENT_URL: ${GOAL_AGENT_URL:-http://host.docker.internal:8000}
       GOAL_AGENT_API_KEY: ${GOAL_AGENT_API_KEY:-}
-      MATURITY_AGENT_ENABLED: ${MATURITY_AGENT_ENABLED:-false}
-      SPENDING_AGENT_ENABLED: ${SPENDING_AGENT_ENABLED:-false}
+      # 만기·지출 에이전트. 기본값이 false 였고, 그래서 1,037줄이 도는 일 없이
+      # 남아 있었다. 실제로 켜서 돌려 보니 둘 다 정상 동작한다 —
+      # 실제 거래·계약 데이터를 읽어 계산하고, **LLM 을 부르지 않는다**(순수 계산).
+      # 비용도 오동작도 이유가 아니었고, 켜는 것을 잊은 쪽이었다.
+      #
+      # 셋이 같은 성격인데 GOAL 만 true 였던 근거는 커밋에도 남아 있지 않다
+      # (#150 이 셋을 함께 넣으면서 둘만 false 로 뒀다).
+      MATURITY_AGENT_ENABLED: ${MATURITY_AGENT_ENABLED:-true}
+      SPENDING_AGENT_ENABLED: ${SPENDING_AGENT_ENABLED:-true}
       LOG_DIR: /logs
     volumes:
       - C:/logs/internet-banking:/logs
