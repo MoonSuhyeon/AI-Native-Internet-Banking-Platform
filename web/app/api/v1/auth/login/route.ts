@@ -1,55 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 게이트웨이를 가리킨다. 8081(customer-service) 직통이면 JwtAuthenticationFilter 가
-// 클라이언트발 신원 헤더를 지우고 검증된 클레임으로 덮어쓰는 단계를 통째로 건너뛴다.
-const CUSTOMER_API_URL = process.env.CUSTOMER_API_URL || 'http://localhost:8088'
-
-// 상담 서비스 계정(agent01·agent02·super01·admin01)은 consultation-service /auth/agent/login 에서 인증
-// 이 mock은 customer-service 미기동 시 데모 전용 폴백이며 운영 배포 전 제거 필요
-const MOCK_CUSTOMERS = [
-  { loginId: 'user01', password: 'Test1234', customerId: 1, customerNo: 'CUST001', name: '김고객' },
-  { loginId: 'user02', password: 'Test1234', customerId: 2, customerNo: 'CUST002', name: '이고객' },
-  { loginId: 'user03', password: 'Test1234', customerId: 3, customerNo: 'CUST003', name: '박고객' },
-]
+/**
+ * 로그인 프록시.
+ *
+ * **mock 폴백을 없앴다.** 예전에는 customer-service 응답이 3초 안에 안 오면
+ * 하드코딩된 계정 목록(`user01`/`Test1234` 등)과 대조해 **가짜 토큰**
+ * (`mock.<base64>.<시각>`)을 내줬다.
+ *
+ * 두 가지가 나빴다.
+ *
+ * 1. **인증하지 않는 인증 경로다.** 백엔드가 잠깐 느리기만 해도 하드코딩된
+ *    비밀번호로 들어올 수 있었다. 실제 시드의 user01 비밀번호와 다른 값이라,
+ *    "백엔드가 살아 있을 때는 안 되고 죽었을 때만 되는" 계정이었다.
+ * 2. **가짜 토큰은 게이트웨이가 거절한다.** 화면만 로그인된 것처럼 보이고 이후
+ *    모든 API 가 401 이다 — 원인을 찾기 가장 어려운 상태다.
+ *
+ * 백엔드가 없으면 로그인은 **실패해야 한다.** 그것이 정직한 동작이다.
+ */
+const GATEWAY_URL =
+  process.env.CUSTOMER_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8080'
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { loginId, password } = body
+  const body = await req.text()
 
-  // 1차: customer-service 실제 API 호출 — 서명된 JWT 토큰 반환
   try {
-    const upstream = await fetch(`${CUSTOMER_API_URL}/api/v1/auth/login`, {
+    const upstream = await fetch(`${GATEWAY_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ loginId, password }),
+      body,
       cache: 'no-store',
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(8000),
     })
-    const data = await upstream.json()
-    return NextResponse.json(data, { status: upstream.status })
+    const text = await upstream.text()
+    return new NextResponse(text, {
+      status: upstream.status,
+      headers: { 'Content-Type': upstream.headers.get('Content-Type') || 'application/json' },
+    })
   } catch {
-    // customer-service 미기동 시 mock 폴백
-  }
-
-  // 2차: 데모 환경 mock (customer-service 미기동 시에만)
-  const user = MOCK_CUSTOMERS.find((u) => u.loginId === loginId && u.password === password)
-  if (!user) {
     return NextResponse.json(
-      { status: 'FAIL', message: '아이디 또는 비밀번호가 올바르지 않습니다.' },
-      { status: 401 },
+      { code: 'CUSTOMER_SERVICE_UNAVAILABLE', message: '인증 서버와 통신할 수 없습니다.' },
+      { status: 503 },
     )
   }
-
-  const payload = { customerId: user.customerId, customerNo: user.customerNo, name: user.name }
-  const accessToken = `mock.${Buffer.from(JSON.stringify(payload)).toString('base64')}.${Date.now()}`
-
-  return NextResponse.json({
-    status: 'SUCCESS',
-    data: {
-      accessToken,
-      customerId: user.customerId,
-      customerNo: user.customerNo,
-      name: user.name,
-    },
-  })
 }

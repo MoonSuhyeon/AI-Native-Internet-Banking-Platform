@@ -88,6 +88,8 @@ tasks.named('test') {
         // 상단 대출 메뉴 ↔ 대출 사이드바 대조(LoanNavConsistencyTest).
         include 'web/components/layout/Header.tsx'
         include 'web/components/inquiry/LoanSidebar.tsx'
+        // 프론트 라우트가 토큰을 스스로 만들지 않는지(NoMockAuthRouteTest).
+        // web/app/api/**/route.ts 는 위에서 이미 선언돼 있다.
         exclude '**/build/**'
         exclude 'web/node_modules/**'
         exclude 'web/.next/**'

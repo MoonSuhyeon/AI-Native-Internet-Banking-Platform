@@ -3254,26 +3254,44 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
     setPassword('')
   }
 
+  // 로그인 화면(app/(personal)/login)이 쓰는 것과 같은 데모 인증서다.
+  // 실제 서비스라면 사용자가 보유 인증서를 고르는 단계가 앞에 온다.
+  const DEMO_FIN_CERT_SERIAL = 'FINCERT-TEST-2024-000001'
+
   async function handleCertLogin() {
     if (pin.length !== 6) { setError('PIN 6자리를 입력해주세요.'); return }
     setError('')
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/cert-login', {
+      // 예전에는 `/api/auth/cert-login` 을 불렀다. 그 라우트는 백엔드를 부르지 않고
+      // 하드코딩된 PIN 과 대조해 **가짜 토큰**(`mock.…`)을 내주는 mock 이었다.
+      // 화면은 로그인된 것처럼 보이지만 그 토큰으로는 게이트웨이가 전부 거절한다 —
+      // "로그인은 됐는데 아무것도 안 되는" 상태가 된다.
+      //
+      // 로그인 화면이 쓰는 진짜 경로로 맞춘다. customer-service 가 인증서 상태·PIN 을
+      // 검증하고 실패를 누적해 잠근다.
+      const res = await fetch('/api/customer/cert-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cert_id: 'cert_1', pin }),
+        body: JSON.stringify({
+          certSerialNumber: DEMO_FIN_CERT_SERIAL,
+          pin,
+          certType: 'CERT_FIN',
+        }),
       })
-      if (res.ok) {
-        const data = await res.json()
-        localStorage.setItem('accessToken', data.access_token)
-        localStorage.setItem('access_token', data.access_token)
-        localStorage.setItem('customerId', String(data.user.customer_id))
-        localStorage.setItem('customerNo', data.user.customerNo || data.user.customer_no || '')
-        localStorage.setItem('user', JSON.stringify(data.user))
+      const payload = await res.json().catch(() => null)
+      if (res.ok && payload?.data?.accessToken) {
+        const d = payload.data
+        localStorage.setItem('accessToken', d.accessToken)
+        localStorage.setItem('access_token', d.accessToken)
+        localStorage.setItem('customerId', String(d.customerId))
+        localStorage.setItem('customerNo', String(d.customerNo ?? d.customerId))
+        localStorage.setItem('user', JSON.stringify({
+          customer_id: d.customerId, customerNo: d.customerNo, name: d.name,
+        }))
         onSuccess()
       } else {
-        setError('인증서 비밀번호가 맞지 않습니다.')
+        setError(payload?.message ?? '인증서 비밀번호가 맞지 않습니다.')
       }
     } catch {
       setError('네트워크 오류가 발생했습니다.')

@@ -5,7 +5,7 @@ const CUSTOMER_API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   // 게이트웨이. 예전 기본값 8081 은 customer-service 직통이라, 같은 변수
   // (NEXT_PUBLIC_API_URL)가 lib 에서는 게이트웨이를 뜻하는 것과 어긋났다.
-  'http://localhost:8088'
+  'http://localhost:8080'
 
 export async function POST(req: NextRequest) {
   try {
