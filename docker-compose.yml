@@ -584,7 +584,10 @@ services:
       core-banking-db-a:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8087/health || exit 1"]
+      # 파이썬 이미지에는 wget·curl 이 없다. wget 으로 검사하면 앱이 멀쩡해도
+      # 영원히 unhealthy 이고, depends_on: service_healthy 를 건 것이 안 뜬다.
+      # 조사 에이전트는 이미 파이썬으로 검사하고 있었다 — 여기만 남아 있었다.
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8087/health')\""]
       interval: 10s
       timeout: 5s
       retries: 5
