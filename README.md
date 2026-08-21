@@ -308,10 +308,20 @@ expensive afterwards.
 ## Run locally
 
 ```bash
+cp .env.sample .env                   # fill AGENT_PII_SALT; LLM keys are optional (stub otherwise)
 ./gradlew build
-docker compose up -d
+docker compose up -d                  # 30 containers, ~17 GB RAM
+cd web && npm run dev                 # http://localhost:3001
+```
 
-cd web && npm run dev
+The gateway is the only entry point — `http://localhost:8080`. Demo login: `user01` / `Employee1234!`.
+
+Docker Desktop needs its memory raised past the 8 GB default; the full stack does not fit.
+This slice does — 13 containers, ~3 GB in use, covering customer, deposits, transfers and loans
+(`depends_on` pulls in the databases, Kafka and the review agent):
+
+```bash
+docker compose up -d customer-service core-banking-a api-gateway
 ```
 
 ```bash
