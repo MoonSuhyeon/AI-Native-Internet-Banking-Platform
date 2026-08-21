@@ -68,8 +68,19 @@ class FrontendGatewayOnlyTest {
      * 조회가 게이트웨이를 건너뛰고 엉뚱한 서비스를 부르고 있었다 — 브라우저를 띄워
      * 확인하기 전까지 아무 검사도 이것을 말해 주지 않았다.
      */
+    /**
+     * 서비스 직통 포트.
+     *
+     * <p><b>8080 이 빠져 있는 것은 의도다.</b> 예전에는 8080 이 payment-service 였고
+     * 게이트웨이는 8088 로 비켜 있었다. payment 가 core-banking(8082)으로 병합되면서
+     * 8080 이 비었고 게이트웨이가 제자리로 돌아왔다 — 지금 {@code localhost:8080} 은
+     * <b>게이트웨이를 가리키는 올바른 주소</b>다.
+     *
+     * <p>8088 도 뺀다. 그 자리는 이제 review-ai-gateway 인데, 프론트가 그것을 직접
+     * 부르는 일은 없고 넣어 두면 게이트웨이 기본값을 적은 곳이 거짓 경보를 낸다.
+     */
     private static final Pattern HARDCODED_SERVICE_PORT =
-            Pattern.compile("localhost:(8080|8081|8082|8083|8084|8086|8087|8089|8090|8091)");
+            Pattern.compile("localhost:(8081|8082|8083|8084|8086|8087|8089|8090|8091)");
 
     @Test
     @DisplayName("프론트 클라이언트가 서비스 직통 주소를 쓰지 않는다")

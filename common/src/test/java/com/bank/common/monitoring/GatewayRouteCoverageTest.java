@@ -140,6 +140,40 @@ class GatewayRouteCoverageTest {
         return path.equals(pattern);
     }
 
+    /**
+     * 주석을 걷어낸다.
+     *
+     * <p>없앤 경로를 <b>주석으로 설명하는 것</b>은 지워야 할 코드가 아니라 남겨야 할
+     * 기록이다. 걷어내지 않으면 "예전에는 `/api/auth/cert-login` 을 불렀다" 는
+     * 설명이 호출로 읽혀, 이미 지운 경로에 라우트를 만들라고 요구한다.
+     */
+    private static String withoutComments(String source) {
+        StringBuilder out = new StringBuilder();
+        boolean inBlock = false;
+
+        for (String line : source.split("\n")) {
+            String trimmed = line.trim();
+
+            if (inBlock) {
+                if (trimmed.contains("*/")) {
+                    inBlock = false;
+                }
+                continue;
+            }
+            if (trimmed.startsWith("/*") || trimmed.startsWith("{/*")) {
+                if (!trimmed.contains("*/")) {
+                    inBlock = true;
+                }
+                continue;
+            }
+            if (trimmed.startsWith("//") || trimmed.startsWith("*")) {
+                continue;
+            }
+            out.append(line).append('\n');
+        }
+        return out.toString();
+    }
+
     private static Set<String> frontendApiPaths() throws IOException {
         Set<String> paths = new LinkedHashSet<>();
         for (Path dir : List.of(WEB.resolve("lib"), WEB.resolve("app"), WEB.resolve("components"))) {
@@ -156,7 +190,7 @@ class GatewayRouteCoverageTest {
                         // 생성된 타입 정의는 호출이 아니라 스펙 사본이다.
                         continue;
                     }
-                    Matcher m = API_PATH.matcher(Files.readString(f));
+                    Matcher m = API_PATH.matcher(withoutComments(Files.readString(f)));
                     while (m.find()) {
                         paths.add(stripTemplate(m.group(1)));
                     }
