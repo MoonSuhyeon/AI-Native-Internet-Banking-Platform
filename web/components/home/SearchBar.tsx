@@ -129,7 +129,15 @@ const SEARCH_ITEMS = [
   ...NEWS_ITEMS.map(n => ({ label: n.title, href: n.href, group: n.type })),
 ]
 
-export default function SearchBar() {
+/**
+ * @param variant `band` 는 원래 모양 — 자체 배경·테두리를 가진 가로 띠다.
+ *   `inline` 은 헤더 한 줄 안에 들어갈 때 쓴다. 띠 장식과 컨테이너 여백을 뺀다.
+ *
+ *   변형을 둔 이유: 헤더에 그냥 넣었더니 컴포넌트가 제 몫의 `max-w-kb-container`
+ *   와 `w-72` 를 그대로 들고 와서 로그인 버튼 위로 넘쳤다. 감싸는 쪽에서 폭을
+ *   억지로 줄이면 안쪽이 삐져나온다 — 어떤 모양으로 쓸지는 컴포넌트가 알아야 한다.
+ */
+export default function SearchBar({ variant = 'band' }: { variant?: 'band' | 'inline' } = {}) {
   const router = useRouter()
   const [query, setQuery]     = useState('')
   const [open, setOpen]       = useState(false)
@@ -175,10 +183,10 @@ export default function SearchBar() {
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
-  return (
-    <div className="border-t" style={{ borderColor: KB_PRIMARY_BORDER, backgroundColor: KB_PRIMARY_SURFACE }}>
-      <div className="max-w-kb-container mx-auto px-6 py-1.5">
-        <div ref={containerRef} className="relative w-72">
+  const inline = variant === 'inline'
+
+  const field = (
+    <div ref={containerRef} className={inline ? "relative w-full" : "relative w-72"}>
 
           {/* 인풋 */}
           <div
@@ -247,7 +255,19 @@ export default function SearchBar() {
               </p>
             </div>
           )}
-        </div>
+    </div>
+  )
+
+  // 인라인은 필드만 돌려준다. 띠 장식(border-t·배경)과 컨테이너 여백은 헤더가
+  // 이미 갖고 있어, 그대로 두면 헤더 안에 또 하나의 띠가 생긴다.
+  if (inline) {
+    return field
+  }
+
+  return (
+    <div className="border-t" style={{ borderColor: KB_PRIMARY_BORDER, backgroundColor: KB_PRIMARY_SURFACE }}>
+      <div className="max-w-kb-container mx-auto px-6 py-1.5">
+        {field}
       </div>
     </div>
   )

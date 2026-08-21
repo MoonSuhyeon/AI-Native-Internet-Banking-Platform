@@ -318,15 +318,24 @@ export default function Header() {
           <span className="text-[26px] font-bold tracking-[0.02em]" style={{ color: KB_PRIMARY }}>AXful Bank</span>
         </Link>
 
+        {/* 가운데: 검색.
+            SearchBar 는 만들어져 있었지만 어디에도 마운트돼 있지 않았다 —
+            컴포넌트도 검색 색인도 멀쩡한데 화면에서 닿을 길이 없었다. 메뉴가 100개
+            가까운 사이트에서 검색이 없으면 못 찾는다.
+
+            우측 사용자 영역 **안**이 아니라 별도 칸으로 둔다. 안에 넣었더니 로그인
+            버튼과 겹쳤다 — 로그인 상태에서는 이름·My AXful·타이머·연장·로그아웃·
+            인증센터까지 들어차기 때문에 그 줄에 검색까지 밀어 넣을 자리가 없다.
+            xl 미만에서는 숨긴다. 좁은 화면에서는 겹치는 것이 아니라 사라져야 한다. */}
+        {!isLoginPage && (
+          <div className="hidden xl:block flex-1 max-w-[260px] mx-6">
+            <SearchBar variant="inline" />
+          </div>
+        )}
+
         {/* 우측: 사용자 영역 */}
         {!isLoginPage && (
-          <div className="flex items-center gap-2 text-[14px]">
-            {/* SearchBar 는 만들어져 있었지만 어디에도 마운트돼 있지 않았다 —
-                컴포넌트도 테스트도 멀쩡한데 화면에서 닿을 길이 없는 상태였다.
-                메뉴가 100개 가까이 되는 사이트에서 검색이 없으면 못 찾는다. */}
-            <div className="hidden lg:block w-[220px]">
-              <SearchBar />
-            </div>
+          <div className="flex items-center gap-2 text-[14px] flex-shrink-0">
             <Link href="/admin/login"
               className="px-3 py-1 text-[12px] font-semibold rounded-full border border-gray-300 text-gray-400 transition-colors hover:bg-gray-50">
               관리자
