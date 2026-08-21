@@ -82,6 +82,9 @@ tasks.named('test') {
         // 개발 스크립트 ↔ Gradle 모듈 대조(DevScriptModuleTest).
         include 'scripts/*.ps1'
         include 'settings.gradle'
+        // compose 가 요구하는 변수 ↔ 샘플 대조(EnvSampleCoverageTest).
+        // 이 줄을 빠뜨려 변이 검증이 통과했다 — 이 레포에서 여섯 번째다.
+        include '.env.sample'
         exclude '**/build/**'
         exclude 'web/node_modules/**'
         exclude 'web/.next/**'
