@@ -283,6 +283,47 @@ def _split_roles(raw: str | None) -> list[str]:
     return [r.strip() for r in raw.split(",") if r.strip()]
 
 
+#: 탐지기(fds-detector)가 사건을 넘길 때 제시하는 시크릿.
+#:
+#: 게이트웨이 시크릿과 나눠 두는 이유는 뜻이 다르기 때문이다 — 게이트웨이 쪽은
+#: "사람의 요청이 게이트웨이를 거쳐 왔다", 이쪽은 "기계가 직접 넘겼다". 하나로
+#: 합치면 탐지기 시크릿을 아는 쪽이 사람 신원까지 위조할 수 있다.
+_DISPATCH_SECRET_ENV = "FRAUD_DISPATCH_SHARED_SECRET"
+
+
+def _service_verified(presented: str | None) -> bool:
+    """탐지기가 직접 넘긴 요청인지."""
+    import hmac
+    import os
+
+    expected = os.getenv(_DISPATCH_SECRET_ENV, "").strip()
+    if not expected or not presented:
+        return False
+    return hmac.compare_digest(expected, presented)
+
+
+def _require_investigator(
+    x_gateway_auth: str | None,
+    x_employee_id: str | None,
+    x_service_auth: str | None,
+) -> str:
+    """조사를 시작할 수 있는가 — 직원이거나, 탐지기이거나.
+
+    **왜 탐지기 경로가 따로 필요한가.** 사후 탐지가 사건을 넘길 때 부르는 것도
+    ``/api/investigate`` 다. 그런데 탐지기는 사람이 아니라 ``X-Employee-Id`` 를 붙일
+    수 없고, 게이트웨이를 거치지도 않는다(서비스 간 직접 호출). 그래서 직원 문지기만
+    두면 **탐지기가 넘긴 사건이 전부 403 으로 되튄다** — 탐지는 도는데 조사 큐가
+    영원히 비어 있는 상태가 된다. 실제로 그랬다.
+
+    :returns: 감사에 남길 행위자. 사람이면 직원 ID, 기계면 ``system:fds-detector``.
+        섞지 않는 이유는, 기계가 연 사건을 사람이 연 것으로 기록하면 나중에
+        "누가 이 고객을 조사 대상으로 삼았나" 에 거짓 답이 나오기 때문이다.
+    """
+    if _service_verified(x_service_auth):
+        return "system:fds-detector"
+    return _require_employee(x_gateway_auth, x_employee_id)
+
+
 def _require_employee(x_gateway_auth: str | None, x_employee_id: str | None) -> str:
     """직원 전용 동작의 문지기.
 
@@ -347,10 +388,11 @@ def investigate(
     req: InvestigateRequest,
     x_employee_id: str | None = Header(default=None, alias="X-Employee-Id"),
     x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+    x_service_auth: str | None = Header(default=None, alias="X-Service-Auth"),
 ) -> InvestigateResponse:
     """한 사건을 조사 루프에 태워 단계별 트레이스 + 권고를 반환. 동작은 HITL 대기.
 
-    <b>직원만 실행할 수 있다.</b> 이유가 둘이다.
+    <b>직원이거나 탐지기여야 한다.</b> 사람 쪽을 막는 이유가 둘이다.
 
     첫째, 조사는 고객의 인증 이력·거래 내역을 끌어와 본다. 승인(/approve)만 막고
     여기를 열어 두면 동작은 못 해도 <b>열람은 자유롭다</b> — 조사가 사찰이 된다.
@@ -358,7 +400,7 @@ def investigate(
     둘째, 한 번 부를 때마다 LLM 호출과 도구 조회가 일어난다. 열려 있으면 비용과
     처리량을 아무나 소진시킬 수 있고, 그 사이 진짜 알림이 밀린다.
     """
-    _require_employee(x_gateway_auth, x_employee_id)
+    _require_investigator(x_gateway_auth, x_employee_id, x_service_auth)
 
     if req.transaction is not None:
         case = req.to_case()

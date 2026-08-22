@@ -50,7 +50,12 @@ class EnvSampleCoverageTest {
      * "뜨기는 하지만 안 되는" 상태를 만든다.
      */
     private static final Set<String> MUST_BE_IN_SAMPLE = Set.of(
-            "CONSULTATION_GATEWAY_SHARED_SECRET");
+            "CONSULTATION_GATEWAY_SHARED_SECRET",
+            // 조사 사이드카도 같은 구실이다. 비어 있으면 어드민 조사 화면이 403 이고,
+            // 이체가 막힌 고객의 맞춤 안내가 조용히 기본형으로 내려간다.
+            "FRAUD_GATEWAY_SHARED_SECRET",
+            // 탐지기 → 조사 인계. 비어 있으면 탐지는 도는데 조사 큐가 영원히 빈다.
+            "FRAUD_DISPATCH_SHARED_SECRET");
 
     @Test
     @DisplayName("기본값 없는 환경변수는 .env.sample 에 있다")

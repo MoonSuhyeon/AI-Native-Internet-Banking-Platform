@@ -518,6 +518,10 @@ services:
       FRAUD_AUDIT_DSN: ${FRAUD_AUDIT_DSN:-}
       # 게이트웨이만 아는 값. 이것이 일치할 때만 신원 헤더를 믿는다.
       FRAUD_GATEWAY_SHARED_SECRET: ${FRAUD_GATEWAY_SHARED_SECRET:-}
+      # 탐지기만 아는 값. 게이트웨이 시크릿과 뜻이 달라 나눠 둔다 — 이쪽은
+      # "기계가 직접 넘겼다" 이고, 비어 있으면 사후 탐지가 넘기는 사건이 전부
+      # 403 으로 되튀어 조사 큐가 비어 있게 된다.
+      FRAUD_DISPATCH_SHARED_SECRET: ${FRAUD_DISPATCH_SHARED_SECRET:-}
       # 조사 루프를 Phoenix 로 남긴다. 끄면 계측 전체가 no-op 이다.
       PHOENIX_ENABLED: ${PHOENIX_ENABLED:-false}
       PHOENIX_GRPC_ENDPOINT: http://phoenix:4317
@@ -1061,6 +1065,8 @@ services:
       REDIS_PORT: 6379
       CORE_BANKING_URL: http://core-banking-a:8082
       FRAUD_AGENT_URL: http://fraud-agent:8090
+      # 사이드카와 같아야 한다. 다르면 조사 인계가 403 이다.
+      FRAUD_DISPATCH_SHARED_SECRET: ${FRAUD_DISPATCH_SHARED_SECRET:-}
       FDS_CONSUMER_GROUP: ${FDS_CONSUMER_GROUP:-fds-detector}
     depends_on:
       kafka:
