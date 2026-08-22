@@ -12,6 +12,8 @@ import com.bank.payment.domain.service.PaymentTransactionService;
 import com.bank.payment.domain.service.PaymentOrchestrator;
 import com.bank.payment.domain.service.PaymentResult;
 import org.springframework.http.ResponseEntity;
+import com.bank.deposit.exception.ErrorCode;
+import com.bank.deposit.exception.RiskGuidedException;
 import com.bank.deposit.security.FdsPreCheckGate;
 import com.bank.deposit.security.PreCheckDecision;
 import com.bank.deposit.security.TransferApprovalGate;
@@ -100,6 +102,18 @@ public class PaymentController {
         // 알아채고 취소할 시간을 주는 것이다. 실행·취소는 이미 검증된 예약이체 경로
         // (ScheduledPaymentWorker, cancelScheduledPayment)를 그대로 탄다.
         if (decision.isDelayed()) {
+            // 타행은 지연을 실행할 수 없다. 예약 실행 워커가 자행만 다루기 때문이다
+            // (registerScheduledPayment 주석 참고). 예전에는 은행을 가리지 않고
+            // 등록해서, 타행 건이 SCHEDULED 로 접수된 뒤 실행 시각에 claim 만 되고
+            // PROCESSING 에 갇혔다 — 고객은 접수됐다고 들었고 돈은 움직이지 않았다.
+            //
+            // 못 미루면 통과시키는 것이 아니라 확인을 요구한다. 탐지기가 든 근거와
+            // 행동요령이 그대로 화면에 뜨고, 고객은 취소하거나 상담으로 넘길 수 있다.
+            if (!paymentOrchestrator.supportsDelayedExecution(request.receiverBankCode())) {
+                fdsPreCheckGate.reportDelayNotHonored("interbank", decision.reasons());
+                throw new RiskGuidedException(ErrorCode.TRANSFER_BLOCKED_BY_RISK, decision.guidance());
+            }
+
             OffsetDateTime executeAt = OffsetDateTime.now().plus(decision.delay());
             // 표시를 남긴다. 이게 없으면 나중에 "지연된 건이 취소됐는가" 를 셀 수 없고,
             // 지연 장치가 사고를 막았는지 알 수 없다.

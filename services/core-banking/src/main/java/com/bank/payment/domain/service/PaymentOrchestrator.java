@@ -24,6 +24,15 @@ public interface PaymentOrchestrator {
      * @param scheduledExecutionAt 예약실행시각 (미래 시각, 컨트롤러에서 검증 완료)
      * @return 처리 결과 (status=SCHEDULED)
      */
+    /**
+     * 이 수취 은행으로 가는 이체를 <b>미뤘다가 실행할 수 있는가</b>.
+     *
+     * <p>예약 실행 워커가 자행만 다루므로 타행은 미룰 수 없다. 호출부가 자행 판별
+     * 규칙을 베껴 쓰지 않도록 여기서 답한다 — 베끼면 은행 코드가 바뀔 때 한쪽만
+     * 고쳐지고, 그 어긋남은 "지연 접수됐는데 실행이 안 되는" 형태로만 드러난다.
+     */
+    boolean supportsDelayedExecution(String receiverBankCode);
+
     PaymentResult registerScheduledPayment(PaymentCommand command, java.time.OffsetDateTime scheduledExecutionAt);
 
     /**

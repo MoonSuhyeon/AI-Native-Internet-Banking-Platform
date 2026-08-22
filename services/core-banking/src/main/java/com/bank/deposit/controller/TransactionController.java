@@ -2,6 +2,8 @@ package com.bank.deposit.controller;
 
 import com.bank.deposit.domain.entity.Transaction;
 import com.bank.deposit.dto.request.*;
+import com.bank.deposit.exception.ErrorCode;
+import com.bank.deposit.exception.RiskGuidedException;
 import com.bank.deposit.security.AuthenticatedCustomerValidator;
 import com.bank.deposit.security.FdsPreCheckGate;
 import com.bank.deposit.security.PreCheckDecision;
@@ -101,20 +103,25 @@ public class TransactionController {
                 req.channelType() == null ? null : req.channelType().name(),
                 req.approvalToken() != null && !req.approvalToken().isBlank());
 
-        // 지연 지시를 이 경로는 아직 이행하지 못한다.
+        // 지연 지시를 이 경로는 이행하지 못한다. 그러면 통과시키지 않는다.
         //
         // 차단·추가인증은 게이트가 예외로 끊으므로 여기까지 오지 않는다. 남는 것은
-        // 지연인데, 자행이체에는 타행이체(PaymentController)가 쓰는 예약 실행 경로가
-        // 없다 — deposit 쪽 TransactionService 에 예약 개념 자체가 없다.
+        // 지연인데, 이 경로에는 예약 실행이 없다 — deposit 쪽 TransactionService 에
+        // 예약 개념 자체가 없고, 결제계의 예약 실행은 PaymentInstruction 위에서 돈다.
         //
         // 예전에는 반환값을 받지도 않아서 **지연 지시가 흔적 없이 사라졌다.** 탐지기는
-        // "미루라" 고 했고 거래는 즉시 나갔는데 아무 데도 기록이 없었다. 통과와
-        // 구별되지 않으니 지연 장치가 얼마나 새고 있는지도 알 수 없었다.
+        // "미루라" 고 했고 거래는 즉시 나갔으며 아무 데도 기록이 없었다. 통과와
+        // 구별되지 않으니 지연 장치가 얼마나 새는지도 알 수 없었다.
         //
-        // 이행은 예약 실행 경로가 생겨야 가능하다(별도 작업). 그때까지는 최소한
-        // 세어 둔다 — 못 지키는 것과 못 지키는 줄 모르는 것은 다르다.
+        // 못 미룰 때 그냥 보내는 것은 탐지 결과를 버리는 것과 같다. 대신 확인을
+        // 요구한다 — 탐지기가 든 근거와 행동요령이 화면에 뜨고, 고객은 취소하거나
+        // 상담으로 넘길 수 있다. 지연보다 강한 조치라 사용자 경험은 나빠지지만,
+        // "미루라고 판정된 거래가 즉시 나가는" 것보다는 낫다.
+        //
+        // 예약 실행 경로가 생기면 여기서 미루면 된다(별도 작업).
         if (decision.isDelayed()) {
             fdsPreCheckGate.reportDelayNotHonored("intrabank", decision.reasons());
+            throw new RiskGuidedException(ErrorCode.TRANSFER_BLOCKED_BY_RISK, decision.guidance());
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)

@@ -1,5 +1,7 @@
 package com.bank.payment.domain.service;
 
+import com.bank.deposit.exception.BusinessException;
+import com.bank.deposit.exception.ErrorCode;
 import com.bank.deposit.client.CustomerServiceClient;
 import com.bank.deposit.client.dto.TransferLimitResponse;
 import com.bank.payment.common.BankCodeMapper;
@@ -217,11 +219,33 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
         return registerScheduledPayment(command, scheduledExecutionAt, PaymentTransactionService.TRIGGER_USER);
     }
 
+    /**
+     * 예약 등록.
+     *
+     * <p><b>자행만 받는다.</b> 워커가 {@link #executeScheduledIntraBank} 하나만 부르고
+     * 그 메서드는 타행이면 예외를 던진다. 그런데 등록은 은행을 가리지 않아서, 타행을
+     * 예약하면 이런 일이 벌어졌다.
+     *
+     * <ol>
+     *   <li>SCHEDULED 로 등록된다 — 고객에게는 접수됐다고 나간다</li>
+     *   <li>실행 시각이 되면 워커가 claim 한다 (SCHEDULED &rarr; PROCESSING, 독립 TX 로 커밋)</li>
+     *   <li>실행이 예외로 죽는다. 워커는 로그만 남기고 다음 건으로 넘어간다</li>
+     * </ol>
+     *
+     * <p>결과는 <b>PROCESSING 에 갇힌 지시</b>다. 실행되지도, 실패로 닫히지도 않는다.
+     * 고객은 접수됐다고 들었고 돈은 움직이지 않으며 아무도 알아채지 못한다.
+     *
+     * <p>실행할 수 없는 것을 접수하지 않는다. 타행 예약 실행이 생기면
+     * ({@code executeScheduledIntraBank} 주석의 "후속 단계") 이 가드를 푼다.
+     */
     @Override
     public PaymentResult registerScheduledPayment(PaymentCommand command,
                                                   java.time.OffsetDateTime scheduledExecutionAt,
                                                   String triggerSource) {
         boolean isIntraBank = isIntraBank(command.receiverBankCode());
+        if (!isIntraBank) {
+            throw new BusinessException(ErrorCode.SCHEDULED_TRANSFER_INTRABANK_ONLY);
+        }
         String routingNetworkType = determineRoutingNetworkType(command);
 
         PaymentInstruction pi;
@@ -421,6 +445,11 @@ public class PaymentOrchestratorImpl implements PaymentOrchestrator {
         } else {
             return "KFTC";
         }
+    }
+
+    @Override
+    public boolean supportsDelayedExecution(String receiverBankCode) {
+        return isIntraBank(receiverBankCode);
     }
 
     // receiverBankCode == 자행코드(A은행=004, B은행=088) → 자행

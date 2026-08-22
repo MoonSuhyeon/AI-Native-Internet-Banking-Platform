@@ -29,6 +29,8 @@ public enum ErrorCode {
             "이상거래 점검을 할 수 없어 고액 이체를 진행하지 않았습니다. 잠시 후 다시 시도해 주세요."),
     TRANSFER_BLOCKED_BY_RISK(HttpStatus.FORBIDDEN,
             "이상거래로 판단되어 이체가 제한되었습니다. 고객센터로 문의해 주세요."),
+    SCHEDULED_TRANSFER_INTRABANK_ONLY(HttpStatus.BAD_REQUEST,
+            "예약이체는 같은 은행 계좌로만 가능합니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;
