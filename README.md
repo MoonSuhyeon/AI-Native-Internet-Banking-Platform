@@ -25,14 +25,17 @@ auditability constrain what they can see and do.**
   audit logging · per-customer transfer limits
 - **Fraud investigation agent** — bounded investigation loop · evidence
   gathering · HITL approval gating · case-scoped tool access · deterministic
-  scoring of tool choices
+  scoring of tool choices · consumer-facing explanation of why a transfer
+  stopped, tailored by age band
 - **Frontend** — internet banking and admin console
 
 After the team phase I continued on the fork: fixing the double-entry check to
 verify persisted rows, adding a pre-check that blocks transfers before money
-moves, and extracting a shared agent harness.
+moves, extracting a shared agent harness, and carrying the detector's reasoning
+through to the customer — the evidence existed but was being logged and
+discarded before it reached the screen.
 
-**537 agent-evaluation tests**, 0 failures — HITL gate, fail-closed and endpoint identity pinned deterministically without an LLM key
+**549 agent-evaluation tests**, 0 failures — HITL gate, fail-closed and endpoint identity pinned deterministically without an LLM key
 
 ---
 
@@ -107,9 +110,12 @@ component diagram.
 
 ### Human approval on a fraud investigation
 
-The agent investigates and recommends. It never executes. Identity is only
-trusted when it arrives through the gateway, because this sidecar is reachable
-directly and a hand-written header would otherwise buy the same authority.
+The agent investigates and recommends. It never executes. A person's identity is
+only trusted when it arrives through the gateway, because this sidecar is
+reachable directly and a hand-written header would otherwise buy the same
+authority. The detector opens cases too, and it is not a person — it presents a
+separate shared secret and is recorded as `system:fds-detector`, so a machine's
+case is never attributed to someone who did not open it.
 
 ```mermaid
 sequenceDiagram
@@ -174,12 +180,23 @@ sequenceDiagram
     alt PASS · MONITOR
         CB->>C: transfer proceeds
     else STEP_UP
-        CB->>C: additional authentication required
-    else DELAY · HOLD_REVIEW
-        CB->>C: transfer delayed, customer notified
-        Note over CB,C: delayed rather than silently blocked —<br/>a single threshold would have to choose<br/>between missing fraud and stopping customers
-    else BLOCK · FREEZE_RECOMMEND
-        CB-->>C: refused
+        CB->>C: evidence + steps + "verify and continue"
+    else DELAY
+        alt path can execute a delay
+            CB->>C: accepted, executes later — cancel in between
+            Note over CB,C: delayed rather than silently blocked —<br/>a single threshold would have to choose<br/>between missing fraud and stopping customers
+        else path cannot
+            CB->>C: stops and asks to confirm
+            Note over CB,C: claiming to delay and then not<br/>delaying is worse than stopping
+        end
+    else BLOCK · HOLD_REVIEW · FREEZE_RECOMMEND
+        CB-->>C: stopped, with evidence and steps
+    end
+
+    Note over C: every stop offers a way out —<br/>cancel, or hand it to an analyst
+    opt customer asks for help
+        C->>FA: open a case with the evidence
+        Note over FA: queued for a human.<br/>the loop runs when the analyst opens it
     end
 
     CB->>K: payment completed
@@ -221,9 +238,9 @@ deterministically rather than sampled from a model.
 
 | Suite | Tests |
 |---|---|
-| Fraud investigation agent | **115**, 0 failures |
+| Fraud investigation agent | **127**, 0 failures |
 | Auto loan review agent | **422**, 0 failures |
-| Total | **537** — 0 failures · 0 errors · 0 skipped |
+| Total | **549** — 0 failures · 0 errors · 0 skipped |
 
 | What is pinned | |
 |---|---|
@@ -261,14 +278,21 @@ something the database provides.
 Post-hoc detection tells you a transfer was fraudulent after it settled.
 
 **Buys** — a pre-authorization check runs on the transfer path, and the response
-is tiered by suspicion level rather than binary: high-risk transfers are delayed
-and the customer is notified instead of being silently blocked or silently
-allowed. Detected cases are handed to the investigation agent as real
-transactions, and its findings feed the next transfer's pre-check — a loop no
-single service can hold.
-**Costs** — latency on the transfer path, and false positives delay legitimate
+is tiered by suspicion level rather than binary. When a transfer stops, the
+customer is told **why** and **what to do now**: the detector's own evidence
+sentences, action steps that differ by which signal fired, and a way out —
+cancel, or hand the case to an analyst. Post-hoc detection marks the customer,
+and that mark is what the next transfer's pre-check reads — a loop no single
+service can hold.
+**Costs** — latency on the transfer path, and false positives stop legitimate
 transfers. The tiered response exists because a single threshold would have to
 choose between missing fraud and blocking customers.
+
+A tier is only worth as much as the path that can carry it. Delay means *accept
+now, execute later, cancel in between* — which needs a scheduler, and only the
+intra-bank payment path has one. Where a delay cannot be executed the transfer
+is not quietly let through; it stops and asks for confirmation instead. Claiming
+to delay and then not delaying is the failure this avoids.
 
 ### Outbox and compensation for external clearing
 
@@ -308,11 +332,17 @@ expensive afterwards.
 ## Run locally
 
 ```bash
-cp .env.sample .env                   # fill AGENT_PII_SALT; LLM keys are optional (stub otherwise)
-./gradlew build
+cp .env.sample .env                   # fill AGENT_PII_SALT and the two FRAUD_* secrets
+./gradlew build                       # LLM keys are optional — stub/mock otherwise
 docker compose up -d                  # 30 containers, ~17 GB RAM
 cd web && npm run dev                 # http://localhost:3001
 ```
+
+The `FRAUD_*` secrets are shared secrets, not credentials — any value works as
+long as both sides match. Left empty, the fraud features fail closed and go
+quiet: the admin investigation screen returns 403, cases the detector hands over
+bounce, and a stopped transfer falls back to generic guidance instead of one
+matched to the customer. Nothing errors, which is why they are called out here.
 
 The gateway is the only entry point — `http://localhost:8080`. Demo login: `user01` / `Employee1234!`.
 
@@ -328,6 +358,11 @@ docker compose up -d customer-service core-banking-a api-gateway
 docker compose --profile doc up -d    # document agent (MinIO, Vault)
 docker compose --profile rag up -d    # Elasticsearch, Kibana
 ```
+
+`docker compose up -d <service>` reuses an existing image instead of rebuilding,
+so a container can quietly run yesterday's code while looking healthy.
+`scripts/check-stale-images.ps1` compares each image against its source and says
+which ones to rebuild.
 
 ## Docs
 
