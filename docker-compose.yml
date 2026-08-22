@@ -259,6 +259,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - default
+      # 조사 사이드카가 안내 대상 구간(연령대)을 물으러 온다. 붙이지 않으면 이름이
+      # 풀리지 않아 조회가 매번 실패하고, 맞춤 안내가 조용히 기본형으로 내려간다 —
+      # 오류로 드러나지 않아서 "맞춤이 되는 줄 알았는데 안 되던" 상태가 된다.
+      # core-banking-a 가 agent-net 에 붙어 상담 사이드카를 받는 것과 같은 방식이다.
+      - fraud-internal
     # 힙 768m
     mem_limit: 1g
   # A은행 코어뱅킹 — 수신(deposit) + 결제(payment) 단일 서비스.
@@ -522,6 +529,10 @@ services:
       # "기계가 직접 넘겼다" 이고, 비어 있으면 사후 탐지가 넘기는 사건이 전부
       # 403 으로 되튀어 조사 큐가 비어 있게 된다.
       FRAUD_DISPATCH_SHARED_SECRET: ${FRAUD_DISPATCH_SHARED_SECRET:-}
+      # 연령대 조회용. 없으면 맞춤 안내가 조용히 기본형으로 내려간다.
+      TRIAGE_BACKEND_URL: ${TRIAGE_BACKEND_URL:-http://customer-service:8081}
+      TRIAGE_USER_ID: ${TRIAGE_USER_ID:-1}
+      TRIAGE_USER_ROLE: ${TRIAGE_USER_ROLE:-ROLE_HQ_RISK}
       # 조사 루프를 Phoenix 로 남긴다. 끄면 계측 전체가 no-op 이다.
       PHOENIX_ENABLED: ${PHOENIX_ENABLED:-false}
       PHOENIX_GRPC_ENDPOINT: http://phoenix:4317

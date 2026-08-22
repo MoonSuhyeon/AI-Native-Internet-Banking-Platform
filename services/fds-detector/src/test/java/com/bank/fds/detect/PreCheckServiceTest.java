@@ -3,6 +3,7 @@ package com.bank.fds.detect;
 import com.bank.fds.api.dto.PreCheckRequest;
 import com.bank.fds.api.dto.PreCheckResponse;
 import com.bank.fds.observability.FdsMetrics;
+import com.bank.fds.guidance.GuidanceComposer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +34,8 @@ class PreCheckServiceTest {
     void setUp() {
         riskStateStore = mock(RiskStateStore.class);
         service = new PreCheckService(
-                riskStateStore, new ResponseTierPolicy(), new FdsMetrics(new SimpleMeterRegistry()));
+                riskStateStore, new ResponseTierPolicy(), new FdsMetrics(new SimpleMeterRegistry()),
+                new GuidanceComposer());
         ReflectionTestUtils.setField(service, "highAmountThreshold", 10_000_000L);
         ReflectionTestUtils.setField(service, "velocityThreshold", 5L);
 

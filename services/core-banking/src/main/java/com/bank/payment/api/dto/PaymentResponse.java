@@ -1,5 +1,7 @@
 package com.bank.payment.api.dto;
 
+import com.bank.deposit.security.RiskGuidance;
+
 import java.util.List;
 import java.time.OffsetDateTime;
 
@@ -21,8 +23,18 @@ public record PaymentResponse(
         String failureCategory,
         /** 지연 실행 예정 시각. 지연되지 않았으면 null. */
         OffsetDateTime delayedUntil,
-        /** 왜 지연됐는가. 고객 안내 문구의 근거이자 감사 기록이다. */
-        List<String> delayReasons
+        /**
+         * 왜 지연됐는가 — <b>감사 기록용</b>.
+         *
+         * <p>주석은 오래 "고객 안내 문구의 근거" 라고 적혀 있었지만 실제로 담기던 값은
+         * 탐지 신호 객체의 {@code toString()} 이었다. 화면에 그대로 쓰면
+         * {@code {code=HIGH_AMOUNT, severity=MEDIUM, detail=...}} 이 뜬다.
+         * 고객에게 보여 줄 것은 {@link #guidance} 다.
+         */
+        List<String> delayReasons,
+
+        /** 고객에게 보여 줄 안내 — 왜 미뤘고, 지금 무엇을 할 수 있는지. */
+        RiskGuidance guidance
 ) {
 
     /** 지연 없이 끝난 보통의 응답. */
@@ -30,13 +42,14 @@ public record PaymentResponse(
                                      String status, OffsetDateTime completedAt,
                                      String failureCategory) {
         return new PaymentResponse(paymentInstructionId, transactionNo, status,
-                completedAt, failureCategory, null, null);
+                completedAt, failureCategory, null, null, null);
     }
 
     /** 이상거래 점검이 지연을 지시한 응답. */
     public static PaymentResponse delayed(String paymentInstructionId, String transactionNo,
-                                          OffsetDateTime delayedUntil, List<String> reasons) {
+                                          OffsetDateTime delayedUntil, List<String> reasons,
+                                          RiskGuidance guidance) {
         return new PaymentResponse(paymentInstructionId, transactionNo, "SCHEDULED",
-                null, null, delayedUntil, reasons);
+                null, null, delayedUntil, reasons, guidance);
     }
 }

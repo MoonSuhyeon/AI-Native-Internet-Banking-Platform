@@ -75,6 +75,11 @@ tasks.named('test') {
         // 추가해도 검사가 UP-TO-DATE 로 안 돌아, 문서에 빠진 채로 통과한다.
         include 'docs/api-spec.md'
         include 'services/*/src/main/java/**/*Controller.java'
+        // 고객 안내 계약(GuidanceContractTest). 세 곳에 같은 모양의 타입이 따로
+        // 선언돼 있고, 이름이 어긋나면 Jackson 이 조용히 값을 버려 안내가 빈다.
+        // 선언하지 않으면 이름을 바꿔도 검사가 UP-TO-DATE 로 안 돌아 그대로 통과한다.
+        include 'services/fds-detector/src/main/java/com/bank/fds/guidance/*.java'
+        include 'services/core-banking/src/main/java/com/bank/deposit/security/RiskGuidance.java'
         include 'agents/*/src/main/java/**/*Controller.java'
         // 계획 문서 상태 줄(PlanStatusTest). 선언하지 않으면 계획서를 추가해도
         // 검사가 UP-TO-DATE 로 안 돌아, 상태 없는 문서가 통과한다.

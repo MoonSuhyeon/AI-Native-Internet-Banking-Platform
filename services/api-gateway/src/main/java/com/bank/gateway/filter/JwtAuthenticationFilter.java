@@ -49,7 +49,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             // /api/v1/accounts 는 payment↔deposit 서비스 간 API 다(AccountV1Controller).
             // 처음 #72 를 넣을 때 v1 쪽만 올려서, 정작 자금이 나가는 문이 열려 있었다.
             "/api/accounts",
-            "/api/transactions"
+            "/api/transactions",
+            // 이상거래 안내는 고객 본인이 자기 화면에서 부른다. 직원 토큰으로 부르면
+            // 직원 자신의 연령대에 맞춰진 안내가 나와 아무 뜻이 없다.
+            "/api/v1/fraud/guidance",
+            "/api/v1/fraud/consult"
     );
 
     private final JwtProvider jwtProvider;

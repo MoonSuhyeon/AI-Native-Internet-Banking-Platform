@@ -18,6 +18,7 @@ CLI(run_investigation.py)와 **동일한 빌딩블록**(hypotheses·planner·too
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -36,6 +37,7 @@ from .graph import (
     _GATED_ACTIONS,
     _REQUIRED_ROLE,
 )
+from .guidance import Guidance, lookup_audience, refine
 from .llm import get_llm_client
 from .metrics import (
     fraud_action_blocked_total,
@@ -44,6 +46,7 @@ from .metrics import (
     fraud_investigation_total,
     fraud_tool_calls_total,
     observe_recommendation,
+    record_guidance,
 )
 from .models import (
     ActionType,
@@ -186,6 +189,31 @@ class ApproveResponse(BaseModel):
     executed_actions: list[str]
 
 
+class GuidanceRequest(BaseModel):
+    """고객 화면이 받은 기본 안내. 그대로 다시 보내 다듬어 달라고 한다.
+
+    **고객 ID 를 본문에 받지 않는다.** 받으면 아무나 남의 번호를 적어 그 사람의
+    연령대를 알아낼 수 있다 — 안내문 한 줄로 새어 나가는 개인정보다.
+    신원은 게이트웨이가 주입하는 ``X-Customer-Id`` 헤더로만 온다(레포 관례).
+    """
+
+    headline: str = ""
+    evidence: list[str] = []
+    action_steps: list[str] = []
+    choices: list[str] = []
+
+
+class GuidanceResponse(BaseModel):
+    headline: str
+    evidence: list[str]
+    action_steps: list[str]
+    choices: list[str]
+    #: 어느 구간에 맞췄는가. 지표용 — UNKNOWN 과 GENERAL 을 섞으면 커버리지가 부푼다.
+    audience: str
+    #: 모델이 다듬었는가. false 면 규칙만으로 만든 것이고, 그래도 완결이다.
+    llm_refined: bool
+
+
 # --------------------------------------------------------------------------- #
 # 내부 — 조사 루프를 한 번 펼쳐 구조화 트레이스로 (graph 와 동일 로직)
 # --------------------------------------------------------------------------- #
@@ -322,6 +350,26 @@ def _require_investigator(
     if _service_verified(x_service_auth):
         return "system:fds-detector"
     return _require_employee(x_gateway_auth, x_employee_id)
+
+
+def _require_customer(x_gateway_auth: str | None, x_customer_id: str | None) -> str:
+    """고객 본인 전용 경로의 문지기.
+
+    직원 경로와 같은 이유로 게이트웨이 서명을 먼저 본다. 이 사이드카는 직접
+    두드릴 수 있어서, 손으로 쓴 ``X-Customer-Id`` 를 믿으면 아무나 남의 번호를 적어
+    **그 사람의 연령대**를 캐낼 수 있다. 안내문 한 줄로 새는 개인정보다.
+
+    :raises HTTPException: 403.
+    """
+    if not _gateway_verified(x_gateway_auth):
+        raise HTTPException(
+            status_code=403,
+            detail="본인 확인이 필요합니다. 게이트웨이를 통해 요청해주세요.",
+        )
+    cid = (x_customer_id or "").strip()
+    if not cid:
+        raise HTTPException(status_code=403, detail="본인 확인이 필요합니다.")
+    return cid
 
 
 def _require_employee(x_gateway_auth: str | None, x_employee_id: str | None) -> str:
@@ -544,6 +592,107 @@ def metrics() -> Response:
     다른 파이썬 서비스(consultation)와 같은 경로·형식을 쓴다.
     """
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+class ConsultRequest(BaseModel):
+    """이체가 막힌 고객이 상담을 요청한다.
+
+    고객 ID 는 본문에 받지 않는다 — 게이트웨이가 ``X-Customer-Id`` 로 주입한다.
+    받으면 아무나 남의 이름으로 케이스를 열 수 있다.
+    """
+
+    #: 막힌 거래의 금액·수취인. 심사원이 무엇을 보는 사건인지 알아야 한다.
+    amount: int = 0
+    payee: str = ""
+    channel: str = "WEB"
+    #: 탐지기가 든 근거. 조사 에이전트가 가설의 출발점으로 쓴다.
+    evidence: list[str] = []
+
+
+class ConsultResponse(BaseModel):
+    case_id: str
+    queued: bool
+
+
+@app.post("/api/consult", response_model=ConsultResponse)
+def consult(
+    req: ConsultRequest,
+    x_customer_id: str | None = Header(default=None, alias="X-Customer-Id"),
+    x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+) -> ConsultResponse:
+    """막힌 이체를 상담원 큐에 올린다.
+
+    **조사를 여기서 돌리지 않는다.** 큐에 올리기만 한다. 고객이 버튼을 누른 그
+    순간 조사 루프를 태우면 두 가지가 나빠진다 — 고객이 수 초에서 수십 초를 기다리게
+    되고, 버튼 한 번이 LLM 호출과 도구 조회를 부르니 아무나 비용을 소진시킬 수 있다.
+    조사는 심사원이 케이스를 열 때 ``/api/investigate`` 로 돈다(HITL 순서 그대로).
+
+    **왜 이 경로가 필요했나.** 지금까지 케이스는 사후 탐지(Kafka)로만 열렸다. 그래서
+    사전 점검에 막힌 고객은 갈 곳이 없었다 — 화면에 "고객센터로 문의해 주세요" 만
+    뜨고, 그 문의는 이 시스템 밖으로 나갔다. 기획서가 말하는 "탐지 후 조치까지의
+    공백" 이 바로 이 자리다.
+    """
+    customer_id = _require_customer(x_gateway_auth, x_customer_id)
+
+    case_id = f"consult-{customer_id}-{int(datetime.now().timestamp())}"
+    case = {
+        "name": case_id,
+        "description": "고객 상담 요청 — 사전 점검에 막힌 이체. 근거: "
+                       + ("; ".join(req.evidence) if req.evidence else "없음"),
+        "alert": {
+            "id": case_id,
+            "account": "",
+            "customer_id": customer_id,
+            "tx_context": {
+                "amount": req.amount,
+                "payee": req.payee,
+                "time": datetime.now().isoformat(timespec="seconds"),
+                "channel": req.channel,
+            },
+            # 사전 점검이 막았다는 것 자체가 강한 신호다. 다만 점수를 지어내지는
+            # 않는다 — 탐지기가 준 것이 없으므로 0 으로 두고 근거는 description 에.
+            "anomaly_score": 0.0,
+        },
+        # 목 응답 없음. 조사는 실연결이 켜진 도구에서만 값을 얻는다.
+        "tool_responses": {},
+    }
+
+    try:
+        path = Path(CASES_DIR) / f"{case_id}.json"
+        path.write_text(json.dumps(case, ensure_ascii=False, indent=2), encoding="utf-8")
+    except OSError:
+        # 큐에 못 올렸다. 고객에게는 실패를 알려야 한다 — 여기서 조용히 성공이라고
+        # 하면 아무도 보지 않는 요청이 되고, 고객은 상담이 접수된 줄 안다.
+        raise HTTPException(status_code=503, detail="상담 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.")
+
+    return ConsultResponse(case_id=case_id, queued=True)
+
+
+@app.post("/api/guidance", response_model=GuidanceResponse)
+def guidance(
+    req: GuidanceRequest,
+    x_customer_id: str | None = Header(default=None, alias="X-Customer-Id"),
+    x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+) -> GuidanceResponse:
+    """이체가 멈춘 고객에게 보여 줄 안내를 연령대에 맞춰 다듬는다.
+
+    **이 경로는 판단하지 않는다.** 무엇이 위험한지·무엇을 할지는 탐지기가 규칙으로
+    이미 정했고 화면에도 이미 그려져 있다. 여기서 바뀌는 것은 *말투와 순서*뿐이다.
+
+    그래서 실패해도 조용하다 — 연령대 조회가 안 되면 UNKNOWN 으로, 모델이 죽으면
+    규칙 결과로 내려간다. 화면은 이 응답이 안 와도 성립한다.
+    """
+    customer_id = _require_customer(x_gateway_auth, x_customer_id)
+
+    base = Guidance(
+        headline=req.headline,
+        evidence=req.evidence,
+        action_steps=req.action_steps,
+        choices=req.choices,
+    )
+    result = refine(base, lookup_audience(customer_id))
+    record_guidance(result.audience, result.llm_refined)
+    return GuidanceResponse(**result.model_dump())
 
 
 @app.get("/health")

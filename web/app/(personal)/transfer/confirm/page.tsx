@@ -9,6 +9,9 @@ import TransferSidebar from '@/components/inquiry/TransferSidebar'
 import { executeDepositTransfer, getCurrentDepositCustomerId } from '@/lib/deposit-api'
 import { createInstantTransfer, newIdempotencyKey, PAYMENT_BANK_CODE_MAP } from '@/lib/payment-api'
 import { fetchMyCertificates, issueTransferApproval } from '@/lib/api'
+import RiskGuidanceModal from '@/components/transfer/RiskGuidanceModal'
+import { extractGuidance, isStepUp, type RiskGuidance } from '@/lib/risk-guidance'
+import { openRiskConsultation } from '@/lib/risk-consult'
 
 type PendingTransfer = {
   fromAccountId?: number
@@ -68,6 +71,11 @@ export default function TransferConfirmPage() {
   const [certError, setCertError] = useState<string | null>(null)
   const [certs, setCerts] = useState<Array<{ serialNumber: string; status: string; certTypeName?: string }>>([])
   const [selectedCert, setSelectedCert] = useState<string>('')
+
+  // 이상거래로 멈춘 경우. 결과 페이지로 넘기지 않고 여기서 안내한다 —
+  // 결과 페이지는 끝난 거래를 보여주는 곳이라, 아직 되돌릴 수 있는 이 상황을
+  // 거기로 보내면 고객은 이미 실패한 것으로 읽는다.
+  const [risk, setRisk] = useState<{ guidance: RiskGuidance; stepUp: boolean } | null>(null)
 
   useEffect(() => {
     const raw = sessionStorage.getItem('pendingTransfer')
@@ -179,6 +187,17 @@ export default function TransferConfirmPage() {
               router.push('/transfer/result')
               return
             }
+            // 이상거래로 멈춘 경우. 탐지기가 보낸 근거와 행동요령이 실려 온다.
+            // 예전에는 이 분기가 없어 아래 일반 오류로 떨어졌고, 결과 페이지에
+            // "고객센터로 문의해 주세요" 한 줄만 떴다.
+            const guidance = extractGuidance(e)
+            if (guidance) {
+              setRisk({ guidance, stepUp: isStepUp(e) })
+              setPin([])
+              setIsSubmitting(false)
+              return
+            }
+
             const code = err.response?.data?.code ?? ''
             if (code.startsWith('CUST_03')) {
               setCertError(err.response?.data?.message ?? '인증서 비밀번호가 올바르지 않습니다.')
@@ -296,6 +315,41 @@ export default function TransferConfirmPage() {
           </div>
         </main>
       </div>
+
+      {/* 이상거래 안내 — 아직 되돌릴 수 있는 상태다. 결과 페이지로 보내지 않는다. */}
+      {risk && data && (
+        <RiskGuidanceModal
+          guidance={risk.guidance}
+          onStepUp={risk.stepUp ? () => {
+            // 추가 인증으로 풀 수 있는 등급. 인증서 모달을 다시 연다.
+            setRisk(null)
+            setShowCertModal(true)
+            setCertStep('pin')
+          } : undefined}
+          onCancel={() => {
+            setRisk(null)
+            router.push('/transfer/account')
+          }}
+          onConsult={async () => {
+            const result = await openRiskConsultation({
+              amount: data.amount,
+              payee: data.toAccount,
+              evidence: risk.guidance.evidence,
+            })
+            setRisk(null)
+            sessionStorage.setItem('paymentResult', JSON.stringify(
+              result.ok
+                ? {
+                    status: 'CONSULT',
+                    message: '상담원에게 확인을 요청했습니다. 검토 후 연락드립니다.',
+                    caseId: result.caseId,
+                  }
+                : { status: 'ERROR', message: result.message }
+            ))
+            router.push('/transfer/result')
+          }}
+        />
+      )}
 
       {/* 금융인증서 모달 */}
       {showCertModal && data && (

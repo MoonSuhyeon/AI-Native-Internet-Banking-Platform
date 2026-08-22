@@ -107,7 +107,7 @@ public class PaymentController {
                     command, executeAt, PaymentTransactionService.TRIGGER_FDS_DELAY);
             return ResponseEntity.ok(PaymentResponse.delayed(
                     delayed.paymentInstructionId(), delayed.transactionNo(),
-                    executeAt, decision.reasons()));
+                    executeAt, decision.reasons(), decision.guidance()));
         }
 
         // 오케스트레이션

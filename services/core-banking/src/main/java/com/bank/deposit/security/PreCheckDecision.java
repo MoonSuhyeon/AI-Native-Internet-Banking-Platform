@@ -13,7 +13,7 @@ import java.util.List;
  * 잠시 뒤 실행된다. 예외로 끊으면 호출부가 "실패" 로 다루게 되고, 고객에게도
  * 실패로 보인다 — 실제로는 취소할 기회를 준 것인데 그 의미가 사라진다.
  */
-public record PreCheckDecision(Kind kind, Duration delay, List<String> reasons) {
+public record PreCheckDecision(Kind kind, Duration delay, List<String> reasons, RiskGuidance guidance) {
 
     public enum Kind {
         /** 그대로 진행. */
@@ -28,11 +28,17 @@ public record PreCheckDecision(Kind kind, Duration delay, List<String> reasons) 
     }
 
     public static PreCheckDecision proceed() {
-        return new PreCheckDecision(Kind.PROCEED, Duration.ZERO, List.of());
+        return new PreCheckDecision(Kind.PROCEED, Duration.ZERO, List.of(), null);
     }
 
-    public static PreCheckDecision delay(Duration delay, List<String> reasons) {
-        return new PreCheckDecision(Kind.DELAY, delay, reasons);
+    /**
+     * 지연시킨다.
+     *
+     * <p>{@code guidance} 는 고객에게 보여 줄 안내다. 지연은 거절이 아니라 <b>취소할
+     * 시간을 주는 것</b>인데, 그 사실이 화면에 도달하지 않으면 고객은 그냥 실패로 읽는다.
+     */
+    public static PreCheckDecision delay(Duration delay, List<String> reasons, RiskGuidance guidance) {
+        return new PreCheckDecision(Kind.DELAY, delay, reasons, guidance);
     }
 
     public boolean isDelayed() {

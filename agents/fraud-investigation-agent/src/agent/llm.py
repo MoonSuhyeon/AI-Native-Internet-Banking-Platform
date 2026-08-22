@@ -1,10 +1,13 @@
 """LLM 경계 — 벤더 중립 인터페이스 (§16-4 Planner) + 실제 OpenAI/Anthropic.
 
-LLM 역할은 두 가지로 한정한다(CLAUDE.md 원칙 1):
+LLM 역할은 아래로 한정한다(CLAUDE.md 원칙 1):
 1. ``select_next_tool(state, matrix)`` — Tool Matrix 를 프롬프트에 넣어 다음 도구를
    고르고 **선택 이유**를 함께 반환한다(원칙 2: 매번 로그 → 설명가능성·감사·재현).
    실제 LLM에서도 이유 로그는 필수.
 2. ``generate_recommendation(state)`` — 증거 사슬로 권고 근거 텍스트를 서술한다.
+3. ``refine_consumer_text(system, user)`` — 고객 안내 문구의 **말투만** 다듬는다.
+   판단이 아니다. 무엇이 위험한지·무엇을 할지는 규칙이 정하고, 모델 결과는
+   ``guidance._safe_merge`` 가 걸러 근거·선택지를 원래대로 되돌린다.
 
 결정적 사실(사망·후견)·동작(지급정지·STR)은 LLM이 건드리지 않는다.
 
@@ -119,6 +122,20 @@ class LLMClient(ABC):
     @abstractmethod
     def generate_recommendation(self, state: AgentState) -> str:
         """증거·도구 로그로 권고 근거 텍스트를 만든다."""
+
+    def refine_consumer_text(self, system: str, user: str) -> str:
+        """고객에게 보여 줄 문구의 **말투만** 다듬는다.
+
+        판단이 아니다. 무엇이 위험한지·무엇을 할지는 이미 규칙이 정했고, 여기서
+        바뀔 수 있는 것은 표현뿐이다. 결과는 ``guidance._safe_merge`` 를 거쳐 근거와
+        선택지가 원래대로 되돌려진 뒤에야 쓰인다 — 모델이 항목을 지우거나 합치면
+        통째로 버려진다.
+
+        기본 구현은 **아무것도 하지 않는다.** 다듬기는 있으면 좋은 것이지 없으면
+        안 되는 것이 아니라서, 구현하지 않은 클라이언트가 예외를 던지는 대신
+        규칙 결과를 그대로 쓰게 한다.
+        """
+        raise NotImplementedError
 
 
 # --------------------------------------------------------------------------- #
@@ -267,6 +284,10 @@ class _RealClient(LLMClient):
     def generate_recommendation(self, state: AgentState) -> str:
         system, user = _recommend_prompt(state)
         return self._complete(self.light_model, system, user, json_mode=False).strip()
+
+    def refine_consumer_text(self, system: str, user: str) -> str:
+        # 말투 다듬기는 판단이 아니라 경량 모델로 충분하다.
+        return self._complete(self.light_model, system, user, json_mode=True).strip()
 
 
 class OpenAIClient(_RealClient):

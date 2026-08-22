@@ -2,6 +2,7 @@ package com.bank.fds.detect;
 
 import com.bank.fds.api.dto.PreCheckRequest;
 import com.bank.fds.api.dto.PreCheckResponse;
+import com.bank.fds.guidance.GuidanceComposer;
 import com.bank.fds.detect.DetectionSignal.Severity;
 import com.bank.fds.observability.FdsMetrics;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class PreCheckService {
     private final RiskStateStore riskStateStore;
     private final ResponseTierPolicy tierPolicy;
     private final FdsMetrics metrics;
+    private final GuidanceComposer guidanceComposer;
 
     @Value("${fds.rule.high-amount:10000000}")
     private long highAmountThreshold;
@@ -85,8 +87,14 @@ public class PreCheckService {
         // 조회가 온전했는지 알려 준다. "통과" 와 "판정을 못 해서 통과" 는 다른 사건이라,
         // 결제계가 금액 구간별 장애 정책을 적용할 수 있어야 한다.
         boolean degraded = !riskStateStore.isAvailable();
-        return degraded
-                ? PreCheckResponse.degraded(tier, signals)
-                : PreCheckResponse.of(tier, signals);
+        if (degraded) {
+            return PreCheckResponse.degraded(tier, signals);
+        }
+
+        // 고객 화면에 뜨는 등급에만 안내를 만든다. 통과하는 거래에까지 붙이면
+        // 아무도 읽지 않을 문자열을 매 이체마다 만드는 셈이다.
+        return tier == ResponseTier.PASS || tier == ResponseTier.MONITOR
+                ? PreCheckResponse.of(tier, signals)
+                : PreCheckResponse.of(tier, signals, guidanceComposer.compose(tier, signals));
     }
 }

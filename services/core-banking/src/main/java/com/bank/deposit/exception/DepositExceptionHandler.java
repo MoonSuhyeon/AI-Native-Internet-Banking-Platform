@@ -25,6 +25,20 @@ import java.util.List;
 @RestControllerAdvice(basePackages = "com.bank.deposit")
 public class DepositExceptionHandler {
 
+    /**
+     * 이상거래로 세운 거래 — 근거와 행동요령을 함께 내보낸다.
+     *
+     * <p>{@link BusinessException} 핸들러보다 <b>먼저</b> 잡혀야 한다. 스프링은 더
+     * 구체적인 예외 타입의 핸들러를 고르므로 순서가 아니라 타입으로 결정되지만,
+     * 이 메서드를 지우면 안내가 조용히 사라지고 예전의 한 줄로 돌아간다.
+     */
+    @ExceptionHandler(RiskGuidedException.class)
+    public ResponseEntity<ErrorResponse> handleRiskGuided(RiskGuidedException e) {
+        log.warn("이상거래로 거래 중단: {} guidance={}", e.getMessage(), e.getGuidance() != null);
+        return ResponseEntity.status(e.getErrorCode().getStatus())
+                .body(ErrorResponse.of(e.getErrorCode(), e.getMessage(), e.getGuidance()));
+    }
+
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e) {
         log.warn("BusinessException: {}", e.getMessage());

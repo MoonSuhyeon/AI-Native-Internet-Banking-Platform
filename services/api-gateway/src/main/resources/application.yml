@@ -209,6 +209,32 @@ spring:
             # 게이트웨이를 거쳤다는 증거. 사이드카는 이 값이 맞을 때만 신원 헤더를 믿는다.
             - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:not-configured}
 
+        # 이상거래 안내 다듬기 — **고객 본인**이 부른다 (JWT 필요)
+        #
+        # 위 fraud-agent 라우트와 같은 사이드카지만 경로를 나눈 이유가 있다. 그쪽은
+        # /api/v1/internal/** 이라 직원 전용이고, 이 경로는 이체가 막힌 고객이
+        # 자기 화면에서 부른다. 한 라우트로 합치면 조사 큐(/api/cases)와 승인
+        # (/api/approve)까지 고객 토큰으로 열린다.
+        #
+        # 사이드카는 X-Gateway-Auth 가 맞을 때만 X-Customer-Id 를 믿는다. 이게 없으면
+        # 아무나 남의 고객번호를 적어 그 사람의 연령대를 알아낼 수 있다.
+        - id: fraud-agent-guidance
+          uri: http://${FRAUD_AGENT_HOST:localhost}:${FRAUD_AGENT_PORT:8090}
+          predicates:
+            - Path=/api/v1/fraud/guidance
+          filters:
+            - SetPath=/api/guidance
+            - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:not-configured}
+
+        # 상담 요청 — 이체가 막힌 고객이 케이스를 연다 (JWT 필요)
+        - id: fraud-agent-consult
+          uri: http://${FRAUD_AGENT_HOST:localhost}:${FRAUD_AGENT_PORT:8090}
+          predicates:
+            - Path=/api/v1/fraud/consult
+          filters:
+            - SetPath=/api/consult
+            - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:not-configured}
+
         # 목표·지출 에이전트 (JWT 필요)
         #
         # 프론트의 BFF 프록시가 NEXT_PUBLIC_AI_API_URL 기본값 8086 으로 이 에이전트를

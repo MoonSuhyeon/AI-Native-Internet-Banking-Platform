@@ -20,11 +20,18 @@ type PendingTransfer = {
 }
 
 type PaymentResult = {
-  status: 'COMPLETED' | 'FAILED' | 'CLEARING' | 'ERROR'
+  /**
+   * `CONSULT` 는 실패가 아니다. 이상거래로 멈춘 이체를 고객이 상담원에게 넘긴
+   * 상태다 — 접수됐고 사람이 볼 것이다. 빨간 실패 배너로 보여주면 고객은
+   * 안 된 줄 알고 다시 시도하게 되고, 상담 요청은 큐에 그대로 쌓인다.
+   */
+  status: 'COMPLETED' | 'FAILED' | 'CLEARING' | 'ERROR' | 'CONSULT'
   piId?: string
   txNo?: string
   failureCategory?: string | null
   message?: string
+  /** 상담 케이스 번호. 고객이 문의할 때 댈 수 있어야 한다. */
+  caseId?: string
 }
 
 const FAILURE_MESSAGES: Record<string, string> = {
@@ -100,7 +107,25 @@ export default function TransferResultPage() {
           <h1 className="text-[22px] font-bold text-kb-text mb-6">계좌이체</h1>
 
           {/* 완료/실패 배너 */}
-          {(!paymentResult || paymentResult.status === 'COMPLETED' || paymentResult.status === 'CLEARING') ? (
+          {paymentResult?.status === 'CONSULT' ? (
+            <div className="rounded-xl p-6 mb-6 flex items-center gap-5" style={{ backgroundColor: '#FFF4E5', border: '1px solid #FCD9A6' }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-amber-500">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-[16px] font-bold mb-1 text-amber-700">상담 요청이 접수되었습니다.</p>
+                <p className="text-[12px] text-kb-text-muted">
+                  {paymentResult.message ?? '검토 후 연락드립니다.'}
+                </p>
+                <p className="text-[12px] text-kb-text-muted">이체는 진행되지 않았습니다. 돈은 그대로 있습니다.</p>
+                {paymentResult.caseId && (
+                  <p className="mt-1 text-[12px] text-kb-text-muted">접수번호: {paymentResult.caseId}</p>
+                )}
+              </div>
+            </div>
+          ) : (!paymentResult || paymentResult.status === 'COMPLETED' || paymentResult.status === 'CLEARING') ? (
             <div className="rounded-xl p-6 mb-6 flex items-center gap-5" style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
               <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: KB_PRIMARY }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

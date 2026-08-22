@@ -64,3 +64,27 @@ def observe_recommendation(status: str, approved: bool) -> None:
     fraud_recommendation_reviewed_total.labels(
         status=status, decision="approved" if approved else "rejected"
     ).inc()
+
+
+# ── 소비자 안내 ──────────────────────────────────────────────────────────────
+#
+# **왜 이 둘을 재는가.** 안내는 실패해도 조용히 규칙 결과로 내려간다 — 화면이
+# 깨지지 않게 일부러 그렇게 만들었다. 그래서 계측이 없으면 맞춤이 사실상 하나도
+# 안 되고 있어도 아무도 모른다. 조용한 실패는 재야 보인다.
+#
+# audience 는 값의 종류가 다섯이라 라벨로 안전하다(카디널리티). 고객 ID 는 넣지
+# 않는다 — 개인 단위 추적은 지표가 아니라 감사로그가 할 일이다.
+fraud_guidance_total = Counter(
+    "fraud_guidance_total",
+    "고객 안내 생성 수",
+    ["audience", "refined"],  # audience: SENIOR/YOUNG_ADULT/GENERAL/MINOR/UNKNOWN
+)
+fraud_guidance_audience_lookup_failed_total = Counter(
+    "fraud_guidance_audience_lookup_failed_total",
+    "연령대 조회에 실패해 UNKNOWN 으로 내려간 수",
+)
+
+
+def record_guidance(audience: str, refined: bool) -> None:
+    """안내 한 건. ``refined`` 가 false 면 규칙만으로 만든 것이다."""
+    fraud_guidance_total.labels(audience=audience, refined=str(refined).lower()).inc()

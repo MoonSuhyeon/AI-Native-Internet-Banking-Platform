@@ -4,6 +4,7 @@ import com.bank.deposit.domain.entity.Transaction;
 import com.bank.deposit.dto.request.*;
 import com.bank.deposit.security.AuthenticatedCustomerValidator;
 import com.bank.deposit.security.FdsPreCheckGate;
+import com.bank.deposit.security.PreCheckDecision;
 import com.bank.deposit.security.TransferApprovalGate;
 import com.bank.deposit.service.AccountService;
 import com.bank.deposit.service.TransactionService;
@@ -94,11 +95,27 @@ public class TransactionController {
         transferApprovalGate.verify(req.approvalToken(), fromAccountNo, req.toAccountNo(), req.amount());
 
         // 자행이체도 점검한다. 대포통장으로 흘러가는 자금은 자행/타행을 가리지 않는다.
-        fdsPreCheckGate.evaluate(
+        PreCheckDecision decision = fdsPreCheckGate.evaluate(
                 authenticatedCustomerId, fromAccountNo, req.counterpartyBankCode(),
                 req.toAccountNo(), req.amount(), true,
                 req.channelType() == null ? null : req.channelType().name(),
                 req.approvalToken() != null && !req.approvalToken().isBlank());
+
+        // 지연 지시를 이 경로는 아직 이행하지 못한다.
+        //
+        // 차단·추가인증은 게이트가 예외로 끊으므로 여기까지 오지 않는다. 남는 것은
+        // 지연인데, 자행이체에는 타행이체(PaymentController)가 쓰는 예약 실행 경로가
+        // 없다 — deposit 쪽 TransactionService 에 예약 개념 자체가 없다.
+        //
+        // 예전에는 반환값을 받지도 않아서 **지연 지시가 흔적 없이 사라졌다.** 탐지기는
+        // "미루라" 고 했고 거래는 즉시 나갔는데 아무 데도 기록이 없었다. 통과와
+        // 구별되지 않으니 지연 장치가 얼마나 새고 있는지도 알 수 없었다.
+        //
+        // 이행은 예약 실행 경로가 생겨야 가능하다(별도 작업). 그때까지는 최소한
+        // 세어 둔다 — 못 지키는 것과 못 지키는 줄 모르는 것은 다르다.
+        if (decision.isDelayed()) {
+            fdsPreCheckGate.reportDelayNotHonored("intrabank", decision.reasons());
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(transactionService.transfer(req.fromAccountId(), req.toAccountId(), req.toAccountNo(),

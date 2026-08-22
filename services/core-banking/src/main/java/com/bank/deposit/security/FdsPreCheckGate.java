@@ -1,6 +1,7 @@
 package com.bank.deposit.security;
 
 import com.bank.deposit.exception.BusinessException;
+import com.bank.deposit.exception.RiskGuidedException;
 import com.bank.deposit.exception.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -106,6 +107,22 @@ public class FdsPreCheckGate {
     }
 
     /**
+     * 지연 지시를 호출부가 이행하지 못했다.
+     *
+     * <p>자행이체 경로에는 타행이체가 쓰는 예약 실행이 없어서 지연을 못 지킨다.
+     * 예전에는 반환값을 받지도 않아 <b>지시가 흔적 없이 사라졌다</b> — 통과와
+     * 구별되지 않으니 지연 장치가 얼마나 새는지 알 수 없었다.
+     *
+     * <p>계측을 여기 둔 이유는 FDS 지표가 한 곳에 모여 있어야 하기 때문이다.
+     * 호출부마다 레지스트리를 들고 다니면 이름이 갈라지고, 컨트롤러가 계측 배선을
+     * 생성자에 이고 가게 된다.
+     */
+    public void reportDelayNotHonored(String path, List<String> reasons) {
+        log.warn("지연 지시를 이행하지 못하고 즉시 실행함 path={} reasons={}", path, reasons);
+        meterRegistry.counter("payment.fds.delay.not_honored", "path", path).increment();
+    }
+
+    /**
      * @param hasApprovalToken 승인 토큰을 이미 제시했는가. 탐지기가 추가 인증을 요구했을 때
      *                         이미 인증했으면 다시 막지 않기 위해 필요하다.
      */
@@ -170,7 +187,7 @@ public class FdsPreCheckGate {
                 if (!hasApprovalToken) {
                     log.info("이상거래 점검이 추가 인증을 요구함 signals={}", result.signals());
                     countOutcome("step_up_required");
-                    throw new BusinessException(ErrorCode.TRANSFER_APPROVAL_REQUIRED);
+                    throw new RiskGuidedException(ErrorCode.TRANSFER_APPROVAL_REQUIRED, result.guidance());
                 }
                 countOutcome("proceed");
                 return PreCheckDecision.proceed();
@@ -182,14 +199,17 @@ public class FdsPreCheckGate {
                         delayMinutes, result.signals());
                 countOutcome("delayed");
                 return PreCheckDecision.delay(
-                        Duration.ofMinutes(delayMinutes), toReasons(result.signals()));
+                        Duration.ofMinutes(delayMinutes), toReasons(result.signals()), result.guidance());
             }
             default -> {
                 // BLOCK / HOLD_REVIEW / FREEZE_RECOMMEND — 사람이 봐야 하는 등급이다.
                 // 지연으로도 부족하다. 진행하지 않는다.
+                // 예전에는 여기서 근거를 로그에만 남기고 고정 문구를 던졌다. 탐지기가
+                // 만들어 보낸 근거가 고객에게 도달하지 않아, 화면에는 "고객센터로
+                // 문의해 주세요" 만 떴다 — 왜 막혔는지도, 지금 무엇을 할지도 없이.
                 log.warn("이상거래로 이체 차단 tier={} signals={}", result.tier(), result.signals());
                 countOutcome("blocked");
-                throw new BusinessException(ErrorCode.TRANSFER_BLOCKED_BY_RISK);
+                throw new RiskGuidedException(ErrorCode.TRANSFER_BLOCKED_BY_RISK, result.guidance());
             }
         }
     }
@@ -226,6 +246,6 @@ public class FdsPreCheckGate {
      * 엄격하게 바꾸는 순간 탐지기가 필드 하나 늘렸다고 이체가 전부 막힌다.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record PreCheckResult(String tier, List<Object> signals, boolean degraded) {
+    record PreCheckResult(String tier, List<Object> signals, boolean degraded, RiskGuidance guidance) {
     }
 }

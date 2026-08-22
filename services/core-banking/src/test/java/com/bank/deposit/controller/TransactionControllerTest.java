@@ -11,10 +11,12 @@ import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
 import com.bank.deposit.repository.AccountRepository;
 import com.bank.deposit.security.FdsPreCheckGate;
+import com.bank.deposit.security.PreCheckDecision;
 import com.bank.deposit.security.TransferApprovalGate;
 import com.bank.deposit.service.AccountService;
 import com.bank.deposit.repository.TransactionRepository;
 import com.bank.deposit.service.TransactionService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +71,19 @@ class TransactionControllerTest {
     // FdsPreCheckGateTest 가 본다 — 특히 탐지기 장애 시 금액 구간 분기.
     @MockBean
     private FdsPreCheckGate fdsPreCheckGate;
+
+    /**
+     * 점검 결과 기본값.
+     *
+     * <p>mock 은 스텁하지 않으면 {@code null} 을 준다. 예전에는 컨트롤러가 반환값을
+     * <b>받지도 않아서</b> 그래도 통과했는데, 지연 지시를 세기 시작하면서 드러났다 —
+     * 실제 게이트는 절대 {@code null} 을 주지 않으므로, 계약대로 통과 결정을 세운다.
+     */
+    @BeforeEach
+    void stubPreCheckToProceed() {
+        given(fdsPreCheckGate.evaluate(any(), any(), any(), any(), any(), any(), any(), anyBoolean()))
+                .willReturn(PreCheckDecision.proceed());
+    }
 
     // 이체 컨트롤러가 승인 토큰 대조용 계좌번호를 여기서 찾는다.
     @MockBean
