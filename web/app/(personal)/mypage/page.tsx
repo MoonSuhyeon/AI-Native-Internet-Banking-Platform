@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { readAccessToken } from '@/lib/token'
+import { loginUrlFor } from '@/lib/return-url'
 
 interface GradeInfo {
   previousGradeCode: string | null
@@ -120,7 +121,7 @@ export default function MyKBPage() {
 
   useEffect(() => {
     const token = readAccessToken()
-    if (!token) { router.replace('/login'); return }
+    if (!token) { router.replace(loginUrlFor('/mypage')); return }
 
     api.get('/api/v1/customers/me')
       .then(res => setData(res.data.data))

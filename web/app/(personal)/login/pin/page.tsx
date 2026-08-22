@@ -1,5 +1,6 @@
 'use client'
 import { KB_PRIMARY } from '@/lib/theme'
+import { postLoginTarget } from '@/lib/return-url'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -30,7 +31,7 @@ export default function PinLoginPage() {
     try {
       const res = await pinLogin({ loginId, deviceId, pin })
       await persistLogin(res)
-      window.location.href = '/'
+      window.location.href = postLoginTarget()
     } catch (err) {
       setError(authErrorMessage(err, 'PIN 로그인에 실패했습니다.'))
     } finally {

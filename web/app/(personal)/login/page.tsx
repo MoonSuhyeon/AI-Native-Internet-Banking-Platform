@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { api } from '@/lib/api'
 import { CERT_ISSUE_PATH, forgetIssuedCert, noCertMessage, readIssuedCert } from '@/lib/issued-cert'
 import { clearAuthStorage } from '@/lib/token'
+import { postLoginTarget, withReturnUrl } from '@/lib/return-url'
 
 type LoginTab = 'kb인증서' | '공동금융인증서' | '아이디'
 
@@ -206,7 +207,7 @@ function KBCertTab() {
             setErrorMsg((e as Error).message)
             return
           }
-          window.location.href = '/'
+          window.location.href = postLoginTarget()
         }
       } catch {
         if (++pollErrors >= 3) {
@@ -555,7 +556,7 @@ async function handleCertLogin(certSerialNumber: string, certType: string, pin: 
     throw new Error(data?.message ?? '인증서 로그인에 실패했습니다.')
   }
   await persistLoginState(data.data)
-  window.location.href = '/'
+  window.location.href = postLoginTarget()
 }
 
 
@@ -865,6 +866,12 @@ function IdLoginTab() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // 간편비밀번호 화면으로 넘어가도 돌아갈 곳을 잃지 않게 한다.
+  // 첫 렌더에서는 서버와 같은 값을 내야 하므로(하이드레이션 불일치 방지)
+  // 주소창을 읽는 것은 마운트 뒤로 미룬다.
+  const [pinLoginHref, setPinLoginHref] = useState('/login/pin')
+  useEffect(() => { setPinLoginHref(withReturnUrl('/login/pin')) }, [])
+
   async function handleLogin() {
     if (!loginId || !password) {
       setError('아이디와 비밀번호를 입력해주세요.')
@@ -881,7 +888,7 @@ function IdLoginTab() {
       const { data } = await api.post('/api/v1/auth/login', { loginId, password })
       await persistLoginState(data.data)
 
-      window.location.href = '/'
+      window.location.href = postLoginTarget()
     } catch (err: unknown) {
       const axiosErr = err as { code?: string; message?: string; response?: { data?: { message?: string } } }
       if (!axiosErr.response && (axiosErr.code === 'ERR_NETWORK' || axiosErr.message === 'Network Error')) {
@@ -949,7 +956,7 @@ function IdLoginTab() {
         <div className="flex items-center justify-center gap-3 mt-4 text-caption" style={{ color: KB_PRIMARY }}>
           <Link href="/support/customer-info/id-password" className="hover:underline">ID 조회 / 사용자암호 설정</Link>
           <span className="text-kb-border">|</span>
-          <Link href="/login/pin" className="hover:underline">간편비밀번호 로그인</Link>
+          <Link href={pinLoginHref} className="hover:underline">간편비밀번호 로그인</Link>
           <span className="text-kb-border">|</span>
           <Link href="/support/customer-info/online-join" className="hover:underline">개인 회원가입</Link>
           <span className="text-kb-border">|</span>
@@ -1549,7 +1556,7 @@ function LoginSettingModal({ onApply, onClose }: { onApply: (tab: LoginTab) => v
   function handleApply() {
     localStorage.setItem('preferredLoginMethod', selected)
     if (selected === '간편비밀번호') {
-      window.location.href = '/login/pin'
+      window.location.href = withReturnUrl('/login/pin')
       return
     }
     const target = METHOD_TAB_MAP[selected]
