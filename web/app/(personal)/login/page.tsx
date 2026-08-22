@@ -4,6 +4,8 @@ import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PR
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
+import { CERT_ISSUE_PATH, forgetIssuedCert, noCertMessage, readIssuedCert } from '@/lib/issued-cert'
+import { clearAuthStorage } from '@/lib/token'
 
 type LoginTab = 'kb인증서' | '공동금융인증서' | '아이디'
 
@@ -194,17 +196,16 @@ function KBCertTab() {
             return
           }
           setStatus('approved')
-          localStorage.removeItem('sessionExpiry')
-          localStorage.setItem('accessToken',  data.data.accessToken)
-          localStorage.setItem('access_token', data.data.accessToken)
-          localStorage.setItem('customerId',   String(data.data.customerId))
-          if (data.data.refreshToken) localStorage.setItem('refreshToken', data.data.refreshToken)
-          localStorage.setItem('user', JSON.stringify({ name: '고객', email: '', customer_id: data.data.customerId }))
-          localStorage.setItem('sessionExpiry', String(Date.now() + 10 * 60 * 1000))
+          // 예전에는 저장 로직을 여기 한 벌 더 베껴 뒀고, 본인 정보 조회가
+          // 실패하면 이름을 '고객' 으로 박았다. 같은 일을 두 곳에서 다르게 하면
+          // 한쪽만 고쳐지므로 persistLoginState 하나로 모은다.
           try {
-            const me = await api.get('/api/v1/customers/me')
-            localStorage.setItem('user', JSON.stringify({ name: me.data.data.name, email: me.data.data.email ?? '', customer_id: me.data.data.customerId }))
-          } catch {}
+            await persistLoginState(data.data)
+          } catch (e: unknown) {
+            setStatus('error')
+            setErrorMsg((e as Error).message)
+            return
+          }
           window.location.href = '/'
         }
       } catch {
@@ -464,33 +465,65 @@ const STORAGE_TYPES = [
   )},
 ]
 
-const MOCK_JOINT_CERTS = [
-  {
-    id: 'joint_1',
-    serialNumber: 'COMMON-TEST-2024-000001',
-    certType: 'CERT_COMMON',
-    type: '금융결제원',
-    user: '홍길동(0100-0101-****-****)',
-    expiry: '2027.06.01',
-    issuer: '한국전자인증',
-  },
-]
+/**
+ * 목록에 그리는 인증서 한 줄.
+ *
+ * 예전에는 여기에 `COMMON-TEST-2024-000001` 한 장이 상수로 박혀 있었다. 그
+ * 인증서의 주인은 고객 9001 — **직원**이라, 그걸로 로그인하면 토큰에
+ * `ROLE_CUSTOMER` 가 없어 마이페이지가 403 이 됐다. 자세한 배경은
+ * `lib/issued-cert.ts` 주석에 적어 뒀다.
+ *
+ * 이제 목록은 **이 브라우저에서 실제로 발급받은 인증서**만 보여준다.
+ */
+type JointCertRow = {
+  id: string
+  serialNumber: string
+  certType: string
+  type: string
+  user: string
+  expiry: string
+  issuer: string
+}
 
+/**
+ * 로그인 성공 뒤 브라우저 상태를 채운다.
+ *
+ * **본인 정보 조회가 실패하면 로그인을 실패시킨다.** 예전에는 이 호출을
+ * `try {} catch {}` 로 감싸고, 실패하면 이름을 `'홍길동'` 으로 박아 두었다.
+ * 그래서 인증서 로그인이 직원 계정을 물어 `/api/v1/customers/me` 가 403 이
+ * 나도 화면은 **"홍길동님" 으로 로그인된 것처럼** 보였고, 마이페이지만
+ * "정보를 불러오지 못했습니다" 가 됐다. 실패를 감춘 자리에서 한참 떨어진
+ * 화면에서 증상이 나온 셈이다.
+ *
+ * 본인 정보를 못 읽는 세션은 어차피 고객 화면에서 할 수 있는 일이 없다.
+ * 그 자리에서 실패시키고 저장소를 비우는 편이, 절반만 로그인된 상태로
+ * 돌아다니게 두는 것보다 낫다.
+ */
 async function persistLoginState(auth: { customerId: number; accessToken: string; refreshToken?: string }) {
-  const fallbackUser = { name: '홍길동', email: '', customer_id: auth.customerId }
-
   localStorage.removeItem('sessionExpiry')
   localStorage.setItem('accessToken', auth.accessToken)
   localStorage.setItem('access_token', auth.accessToken)
   localStorage.setItem('customerId', String(auth.customerId))
-  localStorage.setItem('user', JSON.stringify(fallbackUser))
   localStorage.setItem('sessionExpiry', String(Date.now() + 10 * 60 * 1000))
   if (auth.refreshToken) localStorage.setItem('refreshToken', auth.refreshToken)
 
+  let me
   try {
-    const me = await api.get('/api/v1/customers/me')
-    localStorage.setItem('user', JSON.stringify({ name: me.data.data.name, email: me.data.data.email ?? '', customer_id: me.data.data.customerId }))
-  } catch {}
+    me = await api.get('/api/v1/customers/me')
+  } catch (err: unknown) {
+    clearAuthStorage()
+    const status = (err as { response?: { status?: number } }).response?.status
+    throw new Error(status === 403
+      ? '고객 계정이 아닙니다. 직원 계정은 관리자 화면에서 로그인해 주세요.'
+      : '로그인 후 고객 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
+  }
+
+  const profile = me.data.data
+  localStorage.setItem('user', JSON.stringify({
+    name: profile.name,
+    email: profile.email ?? '',
+    customer_id: profile.customerId,
+  }))
 }
 
 async function handleCertLogin(certSerialNumber: string, certType: string, pin: string) {
@@ -528,33 +561,26 @@ async function handleCertLogin(certSerialNumber: string, certType: string, pin: 
 
 function JointCertModal({ onClose }: { onClose: () => void }) {
   const [storageType, setStorageType] = useState('하드디스크')
-  const [certs, setCerts] = useState(MOCK_JOINT_CERTS)
+  const [certs, setCerts] = useState<JointCertRow[]>([])
   const [selectedCert, setSelectedCert] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [subModal, setSubModal] = useState<'view' | 'find' | 'delete' | null>(null)
 
-  // 발급 화면(joint-cert-issue)에서 저장한 인증서를 목록에 합친다.
+  // 목록은 발급 화면(joint-cert-issue)에서 실제로 발급받은 것만 담는다.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('issuedJointCert')
-      if (!raw) return
-      const c = JSON.parse(raw)
-      if (!c?.serialNumber) return
-      setCerts(prev => prev.some(x => x.serialNumber === c.serialNumber) ? prev : [
-        {
-          id: 'issued_joint',
-          serialNumber: c.serialNumber,
-          certType: c.certType ?? 'CERT_COMMON',
-          type: '금융결제원',
-          user: c.user ?? '본인',
-          expiry: c.expiry ?? '',
-          issuer: c.issuer ?? '한국전자인증',
-        },
-        ...prev,
-      ])
-    } catch {}
+    const c = readIssuedCert('CERT_COMMON')
+    if (!c) return
+    setCerts([{
+      id: 'issued_joint',
+      serialNumber: c.serialNumber,
+      certType: c.certType,
+      type: '금융결제원',
+      user: c.user ?? '본인',
+      expiry: c.expiry ?? '',
+      issuer: c.issuer ?? '한국전자인증',
+    }])
   }, [])
 
   const activeCert = certs.find(c => c.id === selectedCert)
@@ -562,10 +588,8 @@ function JointCertModal({ onClose }: { onClose: () => void }) {
   function handleDelete() {
     const target = certs.find(c => c.id === selectedCert)
     setCerts(prev => prev.filter(c => c.id !== selectedCert))
-    // 발급 인증서를 지우면 localStorage 도 비워 모달 재진입 시 되살아나지 않게 한다.
-    if (target?.id === 'issued_joint') {
-      try { localStorage.removeItem('issuedJointCert') } catch {}
-    }
+    // 발급 인증서를 지우면 저장소도 비워 모달 재진입 시 되살아나지 않게 한다.
+    if (target?.id === 'issued_joint') forgetIssuedCert('CERT_COMMON')
     setSelectedCert(null)
     setSubModal(null)
   }
@@ -653,6 +677,17 @@ function JointCertModal({ onClose }: { onClose: () => void }) {
                   </tr>
                 </thead>
                 <tbody>
+                  {certs.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-6 px-3 text-center text-kb-text-muted leading-relaxed">
+                        이 브라우저에 발급된 공동인증서가 없습니다.
+                        <br />
+                        <Link href={CERT_ISSUE_PATH.CERT_COMMON} className="font-semibold underline" style={{ color: KB_PRIMARY }}>
+                          공동인증서 발급받기
+                        </Link>
+                      </td>
+                    </tr>
+                  )}
                   {certs.map((cert) => (
                     <tr
                       key={cert.id}
@@ -1102,6 +1137,9 @@ function FinCertModal({ onClose }: { onClose: () => void }) {
   const [pad, setPad] = useState<string[]>(shufflePad)
   const [attemptsLeft, setAttemptsLeft] = useState(10)
   const [errorMsg, setErrorMsg] = useState('')
+  // 오류가 "인증서가 없다" 인 경우에만 발급 화면으로 가는 길을 함께 준다.
+  // 모달이 화면을 덮고 있어서, 확인만 누르게 하면 어디로 가야 하는지 모른다.
+  const [issuePath, setIssuePath] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -1128,16 +1166,29 @@ function FinCertModal({ onClose }: { onClose: () => void }) {
       setErrorMsg('비밀번호 6자리를 입력해주세요.')
       return
     }
+    // 어느 인증서인가. 예전에는 `FINCERT-TEST-2024-000001` 이 박혀 있었는데
+    // 그 인증서의 주인은 **직원**이라 로그인은 되고 마이페이지는 403 이었다.
+    // 배경은 `lib/issued-cert.ts` 주석에 있다.
+    const cert = readIssuedCert('CERT_FIN')
+    if (!cert) {
+      setErrorMsg(noCertMessage('CERT_FIN'))
+      setIssuePath(CERT_ISSUE_PATH.CERT_FIN)
+      setPin('')
+      setPad(shufflePad())
+      return
+    }
+
     setLoading(true)
     setErrorMsg('')
     try {
-      await handleCertLogin('FINCERT-TEST-2024-000001', 'CERT_FIN', finalPin)
+      await handleCertLogin(cert.serialNumber, cert.certType, finalPin)
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string }
       const next = Math.max(attemptsLeft - 1, 0)
       const message = e.response?.data?.message ?? e.message ?? `비밀번호가\n맞지 않습니다\n(${next}회 남음)`
       setAttemptsLeft(next)
       setErrorMsg(message)
+      setIssuePath(null)
       setPin('')
       setPad(shufflePad())
     } finally {
@@ -1367,6 +1418,11 @@ function FinCertModal({ onClose }: { onClose: () => void }) {
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
           <div className="bg-white shadow-xl rounded p-8 min-w-[220px] text-center">
             <p className="text-body text-kb-text whitespace-pre-line leading-relaxed">{errorMsg}</p>
+            {issuePath && (
+              <Link href={issuePath} className="mt-4 block text-body font-semibold underline" style={{ color: KB_PRIMARY }}>
+                금융인증서 발급받기
+              </Link>
+            )}
             <button
               onClick={() => setErrorMsg('')}
               className="mt-5 text-body hover:underline"

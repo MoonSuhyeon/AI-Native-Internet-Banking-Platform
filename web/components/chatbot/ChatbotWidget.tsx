@@ -11,6 +11,7 @@ import {
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { api, fetchMyCertificates, issueTransferApproval } from '@/lib/api'
+import { noCertMessage, readIssuedCert } from '@/lib/issued-cert'
 import { ArrowLeftRight, Bot, Home, LogOut, MessageCircle, PackageSearch, Paperclip, Phone, Send, Sparkles, X } from 'lucide-react'
 import {
   ChatbotButton,
@@ -3288,12 +3289,15 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
     setPassword('')
   }
 
-  // 로그인 화면(app/(personal)/login)이 쓰는 것과 같은 데모 인증서다.
-  // 실제 서비스라면 사용자가 보유 인증서를 고르는 단계가 앞에 온다.
-  const DEMO_FIN_CERT_SERIAL = 'FINCERT-TEST-2024-000001'
-
   async function handleCertLogin() {
     if (pin.length !== 6) { setError('PIN 6자리를 입력해주세요.'); return }
+
+    // 어느 인증서인가. 예전에는 `FINCERT-TEST-2024-000001` 을 상수로 박아 뒀는데
+    // 그 인증서의 주인은 **직원**이라, 로그인은 되고 마이페이지는 403 이 됐다.
+    // 배경은 `lib/issued-cert.ts` 주석에 있다.
+    const cert = readIssuedCert('CERT_FIN')
+    if (!cert) { setError(noCertMessage('CERT_FIN')); return }
+
     setError('')
     setLoading(true)
     try {
@@ -3308,9 +3312,9 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          certSerialNumber: DEMO_FIN_CERT_SERIAL,
+          certSerialNumber: cert.serialNumber,
           pin,
-          certType: 'CERT_FIN',
+          certType: cert.certType,
         }),
       })
       const payload = await res.json().catch(() => null)
