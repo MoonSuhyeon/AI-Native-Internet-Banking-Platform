@@ -12,7 +12,7 @@ class CustomerAccessLogWormMigrationTest {
     @Test
     void customerAccessLogHasUpdateAndDeleteBlockingTriggers() throws Exception {
         String migration = Files.readString(Path.of("src/main/resources/db/migration/"
-                + "V39__make_customer_access_log_insert_only.sql"));
+                + "V41__make_customer_access_log_insert_only.sql"));
 
         assertThat(migration)
                 .contains("BEFORE UPDATE ON customer_access_log")
