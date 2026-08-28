@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bank.payment.security.ServiceAuthorizationMapper">
+
+    <select id="findPrincipalByCredentialHash" resultType="com.bank.payment.security.ServicePrincipal">
+        SELECT service_id,
+               display_name,
+               status
+        FROM service_principal
+        WHERE credential_hash = #{credentialHash}
+    </select>
+
+    <!--
+      회수된 권한도 함께 돌려준다. "부여된 적 없다" 와 "있었는데 회수됐다" 는
+      감사에서 다른 사건이므로, 여기서 걸러 버리면 그 구분을 잃는다.
+    -->
+    <select id="findPermission" resultType="com.bank.payment.security.ServicePermission">
+        SELECT permission_id,
+               service_id,
+               operation,
+               max_amount,
+               status
+        FROM service_permission
+        WHERE service_id = #{serviceId}
+          AND operation  = #{operation}
+    </select>
+
+    <select id="findAllowedAccounts" resultType="string">
+        SELECT account_no
+        FROM service_permission_account
+        WHERE permission_id = #{permissionId}
+    </select>
+
+    <insert id="insertAuthorizationLog"
+            parameterType="com.bank.payment.security.ServiceAuthorizationLogEntry">
+        INSERT INTO service_authorization_log (
+            service_id,
+            operation,
+            decision,
+            deny_reason,
+            idempotency_key,
+            amount,
+            sender_account_no,
+            trace_id,
+            request_path
+        ) VALUES (
+            #{serviceId},
+            #{operation},
+            #{decision},
+            #{denyReason},
+            #{idempotencyKey},
+            #{amount},
+            #{senderAccountNo},
+            #{traceId},
+            #{requestPath}
+        )
+    </insert>
+
+</mapper>
