@@ -302,4 +302,49 @@ class JwtAuthenticationFilterTest {
 
         assertThat(chainCalled.get()).isTrue();
     }
+
+    @Test
+    @DisplayName("공개 경로여도 클라이언트가 보낸 신원 헤더는 지워진다")
+    void publicPath_stripsClientSuppliedIdentityHeaders() {
+        // 로그인 경로는 인증을 요구하지 않는다. 그렇다고 신원 헤더를 통과시키면,
+        // 그 값이 속도제한 버킷 키가 되어 요청마다 새 버킷이 생긴다 —
+        // 브루트포스를 막으려고 건 한도가 정작 브루트포스에 뚫린다.
+        MockServerHttpRequest request = MockServerHttpRequest
+                .post("/api/v1/auth/login")
+                .header("X-User-Id", "attacker-rotates-this")
+                .header("X-Employee-Id", "9001")
+                .header("X-User-Role", "ROLE_ADMIN")
+                .build();
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+
+        AtomicReference<ServerHttpRequest> forwarded = new AtomicReference<>();
+        filter.filter(exchange, ex -> {
+            forwarded.set(ex.getRequest());
+            return Mono.empty();
+        }).block();
+
+        assertThat(forwarded.get().getHeaders().getFirst("X-User-Id"))
+                .as("남겨 두면 속도제한 키가 클라이언트 마음대로가 된다")
+                .isNull();
+        assertThat(forwarded.get().getHeaders().getFirst("X-Employee-Id")).isNull();
+        assertThat(forwarded.get().getHeaders().getFirst("X-User-Role")).isNull();
+    }
+
+    @Test
+    @DisplayName("공개 경로는 토큰 없이도 그대로 통과한다")
+    void publicPath_passesThroughWithoutToken() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/v1/auth/login").build());
+
+        AtomicReference<Boolean> reached = new AtomicReference<>(false);
+        filter.filter(exchange, ex -> {
+            reached.set(true);
+            return Mono.empty();
+        }).block();
+
+        assertThat(reached.get())
+                .as("헤더를 지우느라 공개 경로를 막아 버리면 로그인 자체가 안 된다")
+                .isTrue();
+        assertThat(exchange.getResponse().getStatusCode()).isNull();
+    }
 }

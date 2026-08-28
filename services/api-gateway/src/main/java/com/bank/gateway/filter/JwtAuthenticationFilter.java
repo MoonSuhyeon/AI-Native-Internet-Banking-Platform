@@ -63,7 +63,17 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String path = exchange.getRequest().getPath().value();
 
         if (isPublic(path)) {
-            return chain.filter(exchange);
+            // 인증을 요구하지 않는 경로여도 신원 헤더는 지운다.
+            //
+            // 지우지 않으면 클라이언트가 X-User-Id 를 직접 실을 수 있고, 그 값은
+            // 속도제한 버킷 키로 쓰인다. 요청마다 다른 값을 넣으면 버킷이 매번 새로
+            // 생겨 로그인 속도제한이 통째로 우회된다 — 브루트포스를 막으려고 건
+            // 한도가 정작 브루트포스에 뚫린다.
+            return chain.filter(exchange.mutate()
+                    .request(exchange.getRequest().mutate()
+                            .headers(JwtAuthenticationFilter::stripIdentityHeaders)
+                            .build())
+                    .build());
         }
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
@@ -92,15 +102,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         ServerHttpRequest mutated = exchange.getRequest().mutate()
-                .headers(h -> {
-                    h.remove("X-Customer-Id");
-                    h.remove("X-Customer-Email");
-                    h.remove("X-User-Id");
-                    h.remove("X-User-Role");
-                    h.remove("X-User-Branch");
-                    h.remove("X-User-Grade");
-                    h.remove("X-Employee-Id");
-                })
+                .headers(JwtAuthenticationFilter::stripIdentityHeaders)
                 .header("X-Customer-Id",    String.valueOf(claims.customerId()))
                 .header("X-Customer-Email", claims.email() != null ? claims.email() : "")
                 .header("X-User-Id",        String.valueOf(claims.customerId()))
@@ -113,8 +115,27 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return chain.filter(exchange.mutate().request(mutated).build());
     }
 
+    /**
+     * 게이트웨이가 주입하는 신원 헤더를 요청에서 제거한다.
+     *
+     * <p>클라이언트가 보낸 같은 이름의 헤더를 먼저 지워야 뒤에서 넣는 값이 유일해진다.
+     * 인증 경로든 공개 경로든 지우는 것은 같다 — 공개 경로에서 남겨 두면 그 값이
+     * 속도제한 키나 하위 서비스로 흘러간다.
+     */
+    private static void stripIdentityHeaders(HttpHeaders h) {
+        h.remove("X-Customer-Id");
+        h.remove("X-Customer-Email");
+        h.remove("X-User-Id");
+        h.remove("X-User-Role");
+        h.remove("X-User-Branch");
+        h.remove("X-User-Grade");
+        h.remove("X-Employee-Id");
+    }
+
     @Override
     public int getOrder() {
+        // 라우트 필터(속도제한 등)보다 먼저 돌아야 한다. 순서가 뒤집히면
+        // 속도제한이 클라이언트가 보낸 신원 헤더를 그대로 키로 쓴다.
         return Ordered.HIGHEST_PRECEDENCE;
     }
 
