@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.audit import ensure_harness_audit_schema
 from app import identity
+from app import core_banking_client
 from app.config import get_settings
 from app.database import Base, engine, get_db
 from app.kafka import KafkaEventConsumer, KafkaEventPublisher
@@ -163,29 +164,13 @@ async def _kafka_consume_loop(consumer: KafkaEventConsumer) -> None:
 
 
 def _build_rag_index(rag_engine: ProductRagEngine) -> None:
-    """DB에서 상품 목록을 조회해 RAG 인덱스를 빌드한다. 오류 시 로그만 남기고 계속 진행."""
-    from sqlalchemy.orm import Session as _Session
+    """상품 목록으로 RAG 인덱스를 빌드한다. 오류 시 로그만 남기고 계속 진행.
+
+    상품은 core-banking 소유다. 직접 SQL 로 읽으면 core-banking 이 스키마를 바꿀 때
+    이 서비스가 조용히 깨진다 — 컴파일도 테스트도 잡아 주지 않는다.
+    """
     try:
-        with _Session(engine) as db:
-            rows = db.execute(text(
-                """
-                SELECT banking_product_id AS product_id,
-                       deposit_product_name,
-                       deposit_product_type,
-                       base_interest_rate,
-                       min_join_amount,
-                       max_join_amount,
-                       min_period_month,
-                       max_period_month,
-                       is_early_termination_allowed,
-                       is_tax_benefit_available,
-                       description
-                  FROM deposit_banking_products
-                 WHERE is_sold = true
-                 ORDER BY banking_product_id
-                """
-            )).mappings().all()
-            products = [dict(r) for r in rows]
+        products = core_banking_client.fetch_selling_products()
         rag_engine.build_from_db(products)
         logger.info("[RAG] 인덱스 빌드 완료: 상품 %d건", len(products))
     except Exception as exc:

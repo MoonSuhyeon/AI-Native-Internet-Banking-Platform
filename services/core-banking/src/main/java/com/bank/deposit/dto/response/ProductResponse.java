@@ -18,6 +18,8 @@ public record ProductResponse(
         Long departmentId,
         BigDecimal baseInterestRate,
         BigDecimal bestRate,
+        /** 우대금리 조건 원문. 상담이 비교 안내에 쓴다. */
+        String preferentialRateCondition,
         Long minJoinAmount,
         Long maxJoinAmount,
         Integer minPeriodMonth,
@@ -64,6 +66,7 @@ public record ProductResponse(
                 product.getDepartmentId(),
                 product.getBaseInterestRate(),
                 bestRate,
+                product.getPreferentialRateCondition(),
                 product.getMinJoinAmount(),
                 product.getMaxJoinAmount(),
                 product.getMinPeriodMonth(),

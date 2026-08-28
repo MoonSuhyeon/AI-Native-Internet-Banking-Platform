@@ -11,6 +11,7 @@ from typing import Any
 
 from harness_core.tracing import span, update_current_span
 
+from app import core_banking_client
 from app.features.base import FeatureExecutorBase
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse
 
@@ -71,28 +72,7 @@ def _find_products_by_name(db: Any, query: str) -> list[dict]:
     2. 공백 제거 후 상품명이 쿼리에 포함
     3. 상품명 고유 토큰(4자 이상) 중 하나가 쿼리에 포함
     """
-    from sqlalchemy import text
-    rows = db.execute(text(
-        """
-        SELECT banking_product_id   AS product_id,
-               deposit_product_name AS product_name,
-               deposit_product_type AS product_type,
-               description,
-               base_interest_rate,
-               preferential_rate_condition,
-               min_join_amount,
-               max_join_amount,
-               min_period_month,
-               max_period_month,
-               is_early_termination_allowed,
-               is_tax_benefit_available,
-               is_auto_renewal_available,
-               is_passbook_issued
-          FROM deposit_banking_products
-         WHERE deposit_product_status = 'SELLING'
-         ORDER BY banking_product_id
-        """
-    )).mappings().all()
+    rows = core_banking_client.fetch_selling_products_for_compare()
 
     q_nospace = query.replace(" ", "")
     scored: list[tuple[int, dict]] = []
