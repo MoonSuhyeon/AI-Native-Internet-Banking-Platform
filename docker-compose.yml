@@ -356,6 +356,12 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # 여신 자금이동(실행·자동이체·온라인상환·역분개)이 결제를 거치는 경로다.
+      # 이 값이 없으면 loan 의 기본값 http://localhost:8080 으로 떨어지는데,
+      # 컨테이너 안의 localhost:8080 은 아무것도 아니라 Connection refused 가 난다.
+      # 그 탓에 도커 스택에서 여신 자금이동이 한 번도 성공한 적이 없다 —
+      # 근거는 docs/plan/loan-payment-ledger-trace.md.
+      PAYMENT_SERVICE_URL: http://core-banking-a:8082
       CRYPTO_KEY_BASE64: ${CRYPTO_KEY_BASE64:-aW50ZXJuZXQtYmFuay1kZXYta2V5LTMyYnl0ZXMhISE=}
       LOG_DIR: /logs
       # 서류 원본 보관. 기본 스택은 filesystem + 영속 볼륨을 쓴다.
