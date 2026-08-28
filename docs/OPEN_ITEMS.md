@@ -104,7 +104,7 @@
 | **ISO 20022 전문 변환** | Kafka JSON 이벤트로 대체 | 실제 KFTC/BOK 연계는 표준 전문 |
 | **HSM** | Vault(Transit)로 대체 | doc-agent 봉투암호화에만 적용 |
 | **DR·원장 HA** | 없음. `core-banking-a/b` 는 HA 가 아니라 **타행 시연용** | |
-| **WORM 스토리지** | `agent_audit_log` 에 UPDATE/DELETE 차단 트리거는 있으나, 그 외 감사 테이블(`customer_access_log` 등)에는 없다 | 트리거는 DB 관리자를 못 막는다 |
+| **WORM 스토리지** | `agent_audit_log`·`customer_access_log` 에 UPDATE/DELETE 차단 트리거를 적용했다 | 트리거는 테이블 변경을 막지만 DB 관리자·슈퍼유저의 DDL/트리거 해제까지 막지는 못한다. 권한 분리·백업 보존이 별도 필요하다 |
 
 ### 확인해 보니 이미 있던 것 — 지적이 맞지 않았다
 
