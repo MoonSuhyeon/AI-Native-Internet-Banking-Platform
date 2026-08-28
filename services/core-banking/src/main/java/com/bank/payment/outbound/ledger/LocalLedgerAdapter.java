@@ -58,7 +58,8 @@ public class LocalLedgerAdapter implements LedgerPort {
                 request.accountId(),
                 request.amount(),
                 channelOf(request.channelType()),
-                request.transactionMemo()));
+                request.transactionMemo(),
+                idempotencyKey));
     }
 
     @Override
@@ -69,12 +70,13 @@ public class LocalLedgerAdapter implements LedgerPort {
                 channelOf(request.channelType()),
                 request.transactionMemo(),
                 null,
-                request.depositorName()));
+                request.depositorName(),
+                idempotencyKey));
     }
 
     @Override
     public WithdrawCancelData withdrawCancel(String idempotencyKey, Long transactionId) {
-        Transaction reversal = transactionService.reversal(transactionId, TransactionChannel.SYSTEM);
+        Transaction reversal = transactionService.reversal(transactionId, TransactionChannel.SYSTEM, idempotencyKey);
         return new WithdrawCancelData(
                 reversal.getTransactionNumber(),
                 null,   // 원거래 번호: deposit 은 originalTransactionId(FK)만 보유

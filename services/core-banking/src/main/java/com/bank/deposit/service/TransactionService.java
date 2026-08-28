@@ -56,11 +56,28 @@ public class TransactionService {
     @Transactional
     public Transaction deposit(Long accountId, Long amount, TransactionChannel channelType,
                                String transactionMemo, String depositorCustomerId, String depositorName) {
+        return deposit(accountId, amount, channelType, transactionMemo, depositorCustomerId, depositorName, null);
+    }
+
+    /**
+     * 입금. 멱등키가 있으면 같은 키의 기존 거래를 그대로 돌려준다.
+     *
+     * <p>키를 조회만 하고 저장하지 않으면 재시도가 매번 새 입금이 된다. 조회·저장은
+     * 한 쌍이어야 한다.
+     */
+    @Transactional
+    public Transaction deposit(Long accountId, Long amount, TransactionChannel channelType,
+                               String transactionMemo, String depositorCustomerId, String depositorName,
+                               String idempotencyKey) {
+        Optional<Transaction> replayed = findByIdempotencyKey(idempotencyKey, accountId);
+        if (replayed.isPresent()) {
+            return replayed.get();
+        }
         Account account = getActiveAccountForUpdate(accountId);
         Long before = account.getBalance();
         account.deposit(amount, clock);
 
-        return transactionRepository.save(Transaction.builder()
+        Transaction built = Transaction.builder()
                 .transactionNumber(generateTxnNumber("DEP"))
                 .accountId(accountId)
                 .transactionType(TransactionType.DEPOSIT)
@@ -75,16 +92,29 @@ public class TransactionService {
                 .transactionMemo(transactionMemo)
                 .depositorCustomerId(depositorCustomerId)
                 .depositorName(depositorName)
-                .build());
+                .idempotencyKey(normalizeIdempotencyKey(idempotencyKey))
+                .build();
+        return persistIdempotent(built, idempotencyKey, accountId);
     }
 
     @Transactional
     public Transaction withdraw(Long accountId, Long amount, TransactionChannel channelType, String transactionMemo) {
+        return withdraw(accountId, amount, channelType, transactionMemo, null);
+    }
+
+    /** 출금. 멱등키가 있으면 같은 키의 기존 거래를 그대로 돌려준다. */
+    @Transactional
+    public Transaction withdraw(Long accountId, Long amount, TransactionChannel channelType,
+                                String transactionMemo, String idempotencyKey) {
+        Optional<Transaction> replayed = findByIdempotencyKey(idempotencyKey, accountId);
+        if (replayed.isPresent()) {
+            return replayed.get();
+        }
         Account account = getActiveAccountForUpdate(accountId);
         Long before = account.getBalance();
         account.withdraw(amount, clock);
 
-        return transactionRepository.save(Transaction.builder()
+        Transaction built = Transaction.builder()
                 .transactionNumber(generateTxnNumber("WDR"))
                 .accountId(accountId)
                 .transactionType(TransactionType.WITHDRAW)
@@ -97,7 +127,9 @@ public class TransactionService {
                 .transactionAt(OffsetDateTime.now(clock))
                 .postedAt(OffsetDateTime.now(clock))
                 .transactionMemo(transactionMemo)
-                .build());
+                .idempotencyKey(normalizeIdempotencyKey(idempotencyKey))
+                .build();
+        return persistIdempotent(built, idempotencyKey, accountId);
     }
 
     /**
@@ -231,7 +263,17 @@ public class TransactionService {
 
     @Transactional
     public Transaction reversal(Long transactionId, TransactionChannel channelType) {
+        return reversal(transactionId, channelType, null);
+    }
+
+    /** 거래 취소(보상). 멱등키가 있으면 같은 키의 기존 취소 거래를 그대로 돌려준다. */
+    @Transactional
+    public Transaction reversal(Long transactionId, TransactionChannel channelType, String idempotencyKey) {
         Transaction original = findById(transactionId);
+        Optional<Transaction> replayed = findByIdempotencyKey(idempotencyKey, original.getAccountId());
+        if (replayed.isPresent()) {
+            return replayed.get();
+        }
         if (original.getStatus() == TransactionStatus.CANCELED) {
             throw new BusinessException(ErrorCode.ALREADY_CANCELED);
         }
@@ -253,7 +295,7 @@ public class TransactionService {
 
         original.cancel(clock);
 
-        return transactionRepository.save(Transaction.builder()
+        Transaction built = Transaction.builder()
                 .transactionNumber(generateTxnNumber("REV"))
                 .accountId(original.getAccountId())
                 .contractId(original.getContractId())
@@ -268,7 +310,31 @@ public class TransactionService {
                 .transactionAt(OffsetDateTime.now(clock))
                 .postedAt(OffsetDateTime.now(clock))
                 .transactionSummary("거래 취소")
-                .build());
+                .idempotencyKey(normalizeIdempotencyKey(idempotencyKey))
+                .build();
+        return persistIdempotent(built, idempotencyKey, original.getAccountId());
+    }
+
+    private Optional<Transaction> findByIdempotencyKey(String idempotencyKey, Long accountId) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return Optional.empty();
+        }
+        return transactionRepository.findByIdempotencyKeyAndAccountId(idempotencyKey, accountId);
+    }
+
+    /**
+     * 유니크 제약에 기대어 저장한다. 사전 조회와 저장 사이에 다른 요청이 끼어들어도
+     * 두 번째는 제약에 걸려 기존 행을 돌려받는다 — 사전 조회만으로는 동시 요청을 못 막는다.
+     */
+    private Transaction persistIdempotent(Transaction tx, String idempotencyKey, Long accountId) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return transactionRepository.save(tx);
+        }
+        return idempotentTransactionSaver.saveOrFetch(tx, idempotencyKey, accountId);
+    }
+
+    private static String normalizeIdempotencyKey(String key) {
+        return (key != null && !key.isBlank()) ? key : null;
     }
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");

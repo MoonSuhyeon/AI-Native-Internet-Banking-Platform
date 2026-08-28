@@ -90,18 +90,14 @@ public class DepositV1Service {
     @Transactional
     public TransactionResponse withdraw(WithdrawRequest req, String idempotencyKey) {
         Account a = accountService.findByAccountNumber(req.accountNo());
-        // 멱등 처리: 동일 키로 이미 처리된 출금이 있으면 그대로 반환
-        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            var existing = transactionRepository.findByIdempotencyKeyAndAccountId(idempotencyKey, a.getAccountId());
-            if (existing.isPresent()) {
-                return TransactionResponse.from(existing.get(), req.accountNo());
-            }
-        }
+        // 멱등 처리는 TransactionService 안에서 조회·저장을 한 쌍으로 한다.
+        // 여기서 한 번 더 조회하면 두 곳이 우연히 같아야만 맞는 구조가 된다.
         Transaction tx = transactionService.withdraw(
                 a.getAccountId(),
                 req.amount(),
                 TransactionChannel.INTERNET,
-                req.memo()
+                req.memo(),
+                idempotencyKey
         );
         return TransactionResponse.from(tx, req.accountNo());
     }
@@ -109,12 +105,6 @@ public class DepositV1Service {
     @Transactional
     public TransactionResponse deposit(DepositRequest req, String idempotencyKey) {
         Account a = accountService.findByAccountNumber(req.accountNo());
-        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            var existing = transactionRepository.findByIdempotencyKeyAndAccountId(idempotencyKey, a.getAccountId());
-            if (existing.isPresent()) {
-                return TransactionResponse.from(existing.get(), req.accountNo());
-            }
-        }
         String depositorName = req.counterparty() != null ? req.counterparty().holderName() : null;
         Transaction tx = transactionService.deposit(
                 a.getAccountId(),
@@ -122,7 +112,8 @@ public class DepositV1Service {
                 TransactionChannel.INTERNET,
                 req.memo(),
                 null,
-                depositorName
+                depositorName,
+                idempotencyKey
         );
         return TransactionResponse.from(tx, req.accountNo());
     }
@@ -132,15 +123,7 @@ public class DepositV1Service {
         Transaction original = transactionRepository.findByTransactionNumber(req.originalDepositTransactionNo())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRANSACTION_NOT_FOUND));
 
-        // 멱등 처리: 이미 취소 거래가 생성되어 있으면 그대로 반환
-        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            var existing = transactionRepository.findByIdempotencyKeyAndAccountId(idempotencyKey, original.getAccountId());
-            if (existing.isPresent()) {
-                return CancelResponse.from(existing.get(), req.originalDepositTransactionNo(), req.accountNo());
-            }
-        }
-
-        Transaction reversal = transactionService.reversal(original.getTransactionId(), null);
+        Transaction reversal = transactionService.reversal(original.getTransactionId(), null, idempotencyKey);
         return CancelResponse.from(reversal, req.originalDepositTransactionNo(), req.accountNo());
     }
 }
