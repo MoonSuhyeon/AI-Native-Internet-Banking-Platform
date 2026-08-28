@@ -1,5 +1,6 @@
 package com.bank.ai.llm.client;
 
+import com.bank.harness.pii.PiiMasker;
 import com.bank.harness.trace.AgentTracer;
 
 import java.util.Map;
@@ -57,10 +58,12 @@ public class GeminiOpenAiCompatLlmClient implements LlmClient {
         String systemPrompt = (request.system() != null ? request.system() : "")
                 + "\n\n" + converter.getFormat();
 
+        // 외부 사업자에게 나가는 경로다. 심사 프롬프트에는 이름·연락처·계좌가 실린다.
+        // 가리는 지점이 여기 하나뿐이어서는 안 되지만, 없는 것보다는 낫다.
         var prompt = new Prompt(
                 List.of(
-                        new SystemMessage(systemPrompt),
-                        new UserMessage(request.userContent())
+                        new SystemMessage(PiiMasker.mask(systemPrompt)),
+                        new UserMessage(PiiMasker.mask(request.userContent()))
                 ),
                 OpenAiChatOptions.builder()
                         .temperature(request.temperature())
