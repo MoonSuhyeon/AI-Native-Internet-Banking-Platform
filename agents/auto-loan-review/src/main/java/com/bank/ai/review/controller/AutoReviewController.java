@@ -42,6 +42,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AutoReviewController {
 
+    private static final String ADMIN_ROLE = "ROLE_ADMIN";
+
     private final AutoReviewService autoReviewService;
     private final RuleEngineService ruleEngineService;
 
@@ -63,15 +65,25 @@ public class AutoReviewController {
         return false;
     }
 
+    private boolean gatewayRoleForbidden(String userRoles) {
+        // loan-service의 내부 호출은 X-User-Role 없이 내부 토큰으로만 인증된다.
+        // 반대로 gateway가 역할을 붙인 브라우저 호출은 관리자 역할을 반드시 가져야 한다.
+        return userRoles != null && !userRoles.isBlank()
+                && java.util.Arrays.stream(userRoles.split(","))
+                .map(String::trim)
+                .noneMatch(ADMIN_ROLE::equals);
+    }
+
     @Operation(summary = "자동심사 ML 추론 단건",
             description = "신청자 피처를 받아 APPROVE/REJECT 결정과 확률만 반환. "
                     + "트랙 분기·hard constraint 까지 포함한 종합 결과는 /evaluate 사용.")
     @PostMapping("/auto-review")
     public ResponseEntity<ApiResponse<AutoReviewResponse>> review(
             @RequestHeader(value = "X-Internal-Token", required = false) String token,
+            @RequestHeader(value = "X-User-Role", required = false) String userRoles,
             @Valid @RequestBody AutoReviewRequest req) {
-        if (tokenMismatch(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (tokenMismatch(token) || gatewayRoleForbidden(userRoles)) {
+            return ResponseEntity.status(tokenMismatch(token) ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(ApiResponse.ok(autoReviewService.review(req)));
     }
@@ -82,9 +94,10 @@ public class AutoReviewController {
     @PostMapping("/auto-review/evaluate")
     public ResponseEntity<ApiResponse<AutoReviewEvaluateResponse>> evaluate(
             @RequestHeader(value = "X-Internal-Token", required = false) String token,
+            @RequestHeader(value = "X-User-Role", required = false) String userRoles,
             @Valid @RequestBody AutoReviewRequest req) {
-        if (tokenMismatch(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (tokenMismatch(token) || gatewayRoleForbidden(userRoles)) {
+            return ResponseEntity.status(tokenMismatch(token) ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(ApiResponse.ok(ruleEngineService.evaluate(req)));
     }

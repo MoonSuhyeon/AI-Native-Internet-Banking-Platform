@@ -96,7 +96,7 @@ class GatewayRouteCoverageTest {
      * 않는다. 어드민 시뮬레이터 화면(admin/loan/auto-review-sim)이 이 경로를 부르므로
      * 지금은 동작하지 않는다 — docs/OPEN_ITEMS.md 에 적어 두었다.
      */
-    private static final Set<String> INTENTIONALLY_UNROUTED = Set.of("/api/ai");
+    private static final Set<String> INTENTIONALLY_UNROUTED = Set.of();
 
     @Test
     @DisplayName("프론트가 부르는 /api 경로는 모두 게이트웨이 라우트에 있다")

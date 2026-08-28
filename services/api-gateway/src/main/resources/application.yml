@@ -277,6 +277,19 @@ spring:
             #   /api/v1/agent/spending/chat → /agent/spending/chat
             - RewritePath=/api/v1/agent/(?<segment>.*), /agent/$\{segment}
 
+        # 자동심사 시뮬레이터는 gateway가 검증한 역할과 내부 토큰을 모두 전달한다.
+        - id: auto-loan-review-admin
+          uri: http://${AUTO_LOAN_REVIEW_HOST:localhost}:${AUTO_LOAN_REVIEW_PORT:8086}
+          predicates:
+            - Path=/api/ai/auto-review/**
+          filters:
+            - AddRequestHeader=X-Internal-Token, ${AUTO_LOAN_REVIEW_INTERNAL_TOKEN:not-configured}
+            # 고비용 추론 경로의 한도는 모델/LLM 공급자 쿼터를 근거로 운영에서 주입한다.
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${GATEWAY_AUTO_REVIEW_REPLENISH_RATE}
+                redis-rate-limiter.burstCapacity: ${GATEWAY_AUTO_REVIEW_BURST_CAPACITY}
+
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-please-change-in-production-min-32-chars-long}
   access-token-validity: 600000    # 10분 (밀리초)

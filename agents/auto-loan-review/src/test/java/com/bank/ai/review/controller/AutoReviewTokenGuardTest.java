@@ -87,4 +87,18 @@ class AutoReviewTokenGuardTest {
 
         verifyNoInteractions(autoReviewService, ruleEngineService);
     }
+
+    @ParameterizedTest(name = "{0} 는 gateway 역할이 ADMIN이 아니면 거절한다")
+    @ValueSource(strings = {"/api/ai/auto-review", "/api/ai/auto-review/evaluate"})
+    @DisplayName("유효 내부 토큰만으로는 gateway 경유 일반 사용자가 자동심사를 실행할 수 없다")
+    void gatewayCallerWithoutAdminRoleIsRejected(String path) throws Exception {
+        mockMvc.perform(post(path)
+                        .header("X-Internal-Token", VALID_TOKEN)
+                        .header("X-User-Role", "ROLE_CUSTOMER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(BODY))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(autoReviewService, ruleEngineService);
+    }
 }
