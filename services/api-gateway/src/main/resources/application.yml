@@ -54,6 +54,7 @@ spring:
             # `GATEWAY_AUTH_*` 환경 설정으로만 결정한다(코드에 임의 정책값을 두지 않는다).
             - name: RequestRateLimiter
               args:
+                key-resolver: "#{@rateLimitKeyResolver}"
                 redis-rate-limiter.replenishRate: ${GATEWAY_AUTH_REPLENISH_RATE}
                 redis-rate-limiter.burstCapacity: ${GATEWAY_AUTH_BURST_CAPACITY}
 
@@ -82,6 +83,7 @@ spring:
             # 트래픽과 부하 시험 결과를 근거로 운영 환경에서 주입한다.
             - name: RequestRateLimiter
               args:
+                key-resolver: "#{@rateLimitKeyResolver}"
                 redis-rate-limiter.replenishRate: ${GATEWAY_CUSTOMER_REPLENISH_RATE}
                 redis-rate-limiter.burstCapacity: ${GATEWAY_CUSTOMER_BURST_CAPACITY}
 
@@ -126,6 +128,7 @@ spring:
             # 용량을 근거로 배포 설정에서 관리한다.
             - name: RequestRateLimiter
               args:
+                key-resolver: "#{@rateLimitKeyResolver}"
                 redis-rate-limiter.replenishRate: ${GATEWAY_LOAN_REPLENISH_RATE}
                 redis-rate-limiter.burstCapacity: ${GATEWAY_LOAN_BURST_CAPACITY}
 
@@ -287,6 +290,7 @@ spring:
             # 고비용 추론 경로의 한도는 모델/LLM 공급자 쿼터를 근거로 운영에서 주입한다.
             - name: RequestRateLimiter
               args:
+                key-resolver: "#{@rateLimitKeyResolver}"
                 redis-rate-limiter.replenishRate: ${GATEWAY_AUTO_REVIEW_REPLENISH_RATE}
                 redis-rate-limiter.burstCapacity: ${GATEWAY_AUTO_REVIEW_BURST_CAPACITY}
 
