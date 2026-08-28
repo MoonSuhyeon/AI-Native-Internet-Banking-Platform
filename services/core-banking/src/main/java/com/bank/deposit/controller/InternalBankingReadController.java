@@ -2,8 +2,7 @@ package com.bank.deposit.controller;
 
 import com.bank.deposit.audit.AccessActor;
 import com.bank.deposit.audit.AccessActorResolver;
-import com.bank.deposit.audit.AccessAuditRecorder;
-import com.bank.deposit.domain.entity.Account;
+import com.bank.deposit.audit.ResourceAccessGuard;
 import com.bank.deposit.dto.internal.InternalAccountSummary;
 import com.bank.deposit.service.AccountService;
 import lombok.RequiredArgsConstructor;
@@ -32,11 +31,12 @@ import static com.bank.deposit.audit.AccessActorResolver.*;
 @RequiredArgsConstructor
 public class InternalBankingReadController {
 
-    private static final String ACTION_ACCOUNT_LIST = "ACCOUNT_LIST";
+    private static final String RESOURCE_ACCOUNT = "DEPOSIT_ACCOUNT";
+    private static final String ACTION_READ = "READ";
 
     private final AccountService accountService;
     private final AccessActorResolver actorResolver;
-    private final AccessAuditRecorder auditRecorder;
+    private final ResourceAccessGuard accessGuard;
 
     /**
      * 고객의 계좌 요약 목록.
@@ -55,14 +55,14 @@ public class InternalBankingReadController {
 
         AccessActor actor = actorResolver.resolve(
                 employeeId, callerCustomerId, service, reason, traceId,
-                ACTION_ACCOUNT_LIST, customerId);
-        actorResolver.requireOwnershipIfCustomer(actor, ACTION_ACCOUNT_LIST, customerId);
+                RESOURCE_ACCOUNT + "_" + ACTION_READ, customerId);
 
-        List<Account> accounts = accountService.findByCustomer(customerId);
+        // 두 경계를 모두 통과해야 한다 — 상류 인가와 자원 쪽 최종 판단.
+        // 통과 여부와 무관하게 요청·판단·결과가 한 건으로 기록된다.
+        accessGuard.authorizeRead(actor, RESOURCE_ACCOUNT, ACTION_READ, customerId);
 
-        // 조회가 성공한 뒤에 기록한다. 실패한 조회를 "봤다" 로 남기지 않기 위해서다.
-        auditRecorder.allowed(actor, ACTION_ACCOUNT_LIST, customerId, null);
-
-        return accounts.stream().map(InternalAccountSummary::from).toList();
+        return accountService.findByCustomer(customerId).stream()
+                .map(InternalAccountSummary::from)
+                .toList();
     }
 }

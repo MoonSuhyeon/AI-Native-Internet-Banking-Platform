@@ -34,6 +34,36 @@ public class AccessAuditRecorder {
         save(actor, action, targetCustomerId, targetAccountId, DENIED, deniedReason);
     }
 
+    /**
+     * 요청·판단·결과를 한 건으로 남긴다.
+     *
+     * <p>판단이 둘이라 둘 다 적는다 — 상류(customer-service) 인가와 자원 쪽 최종 판단.
+     * 하나로 뭉치면 "상류는 허용했는데 자원에서 막혔다" 가 로그에서 사라지고,
+     * 중앙 인가가 잘못 열렸을 때 그 사실이 안 보인다.
+     */
+    public void record(AccessActor actor, String resource, String action, String targetCustomerId,
+                       Long targetAccountId, String authzDecision, String authzDenyCode,
+                       String result, String deniedReason) {
+        writer.write(AccessAudit.builder()
+                .actorType(actor.type())
+                .actorEmployeeId(actor.employeeId())
+                .actorCustomerId(actor.customerId())
+                .actorService(actor.service())
+                .targetCustomerId(targetCustomerId)
+                .targetAccountId(targetAccountId)
+                .accessActionCode(resource + "_" + action)
+                .resourceCode(resource)
+                .actionCode(action)
+                .authzDecision(authzDecision)
+                .authzDenyCode(authzDenyCode)
+                .accessReason(actor.reason())
+                .resultCode(result)
+                .deniedReason(deniedReason)
+                .traceId(actor.traceId())
+                .accessedAt(OffsetDateTime.now(clock))
+                .build());
+    }
+
     private void save(AccessActor actor, String action, String targetCustomerId,
                       Long targetAccountId, String result, String deniedReason) {
         writer.write(AccessAudit.builder()

@@ -46,6 +46,20 @@ public class AccessAudit {
     @Column(name = "access_action_code", length = 40, nullable = false)
     private String accessActionCode;
 
+    /** 자원 축. access_action_code 와 달리 집계에 쓴다. */
+    @Column(name = "resource_code", length = 40)
+    private String resourceCode;
+
+    @Column(name = "action_code", length = 20)
+    private String actionCode;
+
+    /** customer-service 의 인가 판단. 이것만 믿고 자원을 내주지는 않는다. */
+    @Column(name = "authz_decision", length = 20)
+    private String authzDecision;
+
+    @Column(name = "authz_deny_code", length = 40)
+    private String authzDenyCode;
+
     @Column(name = "access_reason", length = 500)
     private String accessReason;
 
@@ -64,7 +78,9 @@ public class AccessAudit {
     @Builder
     private AccessAudit(String actorType, Long actorEmployeeId, String actorCustomerId,
                         String actorService, String targetCustomerId, Long targetAccountId,
-                        String accessActionCode, String accessReason, String resultCode,
+                        String accessActionCode, String resourceCode, String actionCode,
+                        String authzDecision, String authzDenyCode,
+                        String accessReason, String resultCode,
                         String deniedReason, String traceId, OffsetDateTime accessedAt) {
         this.actorType = actorType;
         this.actorEmployeeId = actorEmployeeId;
@@ -73,6 +89,10 @@ public class AccessAudit {
         this.targetCustomerId = targetCustomerId;
         this.targetAccountId = targetAccountId;
         this.accessActionCode = accessActionCode;
+        this.resourceCode = resourceCode;
+        this.actionCode = actionCode;
+        this.authzDecision = authzDecision;
+        this.authzDenyCode = authzDenyCode;
         this.accessReason = accessReason;
         this.resultCode = resultCode;
         this.deniedReason = deniedReason;

@@ -1,5 +1,7 @@
 package com.bank.deposit.client;
 
+import com.bank.deposit.client.dto.EmployeeAuthorizationRequest;
+import com.bank.deposit.client.dto.EmployeeAuthorizationResponse;
 import com.bank.deposit.client.dto.HolderInfoResponse;
 import com.bank.deposit.client.dto.TransactionApprovalVerifyRequest;
 import com.bank.deposit.client.dto.TransferLimitResponse;
@@ -44,4 +46,21 @@ public interface CustomerServiceClient {
      */
     @PostMapping("/api/internal/transaction-approvals/verify")
     void verifyTransactionApproval(@RequestBody TransactionApprovalVerifyRequest request);
+
+    /**
+     * 직원 인가 판단.
+     *
+     * <p><b>왜 core-banking 이 직접 묻는가.</b> 부르는 쪽(상담·조사)이 "나는 허가받았다"
+     * 는 헤더를 실어 보내면, 그것은 클라이언트가 주장하는 값이다. 자원을 가진 쪽이
+     * 직접 물어야 그 주장을 검증한 것이 된다.
+     *
+     * <p>직원 신원·역할의 정본은 customer-service 다. 다만 <b>여기서 ALLOW 가 와도
+     * 자원이 열리는 것은 아니다</b> — core-banking 은 자기 자원 기준 검사를 따로 한다.
+     * 중앙 인가가 잘못 열렸을 때 자원까지 같이 열리지 않게 하려는 것이다.
+     */
+    @PostMapping("/api/v1/internal/authorization/employee")
+    EmployeeAuthorizationResponse authorizeEmployee(
+            @RequestBody EmployeeAuthorizationRequest request,
+            @RequestHeader("X-Caller-Service") String callerService
+    );
 }
