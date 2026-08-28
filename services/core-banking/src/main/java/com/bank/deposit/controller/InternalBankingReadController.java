@@ -3,8 +3,15 @@ package com.bank.deposit.controller;
 import com.bank.deposit.audit.AccessActor;
 import com.bank.deposit.audit.AccessActorResolver;
 import com.bank.deposit.audit.ResourceAccessGuard;
+import com.bank.deposit.domain.enums.ContractStatus;
 import com.bank.deposit.dto.internal.InternalAccountSummary;
+import com.bank.deposit.dto.internal.InternalContractSummary;
+import com.bank.deposit.dto.internal.InternalTransactionSummary;
 import com.bank.deposit.service.AccountService;
+import com.bank.deposit.service.ContractService;
+import com.bank.deposit.service.TransactionService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,10 +38,17 @@ import static com.bank.deposit.audit.AccessActorResolver.*;
 @RequiredArgsConstructor
 public class InternalBankingReadController {
 
-    private static final String RESOURCE_ACCOUNT = "DEPOSIT_ACCOUNT";
+    private static final String RESOURCE_ACCOUNT     = "DEPOSIT_ACCOUNT";
+    private static final String RESOURCE_TRANSACTION = "DEPOSIT_TRANSACTION";
+    private static final String RESOURCE_CONTRACT    = "DEPOSIT_CONTRACT";
     private static final String ACTION_READ = "READ";
 
+    /** 상담 한 번이 훑는 양의 상한. 없으면 한 번의 조회가 전 이력을 끌어간다. */
+    private static final int MAX_PAGE_SIZE = 200;
+
     private final AccountService accountService;
+    private final TransactionService transactionService;
+    private final ContractService contractService;
     private final AccessActorResolver actorResolver;
     private final ResourceAccessGuard accessGuard;
 
@@ -63,6 +77,55 @@ public class InternalBankingReadController {
 
         return accountService.findByCustomer(customerId).stream()
                 .map(InternalAccountSummary::from)
+                .toList();
+    }
+
+    /**
+     * 고객의 최근 거래.
+     *
+     * <p>기간·건수를 좁힌다. 상담에 필요한 것은 최근 흐름이지 전 이력이 아니고,
+     * 한 번의 조회로 전부 끌어가면 그것 자체가 유출 경로가 된다.
+     */
+    @GetMapping("/customers/{customerId}/transactions")
+    public List<InternalTransactionSummary> transactions(
+            @PathVariable String customerId,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestHeader(value = EMPLOYEE_ID_HEADER, required = false) String employeeId,
+            @RequestHeader(value = CUSTOMER_ID_HEADER, required = false) String callerCustomerId,
+            @RequestHeader(value = SERVICE_HEADER,     required = false) String service,
+            @RequestHeader(value = REASON_HEADER,      required = false) String reason,
+            @RequestHeader(value = TRACE_HEADER,       required = false) String traceId) {
+
+        AccessActor actor = actorResolver.resolve(
+                employeeId, callerCustomerId, service, reason, traceId,
+                RESOURCE_TRANSACTION + "_" + ACTION_READ, customerId);
+        accessGuard.authorizeRead(actor, RESOURCE_TRANSACTION, ACTION_READ, customerId);
+
+        var pageable = PageRequest.of(0, Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
+                Sort.by(Sort.Direction.DESC, "transactionAt"));
+        return transactionService.findByCustomer(customerId, pageable).getContent().stream()
+                .map(InternalTransactionSummary::from)
+                .toList();
+    }
+
+    /** 고객의 수신 계약. 만기 안내·상담에서 쓴다. */
+    @GetMapping("/customers/{customerId}/contracts")
+    public List<InternalContractSummary> contracts(
+            @PathVariable String customerId,
+            @RequestParam(required = false) ContractStatus contractStatus,
+            @RequestHeader(value = EMPLOYEE_ID_HEADER, required = false) String employeeId,
+            @RequestHeader(value = CUSTOMER_ID_HEADER, required = false) String callerCustomerId,
+            @RequestHeader(value = SERVICE_HEADER,     required = false) String service,
+            @RequestHeader(value = REASON_HEADER,      required = false) String reason,
+            @RequestHeader(value = TRACE_HEADER,       required = false) String traceId) {
+
+        AccessActor actor = actorResolver.resolve(
+                employeeId, callerCustomerId, service, reason, traceId,
+                RESOURCE_CONTRACT + "_" + ACTION_READ, customerId);
+        accessGuard.authorizeRead(actor, RESOURCE_CONTRACT, ACTION_READ, customerId);
+
+        return contractService.findAll(customerId, contractStatus).stream()
+                .map(InternalContractSummary::from)
                 .toList();
     }
 }
