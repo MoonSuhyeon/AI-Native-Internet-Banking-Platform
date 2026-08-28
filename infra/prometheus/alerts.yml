@@ -130,6 +130,59 @@ groups:
           summary: "Kafka Consumer Lag 위험: {{ $labels.consumergroup }}"
           description: "{{ $labels.consumergroup }} ({{ $labels.topic }}) lag={{ $value }}"
 
+  # 돈이 맞는가 — 시스템 가용성이 아니라 원장 정합성을 본다.
+  # Outbox 적체·미완료 거래는 kafka-payment 그룹에 이미 있다.
+  - name: banking-integrity
+    interval: 30s
+    rules:
+      - alert: ReconciliationBreakOpen
+        expr: |
+          sum(payment_reconciliation_break_open{application="core-banking"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "대사 불일치 미해결 {{ $value }}건"
+          description: "내부 원장과 외부 청산이 어긋난 지점이 남아 있습니다. 유형은 대시보드에서 확인하세요."
+
+      # 유형 하나를 따로 뗀 이유 — 합계로 보면 무게가 뭉개진다.
+      # 되돌렸는데 정산된 건은 1건이라도 돈이 실제로 어긋난 것이다.
+      - alert: ReconciliationReversedButSettled
+        expr: |
+          payment_reconciliation_break_open{application="core-banking",type="REVERSED_BUT_SETTLED"} > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "되돌린 거래가 정산됐습니다 ({{ $value }}건)"
+          description: "취소 처리된 거래가 외부 청산에는 정산으로 남아 있습니다. 즉시 확인이 필요합니다."
+
+      # degraded 는 "이상 없음" 이 아니라 "판정 못 함" 이다.
+      # 고액 구간에서는 장애와 같이 취급해 차단하므로, 이 비율이 오르면
+      # 정상 거래가 막히고 있다는 뜻이기도 하다.
+      - alert: FdsPrecheckDegradedHigh
+        expr: |
+          sum(rate(payment_fds_precheck_outcome_total{application="core-banking",outcome="degraded"}[10m]))
+          /
+          sum(rate(payment_fds_precheck_outcome_total{application="core-banking"}[10m]))
+          > 0.10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "FDS 축소판정 비율 {{ $value | humanizePercentage }}"
+          description: "탐지기가 판정하지 못한 비율이 높습니다. 탐지기 상태를 먼저 확인하세요."
+
+      - alert: FdsDelayNotHonored
+        expr: |
+          increase(payment_fds_delay_not_honored_total{application="core-banking"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "지연 지시를 이행하지 못했습니다: {{ $labels.path }}"
+          description: "탐지기가 지연을 지시했으나 호출부가 지키지 못한 건이 {{ $value }}건입니다."
+
   - name: kafka-payment
     interval: 30s
     rules:
