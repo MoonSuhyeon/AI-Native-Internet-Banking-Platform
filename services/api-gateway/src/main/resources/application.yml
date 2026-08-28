@@ -49,6 +49,13 @@ spring:
           uri: http://${CUSTOMER_SERVICE_HOST:localhost}:${CUSTOMER_SERVICE_PORT:8081}
           predicates:
             - Path=/api/v1/auth/**
+          filters:
+            # 인증 시도는 계정당 실패 횟수와 별도로 IP 단위로 제한한다. 값은 운영의
+            # `GATEWAY_AUTH_*` 환경 설정으로만 결정한다(코드에 임의 정책값을 두지 않는다).
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${GATEWAY_AUTH_REPLENISH_RATE}
+                redis-rate-limiter.burstCapacity: ${GATEWAY_AUTH_BURST_CAPACITY}
 
         # 휴대폰 본인인증 (가입 단계 — JWT 없이 공개)
         - id: mobile-auth-public
@@ -70,6 +77,13 @@ spring:
           uri: http://${CUSTOMER_SERVICE_HOST:localhost}:${CUSTOMER_SERVICE_PORT:8081}
           predicates:
             - Path=/api/v1/customers/**,/api/v1/banking/**,/api/v1/notifications/**,/api/v1/branches/**,/api/v1/cert/**
+          filters:
+            # 고객 조회·인증서 경로는 인증된 고객별 한도를 쓴다. 수치는 채널별 정상
+            # 트래픽과 부하 시험 결과를 근거로 운영 환경에서 주입한다.
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${GATEWAY_CUSTOMER_REPLENISH_RATE}
+                redis-rate-limiter.burstCapacity: ${GATEWAY_CUSTOMER_BURST_CAPACITY}
 
         # 직원용 내부 API (JWT 필요 — customer-service가 X-User-Role로 역할 게이팅)
         # customer 소유 하위경로만 한정 라우팅 → 타 서비스가 미래에 /api/v1/internal/* 를 써도 충돌 없음.
@@ -107,6 +121,13 @@ spring:
           uri: http://${LOAN_SERVICE_HOST:localhost}:${LOAN_SERVICE_PORT:8083}
           predicates:
             - Path=/api/loan-applications/**,/api/loan-products/**,/api/loan-contracts/**,/api/collaterals/**,/api/credit-info-reports/**,/api/credit-score/**,/api/loan-certificates/**,/api/loan-documents/**,/api/loan-reviews/**,/api/loans/**,/api/business-calendar/**,/api/notifications/**,/api/status-history/**,/api/admin/loan-contracts/**,/api/audit/**,/api/break-glass/**,/api/advisory/**,/api/internal/advisory/**,/api/internal/eod/**
+          filters:
+            # 여신 심사·신용정보는 고객/직원별 한도를 쓴다. 값은 심사 SLA와 다운스트림
+            # 용량을 근거로 배포 설정에서 관리한다.
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${GATEWAY_LOAN_REPLENISH_RATE}
+                redis-rate-limiter.burstCapacity: ${GATEWAY_LOAN_BURST_CAPACITY}
 
         # 지급·이체 도메인 (JWT 필요)
         #
