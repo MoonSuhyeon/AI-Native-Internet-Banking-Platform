@@ -14,7 +14,7 @@
 | 📐 설계만 | 코드가 없다. **읽고 붙이면 안 된다** |
 | 🗑 폐기 | 전제가 무너졌다. **따르지 말 것** |
 
-총 33건.
+총 34건.
 
 ---
 
@@ -40,7 +40,7 @@
 | [`pre-review-agent-plan.md`](pre-review-agent-plan.md) | 사전 심사 에이전트 (Pre-Review Agent) — 실행 계획 | `PreReviewAgentService` · `AgentToolRegistry` |
 | [`transfer-step-up-auth.md`](transfer-step-up-auth.md) | 이체 거래 승인 인증(step-up) 설계 노트 | `TransactionApprovalController` · `CUST_145/146` |
 
-## 🔨 진행 중 (11건)
+## 🔨 진행 중 (12건)
 
 | 문서 | 무엇 | 근거 |
 |---|---|---|
@@ -50,6 +50,7 @@
 | [`agent-loop-limits-metrics-plan.md`](agent-loop-limits-metrics-plan.md) | 에이전트 루프 한도(도구 ≤6 · LLM ≤2 · 턴 5) 근거 계측 & 설정화 계획 | 루프 한도 상수는 있고 근거 계측이 없다 |
 | [`banking-review-llm.md`](banking-review-llm.md) | 대출 심사원 보조 자동 대출 심사 — 큰 그림 | Phase 1.5·1.6 완료, 1.7(RAG) 보류. 문서 머리말이 스스로 밝힌다 |
 | [`loan-frontend-backend-mapping.md`](loan-frontend-backend-mapping.md) | 대출 프론트 ↔ 백엔드 전체 연결 계획 | 대출 화면 연결분 |
+| [`loan-payment-ledger-trace.md`](loan-payment-ledger-trace.md) | 여신 자금이동 경로 추적 — Loan → Payment → Deposit → Ledger | 결과 리포트. 추적은 끝났고 차단 4겹은 아직 안 고쳤다 — C1 ②의 근거 |
 | [`loan_review_bias_check_plan.md`](loan_review_bias_check_plan.md) | 본심사 편향 검증 + 승인자 단계 도입 Plan | `AuditFairnessAgent` 있음. 승인자 단계 미완 체크 10개 |
 | [`next-phase-roadmap.md`](next-phase-roadmap.md) | 자동 심사 시스템 — 다음 단계 로드맵 | 로드맵. 링크 중 `phase-e-elasticsearch.md` 는 **없는 문서**다 |
 | [`phase-b-operational.md`](phase-b-operational.md) | Phase B — 운영 준비 (Operational Readiness) 실행 계획 | 미완 체크 31개. 관측·배치 일부만 |
