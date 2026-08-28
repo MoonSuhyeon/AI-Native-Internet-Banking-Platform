@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from typing import Any
 
+from app import core_banking_client
 from app.features.base import FeatureExecutorBase
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse
 
@@ -93,24 +94,7 @@ class MaturityManagementAgent(FeatureExecutorBase):
         return targets
 
     def _selling_products(self) -> list[dict[str, Any]]:
-        return self._rows(
-            """
-            SELECT banking_product_id AS product_id,
-                   deposit_product_name AS product_name,
-                   deposit_product_type AS product_type,
-                   base_interest_rate,
-                   min_join_amount,
-                   max_join_amount,
-                   min_period_month,
-                   max_period_month,
-                   is_early_termination_allowed,
-                   is_tax_benefit_available
-              FROM deposit_banking_products
-             WHERE deposit_product_status = 'SELLING'
-             ORDER BY base_interest_rate DESC
-             LIMIT 30
-            """
-        )
+        return core_banking_client.fetch_products_basic(limit=30)
 
     def _recommend_for_target(
         self,

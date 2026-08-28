@@ -6,9 +6,13 @@ import com.bank.deposit.audit.ResourceAccessGuard;
 import com.bank.deposit.domain.enums.ContractStatus;
 import com.bank.deposit.dto.internal.InternalAccountSummary;
 import com.bank.deposit.dto.internal.InternalContractSummary;
+import com.bank.deposit.dto.internal.InternalProductCatalogEntry;
+import com.bank.deposit.dto.internal.InternalSpecialTerm;
 import com.bank.deposit.dto.internal.InternalTransactionSummary;
 import com.bank.deposit.service.AccountService;
 import com.bank.deposit.service.ContractService;
+import com.bank.deposit.service.InternalProductCatalogService;
+import com.bank.deposit.repository.SpecialTermRepository;
 import com.bank.deposit.service.TransactionService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -49,6 +53,8 @@ public class InternalBankingReadController {
     private final AccountService accountService;
     private final TransactionService transactionService;
     private final ContractService contractService;
+    private final InternalProductCatalogService productCatalogService;
+    private final SpecialTermRepository specialTermRepository;
     private final AccessActorResolver actorResolver;
     private final ResourceAccessGuard accessGuard;
 
@@ -126,6 +132,31 @@ public class InternalBankingReadController {
 
         return contractService.findAll(customerId, contractStatus).stream()
                 .map(InternalContractSummary::from)
+                .toList();
+    }
+
+    /**
+     * 판매 중인 상품 카탈로그 — 대상·금리·예금상세를 묶어 한 번에.
+     *
+     * <p><b>여기만 관문을 지나지 않는다.</b> 상품은 공개 카탈로그이지 고객 데이터가
+     * 아니다. 행위자·사유를 요구하면 통제가 아니라 형식만 늘어나고, 열람 감사에
+     * 의미 없는 행이 쌓여 정작 봐야 할 고객정보 열람이 묻힌다.
+     */
+    @GetMapping("/products")
+    public List<InternalProductCatalogEntry> products() {
+        return productCatalogService.sellingCatalog();
+    }
+
+    /**
+     * 약관 전문. 상품 카탈로그와 같은 이유로 관문을 지나지 않는다 — 고객 데이터가 아니다.
+     *
+     * <p>검색어 매칭은 부르는 쪽이 한다. 여기서 LIKE 를 받으면 와일드카드 이스케이프를
+     * 서비스 경계 너머에서 책임지게 되고, 한쪽만 고치면 조용히 어긋난다.
+     */
+    @GetMapping("/special-terms")
+    public List<InternalSpecialTerm> specialTerms() {
+        return specialTermRepository.findAll().stream()
+                .map(InternalSpecialTerm::from)
                 .toList();
     }
 }

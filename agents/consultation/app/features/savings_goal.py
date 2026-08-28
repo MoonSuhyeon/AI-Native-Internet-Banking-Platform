@@ -19,6 +19,7 @@ from typing import Any
 
 from harness_core.tracing import observe
 
+from app import core_banking_client
 from app.features.base import FeatureExecutorBase
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse
 
@@ -545,37 +546,9 @@ class SavingsGoalFeatureExecutor(FeatureExecutorBase):
         monthly_surplus: float | None = session.get("monthly_surplus")
 
         # ── 최고금리 적금 상품 조회 ──────────────────────────────────────────
-        best_products = self._rows(
-            """
-            SELECT deposit_product_name AS product_name,
-                   deposit_product_type AS product_type,
-                   base_interest_rate,
-                   min_period_month,
-                   max_period_month
-              FROM deposit_banking_products
-             WHERE deposit_product_status = 'SELLING'
-               AND deposit_product_type = 'SAVINGS'
-               AND (min_period_month IS NULL OR min_period_month <= :months)
-               AND (max_period_month IS NULL OR max_period_month >= :months)
-             ORDER BY base_interest_rate DESC NULLS LAST
-             LIMIT 3
-            """,
-            {"months": goal_months},
-        )
+        best_products = core_banking_client.fetch_products_for_goal(['SAVINGS'], goal_months, 3)
         if not best_products:
-            best_products = self._rows(
-                """
-                SELECT deposit_product_name AS product_name,
-                       deposit_product_type AS product_type,
-                       base_interest_rate,
-                       min_period_month, max_period_month
-                  FROM deposit_banking_products
-                 WHERE deposit_product_status = 'SELLING'
-                   AND deposit_product_type = 'SAVINGS'
-                 ORDER BY base_interest_rate DESC NULLS LAST
-                 LIMIT 3
-                """
-            )
+            best_products = core_banking_client.fetch_products_for_goal(['SAVINGS'], None, 3)
 
         best_rate = float(best_products[0].get("base_interest_rate") or 0) if best_products else 0.0
         best_name = best_products[0].get("product_name", "최고금리 적금") if best_products else "최고금리 적금"
@@ -683,50 +656,14 @@ class SavingsGoalFeatureExecutor(FeatureExecutorBase):
         """상품 조회 → 이자 계산 → 비교 → 추천."""
         is_lump = lump_sum is not None
         ptype_filter = "'DEPOSIT'" if is_lump else "'SAVINGS'"
+        _ptypes = ["DEPOSIT"] if is_lump else ["SAVINGS"]
 
         # ── 실제 DB 조회 (기간 조건 포함) ─────────────────────────────────────
-        products = self._rows(
-            f"""
-            SELECT banking_product_id AS product_id,
-                   deposit_product_name AS product_name,
-                   deposit_product_type AS product_type,
-                   base_interest_rate,
-                   min_join_amount,
-                   max_join_amount,
-                   min_period_month,
-                   max_period_month,
-                   is_tax_benefit_available
-              FROM deposit_banking_products
-             WHERE deposit_product_status = 'SELLING'
-               AND deposit_product_type IN ({ptype_filter})
-               AND (min_period_month IS NULL OR min_period_month <= :months)
-               AND (max_period_month IS NULL OR max_period_month >= :months)
-             ORDER BY base_interest_rate DESC NULLS LAST
-             LIMIT 6
-            """,
-            {"months": goal_months},
-        )
+        products = core_banking_client.fetch_products_for_goal(_ptypes, goal_months, 6, with_amounts=True)
 
         # 기간 조건 일치 상품 없을 때 fallback (기간 조건 제거)
         if not products:
-            products = self._rows(
-                f"""
-                SELECT banking_product_id AS product_id,
-                       deposit_product_name AS product_name,
-                       deposit_product_type AS product_type,
-                       base_interest_rate,
-                       min_join_amount,
-                       max_join_amount,
-                       min_period_month,
-                       max_period_month,
-                       is_tax_benefit_available
-                  FROM deposit_banking_products
-                 WHERE deposit_product_status = 'SELLING'
-                   AND deposit_product_type IN ({ptype_filter})
-                 ORDER BY base_interest_rate DESC NULLS LAST
-                 LIMIT 6
-                """
-            )
+            products = core_banking_client.fetch_products_for_goal(_ptypes, None, 6, with_amounts=True)
 
         # ── 상품별 이자 계산 ──────────────────────────────────────────────────
         enriched: list[dict[str, Any]] = []

@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from app import core_banking_client
 from app.features.base import (
     FeatureExecutorBase,
     append_preferential_rate_notice,
@@ -136,49 +137,9 @@ class UserFinanceFeatureExecutor(FeatureExecutorBase):
             )
 
         # ── 3. 판매 중인 수신 상품 및 대상 그룹 조회 ──────────────────────────
-        raw_products = self._rows(
-            """
-            SELECT p.banking_product_id AS product_id,
-                   p.deposit_product_name,
-                   p.deposit_product_type,
-                   p.base_interest_rate,
-                   p.min_join_amount,
-                   p.max_join_amount,
-                   p.min_period_month,
-                   p.max_period_month,
-                   p.is_early_termination_allowed,
-                   p.is_tax_benefit_available,
-                   tg.target_group_name,
-                   tg.min_age,
-                   tg.max_age
-              FROM deposit_banking_products p
-              LEFT JOIN banking_deposit_product_target_groups bptg ON p.banking_product_id = bptg.banking_product_id
-              LEFT JOIN deposit_target_groups tg ON bptg.target_group_id = tg.target_group_id
-             WHERE p.deposit_product_status = 'SELLING'
-               AND p.deposit_product_type != 'SUBSCRIPTION'
-            """
-        )
+        raw_products = core_banking_client.fetch_products_with_target_groups(exclude_types=['SUBSCRIPTION'])
         if not raw_products:
-            raw_products = self._rows(
-                """
-                SELECT banking_product_id AS product_id,
-                       deposit_product_name,
-                       deposit_product_type,
-                       base_interest_rate,
-                       min_join_amount,
-                       max_join_amount,
-                       min_period_month,
-                       max_period_month,
-                       is_early_termination_allowed,
-                       is_tax_benefit_available,
-                       NULL AS target_group_name,
-                       NULL AS min_age,
-                       NULL AS max_age
-                  FROM deposit_banking_products
-                 WHERE deposit_product_status = 'SELLING'
-                   AND deposit_product_type != 'SUBSCRIPTION'
-                """
-            )
+            raw_products = core_banking_client.fetch_products_with_target_groups(exclude_types=['SUBSCRIPTION'])
 
         product_map: dict[Any, dict[str, Any]] = {}
         for row in raw_products:

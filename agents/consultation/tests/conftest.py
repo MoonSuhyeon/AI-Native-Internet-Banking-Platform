@@ -70,6 +70,130 @@ from app.llm import LlmAdapter, LlmHandoffAdapter
 from app.services import ChatbotService
 
 
+
+# ── core-banking API stub ────────────────────────────────────────────────────
+#
+# 런타임은 상품을 core-banking API 에서 읽는다(app/core_banking_client.py).
+# 테스트는 SQLite 에 시드해 두므로, stub 이 그 시드를 읽어 API 응답 모양으로
+# 돌려준다. 픽스처를 고정 JSON 으로 바꾸지 않는 이유는 시드와 기대값이 두 곳으로
+# 갈라지지 않게 하려는 것이다.
+
+def _install_catalog_stub(session):
+    """세션이 보는 시드로 상품 카탈로그를 구성해 클라이언트에 심는다."""
+    from app import core_banking_client
+
+    def _fetch_catalog():
+        try:
+            rows = session.execute(text("""
+                SELECT p.banking_product_id, p.deposit_product_name, p.deposit_product_type,
+                       p.description, p.base_interest_rate, p.min_join_amount, p.max_join_amount,
+                       p.min_period_month, p.max_period_month,
+                       p.is_early_termination_allowed, p.is_tax_benefit_available,
+                       p.is_auto_renewal_available, p.is_passbook_issued,
+                       p.preferential_rate_condition
+                  FROM deposit_banking_products p
+                 WHERE p.deposit_product_status = 'SELLING'
+                 ORDER BY p.banking_product_id
+            """)).mappings().all()
+        except Exception:
+            session.rollback()
+            return []
+
+        def _safe(sql, params=None):
+            try:
+                return session.execute(text(sql), params or {}).mappings().all()
+            except Exception:
+                session.rollback()
+                return []
+
+        entries = []
+        for r in rows:
+            pid = r["banking_product_id"]
+            groups = _safe("""
+                SELECT tg.target_group_id, tg.target_group_name, tg.description,
+                       tg.min_age, tg.max_age
+                  FROM banking_deposit_product_target_groups m
+                  JOIN deposit_target_groups tg ON tg.target_group_id = m.target_group_id
+                 WHERE m.banking_product_id = :pid
+            """, {"pid": pid})
+            rates = _safe("""
+                SELECT rate_id, rate_type, minimum_contract_period, maximum_contract_period,
+                       rate, condition_description
+                  FROM banking_deposit_product_interest_rates
+                 WHERE banking_product_id = :pid
+            """, {"pid": pid})
+            detail = _safe("""
+                SELECT deposit_type, is_compound_interest
+                  FROM banking_deposit_products
+                 WHERE banking_product_id = :pid
+            """, {"pid": pid})
+            d = detail[0] if detail else {}
+            entries.append({
+                "productId":                 pid,
+                "productName":               r["deposit_product_name"],
+                "productType":               r["deposit_product_type"],
+                "description":               r["description"],
+                "baseInterestRate":          r["base_interest_rate"],
+                "preferentialRateCondition": r.get("preferential_rate_condition"),
+                "minJoinAmount":             r["min_join_amount"],
+                "maxJoinAmount":             r["max_join_amount"],
+                "minPeriodMonth":            r["min_period_month"],
+                "maxPeriodMonth":            r["max_period_month"],
+                "isEarlyTerminationAllowed": r["is_early_termination_allowed"],
+                "isTaxBenefitAvailable":     r["is_tax_benefit_available"],
+                "isAutoRenewalAvailable":    r.get("is_auto_renewal_available"),
+                "isPassbookIssued":          r.get("is_passbook_issued"),
+                "isCompoundInterest":        d.get("is_compound_interest"),
+                "depositType":               d.get("deposit_type"),
+                "targetGroups": [{
+                    "targetGroupId":   g["target_group_id"],
+                    "targetGroupName": g["target_group_name"],
+                    "description":     g["description"],
+                    "minAge":          g["min_age"],
+                    "maxAge":          g["max_age"],
+                } for g in groups],
+                "interestRates": [{
+                    "rateId":                r["rate_id"] if "rate_id" in r else None,
+                    "rateType":              r["rate_type"],
+                    "minimumContractPeriod": r["minimum_contract_period"],
+                    "maximumContractPeriod": r["maximum_contract_period"],
+                    "rate":                  r["rate"],
+                    "conditionDescription":  r["condition_description"],
+                } for r in rates],
+            })
+        return entries
+
+    def _fetch_special_terms(query: str = ""):
+        try:
+            rows = session.execute(text("""
+                SELECT special_term_id, special_term_name, special_term_content,
+                       special_term_summary, is_required, status
+                  FROM deposit_special_terms
+                 ORDER BY special_term_id
+            """)).mappings().all()
+        except Exception:
+            session.rollback()
+            return []
+        out = [dict(r) for r in rows]
+        q = (query or "").strip()
+        if q:
+            out = [r for r in out if any(
+                q in (r.get(k) or "") for k in
+                ("special_term_name", "special_term_content", "special_term_summary"))]
+        return out[:10]
+
+    originals = (core_banking_client.fetch_product_catalog,
+                 core_banking_client.fetch_special_terms)
+    core_banking_client.fetch_product_catalog = _fetch_catalog
+    core_banking_client.fetch_special_terms = _fetch_special_terms
+    return originals
+
+
+def _restore_catalog_stub(originals):
+    from app import core_banking_client
+    core_banking_client.fetch_product_catalog, core_banking_client.fetch_special_terms = originals
+
+
 @pytest.fixture(autouse=True)
 def _block_outbound_http(monkeypatch):
     """테스트에서 나가는 HTTP 를 즉시 끊는다.
@@ -371,9 +495,11 @@ def db() -> Session:
             INSERT INTO employees VALUES ('EMP001', 'ACTIVE')
         """))
     session = Session(engine)
+    _stub_originals = _install_catalog_stub(session)
     try:
         yield session
     finally:
+        _restore_catalog_stub(_stub_originals)
         session.close()
         engine.dispose()
 
@@ -516,9 +642,11 @@ def empty_deposit_db() -> Session:
     with engine.begin() as conn:
         _create_empty_deposit_tables(conn)
     session = Session(engine)
+    _stub_originals = _install_catalog_stub(session)
     try:
         yield session
     finally:
+        _restore_catalog_stub(_stub_originals)
         session.close()
         engine.dispose()
 
@@ -611,9 +739,11 @@ def rich_db() -> Session:
         """))
 
     session = Session(engine)
+    _stub_originals = _install_catalog_stub(session)
     try:
         yield session
     finally:
+        _restore_catalog_stub(_stub_originals)
         session.close()
         engine.dispose()
 
@@ -735,9 +865,11 @@ def cashflow_db() -> Session:
         # 거래 레코드 없음
 
     session = Session(engine)
+    _stub_originals = _install_catalog_stub(session)
     try:
         yield session
     finally:
+        _restore_catalog_stub(_stub_originals)
         session.close()
         engine.dispose()
 

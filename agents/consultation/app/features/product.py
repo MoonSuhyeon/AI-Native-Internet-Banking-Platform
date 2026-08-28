@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app import core_banking_client
 from app.features.base import FeatureExecutorBase
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse
 
@@ -41,79 +42,34 @@ class ProductFeatureExecutor(FeatureExecutorBase):
         elif has_청약 and not has_예금 and not has_적금:
             type_filter, exclude_demand = "SUBSCRIPTION", False
 
-        extra_where = ""
-        extra_params: dict[str, Any] = {}
-        if type_filter:
-            extra_where += " AND p.deposit_product_type = :type_filter"
-            extra_params["type_filter"] = type_filter
-        if subtype_filter:
-            extra_where += " AND bdp.deposit_type = :subtype_filter"
-            extra_params["subtype_filter"] = subtype_filter
-        elif exclude_demand:
-            extra_where += " AND bdp.deposit_type IS DISTINCT FROM 'DEMAND'"
+        # SQL WHERE 절이 하던 걸러내기를 여기서 한다. 상품은 core-banking 소유라
+        # 직접 조회하지 않는다 — 스키마가 바뀌면 조용히 깨진다.
+        rows = core_banking_client.fetch_products_for_guide()
 
-        # 나이 기반 청년·군인 전용 상품 필터
         customer_age = self._get_customer_age(request.customer_no)
-        if not self._is_youth_eligible(customer_age):
-            # 청년 전용(target_group_id=3) 상품 제외
-            extra_where += (
-                " AND p.banking_product_id NOT IN ("
-                "  SELECT banking_product_id FROM banking_deposit_product_target_groups"
-                "  WHERE target_group_id = 3"
-                ")"
-            )
-        # 군인 전용 상품은 상품명 키워드로 항상 제외 (나이만으로 판별 불가)
-        extra_where += (
-            " AND p.deposit_product_name NOT LIKE '%장병%'"
-            " AND p.deposit_product_name NOT LIKE '%군인%'"
-            " AND p.deposit_product_name NOT LIKE '%군무원%'"
-        )
+        youth_ok = self._is_youth_eligible(customer_age)
 
-        sql = """
-            SELECT p.banking_product_id        AS product_id,
-                   p.deposit_product_name      AS product_name,
-                   p.deposit_product_type      AS product_type,
-                   p.description               AS product_desc,
-                   p.base_interest_rate,
-                   p.min_period_month,
-                   p.max_period_month,
-                   p.min_join_amount,
-                   p.max_join_amount,
-                   p.is_early_termination_allowed,
-                   p.is_tax_benefit_available,
-                   p.is_auto_renewal_available,
-                   COALESCE(
-                       STRING_AGG(
-                           DISTINCT tg.target_group_name || ' (' || tg.description || ')',
-                           ', '
-                       ),
-                       '개인고객 (나이 제한 없음)'
-                   ) AS target_groups,
-                   COALESCE(rate_sum.max_rate, p.base_interest_rate) AS effective_rate
-              FROM deposit_banking_products p
-              LEFT JOIN banking_deposit_products bdp
-                     ON bdp.banking_product_id = p.banking_product_id
-              LEFT JOIN banking_deposit_product_target_groups btg
-                     ON btg.banking_product_id = p.banking_product_id
-              LEFT JOIN deposit_target_groups tg
-                     ON tg.target_group_id = btg.target_group_id
-              LEFT JOIN (
-                   SELECT banking_product_id, SUM(rate) AS max_rate
-                     FROM banking_deposit_product_interest_rates
-                    WHERE rate_type IN ('BASE', 'PREFERENTIAL')
-                    GROUP BY banking_product_id
-              ) rate_sum ON rate_sum.banking_product_id = p.banking_product_id
-             WHERE p.deposit_product_status = 'SELLING'
-        """ + extra_where + """
-             GROUP BY p.banking_product_id, p.deposit_product_name, p.deposit_product_type,
-                      p.description, p.base_interest_rate, p.min_period_month, p.max_period_month,
-                      p.min_join_amount, p.max_join_amount, p.is_early_termination_allowed,
-                      p.is_tax_benefit_available, p.is_auto_renewal_available,
-                      rate_sum.max_rate
-             ORDER BY COALESCE(rate_sum.max_rate, p.base_interest_rate) DESC NULLS LAST
-             LIMIT 20
-        """
-        rows = self._rows(sql, extra_params or None)
+        def keep(r: dict[str, Any]) -> bool:
+            if type_filter and r.get("deposit_product_type") != type_filter:
+                return False
+            if subtype_filter:
+                if r.get("_deposit_type") != subtype_filter:
+                    return False
+            elif exclude_demand and r.get("_deposit_type") == "DEMAND":
+                return False
+            # 청년 전용(대상그룹 3) 은 나이 조건을 못 넘기면 뺀다
+            if not youth_ok and 3 in (r.get("_target_group_ids") or []):
+                return False
+            # 군인 전용은 나이만으로 판별할 수 없어 상품명으로 뺀다
+            name = r.get("deposit_product_name") or ""
+            if any(k in name for k in ("장병", "군인", "군무원")):
+                return False
+            return True
+
+        rows = [r for r in rows if keep(r)]
+        for r in rows:
+            r.pop("_deposit_type", None)
+            r.pop("_target_group_ids", None)
 
         _LABEL = {"DEPOSIT": "예금", "SAVINGS": "적금", "SUBSCRIPTION": "청약"}
         label = _LABEL.get(type_filter or "", "수신 상품")
@@ -133,26 +89,7 @@ class ProductFeatureExecutor(FeatureExecutorBase):
         if query:
             escaped = query.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
             like = f"%{escaped}%"
-            rows = self._rows(
-                r"""
-                SELECT banking_product_id AS product_id,
-                       deposit_product_name AS product_name,
-                       deposit_product_type AS product_type,
-                       description,
-                       base_interest_rate,
-                       min_join_amount,
-                       max_join_amount,
-                       min_period_month,
-                       max_period_month,
-                       is_early_termination_allowed,
-                       is_tax_benefit_available
-                  FROM deposit_banking_products
-                 WHERE deposit_product_name LIKE :query ESCAPE '\'
-                   AND deposit_product_status = 'SELLING'
-                 LIMIT 3
-                """,
-                {"query": like}
-            )
+            rows = core_banking_client.fetch_products_by_name(query)
             if rows:
                 return self._data_response("PRODUCT_DETAIL", rows, "검색된 상품의 상세 정보입니다.")
 
@@ -161,43 +98,13 @@ class ProductFeatureExecutor(FeatureExecutorBase):
     # ── RATE_GUIDE ────────────────────────────────────────────────────────────
 
     def execute_rate_guide(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
-        rows = self._rows(
-            """
-            SELECT r.rate_id,
-                   r.banking_product_id AS product_id,
-                   p.deposit_product_name AS product_name,
-                   r.rate_type,
-                   r.minimum_contract_period,
-                   r.maximum_contract_period,
-                   r.rate AS interest_rate,
-                   r.condition_description
-              FROM banking_deposit_product_interest_rates r
-              JOIN deposit_banking_products p ON p.banking_product_id = r.banking_product_id
-             ORDER BY r.banking_product_id, r.rate_id
-             LIMIT 20
-            """
-        )
+        rows = core_banking_client.fetch_interest_rates()
         return self._data_response("RATE_GUIDE", rows, "금리/우대금리 조회를 완료했습니다.", "등록된 금리 데이터가 없습니다.")
 
     # ── JOIN_CONDITION ────────────────────────────────────────────────────────
 
     def execute_join_condition(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
-        rows = self._rows(
-            """
-            SELECT banking_product_id AS product_id,
-                   deposit_product_name AS product_name,
-                   min_join_amount,
-                   max_join_amount,
-                   min_period_month,
-                   max_period_month,
-                   is_early_termination_allowed,
-                   is_tax_benefit_available,
-                   deposit_product_status AS product_status
-              FROM deposit_banking_products
-             ORDER BY banking_product_id
-             LIMIT 20
-            """
-        )
+        rows = core_banking_client.fetch_join_conditions()
         return self._data_response("JOIN_CONDITION", rows, "가입 조건 조회를 완료했습니다.", "등록된 가입 조건 데이터가 없습니다.")
 
     # ── PRODUCT_COMPARE ───────────────────────────────────────────────────────
@@ -205,39 +112,9 @@ class ProductFeatureExecutor(FeatureExecutorBase):
     def execute_product_compare(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         product_ids = request.compare_product_ids or ([request.product_id] if request.product_id else [])
         if product_ids:
-            rows = self._rows(
-                """
-                SELECT banking_product_id AS product_id,
-                       deposit_product_name AS product_name,
-                       deposit_product_type AS product_type,
-                       base_interest_rate,
-                       min_join_amount,
-                       max_join_amount,
-                       min_period_month,
-                       max_period_month
-                  FROM deposit_banking_products
-                 WHERE banking_product_id IN :product_ids
-                 ORDER BY banking_product_id
-                """,
-                {"product_ids": tuple(product_ids)},
-                expanding_params=("product_ids",),
-            )
+            rows = core_banking_client.fetch_compare_by_ids(list(product_ids))
         else:
-            rows = self._rows(
-                """
-                SELECT banking_product_id AS product_id,
-                       deposit_product_name AS product_name,
-                       deposit_product_type AS product_type,
-                       base_interest_rate,
-                       min_join_amount,
-                       max_join_amount,
-                       min_period_month,
-                       max_period_month
-                  FROM deposit_banking_products
-                 ORDER BY base_interest_rate DESC, banking_product_id
-                 LIMIT 5
-                """
-            )
+            rows = core_banking_client.fetch_compare_top(5)
         return self._data_response("PRODUCT_COMPARE", rows, "상품 비교 조회를 완료했습니다.", "비교할 상품 데이터가 없습니다.")
 
     # ── TERMS_RAG ─────────────────────────────────────────────────────────────
@@ -252,23 +129,7 @@ class ProductFeatureExecutor(FeatureExecutorBase):
             like = f"%{escaped}%"
         else:
             like = "%"
-        rows = self._rows(
-            r"""
-            SELECT special_term_id,
-                   special_term_name,
-                   special_term_content,
-                   special_term_summary,
-                   is_required,
-                   status
-              FROM deposit_special_terms
-             WHERE special_term_name LIKE :query ESCAPE '\'
-                OR special_term_content LIKE :query ESCAPE '\'
-                OR special_term_summary LIKE :query ESCAPE '\'
-             ORDER BY special_term_id
-             LIMIT 10
-            """,
-            {"query": like},
-        )
+        rows = core_banking_client.fetch_special_terms(query)
         return self._data_response("TERMS_RAG", rows, "약관 검색을 완료했습니다.", "검색 가능한 약관 데이터가 없습니다.")
 
     # ── FAQ ───────────────────────────────────────────────────────────────────
