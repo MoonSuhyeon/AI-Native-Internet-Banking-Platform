@@ -38,6 +38,7 @@
 | [`observability-phoenix.md`](observability-phoenix.md) | 관측 일원화 — 성능은 Prometheus, 품질은 Phoenix | Phase 0~4 전부. `agents/harness-core/python/harness_core/tracing.py`·`pii.py` |
 | [`phase0-cleanup-report.md`](phase0-cleanup-report.md) | Phase 0 — 죽은 코드·스키마 정리 리포트 | 계획이 아니라 **결과 리포트**다 |
 | [`pre-review-agent-plan.md`](pre-review-agent-plan.md) | 사전 심사 에이전트 (Pre-Review Agent) — 실행 계획 | `PreReviewAgentService` · `AgentToolRegistry` |
+| [`safeline-challenge-submission.md`](safeline-challenge-submission.md) | 2026 금융 AI Challenge 제출본(기획서·기능명세서) | 제출 문서의 확정 내용. 구현 상태는 문서 안의 표가 항목별로 밝힌다 |
 | [`transfer-step-up-auth.md`](transfer-step-up-auth.md) | 이체 거래 승인 인증(step-up) 설계 노트 | `TransactionApprovalController` · `CUST_145/146` |
 
 ## 🔨 진행 중 (13건)
