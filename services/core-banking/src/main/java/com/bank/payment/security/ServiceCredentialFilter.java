@@ -1,7 +1,6 @@
 package com.bank.payment.security;
 
 import com.bank.common.security.Sha256;
-import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
 import com.bank.common.security.service.DenyReason;
 import jakarta.servlet.FilterChain;
@@ -14,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 
 /**
  * Core Banking 의 내부 API 에 호출 주체 인증을 세운다.
@@ -109,7 +110,8 @@ public class ServiceCredentialFilter extends OncePerRequestFilter {
                 request.getRequestURI()));
 
         if (enforce) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+            reject(response);
+            return;
         }
 
         // 전환 단계 — 아직 막지 않는다. 경고는 남긴다. 조용히 통과시키면 이 상태가
@@ -124,5 +126,25 @@ public class ServiceCredentialFilter extends OncePerRequestFilter {
             return null;
         }
         return mapper.findPrincipalByCredentialHash(Sha256.hex(credential));
+    }
+
+    /**
+     * 거절 응답을 직접 쓴다.
+     *
+     * <p>예외를 던지지 않는 이유가 있다. 필터에서 던진 예외는 스프링 MVC 의 예외
+     * 핸들러를 지나지 않아 500 으로 나간다 — 실제로 그랬다. 인가 거절이 500 이면
+     * 호출부는 서버 장애로 읽고, 감시도 장애로 센다. 막은 것과 고장난 것은 다른
+     * 사건이라 다르게 보여야 한다.
+     *
+     * <p>본문은 컨트롤러 거절({@code BusinessException(FORBIDDEN)})과 같은 모양으로
+     * 맞춘다. 같은 이유로 막혔는데 응답 형태가 다르면 호출부가 두 번 처리해야 한다.
+     */
+    private void reject(HttpServletResponse response) throws IOException {
+        response.setStatus(ErrorCode.FORBIDDEN.getStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.getWriter().write("""
+                {"code":"FORBIDDEN","message":"%s","timestamp":"%s"}"""
+                .formatted(ErrorCode.FORBIDDEN.getMessage(), OffsetDateTime.now()));
     }
 }

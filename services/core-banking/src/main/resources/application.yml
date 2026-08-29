@@ -130,6 +130,20 @@ deposit:
 
 payment:
   bank-code: ${BANK_CODE:A}
+
+  # 내부 API 주체 인증.
+  #
+  # 기본값이 true 인 것이 이 설정의 요점이다. 전환 단계에는 false 로 두어 미인증
+  # 호출을 감사에만 남겼고, 그 기록이 0 이 된 것을 실제 트래픽으로 확인한 뒤 켰다.
+  #
+  #   여신    /internal/payments · /loan-disbursements · /ledger  자격증명 확인
+  #   탐지기  /internal/payments/{id}                             자격증명 확인
+  #   상담    /internal/banking/**                                자격증명 확인
+  #
+  # 끄는 것은 사고 대응용이다. 껐다는 사실이 로그에 남고(필터가 warn 을 찍는다)
+  # 감사에도 남으므로, 꺼 둔 채로 잊히지 않는다.
+  internal-auth:
+    enforce: ${INTERNAL_AUTH_ENFORCE:true}
   # 이체 수수료. 코드에 박혀 있던 값(자행 0, 타행 500)을 설정으로 뺐다 —
   # 은행에서 가장 자주 바뀌는 값이라 바꿀 때마다 배포해야 하면 결국 아무도 못 바꾼다.
   # 영업시간은 KST 기준이다.

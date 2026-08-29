@@ -1,7 +1,6 @@
 package com.bank.payment.security;
 
 import com.bank.common.security.Sha256;
-import com.bank.deposit.exception.BusinessException;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -118,13 +116,19 @@ class ServiceCredentialFilterTest {
     }
 
     @Test
-    @DisplayName("enforce 를 켜면 미인증을 막는다")
-    void rejectsWhenEnforced() {
+    @DisplayName("enforce 를 켜면 403 으로 막는다 — 500 이 아니다")
+    void rejectsWhenEnforced() throws Exception {
         FilterChain chain = mock(FilterChain.class);
+        MockHttpServletResponse response = new MockHttpServletResponse();
 
-        assertThatThrownBy(() -> filter(true)
-                .doFilter(request(INTERNAL_PATH, null), new MockHttpServletResponse(), chain))
-                .isInstanceOf(BusinessException.class);
+        filter(true).doFilter(request(INTERNAL_PATH, null), response, chain);
+
+        // 예외를 던지면 필터에서는 MVC 예외 핸들러를 지나지 않아 500 이 나간다.
+        // 인가 거절이 500 이면 호출부는 서버 장애로 읽고 감시도 장애로 센다 —
+        // 막은 것과 고장난 것은 다른 사건이라 다르게 보여야 한다.
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(response.getContentAsString()).contains("FORBIDDEN");
+        verify(chain, never()).doFilter(any(), any());
 
         // 막을 때도 남긴다. 막힌 시도가 가장 봐야 할 기록이다.
         assertThat(audited).hasSize(1);
