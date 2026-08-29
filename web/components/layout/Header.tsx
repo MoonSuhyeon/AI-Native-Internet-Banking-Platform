@@ -61,13 +61,21 @@ export const GNB_MENUS = [
     label: '금융상품',
     href: '/products/deposit/list',
     megaMenu: [
+      // 한 컬럼에 '가입' 과 '결과 조회' 가 섞여 있었다. 하는 일과 확인하는 일은
+      // 다른 동작이라 컬럼을 나눈다.
       {
-        title: '예금',
+        title: '예금상품',
         href: '/products/deposit/list',
         items: [
-          { label: '예금 상품/가입',    href: '/products/deposit/list' },
+          { label: '예금가입', href: '/products/deposit/list' },
+          { label: '예금해지', href: '/products/deposit/inquiry/terminate' },
+        ],
+      },
+      {
+        title: '결과/내역 조회',
+        href: '/products/deposit/inquiry/new',
+        items: [
           { label: '신규결과/내역 조회', href: '/products/deposit/inquiry/new' },
-          { label: '예금해지',          href: '/products/deposit/inquiry/terminate' },
           { label: '해지결과/내역 조회', href: '/products/deposit/inquiry/terminate-result' },
         ],
       },
@@ -87,23 +95,15 @@ export const GNB_MENUS = [
   {
     id: 'manage',
     label: '뱅킹관리',
-    href: '/banking/first-visit',
+    // 예전 대표 링크(/banking/first-visit)는 '이용안내' 컬럼과 함께 메뉴에서 뺐다.
+    href: '/support/customer-info/online-join',
     megaMenu: [
       {
         title: '고객정보관리',
         href: '/support/customer-info/online-join',
         items: [
           { label: '온라인고객 신규가입', href: '/support/customer-info/online-join' },
-          { label: '개인정보 수정',       href: '/settings' },
           { label: '회원탈퇴',           href: '/support/customer-info/withdraw' },
-        ],
-      },
-      {
-        title: '계좌관리',
-        href: '/banking/withdrawal-account',
-        items: [
-          { label: '타행 출금계좌 등록/삭제', href: '/banking/withdrawal-account' },
-          { label: '이체한도 조회/변경',          href: '/banking/transfer-limit' },
         ],
       },
       {
@@ -112,16 +112,6 @@ export const GNB_MENUS = [
         items: [
           { label: 'ID조회/사용자암호 설정', href: '/support/customer-info/id-password' },
           { label: '인터넷뱅킹 해지',        href: '/support/customer-info/internet-banking-cancel' },
-        ],
-      },
-      {
-        title: '이용안내',
-        href: '/banking/first-visit',
-        items: [
-          { label: '첫 방문 고객을 위한 안내', href: '/banking/first-visit' },
-          { label: '인터넷뱅킹 FAQ',          href: '/support/faq' },
-          { label: '인터넷뱅킹 이용안내',      href: '/support/internet-banking-guide' },
-          { label: '이용수수료 안내',          href: '/support/fee-guide' },
         ],
       },
     ],
