@@ -165,13 +165,16 @@ class Recommendation(BaseModel):
     status: RecommendationStatus      # 종료 유형 (§16-5)
     tags: list[Tag] = Field(default_factory=list)
     rationale_chain: list[str] = Field(default_factory=list)  # 근거 사슬
+    # **내부** 조사 우선순위 등급. 법에 있는 등급이 아니다.
     liability_grade: LiabilityGrade
-    # 등급의 규정 근거. 없으면 None — 규정 위반이 아닌 사건(정상)도 있고, 아직
-    # 등급표에 없는 사건도 있다. 근거 없이 등급만 붙는 것을 감추지 않는다.
+    # 그 등급의 근거 — 사실 · 자료 위치 · 확인할 사항 · 검증 여부(liability.TriageRule).
     #
-    # 순환을 끊으려고 둔 필드다. 이것이 없으면 "왜 L3인가" 의 답이 "시나리오가
-    # H1이라서" 가 되는데, 등급을 정한 근거가 등급을 정한 규칙 자신이 된다.
-    # 타입은 dict 로 둔다 — liability 모듈이 models 를 import 하므로 역참조가 된다.
+    # 없으면 None. 규정과 무관한 사건(정상)도 있고 아직 표에 없는 사건도 있어,
+    # 근거 없이 등급만 붙는 것을 감추지 않는다.
+    #
+    # 이 필드가 없으면 "왜 L4인가" 의 답이 "결정적 사실이라서" 가 되는데, 등급을
+    # 정한 근거가 등급을 정한 규칙 자신이라 순환이다.
+    # 타입은 dict — liability 모듈이 models 를 import 하므로 역참조를 피한다.
     regulation: dict | None = None
     actions: list[ProposedAction] = Field(default_factory=list)
     decisive_fact: DecisiveFact | None = None  # 사망·후견 등 결정적 사실(fail-closed 헤드라인 근거)

@@ -1,132 +1,206 @@
-"""책임 등급의 규정 근거 — corpus_registry §12-3 을 코드로 옮긴 것.
+"""조사 우선순위 등급과 그 근거 — 층을 나눠 둔다.
 
-**왜 필요한가.** 권고에 ``liability_grade=L3`` 만 실려 나가면, 감사에서 "왜 L3인가"
-를 물었을 때 답이 "시나리오가 H1이라서" 가 된다. 그건 순환이다 — 등급을 정한 근거가
-등급을 정한 규칙 자신이기 때문이다.
+**무엇이 문제였나.** 이전 판은 ``T2B-03 → L4`` 한 줄이었다. 그 한 줄에 서로 다른
+셋이 뭉쳐 있었다 — 관찰된 사실, 자료에 적힌 내용, 그리고 <b>법적 결론</b>.
+``basis="무권리자 지급으로 은행 직접 배상"`` 같은 문구가 그 결과다. 이건 우리가
+말할 자격이 없는 판단이고, 심사에서 "L4가 법에 있는 등급이냐" 는 질문에 그렇다고
+답하는 모양이 된다.
 
-규정 근거가 붙어야 "실명법 T2B-03(1_5 p10-16)에 따라 무권리자 지급이므로 L4" 처럼
-**바깥의 기준으로** 설명된다. 컴플라이언스를 적용한 조사라는 말이 성립하는 지점이
-정확히 거기다.
+**어떻게 나눴나.** 네 층이다.
 
-**왜 정적 표인가.** 규정은 조사 중에 바뀌지 않는다. 매번 문서를 검색해 근거를 만들면
-같은 사건에 다른 근거가 나올 수 있고, 그러면 감사 기록으로 쓸 수 없다. 등급과 근거는
-한 쌍으로 고정하고, 바뀌는 것은 개정 때 이 표를 고치는 것으로 한다.
+.. code-block:: text
 
-**출처.** ``corpus_registry.md`` §12-3 책임 등급표. 이 파일과 그 표가 어긋나면
-표가 정본이다 — 테스트가 둘의 어긋남을 잡는다.
+    ① 사실        END_REASON=DEATH            도구가 관찰
+    ② 근거 자료   문서·조항·페이지            원문 위치 보존
+    ③ 규정상 의미 "권리자 확인이 필요하다"    자료가 말하는 것까지만
+    ④ 내부 등급   L4 · 즉시                   **우리가 정한** 조사 우선순위
+
+③에서 멈추는 것이 요점이다. "확인이 필요하다" 까지는 자료에 적혀 있지만,
+"그러므로 은행이 배상한다" 는 사건 경위·다른 법률·판례가 함께 걸리는 판단이라
+여기서 결론짓지 않는다.
+
+**L4 는 법에 있는 등급이 아니다.** 우리 시스템의 조사 우선순위다. 그 등급을 매기는
+기준을 자료에서 뽑아 결정 테이블로 고정했을 뿐이다. 이 구분이 흐려지면 없는 권위를
+빌리는 것이 된다.
+
+**검증 상태를 감추지 않는다.** 지금 근거는 대부분 은행업무 교재다 — 법령 원문이
+아니다. ``verified=False`` 로 두어 그 사실이 응답과 화면에 그대로 드러난다.
+법령·판례로 확인되면 그때 ``STATUTE``/``PRECEDENT`` 출처를 더하고 참으로 바꾼다.
+비워 두는 것이 아니라 **채울 자리를 만들어 두는** 쪽이다.
+
+**왜 사람이 확정하나.** 후보를 찾고 구조화하는 일은 자동화할 수 있지만, "이 문서가
+이 법적 의미를 갖는다" 는 확정은 사람이 한다. 이 에이전트가 조사하고 사람이
+승인하는 것과 같은 구조다 — 근거 수집은 기계, 최종 판단은 사람.
 """
 
 from __future__ import annotations
+
+from enum import Enum
 
 from pydantic import BaseModel, Field
 
 from .models import AttackScenario, DecisiveFactKind, LiabilityGrade
 
 
-class RegulationRef(BaseModel):
-    """판정을 뒷받침하는 규정 한 건.
+class SourceType(str, Enum):
+    """근거 자료의 종류. 무게가 다르므로 섞지 않는다."""
 
-    ``clause`` 는 코퍼스 청크 ID(T2B-03)고 ``source`` 는 원문 위치(1_5 p10-16)다.
-    둘을 나눠 두는 이유는, 청크 ID 는 우리 색인의 이름이고 원문 위치는 규정 자체의
-    주소이기 때문이다 — 색인을 다시 만들어도 원문 위치는 그대로여야 한다.
+    STATUTE = "STATUTE"        # 법령 조문
+    PRECEDENT = "PRECEDENT"    # 판례
+    GUIDANCE = "GUIDANCE"      # 금융당국 자료·행정지도
+    MANUAL = "MANUAL"          # 은행업무 교재·실무 자료 — 법적 권위는 없다
+
+
+class EvidenceSource(BaseModel):
+    """근거 자료 한 건. 원문 위치를 반드시 남긴다.
+
+    되짚을 수 없는 근거는 근거가 아니다. 나중에 사람이 검증할 때 이 위치로
+    원문을 찾는다.
     """
 
-    rule_id: str        # §12-3 행 번호 (B-01 …)
-    clause: str         # 코퍼스 청크 ID (T2B-03)
-    source: str         # 원문 위치 (1_5 p10-16)
-    basis: str          # 이 등급인 이유 — 규정 쪽 표현으로
-    weight: int         # §12-3 책임 가중치. 트리아지 정렬 값
-    track: str          # 처리 경로 — 즉시 · 가중 · NOTIFY · 이상도만
+    type: SourceType
+    ref: str                      # 원문 위치 — 조/항 또는 문서·페이지
+    note: str | None = None       # 자료에 적힌 내용 요약 (해석 아님)
 
     def label(self) -> str:
-        """감사 로그·화면에 한 줄로 남길 형태."""
-        return f"{self.clause} ({self.source}) — {self.basis}"
+        return f"[{self.type.value}] {self.ref}"
+
+
+class TriageRule(BaseModel):
+    """사실 → 근거 → 규정상 의미 → 내부 등급.
+
+    ``grade`` 는 **우리가 정의한** 조사 우선순위다. 법적 등급이 아니다.
+    """
+
+    rule_id: str                       # 내부 규칙 번호 (B-01 …)
+    fact: str                          # ① 어떤 사실이 관찰됐을 때인가
+    sources: list[EvidenceSource]      # ② 근거 자료 (원문 위치 보존)
+    implication: list[str]             # ③ 자료가 말하는 것 — 확인이 필요한 사항
+    grade: LiabilityGrade              # ④ 내부 조사 우선순위 등급
+    weight: int                        # ④ 정렬 값
+    track: str                         # ④ 처리 경로 — 즉시 · 가중 · NOTIFY
+
+    # 법령·판례로 확인됐는가. 거짓이면 아직 업무 자료 수준의 근거다.
+    # 사람이 확인한 뒤에만 참으로 바꾼다 — 자동으로 올리지 않는다.
+    verified: bool = False
+    verified_note: str | None = None
+
+    def summary(self) -> str:
+        """감사 로그 한 줄. 등급이 내부 기준임을 문장 안에 남긴다."""
+        srcs = " · ".join(s.label() for s in self.sources)
+        mark = "" if self.verified else " (미검증)"
+        return (
+            f"{self.rule_id}{mark} — 근거 {srcs} → "
+            f"{'; '.join(self.implication)} → 내부 조사등급 {self.grade.value}"
+        )
 
 
 # --------------------------------------------------------------------------- #
-# 결정적 사실 → 규정 (§12-3 B-01 · B-02)
+# 규칙 표
 #
-# 이 둘은 조사 결과가 아니라 **사실 확인**이라 등급이 고정이다. 사망·후견은
-# "얼마나 이상한가" 와 무관하게 무권리자 지급이므로 L4 다 — 이상도 15점짜리
-# 30만 원 인출이 이상도 75점 거액 송금보다 위로 가는 근거가 여기다.
+# 출처가 지금은 은행업무 교재(MANUAL)뿐이라 전부 verified=False 다. 이것을 감추면
+# 교재를 법령처럼 보이게 하는 것이라, 드러내 두고 검증 자리를 비워 둔다.
+#
+# corpus_registry.md §12-3 이 이 표의 원본이다. 다만 그 표의 "책임등급·근거" 칸에
+# 적힌 법적 결론(무권리자 지급 = 직접 배상 등)은 여기 옮기지 않는다 — 확인되지
+# 않은 판단이기 때문이다. 옮기는 것은 사실·자료 위치·확인할 사항까지다.
 # --------------------------------------------------------------------------- #
-DECISIVE_FACT_REGULATION: dict[DecisiveFactKind, RegulationRef] = {
-    DecisiveFactKind.DEATH: RegulationRef(
+DECISIVE_FACT_RULES: dict[DecisiveFactKind, TriageRule] = {
+    DecisiveFactKind.DEATH: TriageRule(
         rule_id="B-01",
-        clause="T2B-03",
-        source="1_5 p10-16",
-        basis="사망계좌 상속 미완 지급 — 무권리자 지급으로 은행 직접 배상",
+        fact="계좌 명의인 사망 확인 (END_REASON=DEATH)",
+        sources=[
+            EvidenceSource(
+                type=SourceType.MANUAL,
+                ref="은행업무 자료 1_5 p10-16 (코퍼스 T2B-03)",
+                note="상속인 확인·유언검인·상속포기/한정승인·분할 전 공유 관련",
+            )
+        ],
+        implication=[
+            "상속인 등 정당한 권리자인지 확인이 필요",
+            "지급 적정성 검토가 필요",
+        ],
+        grade=LiabilityGrade.L4,
         weight=95,
         track="즉시",
+        verified=False,
+        verified_note="법령·판례 확인 전. 은행업무 자료 기준의 내부 우선순위다.",
     ),
-    DecisiveFactKind.GUARDIANSHIP: RegulationRef(
+    DecisiveFactKind.GUARDIANSHIP: TriageRule(
         rule_id="B-02",
-        clause="T2B-06",
-        source="1_4 p13",
-        basis="성년후견 개시 후 단독 거래 — 무능력자 단독행위는 무효",
+        fact="성년후견 개시 확인 + 단독 거래",
+        sources=[
+            EvidenceSource(
+                type=SourceType.MANUAL,
+                ref="은행업무 자료 1_4 p13 (코퍼스 T2B-06)",
+                note="제한능력자 구분 · 피한정후견은 원칙적으로 행위능력자이며 "
+                     "일상행위는 취소 대상이 아님",
+            )
+        ],
+        implication=[
+            "후견 유형(성년/한정)과 법원이 정한 범위 확인이 필요",
+            "일상적 거래인지 여부에 따라 취급이 달라짐 — 일률 거부 아님",
+        ],
+        grade=LiabilityGrade.L4,
         weight=92,
         track="즉시",
+        verified=False,
+        verified_note="법령·판례 확인 전. 후견 유형별 차등 취급은 자료에 근거.",
     ),
 }
 
 
-# --------------------------------------------------------------------------- #
-# 우세 가설 → 규정 (§12-3 B-05 · B-06)
-#
-# 결정적 사실과 달리 이쪽은 **추정**이다. 그래서 경로가 "즉시" 가 아니라 "가중" 이고,
-# 이상도가 정렬에 함께 반영된다(§12-4).
-#
-# H4(내부자)는 §12-3 에 대응 행이 없다. 없는 것을 지어내지 않고 비워 둔다 —
-# 규정 근거 없이 등급만 붙이면 이 표를 만든 이유가 사라진다.
-# --------------------------------------------------------------------------- #
-SCENARIO_REGULATION: dict[AttackScenario, RegulationRef] = {
-    AttackScenario.H1_VOICE_PHISHING: RegulationRef(
+SCENARIO_RULES: dict[AttackScenario, TriageRule] = {
+    AttackScenario.H1_VOICE_PHISHING: TriageRule(
         rule_id="B-06",
-        clause="T3-02/03",
-        source="2_1 p21-22",
-        basis="보이스피싱 정황 — STR 보고 대상이며 피해 책임이 따른다",
+        fact="보이스피싱 정황 (신규 수취인 + 수취 네트워크 신호)",
+        sources=[
+            EvidenceSource(
+                type=SourceType.MANUAL,
+                ref="은행업무 자료 2_1 p21-22 (코퍼스 T3-02/03)",
+                note="STR·CTR 보고 및 CDD/EDD 관련",
+            )
+        ],
+        implication=["의심거래보고 대상인지 검토가 필요"],
+        grade=LiabilityGrade.L3,
         weight=80,
         track="가중",
+        verified=False,
+        verified_note="법령·판례 확인 전.",
     ),
-    AttackScenario.H3_LAUNDERING: RegulationRef(
+    AttackScenario.H3_LAUNDERING: TriageRule(
         rule_id="B-05",
-        clause="T2A-03",
-        source="1_4 p20",
-        basis="차명·명의대여 정황 — 실명법 위반 및 대포통장",
+        fact="차명·명의대여 정황 (신규계좌 즉시 대량이체 등)",
+        sources=[
+            EvidenceSource(
+                type=SourceType.MANUAL,
+                ref="은행업무 자료 1_4 p20 (코퍼스 T2A-03)",
+                note="타인명의·차명 거래 및 예금주 확정 관련",
+            )
+        ],
+        implication=["실지명의 확인 및 계좌 실소유자 검토가 필요"],
+        grade=LiabilityGrade.L3,
         weight=82,
         track="가중",
+        verified=False,
+        verified_note="법령·판례 확인 전. 코퍼스가 '실명법 미업로드'로 표시한 영역.",
     ),
 }
 
 
-def for_decisive_fact(kind: DecisiveFactKind) -> RegulationRef | None:
-    return DECISIVE_FACT_REGULATION.get(kind)
+def for_decisive_fact(kind: DecisiveFactKind) -> TriageRule | None:
+    return DECISIVE_FACT_RULES.get(kind)
 
 
-def for_scenario(scenario: AttackScenario) -> RegulationRef | None:
-    """우세 가설의 규정 근거. 대응 행이 없으면 ``None``.
+def for_scenario(scenario: AttackScenario) -> TriageRule | None:
+    """우세 가설의 규칙. 대응 행이 없으면 ``None``.
 
-    ``None`` 은 결함이 아니라 사실이다 — 규정 위반이 아닌 사건(H5 정상)도 있고,
-    아직 표에 없는 사건(H4 내부자)도 있다. 부르는 쪽은 근거 없이 등급만 실어
-    보내되, 근거가 없다는 것 자체가 보이게 둔다.
+    ``None`` 은 결함이 아니라 사실이다 — 규정과 무관한 사건(정상)도 있고, 아직
+    표에 없는 사건(내부자)도 있다. 없는 근거를 지어 붙이지 않는다.
     """
-    return SCENARIO_REGULATION.get(scenario)
+    return SCENARIO_RULES.get(scenario)
 
 
-def grade_of(ref: RegulationRef | None, fallback: LiabilityGrade) -> LiabilityGrade:
-    """규정 근거가 있으면 그 가중치 구간의 등급을, 없으면 부르는 쪽 판단을 쓴다.
-
-    §12-3 의 가중치는 등급과 함께 정해져 있으므로, 근거가 있는 판정은 등급도
-    규정에서 나온다 — 코드가 따로 정하지 않는다.
-    """
-    if ref is None:
-        return fallback
-    if ref.weight >= 85:
-        return LiabilityGrade.L4
-    if ref.weight >= 70:
-        return LiabilityGrade.L3
-    if ref.weight >= 50:
-        return LiabilityGrade.L2
-    if ref.weight > 0:
-        return LiabilityGrade.L1
-    return LiabilityGrade.L0
+def grade_of(rule: TriageRule | None, fallback: LiabilityGrade) -> LiabilityGrade:
+    """규칙이 있으면 그 등급을, 없으면 부르는 쪽 판단을 쓴다."""
+    return rule.grade if rule is not None else fallback

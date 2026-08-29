@@ -107,7 +107,7 @@ def build_recommendation(state: AgentState, rationale_text: str = "") -> Recomme
     if status == RecommendationStatus.FAIL_CLOSED:
         # 등급을 코드가 정하지 않는다. §12-3 등급표에서 가져온다 — 그래야 감사에서
         # "왜 L4인가" 에 규정으로 답할 수 있다.
-        ref = liability.for_decisive_fact(state.decisive_fact.kind)
+        rule = liability.for_decisive_fact(state.decisive_fact.kind)
         return Recommendation(
             scenario=top,
             status=status,
@@ -115,9 +115,9 @@ def build_recommendation(state: AgentState, rationale_text: str = "") -> Recomme
             decisive_fact=state.decisive_fact,
             rationale_chain=chain
             + [f"결정적 사실: {state.decisive_fact.kind.value} (fail-closed, 예산 무관)"]
-            + ([f"규정 근거: {ref.label()}"] if ref else []),
-            liability_grade=liability.grade_of(ref, LiabilityGrade.L4),
-            regulation=ref.model_dump() if ref else None,
+            + ([f"조사등급 근거: {rule.summary()}"] if rule else []),
+            liability_grade=liability.grade_of(rule, LiabilityGrade.L4),
+            regulation=rule.model_dump() if rule else None,
             actions=[
                 ProposedAction(
                     type=ActionType.FREEZE_PAYMENT,
@@ -129,10 +129,10 @@ def build_recommendation(state: AgentState, rationale_text: str = "") -> Recomme
 
     # 우세 가설의 규정 근거. 없으면(정상·미등재) 시나리오 매핑을 그대로 쓴다 —
     # 근거가 없다는 사실은 regulation=None 으로 드러난다.
-    ref = liability.for_scenario(top)
-    grade = liability.grade_of(ref, _GRADE_BY_SCENARIO.get(top, LiabilityGrade.L0))
-    if ref:
-        chain.append(f"규정 근거: {ref.label()}")
+    rule = liability.for_scenario(top)
+    grade = liability.grade_of(rule, _GRADE_BY_SCENARIO.get(top, LiabilityGrade.L0))
+    if rule:
+        chain.append(f"조사등급 근거: {rule.summary()}")
 
     # 3. 예산 소진 — fail-soft: 빈손이 아니라 부분결과를 넘긴다
     if status == RecommendationStatus.PROVISIONAL:
@@ -147,6 +147,6 @@ def build_recommendation(state: AgentState, rationale_text: str = "") -> Recomme
         tags=tags,
         rationale_chain=chain,
         liability_grade=grade,
-        regulation=ref.model_dump() if ref else None,
+        regulation=rule.model_dump() if rule else None,
         actions=_actions(grade, top),
     )

@@ -337,20 +337,51 @@ function TraceView({ result }: { result: InvestigateResponse }) {
             조항과 원문 위치를 함께 둔다: 조항만으로는 원문을 못 찾고, 위치만으로는
             우리 색인에서 되짚지 못한다. */}
         {rec.regulation && (
-          <div className="mb-3 rounded border border-gray-200 bg-gray-50 px-3 py-2">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-bold text-gray-500 tracking-wide">규정 근거</span>
+          <div className="mb-3 rounded border border-gray-200 bg-gray-50 px-3 py-2 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-gray-500 tracking-wide">
+                조사등급 근거
+              </span>
               <span className="text-[11px] font-mono font-semibold text-gray-700">
-                {rec.regulation.clause}
+                {rec.regulation.rule_id}
               </span>
-              <span className="text-[11px] text-gray-400 font-mono">
-                {rec.regulation.source}
-              </span>
+              {/* 미검증을 감추지 않는다. 업무자료를 법령처럼 보이게 하면
+                  없는 권위를 빌리는 것이 된다. */}
+              {!rec.regulation.verified && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                  미검증
+                </span>
+              )}
               <span className="ml-auto text-[10px] text-gray-500">
                 {rec.regulation.track} · 가중치 {rec.regulation.weight}
               </span>
             </div>
-            <p className="text-[12px] text-gray-600">{rec.regulation.basis}</p>
+
+            <p className="text-[12px] text-gray-600">
+              <span className="text-gray-400 mr-1.5">사실</span>
+              {rec.regulation.fact}
+            </p>
+
+            <div className="text-[12px] text-gray-600">
+              <span className="text-gray-400 mr-1.5">자료</span>
+              {rec.regulation.sources.map((s, i) => (
+                <span key={i} className="mr-2">
+                  <span className="text-[10px] font-mono text-gray-400 mr-1">{s.type}</span>
+                  {s.ref}
+                </span>
+              ))}
+            </div>
+
+            <div className="text-[12px] text-gray-600">
+              <span className="text-gray-400 mr-1.5">확인 필요</span>
+              {rec.regulation.implication.join(' · ')}
+            </div>
+
+            {/* 등급이 법에 있는 것으로 읽히면 안 된다. 화면에서 못을 박는다. */}
+            <p className="text-[11px] text-gray-400 pt-1 border-t border-gray-200">
+              {rec.regulation.grade} 는 법정 등급이 아니라 내부 조사 우선순위다.
+              {rec.regulation.verified_note ? ` ${rec.regulation.verified_note}` : ''}
+            </p>
           </div>
         )}
 

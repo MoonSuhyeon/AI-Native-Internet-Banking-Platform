@@ -76,14 +76,36 @@ export type DecisiveFact = {
   detail?: string | null
 }
 
-/** corpus_registry §12-3 책임 등급표의 한 행. */
-export type RegulationRef = {
-  rule_id: string   // 등급표 행 번호 (B-01 …)
-  clause: string    // 코퍼스 청크 ID (T2B-03)
-  source: string    // 원문 위치 (1_5 p10-16)
-  basis: string     // 이 등급인 이유
-  weight: number    // 책임 가중치 — 트리아지 정렬 값
-  track: string     // 처리 경로 — 즉시 · 가중 · NOTIFY · 이상도만
+/** 근거 자료 한 건. 원문 위치를 반드시 남긴다 — 되짚을 수 없으면 근거가 아니다. */
+export type EvidenceSource = {
+  /** STATUTE(법령) · PRECEDENT(판례) · GUIDANCE(당국) · MANUAL(업무자료) */
+  type: 'STATUTE' | 'PRECEDENT' | 'GUIDANCE' | 'MANUAL'
+  ref: string          // 원문 위치 — 조/항 또는 문서·페이지
+  note?: string | null // 자료에 적힌 내용 (해석 아님)
+}
+
+/**
+ * 조사 우선순위 등급의 근거. 네 층으로 나뉜다.
+ *
+ *   ① fact        관찰된 사실
+ *   ② sources     근거 자료 (원문 위치)
+ *   ③ implication 자료가 말하는 것 — 확인이 필요한 사항
+ *   ④ grade       **우리가 정한** 내부 조사 우선순위
+ *
+ * ③에서 멈춘다. "그러므로 은행이 배상한다" 는 사건 경위·다른 법률이 함께 걸리는
+ * 판단이라 여기서 결론짓지 않는다. `grade` 는 법에 있는 등급이 아니다.
+ */
+export type TriageBasis = {
+  rule_id: string
+  fact: string
+  sources: EvidenceSource[]
+  implication: string[]
+  grade: LiabilityGrade
+  weight: number
+  track: string
+  /** 법령·판례로 확인됐는가. 거짓이면 아직 업무자료 수준의 근거다. */
+  verified: boolean
+  verified_note?: string | null
 }
 
 export type Recommendation = {
@@ -99,7 +121,7 @@ export type Recommendation = {
    * 이게 없으면 "왜 L4인가" 의 답이 "결정적 사실이라서" 가 되는데, 등급을 정한
    * 근거가 등급을 정한 규칙 자신이라 감사에서 순환이 된다.
    */
-  regulation?: RegulationRef | null
+  regulation?: TriageBasis | null
   actions: ProposedAction[]
   decisive_fact?: DecisiveFact | null   // fail-closed(사망·후견) 헤드라인 근거
 }
