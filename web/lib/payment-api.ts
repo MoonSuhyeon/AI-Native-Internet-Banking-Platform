@@ -10,7 +10,7 @@ import { readAccessToken } from '@/lib/token'
 // 서비스별 NEXT_PUBLIC_*_API_URL 오버라이드를 없앤 것도 같은 이유다 —
 // 남겨 두면 환경변수 한 줄로 우회로가 되살아난다.
 const paymentApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   headers: { 'Content-Type': 'application/json' },
 })
 

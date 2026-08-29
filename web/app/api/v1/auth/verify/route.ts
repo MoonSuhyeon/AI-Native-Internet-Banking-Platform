@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // 게이트웨이 경유 (/api/v1/auth/** 라우트가 customer-service 로 보낸다).
-const CUSTOMER_API_URL = process.env.CUSTOMER_API_URL || 'http://localhost:8088'
+const CUSTOMER_API_URL = process.env.CUSTOMER_API_URL || 'http://localhost:8080'
 
 /**
  * GET /api/v1/auth/verify

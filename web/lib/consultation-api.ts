@@ -59,7 +59,7 @@ export type ChatbotFeatureExecuteResponse = {
 // 사라진다. 실제로 로컬 .env.local 이 그 값을 갖고 있었다 — 고쳐도 그 환경에서는
 // 예전 경로로 나가고, 아무 경고 없이 뚫린 상태로 돌아간다.
 const consultationApi = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088'}/api/v1/consultation`,
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/consultation`,
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -107,7 +107,7 @@ export async function executeChatbotFeature(
 // 상담 서비스가 "이 요청을 직원으로 볼지 고객으로 볼지" 를 스스로 정해야 하고,
 // 그 판단이 들어가는 순간 잘못 갈리는 경우가 생긴다.
 const staffConsultationApi = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088'}/api/v1/internal/consultation`,
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/internal/consultation`,
   headers: { 'Content-Type': 'application/json' },
 })
 
