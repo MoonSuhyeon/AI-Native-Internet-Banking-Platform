@@ -209,10 +209,109 @@ export default function FraudInvestigationPage() {
 
 // ── 트레이스 렌더 ────────────────────────────────────────────────────────────
 
+/**
+ * 탐지된 거래 자체를 먼저 보여준다.
+ *
+ * 조사 결과부터 보여주면 "무엇을 조사한 것인지" 를 화면에서 알 수 없다. 분석가가
+ * 가장 먼저 확인하는 것은 금액·시각·채널이고, 그 셋이 사기 판단의 출발점이다.
+ * 값은 전부 탐지 경보에서 온다 — 화면이 지어내는 숫자는 없다.
+ */
+function DetectionCard({ result }: { result: InvestigateResponse }) {
+  const a = result.alert
+  const tx = a.tx_context
+  const rec = result.recommendation
+  const score = a.anomaly_score
+
+  // 이상도 구간. 목록 배지(70/40)와 같은 기준을 쓴다 — 두 벌이면 같은 거래가
+  // 목록과 상세에서 다른 등급으로 보인다.
+  const level = score >= 70 ? 'HIGH' : score >= 40 ? 'MEDIUM' : 'LOW'
+  const levelCls = score >= 70 ? 'bg-red-100 text-red-700 border-red-300'
+    : score >= 40 ? 'bg-orange-100 text-orange-700 border-orange-300'
+    : 'bg-gray-100 text-gray-600 border-gray-300'
+
+  // 결정은 권고 상태에서 온다. 조사가 확정했거나 fail-closed 면 막힌 것이고,
+  // 정상 판정이면 진행된 것이다. 화면이 따로 판단하지 않는다.
+  const blocked = rec.status === 'CONFIRMED' || rec.status === 'FAIL_CLOSED'
+  const pending = rec.status === 'PROVISIONAL' || rec.status === 'HOLD'
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-5">
+      <div className="flex items-start justify-between gap-4 mb-4 pb-3 border-b border-gray-100">
+        <div>
+          <p className="text-[11px] font-semibold text-gray-500 mb-0.5">거래 탐지</p>
+          <p className="text-[15px] font-bold text-gray-800 font-mono">{a.id}</p>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-[11px] text-gray-500 mb-1">이상도</p>
+          <div className="flex items-center gap-2">
+            <span className="text-[20px] font-bold text-gray-800 tabular-nums">
+              {score.toFixed(0)}
+            </span>
+            <span className={`text-[11px] px-2 py-0.5 rounded border font-bold ${levelCls}`}>
+              {level}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 mb-4">
+        <Field label="고객" value={a.customer_id} />
+        <Field label="계좌" value={a.account} mono />
+        <Field label="금액" value={won(tx.amount)} strong />
+        <Field label="수취" value={tx.payee ?? '—'} />
+        <Field label="시간" value={tx.time ?? '—'} mono />
+        <Field label="채널" value={tx.channel ?? '—'} />
+      </dl>
+
+      <p className="text-[11px] font-semibold text-gray-500 mb-1.5">탐지 근거</p>
+      <ul className="mb-4 space-y-0.5">
+        {result.steps.map((s, i) => (
+          <li key={s.loop} className="text-[12px] text-gray-600 flex gap-2">
+            <span className="text-gray-300 font-mono flex-shrink-0">
+              {i === result.steps.length - 1 ? '└─' : '├─'}
+            </span>
+            <span>{s.signal}</span>
+          </li>
+        ))}
+        {result.steps.length === 0 && (
+          <li className="text-[12px] text-gray-400">수집된 근거 없음</li>
+        )}
+      </ul>
+
+      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+        <span className="text-[11px] font-semibold text-gray-500">결정</span>
+        <span className={`text-[12px] font-bold ${blocked ? 'text-red-600' : pending ? 'text-amber-600' : 'text-green-700'}`}>
+          ● {blocked ? '차단 — 자금 이동 없음' : pending ? '보류 — 판단 미확정' : '정상 — 진행'}
+        </span>
+        {result.hitl_pending && (
+          <span className="ml-auto text-[11px] text-amber-600 font-medium">
+            직원 승인 대기
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Field({ label, value, mono, strong }: {
+  label: string; value: string; mono?: boolean; strong?: boolean
+}) {
+  return (
+    <div className="flex gap-3">
+      <dt className="text-[12px] text-gray-500 w-12 flex-shrink-0">{label}</dt>
+      <dd className={`text-[12px] min-w-0 break-words ${mono ? 'font-mono' : ''} ${strong ? 'font-bold text-gray-800' : 'text-gray-700'}`}>
+        {value}
+      </dd>
+    </div>
+  )
+}
+
 function TraceView({ result }: { result: InvestigateResponse }) {
   const rec = result.recommendation
   return (
     <div className="space-y-4">
+      <DetectionCard result={result} />
+
       {/* 권고 요약 (상단) */}
       <div className="bg-white border border-gray-200 rounded-lg p-5">
         <div className="flex items-center gap-3 mb-3">
