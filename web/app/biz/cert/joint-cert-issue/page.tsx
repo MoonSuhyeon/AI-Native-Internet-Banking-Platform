@@ -1,16 +1,24 @@
 ﻿'use client'
 
 import Link from 'next/link'
+import { recordConsents } from '@/lib/consent-api'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import MouseNumKeypad from '@/components/ui/MouseNumKeypad'
 
+/**
+ * 기업 인증서 발급에서 받는 약관.
+ *
+ * `termsNo` 는 서버 약관 템플릿(customer-service V43 시드)을 가리킨다. 개인용과
+ * 번호를 나눈 것은 문구가 달라서다 — 같은 번호를 쓰면 개인이 동의한 것과 기업이
+ * 동의한 것이 구분되지 않는다.
+ */
 const TERMS = [
-  { label: '전자금융거래기본약관' },
-  { label: '전자금융서비스이용약관' },
-  { label: '전자금융서비스설명서' },
-  { label: '개인(신용)정보 수집·이용 동의서(기업 공동/금융인증서 발급용)' },
-  { label: '고유식별정보 수집·이용 동의서(기업 공동/금융인증서 발급용)' },
+  { termsNo: 'BIZC-001', label: '전자금융거래기본약관' },
+  { termsNo: 'BIZC-002', label: '전자금융서비스이용약관' },
+  { termsNo: 'BIZC-003', label: '전자금융서비스설명서' },
+  { termsNo: 'BIZC-004', label: '개인(신용)정보 수집·이용 동의서(기업 공동/금융인증서 발급용)' },
+  { termsNo: 'BIZC-005', label: '고유식별정보 수집·이용 동의서(기업 공동/금융인증서 발급용)' },
 ]
 
 const STEPS = [
@@ -48,9 +56,22 @@ export default function BizJointCertIssuePage() {
    * 화면을 두 벌 만들면 한쪽만 고치는 일이 생기므로 발급 단계는 공용 화면으로
    * 보낸다.
    */
-  function handleNext() {
+  async function handleNext() {
     if (!allChecked) { setStepError('필수 약관에 모두 동의해 주세요.'); return }
     if (!userId.trim()) { setStepError('사용자 ID를 입력해 주세요.'); return }
+
+    // 동의를 남기고 나서 넘어간다. 기록에 실패했는데 발급이 진행되면 "동의 없이
+    // 발급된 건" 이 남고, 화면에서는 받았는데 증명할 방법이 없는 상태가 된다.
+    try {
+      await recordConsents({
+        bizDivCd: 'BIZ_CERT',
+        items: TERMS.map((t, i) => ({ termsNo: t.termsNo, agreed: checkedTerms.has(i) })),
+      })
+    } catch {
+      setStepError('약관 동의 기록에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      return
+    }
+
     setStepError('')
     router.push('/cert/joint-cert-issue?corporate=1')
   }

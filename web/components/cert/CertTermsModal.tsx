@@ -3,12 +3,19 @@ import { KB_PRIMARY } from '@/lib/theme'
 
 import { createPortal } from 'react-dom'
 
+/**
+ * 인증서 발급에서 받는 약관.
+ *
+ * `termsNo` 는 서버 약관 템플릿(customer-service V43 시드)을 가리킨다. 이 값으로
+ * 동의가 기록되므로 바꾸면 그 항목의 동의가 끊긴다 — 등록되지 않은 약관은 서버가
+ * 거절하고, 그러면 그 화면의 동의가 통째로 남지 않는다.
+ */
 export const CERT_TERMS = [
-  { label: '전자금융거래기본약관' },
-  { label: '전자금융서비스이용약관' },
-  { label: '전자금융서비스설명서' },
-  { label: '개인(신용)정보 수집·이용 동의서\n(개인 공동/금융인증서 발급용)' },
-  { label: '고유식별정보 수집·이용 동의서\n(개인 공동/금융인증서 발급용)' },
+  { termsNo: 'CERT-001', label: '전자금융거래기본약관' },
+  { termsNo: 'CERT-002', label: '전자금융서비스이용약관' },
+  { termsNo: 'CERT-003', label: '전자금융서비스설명서' },
+  { termsNo: 'CERT-004', label: '개인(신용)정보 수집·이용 동의서\n(개인 공동/금융인증서 발급용)' },
+  { termsNo: 'CERT-005', label: '고유식별정보 수집·이용 동의서\n(개인 공동/금융인증서 발급용)' },
 ]
 
 function TermContent({ index }: { index: number }) {

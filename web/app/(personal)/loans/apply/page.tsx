@@ -5,6 +5,20 @@ import type { Loan } from '@/lib/generated'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { loanProductApi, loanApplicationApi, creditScorePreviewApi, bpsToRate as bpsToRateUtil } from '@/lib/loan-api'
+import { recordConsents } from '@/lib/consent-api'
+
+/**
+ * 대출 신청에서 받는 약관.
+ *
+ * `termsNo` 는 서버 약관 템플릿(customer-service V43 시드)을 가리킨다.
+ * 제3자 제공(LOAN-002)을 조회 동의와 나눠 둔 것은 성격이 달라서다 — 내가 보는 것과
+ * 남에게 넘기는 것은 다른 동의이고, 묶으면 무엇에 동의했는지 말할 수 없다.
+ */
+const LOAN_TERMS = [
+  { termsNo: 'LOAN-001', label: '개인(신용)정보 조회에 동의합니다.' },
+  { termsNo: 'LOAN-002', label: '개인(신용)정보 제3자 제공에 동의합니다. (신용정보원·신용평가사 등)' },
+  { termsNo: 'LOAN-003', label: '위 내용을 확인하였으며 대출거래 약정에 동의합니다.' },
+]
 
 const PURPOSES = ['생활비', '교육비', '의료비', '주택구입', '전세자금', '사업자금', '부채상환', '기타']
 const PURPOSE_CD: Record<string, string> = {
@@ -40,7 +54,11 @@ export default function LoanApplyPage() {
   const [purpose, setPurpose] = useState('')
   const [employmentType, setEmploymentType] = useState('')
   const [annualIncome, setAnnualIncome] = useState('')
-  const [agreed, setAgreed] = useState(false)
+  const [loanConsents, setLoanConsents] = useState<Record<string, boolean>>(
+    Object.fromEntries(LOAN_TERMS.map(t => [t.termsNo, false])))
+  const toggleTerm = (no: string) => setLoanConsents(prev => ({ ...prev, [no]: !prev[no] }))
+  /** 세 항목이 모두 필수다. 하나라도 빠지면 조회도 신청도 할 수 없다. */
+  const agreed = LOAN_TERMS.every(t => loanConsents[t.termsNo])
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [previewing, setPreviewing] = useState(false)
@@ -75,6 +93,19 @@ export default function LoanApplyPage() {
     const customerId = parseInt(localStorage.getItem('customerId') ?? '1', 10)
     const requestedAmount = parseInt(amount.replace(/,/g, ''), 10)
     try {
+      // 동의를 먼저 남긴다.
+      //
+      // 순서가 중요하다. 신청을 만들면 그 안에서 신용정보 조회가 일어나므로, 동의는
+      // 그 전에 기록돼야 한다. 뒤에 남기면 "조회하고 나서 동의받은" 순서가 되고,
+      // 그것은 동의를 받지 않고 조회한 것과 다르지 않다.
+      //
+      // 그래서 신청 번호(consentTargetId)는 아직 없다. 대출 업무 전반에 대한 동의로
+      // 남기고, 신청과는 고객·시각으로 잇는다.
+      await recordConsents({
+        bizDivCd: 'LOAN',
+        items: LOAN_TERMS.map(t => ({ termsNo: t.termsNo, agreed: loanConsents[t.termsNo] })),
+      })
+
       const { data: res } = await loanApplicationApi.create({
         customerId,
         prodId: selectedProdId,
@@ -302,14 +333,24 @@ export default function LoanApplyPage() {
             · 대출 거절 시 신용등급에 영향을 줄 수 있습니다.<br />
             · 과도한 빚은 당신에게 큰 불행을 안겨줄 수 있습니다.
           </p>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <button type="button" onClick={() => setAgreed(v => !v)}
-              className={`w-4 h-4 border flex-shrink-0 flex items-center justify-center transition-colors
-                ${agreed ? 'bg-kb-primary border-kb-text' : 'bg-white border-kb-primary-border'}`}>
-              {agreed && <svg viewBox="0 0 12 10" fill="none" className="w-3 h-3"><path d="M1 5l3 3 7-7" stroke="#333" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-            </button>
-            <span className="text-[13px] text-kb-text">위 내용을 확인하였으며, <span className="font-bold">개인신용정보 조회 및 대출 신청에 동의합니다.</span></span>
-          </label>
+          {/* 항목을 나눠 받는다.
+              하나로 묶으면 "무엇에 동의했는가" 를 나중에 말할 수 없다. 특히 제3자
+              제공은 조회·이용과 성격이 달라 따로 받는 것이 원칙이다. */}
+          <div className="space-y-2">
+            {LOAN_TERMS.map(term => (
+              <label key={term.termsNo} className="flex items-start gap-2 cursor-pointer">
+                <button type="button" onClick={() => toggleTerm(term.termsNo)}
+                  className={`w-4 h-4 mt-0.5 border flex-shrink-0 flex items-center justify-center transition-colors
+                    ${loanConsents[term.termsNo] ? 'bg-kb-primary border-kb-text' : 'bg-white border-kb-primary-border'}`}>
+                  {loanConsents[term.termsNo] && <svg viewBox="0 0 12 10" fill="none" className="w-3 h-3"><path d="M1 5l3 3 7-7" stroke="#333" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </button>
+                <span className="text-[13px] text-kb-text">
+                  <span className="font-bold text-kb-primary mr-1">[필수]</span>
+                  {term.label}
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
       </section>
 

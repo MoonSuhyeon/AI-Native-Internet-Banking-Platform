@@ -1,5 +1,6 @@
 'use client'
 import { KB_PRIMARY as GREEN, KB_MINT } from '@/lib/theme'
+import { recordConsents } from '@/lib/consent-api'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -37,9 +38,19 @@ export default function CorporateJoinPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ customerId: number; loginId: string } | null>(null)
 
-  function handleStep0() {
+  async function handleStep0() {
     if (!agreed) {
       alert('필수 약관에 동의해주세요.')
+      return
+    }
+    // 동의를 남기고 나서 다음 단계로 간다.
+    try {
+      await recordConsents({
+        bizDivCd: 'CORP_JOIN',
+        items: [{ termsNo: 'CORP-001', agreed: true }],
+      })
+    } catch {
+      alert('약관 동의 기록에 실패했습니다. 잠시 후 다시 시도해 주세요.')
       return
     }
     setStep(1)

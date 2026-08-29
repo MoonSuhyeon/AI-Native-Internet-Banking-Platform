@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { api } from '@/lib/api'
 import { CERT_TERMS, CertTermsModal } from '@/components/cert/CertTermsModal'
+import { recordConsents } from '@/lib/consent-api'
 
 // ── 공통 UI ───────────────────────────────────────────────────
 
@@ -105,6 +106,12 @@ export default function FinCertIssuePage() {
     if (certPin !== certPinConfirm)     { setError('금융인증서 PIN이 일치하지 않습니다.'); return }
     setError(''); setLoading(true)
     try {
+      // 발급 전에 동의를 남긴다. 기록에 실패했는데 발급이 되면 "동의 없이 발급된 건"
+      // 이 남고, 화면에서는 분명히 받았는데 증명할 방법이 없는 상태가 된다.
+      await recordConsents({
+        bizDivCd: 'CERT',
+        items: CERT_TERMS.map((t, i) => ({ termsNo: t.termsNo, agreed: checked[i] })),
+      })
       const { data: res } = await api.post('/api/v1/auth/cert/issue', {
         loginId: userId, password, certType: 'CERT_FIN', certPin,
       })

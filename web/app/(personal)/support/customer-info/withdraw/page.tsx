@@ -1,5 +1,6 @@
 'use client'
 import { KB_PRIMARY } from '@/lib/theme'
+import { recordConsents } from '@/lib/consent-api'
 
 import Link from 'next/link'
 import { useState } from 'react'
@@ -31,8 +32,19 @@ export default function WithdrawPage() {
   const [withdrawError, setWithdrawError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  function handleStep0() {
+  async function handleStep0() {
     if (!agreed) { alert('탈퇴 안내 사항에 동의해주세요.'); return }
+    // 되돌릴 수 없는 처리라 "몰랐다" 가 뒤에 쟁점이 된다. 안내를 확인했다는 사실을
+    // 남긴다 — 동의라기보다 확인 기록이지만, 남겨야 할 자리는 같다.
+    try {
+      await recordConsents({
+        bizDivCd: 'CLOSE',
+        items: [{ termsNo: 'CLOSE-001', agreed: true }],
+      })
+    } catch {
+      alert('안내 확인 기록에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      return
+    }
     setStep(1)
   }
 

@@ -4,6 +4,7 @@ import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { CERT_TERMS, CertTermsModal } from '@/components/cert/CertTermsModal'
+import { recordConsents } from '@/lib/consent-api'
 import { api } from '@/lib/api'
 
 // ── 공통 UI ───────────────────────────────────────────────────
@@ -166,9 +167,25 @@ export default function AxfulCertIssuePage() {
     }
   }
 
-  function goToStep2() {
+  async function goToStep2() {
     if (!allChecked)        { setStep1Error('필수 약관에 모두 동의해 주세요.'); return }
     if (!userId.trim())     { setStep1Error('사용자 ID를 입력해 주세요.'); return }
+
+    // 동의를 남기고 나서 다음 단계로 간다.
+    //
+    // 기록에 실패했는데 발급이 진행되면 "동의 없이 발급된 건" 이 남는다. 화면에서는
+    // 분명히 동의를 받았는데 그것을 증명할 방법이 없는 상태라, 규제 관점에서는
+    // 동의를 받지 않은 것과 같다. 그래서 여기서 멈춘다.
+    try {
+      await recordConsents({
+        bizDivCd: 'CERT',
+        items: CERT_TERMS.map((t, i) => ({ termsNo: t.termsNo, agreed: checked[i] })),
+      })
+    } catch {
+      setStep1Error('약관 동의 기록에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      return
+    }
+
     setStep1Error(''); setStep(2)
   }
 

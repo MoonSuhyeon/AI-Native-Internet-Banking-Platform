@@ -377,6 +377,13 @@ export default function MyKBPage() {
 
       {/* 하단 카드 */}
       <div className="grid grid-cols-2 gap-6">
+        <Link href="/mypage/consents"
+          className="rounded-xl p-6 flex items-center justify-between hover:bg-kb-primary-bg transition-colors group" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
+          <div>
+            <p className="text-[15px] font-bold text-kb-text group-hover:text-kb-primary">약관 동의 이력 &gt;</p>
+            <p className="text-[13px] text-kb-text-muted mt-1">동의한 약관과 시점을 확인하고, 선택 항목은 철회하세요.</p>
+          </div>
+        </Link>
         <Link href="/banking/transfer-limit"
           className="rounded-xl p-6 flex items-center justify-between hover:bg-kb-primary-bg transition-colors group" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>
           <div>
