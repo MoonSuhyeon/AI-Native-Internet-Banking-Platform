@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bank.payment.domain.mapper.LoanLedgerSummaryMapper">
+
+    <!--
+      실행과 상환을 원장에서 각각 센다.
+
+      실행은 LOAN_RECEIVABLE 차변이다. 대출채권이 생기는 다리이므로 이것 하나로
+      실행 사실이 정해진다. 결제를 거치지 않으므로 payment_instruction 조인이 없다.
+
+      상환은 여신이 개시한 결제의 출금 분개다. 여신 것임을 sender_user_id 로 가른다 —
+      내부 결제 경로가 서비스 신원을 그 컬럼에 남기기 때문이다. 멱등키 접두(AUTO-/ONL-)
+      로 가르는 방법도 있지만, 접두는 호출부가 만드는 문자열이라 바뀌면 조용히 어긋난다.
+
+      journal_type 을 TRANSFER_OUT 으로 좁히는 이유는 한 결제가 수수료 분개를 함께
+      만들기 때문이다. 좁히지 않으면 수수료가 상환액에 섞인다.
+    -->
+    <select id="summarize" resultType="com.bank.payment.api.dto.LoanLedgerSummary">
+        SELECT
+            #{baseDate} AS base_date,
+            COALESCE((
+                SELECT SUM(amount) FROM ledger
+                 WHERE posting_date = #{baseDate}
+                   AND journal_type = 'LOAN_RECEIVABLE'
+            ), 0) AS disbursed_amount,
+            COALESCE((
+                SELECT COUNT(*) FROM ledger
+                 WHERE posting_date = #{baseDate}
+                   AND journal_type = 'LOAN_RECEIVABLE'
+            ), 0) AS disbursed_count,
+            COALESCE((
+                SELECT SUM(l.amount)
+                  FROM ledger l
+                  JOIN payment_instruction p
+                    ON p.payment_instruction_id = l.payment_instruction_id
+                 WHERE l.posting_date = #{baseDate}
+                   AND l.journal_type = 'TRANSFER_OUT'
+                   AND p.sender_user_id = 'LOAN_SERVICE'
+            ), 0) AS repaid_amount,
+            COALESCE((
+                SELECT COUNT(*)
+                  FROM ledger l
+                  JOIN payment_instruction p
+                    ON p.payment_instruction_id = l.payment_instruction_id
+                 WHERE l.posting_date = #{baseDate}
+                   AND l.journal_type = 'TRANSFER_OUT'
+                   AND p.sender_user_id = 'LOAN_SERVICE'
+            ), 0) AS repaid_count
+    </select>
+
+</mapper>
