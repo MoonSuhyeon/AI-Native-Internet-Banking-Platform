@@ -1,8 +1,13 @@
 # A2 — Consultation DB 직접 접근 제거
 
-> Status: ✅ 완료 (Phase 0–3, 2026-08-29)
+<!-- plan-status -->
+> **상태: ✅ 구현됨** — Phase 0–3 완료(2026-08-29). 코드·설정·망 세 겹으로 막았고,
+> 어느 겹을 되돌려도 `test_no_direct_core_banking_access.py` 가 실패한다.
 >
-> 범위: `agents/consultation` 런타임 코드의 core-banking `deposit` 스키마 직접 읽기 제거
+> 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
+> 전체 목록은 [`docs/plan/README.md`](README.md).
+
+범위: `agents/consultation` 런타임 코드의 core-banking `deposit` 스키마 직접 읽기 제거
 
 ## 결정
 
