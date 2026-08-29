@@ -508,6 +508,9 @@ services:
       # 하네스 추적 → Phoenix. LANGFUSE_ENABLED 가 있었으나 읽는 코드가 없었다.
       HARNESS_TRACING_ENABLED: ${PHOENIX_ENABLED:-false}
       HARNESS_TRACING_ENDPOINT: http://phoenix:6006/v1/traces
+      # 추적에 실리는 식별자의 가명처리 소금. 파이썬 에이전트와 **같은 값**이어야
+      # 같은 고객의 실행이 런타임을 넘어 이어진다. 비면 프로세스마다 달라진다.
+      AGENT_PII_SALT: ${AGENT_PII_SALT:-}
     volumes:
       - C:/logs/internet-banking:/logs
     depends_on:
@@ -1239,6 +1242,9 @@ services:
       # 하네스 추적 → Phoenix. LANGFUSE_ENABLED 가 있었으나 읽는 코드가 없었다.
       HARNESS_TRACING_ENABLED: ${PHOENIX_ENABLED:-false}
       HARNESS_TRACING_ENDPOINT: http://phoenix:6006/v1/traces
+      # 추적에 실리는 식별자의 가명처리 소금. 파이썬 에이전트와 **같은 값**이어야
+      # 같은 고객의 실행이 런타임을 넘어 이어진다. 비면 프로세스마다 달라진다.
+      AGENT_PII_SALT: ${AGENT_PII_SALT:-}
     volumes:
       - C:/logs/internet-banking:/logs
     depends_on:

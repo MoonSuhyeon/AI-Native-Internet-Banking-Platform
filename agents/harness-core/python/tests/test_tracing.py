@@ -54,6 +54,27 @@ class TestSetAttributes:
     def test_span_이_없으면_조용히_지나간다(self):
         tracing.set_attributes(None, {"a": 1})  # 예외가 나면 본 작업이 멈춘다
 
+    def test_고객번호는_정규식이_못_잡으므로_이름으로_가린다(self, monkeypatch):
+        # "9111" 은 숫자 네 자리일 뿐이라 어떤 정규식에도 걸리지 않는다.
+        # 이 판정이 빠지면 추적 저장소에 고객번호가 그대로 쌓인다.
+        monkeypatch.setenv("AGENT_PII_SALT", "test-salt")
+        span = _FakeSpan()
+        tracing.set_attributes(span, {"harness.input": {"customer_id": "9111"}})
+        assert "9111" not in span.attrs["harness.input"]
+
+    def test_속성_최상위에_놓인_식별자도_가린다(self, monkeypatch):
+        # 값만 넘기고 이름을 안 넘기면 이 층이 통째로 빠진다.
+        monkeypatch.setenv("AGENT_PII_SALT", "test-salt")
+        span = _FakeSpan()
+        tracing.set_attributes(span, {"harness.customer_id": "9111"})
+        assert "9111" not in str(span.attrs["harness.customer_id"])
+
+    def test_금액과_계약번호는_그대로_둔다(self):
+        # 다 가리면 추적을 켠 이유가 없어진다. 무엇을 남길지가 설계다.
+        span = _FakeSpan()
+        tracing.set_attributes(span, {"harness.amount": 8_500_000, "harness.contract_id": 77})
+        assert span.attrs == {"harness.amount": 8_500_000, "harness.contract_id": 77}
+
 
 class TestObserve:
     def test_인자와_반환값을_자동으로_싣지_않는다(self):

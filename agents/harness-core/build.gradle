@@ -19,6 +19,10 @@ dependencies {
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.42.1'
     implementation 'io.opentelemetry.semconv:opentelemetry-semconv-incubating:1.27.0-alpha'
 
+    // 추적기가 무엇을 내보내는지 직접 읽으려면 메모리 exporter 가 필요하다.
+    // 마스킹 함수를 부르는지 여부는 함수 테스트로는 드러나지 않는다.
+    testImplementation 'io.opentelemetry:opentelemetry-sdk-testing:1.42.1'
+
     // 감사 저장소는 JSONB·트리거처럼 PostgreSQL 고유 기능에 기대므로
     // H2 로는 검증되지 않는다. 실제 엔진에서 돌려야 한다.
     testImplementation 'org.testcontainers:junit-jupiter'

@@ -12,6 +12,10 @@
 으로 명시해야 하고, 그렇게 실은 값도 :mod:`harness_core.pii` 를 지난다. 관측을
 켜는 일이 유출을 늘리는 일이 되지 않게 하려면 기본값이 이쪽이어야 한다.
 
+가리는 것은 두 갈래다. 자유 텍스트는 정규식으로 치환하고, **이름이 식별자를 뜻하는
+필드는 가명으로 바꾼다.** 고객번호는 정규식에 걸리지 않아 앞의 것만으로는 그대로
+나갔다 — 무엇을 가릴지는 값이 아니라 필드 이름이 알려 준다.
+
 **켜지 않으면 아무 일도 없다.** ``PHOENIX_ENABLED`` 가 참일 때만 동작하고 실패는
 조용히 삼킨다. 관측은 보조라서 본 작업을 멈추면 안 된다.
 """
@@ -105,6 +109,10 @@ def set_attributes(target, attributes: dict) -> None:
 
     가리는 곳을 여기 하나로 모으는 이유는, 속성이 늘어날 때 마스킹을 다시 떠올리지
     않아도 새 필드가 자동으로 이 경로를 지나게 하기 위해서다.
+
+    **속성 이름을 함께 넘긴다.** ``customer_id="9111"`` 은 어떤 정규식에도 걸리지
+    않으므로, 무엇을 가려야 하는지는 값이 아니라 이름이 알려 준다. 이름을 넘기지
+    않으면 ``harness.customer_id`` 처럼 최상위에 바로 놓인 식별자가 통째로 빠진다.
     """
     if target is None:
         return
@@ -112,7 +120,7 @@ def set_attributes(target, attributes: dict) -> None:
         if value is None:
             continue
         with contextlib.suppress(Exception):
-            target.set_attribute(key, _flatten(scrub(value)))
+            target.set_attribute(key, _flatten(scrub(value, key=key)))
 
 
 def _flatten(value):

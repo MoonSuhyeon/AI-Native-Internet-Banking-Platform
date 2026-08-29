@@ -1,5 +1,6 @@
 package com.bank.harness.trace;
 
+import com.bank.harness.pii.PiiMasker;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
@@ -20,6 +21,13 @@ import java.util.concurrent.TimeUnit;
  * <p>입출력 본문은 크기를 제한해서 싣는다. 프롬프트와 응답 전문을 그대로 보내면
  * 추적 백엔드가 로그 저장소가 되고 비용이 폭증한다. 전문이 필요하면 감사 로그를 본다 —
  * 그쪽이 보존기간과 불변성을 책임지는 자리다.
+ *
+ * <p><b>싣기 전에 가린다.</b> 예전에는 프롬프트·응답·메타데이터를 그대로 실었다.
+ * 계측을 켜는 순간 추적 저장소가 고객 데이터 사본이 됐다는 뜻이다 — 크기만 줄었을 뿐
+ * 내용은 원문이었다. 지금은 모두 {@link PiiMasker} 를 지난다.
+ *
+ * <p>자르는 것과 가리는 것의 <b>순서가 중요하다.</b> 먼저 자르면 경계에 걸친 주민번호가
+ * 반토막 나 정규식에 안 걸리고, 그 반토막이 그대로 나간다. 그래서 가린 뒤에 자른다.
  */
 public class OtelAgentTracer implements AgentTracer {
 
@@ -51,7 +59,9 @@ public class OtelAgentTracer implements AgentTracer {
     public TraceScope startTrace(String name, Map<String, Object> metadata) {
         Span span = tracer.spanBuilder(name).startSpan();
         if (metadata != null) {
-            metadata.forEach((k, v) -> span.setAttribute("harness." + k, String.valueOf(v)));
+            // 메타데이터에도 고객번호가 들어온다. 이름을 함께 넘겨야 식별자로 판단된다.
+            metadata.forEach((k, v) -> span.setAttribute("harness." + k,
+                    truncate(PiiMasker.scrubAttribute(k, v))));
         }
         return new OtelTraceScope(span);
     }
@@ -95,8 +105,8 @@ public class OtelAgentTracer implements AgentTracer {
             if (outputTokens != null) {
                 child.setAttribute(GEN_AI_OUT_TOKENS, outputTokens.longValue());
             }
-            child.setAttribute(GEN_AI_PROMPT, truncate(input));
-            child.setAttribute(GEN_AI_COMPLETION, truncate(output));
+            child.setAttribute(GEN_AI_PROMPT, scrubbed(input));
+            child.setAttribute(GEN_AI_COMPLETION, scrubbed(output));
             child.end(endTime);
         }
 
@@ -106,8 +116,8 @@ public class OtelAgentTracer implements AgentTracer {
             Span child = tracer.spanBuilder(name)
                     .setStartTimestamp(startTime)
                     .startSpan();
-            child.setAttribute(STEP_INPUT, truncate(input));
-            child.setAttribute(STEP_OUTPUT, truncate(output));
+            child.setAttribute(STEP_INPUT, scrubbed(input));
+            child.setAttribute(STEP_OUTPUT, scrubbed(output));
             child.end(endTime);
         }
 
@@ -122,6 +132,11 @@ public class OtelAgentTracer implements AgentTracer {
             scope.close();
             span.end();
         }
+    }
+
+    /** 가린 뒤에 자른다. 순서를 바꾸면 경계에 걸친 값이 반토막으로 새어 나간다. */
+    private static String scrubbed(Object value) {
+        return value == null ? "" : truncate(PiiMasker.mask(value.toString()));
     }
 
     private static String truncate(Object value) {

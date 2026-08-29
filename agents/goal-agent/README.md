@@ -298,6 +298,8 @@ Content-Type: application/json
 | `SPENDING_AGENT_ENABLED` | `true` | 지출 패턴 에이전트 활성화 여부 |
 | `MATURITY_AGENT_ENABLED` | `false` | 만기 에이전트 활성화 여부 |
 | `API_KEY` | (빈값) | 내부 서비스 인증 토큰 (`X-Internal-Token` 헤더) |
+| `PHOENIX_ENABLED` | `false` | 추적 계측. 끄면 전부 no-op |
+| `AGENT_PII_SALT` | (빈값) | 추적 식별자 가명처리 소금. **계측을 켜면 반드시 설정** |
 
 **.env 예시**
 
@@ -306,6 +308,15 @@ DATABASE_URL=postgresql+psycopg://deposit:deposit@localhost:5433/deposit_db
 ANTHROPIC_API_KEY=
 SPENDING_AGENT_ENABLED=true
 MATURITY_AGENT_ENABLED=false
+```
+
+**추적을 켤 때** — 이 에이전트는 고객번호와 질문을 span 에 싣는다. 하네스가
+고객번호를 가명으로 바꾸지만, 소금이 없으면 그 가명이 프로세스마다 달라져 같은
+고객의 실행을 묶을 수 없다. 다른 에이전트와 **같은 값**을 써야 한 사람으로 이어진다.
+
+```env
+PHOENIX_ENABLED=true
+AGENT_PII_SALT=<python -c "import secrets; print(secrets.token_hex(32))">
 ```
 
 ---
