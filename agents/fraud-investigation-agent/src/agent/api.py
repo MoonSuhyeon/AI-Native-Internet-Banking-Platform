@@ -60,6 +60,7 @@ from .planner import plan_next_tool
 from .recommend import build_recommendation
 from .tool_matrix import TOOL_MATRIX
 from .scope import CaseScope
+from .pretriage import PreTriageResult, order, probe
 from .tools import CASES_DIR, TOOLS, call_tool, load_case
 
 app = FastAPI(
@@ -94,6 +95,14 @@ class CaseSummary(BaseModel):
     payee: str | None = None
     channel: str | None = None
     anomaly_score: float
+
+    # ── 사전 트리아지 결과 (pretriage.probe) ────────────────────────────────
+    # 조사 전에 값싼 조회 한 번으로 매긴 값이다. 조사 결과가 아니다.
+    grade: str = "L0"
+    track: str = "이상도만"
+    priority: float = 0.0
+    # 등급 근거. 없으면 규정상 걸리는 것이 없었다는 뜻이다.
+    basis: dict | None = None
 
 
 class TraceStep(BaseModel):
@@ -402,33 +411,53 @@ def list_cases(
     x_employee_id: str | None = Header(default=None, alias="X-Employee-Id"),
     x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
 ) -> list[CaseSummary]:
-    """data/cases/*.json 을 알림 요약으로 나열 (트리아지 큐 대용 — 조사 입력 선택).
+    """트리아지 큐 — 책임 우선순위 순으로 나열한다.
+
+    <b>파일명 순이 아니다.</b> 알림마다 사전 프로브(``pretriage.probe``)를 돌려
+    권리자 적격성을 확인하고 그 결과로 줄을 세운다. 이상도 순이면 "이상하지 않지만
+    규정상 확인할 것이 많은" 거래가 아래로 묻힌다 — 사망계좌 30만 원이 그렇다.
+
+    프로브는 조사가 아니다. 도구 하나만 부르고 끝난다(가설·재계획·LLM 없음).
+    조사 에이전트는 이 큐의 상위 사건에만 투입한다.
 
     <b>직원만 볼 수 있다.</b> 응답에 고객 ID·계좌·금액·수취인이 그대로 담긴다.
     """
     _require_employee(x_gateway_auth, x_employee_id)
 
-    out: list[CaseSummary] = []
+    scored: list[tuple[PreTriageResult, CaseSummary]] = []
     for path in sorted(Path(CASES_DIR).glob("*.json")):
         try:
             case = load_case(path.stem)
         except Exception:
             continue
         a = case.alert
-        out.append(
-            CaseSummary(
-                name=case.name,
-                description=case.description,
-                alert_id=a.id,
-                account=a.account,
-                customer_id=a.customer_id,
-                amount=a.tx_context.amount,
-                payee=a.tx_context.payee,
-                channel=a.tx_context.channel,
-                anomaly_score=a.anomaly_score,
+        try:
+            pt = probe(case)
+        except Exception:
+            # 프로브가 실패해도 알림을 잃지 않는다. 순서만 이상도로 떨어진다 —
+            # 큐에서 사라지는 것보다 낫다.
+            pt = PreTriageResult(
+                alert_id=a.id, customer_id=a.customer_id,
+                anomaly_score=a.anomaly_score, priority=a.anomaly_score,
             )
-        )
-    return out
+        scored.append((pt, CaseSummary(
+            name=case.name,
+            description=case.description,
+            alert_id=a.id,
+            account=a.account,
+            customer_id=a.customer_id,
+            amount=a.tx_context.amount,
+            payee=a.tx_context.payee,
+            channel=a.tx_context.channel,
+            anomaly_score=a.anomaly_score,
+            grade=pt.grade.value,
+            track=pt.track,
+            priority=pt.priority,
+            basis=pt.basis,
+        )))
+
+    by_id = {pt.alert_id: summary for pt, summary in scored}
+    return [by_id[pt.alert_id] for pt in order([pt for pt, _ in scored])]
 
 
 @app.post("/api/investigate", response_model=InvestigateResponse)
