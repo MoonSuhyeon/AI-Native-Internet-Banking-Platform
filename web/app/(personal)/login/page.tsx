@@ -5,7 +5,8 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { CERT_ISSUE_PATH, forgetIssuedCert, noCertMessage, readIssuedCert } from '@/lib/issued-cert'
-import { clearAuthStorage } from '@/lib/token'
+import { clearAuthStorage, readTokenClaims, readTokenRoles } from '@/lib/token'
+import { branchLabel } from '@/lib/admin-auth'
 import { postLoginTarget, withReturnUrl } from '@/lib/return-url'
 
 type LoginTab = 'kb인증서' | '공동금융인증서' | '아이디'
@@ -200,14 +201,15 @@ function KBCertTab() {
           // 예전에는 저장 로직을 여기 한 벌 더 베껴 뒀고, 본인 정보 조회가
           // 실패하면 이름을 '고객' 으로 박았다. 같은 일을 두 곳에서 다르게 하면
           // 한쪽만 고쳐지므로 persistLoginState 하나로 모은다.
+          let next: string
           try {
-            await persistLoginState(data.data)
+            next = await persistLoginState(data.data)
           } catch (e: unknown) {
             setStatus('error')
             setErrorMsg((e as Error).message)
             return
           }
-          window.location.href = postLoginTarget()
+          window.location.href = next
         }
       } catch {
         if (++pollErrors >= 3) {
@@ -500,7 +502,25 @@ type JointCertRow = {
  * 그 자리에서 실패시키고 저장소를 비우는 편이, 절반만 로그인된 상태로
  * 돌아다니게 두는 것보다 낫다.
  */
-async function persistLoginState(auth: { customerId: number; accessToken: string; refreshToken?: string }) {
+/**
+ * 로그인 성공 후 상태를 저장하고 **갈 곳을 돌려준다.**
+ *
+ * <p><b>고객과 직원이 여기서 갈린다.</b> 게이트웨이는 {@code /api/v1/customers/me}
+ * 를 고객 전용으로 막는다(#72) — 직원·관리자 토큰으로 고객 자가설정 경로를 부르지
+ * 못하게 한 통제다. 그래서 직원이 로그인하면 이 호출이 <b>정상적으로</b> 403 이다.
+ *
+ * <p>예전에는 그 403 을 실패로 보고 "직원 계정은 관리자 화면에서 로그인해 주세요"
+ * 라며 되돌려 보냈다. 그런데 그 관리자 화면(/admin/login)은 상담 서비스로 가고,
+ * 백엔드 JWT 가 아니라 {@code mock.<base64>} 토큰을 스스로 만든다 — readAccessToken
+ * 이 지우는 그 형태다. 즉 <b>직원이 로그인할 수 있는 곳이 한 군데도 없었다.</b>
+ *
+ * <p>통제는 그대로 두고 해석만 고친다. 403 은 "직원이다" 라는 신호다. 역할은 이미
+ * 토큰 안에 있으므로(JwtProvider 의 roles 클레임) 추가 호출 없이 읽어 쓴다.
+ */
+async function persistLoginState(
+  auth: { customerId: number; accessToken: string; refreshToken?: string },
+  loginId?: string,
+): Promise<string> {
   localStorage.removeItem('sessionExpiry')
   localStorage.setItem('accessToken', auth.accessToken)
   localStorage.setItem('access_token', auth.accessToken)
@@ -512,11 +532,12 @@ async function persistLoginState(auth: { customerId: number; accessToken: string
   try {
     me = await api.get('/api/v1/customers/me')
   } catch (err: unknown) {
-    clearAuthStorage()
     const status = (err as { response?: { status?: number } }).response?.status
-    throw new Error(status === 403
-      ? '고객 계정이 아닙니다. 직원 계정은 관리자 화면에서 로그인해 주세요.'
-      : '로그인 후 고객 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
+    if (status === 403) {
+      return persistEmployeeState(auth.accessToken, loginId)
+    }
+    clearAuthStorage()
+    throw new Error('로그인 후 고객 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
   }
 
   const profile = me.data.data
@@ -525,6 +546,41 @@ async function persistLoginState(auth: { customerId: number; accessToken: string
     email: profile.email ?? '',
     customer_id: profile.customerId,
   }))
+  return postLoginTarget()
+}
+
+/**
+ * 직원 세션을 저장하고 관리자 영역의 갈 곳을 돌려준다.
+ *
+ * <p><b>여기 저장하는 역할로 인가하지 않는다.</b> 메뉴를 그릴지 말지를 정할 뿐이고,
+ * 화면이 부르는 API 는 매번 토큰의 진짜 역할로 게이트웨이와 서비스가 다시 판정한다.
+ * 그래서 localStorage 를 손으로 고쳐도 메뉴만 보이고 호출은 전부 거절된다.
+ */
+function persistEmployeeState(accessToken: string, loginId?: string): string {
+  const roles = readTokenRoles(accessToken)
+  if (roles.length === 0) {
+    // 고객도 직원도 아닌 토큰이다. 여기서 멈추지 않으면 역할 없는 세션으로
+    // 관리자 화면이 열렸다가 모든 호출이 401 이 되는, 원인 찾기 어려운 상태가 된다.
+    clearAuthStorage()
+    throw new Error('계정 권한을 확인하지 못했습니다. 다시 로그인해 주세요.')
+  }
+
+  const claims = readTokenClaims(accessToken) ?? {}
+  const branch = typeof claims.branch === 'string' ? claims.branch : undefined
+  const id = loginId ?? (typeof claims.email === 'string' ? claims.email : '직원')
+
+  localStorage.setItem('admin_roles', JSON.stringify(roles))
+  localStorage.setItem('admin_user', JSON.stringify({
+    loginId: id,
+    name: id,
+    branchCode: branch ?? '-',
+    branchName: branchLabel(branch),
+  }))
+
+  // returnUrl 이 있으면 그쪽이 우선이다. 없으면 관리자 기본 화면으로 보낸다 —
+  // 고객 홈('/')으로 보내면 직원이 방금 로그인하고도 아무 데도 못 가는 것처럼 보인다.
+  const target = postLoginTarget()
+  return target === '/' ? '/admin/dashboard' : target
 }
 
 async function handleCertLogin(certSerialNumber: string, certType: string, pin: string) {
@@ -555,8 +611,7 @@ async function handleCertLogin(certSerialNumber: string, certType: string, pin: 
   if (!res.ok || data?.code !== 'OK' || !data.data) {
     throw new Error(data?.message ?? '인증서 로그인에 실패했습니다.')
   }
-  await persistLoginState(data.data)
-  window.location.href = postLoginTarget()
+  window.location.href = await persistLoginState(data.data)
 }
 
 
@@ -886,9 +941,7 @@ function IdLoginTab() {
     localStorage.removeItem('user')
     try {
       const { data } = await api.post('/api/v1/auth/login', { loginId, password })
-      await persistLoginState(data.data)
-
-      window.location.href = postLoginTarget()
+      window.location.href = await persistLoginState(data.data, loginId)
     } catch (err: unknown) {
       const axiosErr = err as { code?: string; message?: string; response?: { data?: { message?: string } } }
       if (!axiosErr.response && (axiosErr.code === 'ERR_NETWORK' || axiosErr.message === 'Network Error')) {

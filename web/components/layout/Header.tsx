@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { readAccessToken } from '@/lib/token'
+import { DEPLOYED } from '@/lib/deployed-services'
 
 // ============================================================
 // GNB 메뉴 데이터
@@ -127,6 +128,29 @@ export const GNB_MENUS = [
   },
 ]
 
+
+/**
+ * 실제로 그릴 메뉴.
+ *
+ * <p><b>정의(GNB_MENUS)는 그대로 두고 여기서 거른다.</b> 두 가지 이유가 있다.
+ * 하나, 빵부스러기(AutoBreadcrumb)와 PageLayout 이 같은 배열을 경로 해석에 쓰므로
+ * 정의를 지우면 그 화면들의 상위 경로가 사라진다. 둘, 상단 대출 메뉴와 대출
+ * 사이드바가 어긋나지 않는지 보는 검사(LoanNavConsistencyTest)가 이 정의를 읽는다 —
+ * 지워 버리면 검사가 아무것도 지키지 않는 상태가 된다.
+ *
+ * <p>배포되지 않은 서비스의 메뉴를 내리는 이유는 "기능이 없어서" 가 아니라
+ * <b>"눌렀는데 깨지기 때문"</b> 이다. 처음 온 사람은 메뉴를 눌러 보고, 오류를 두어 번
+ * 만나면 서비스 전체가 고장 난 것으로 판단한다.
+ */
+const VISIBLE_MENUS = GNB_MENUS
+  .map((menu) => ({
+    ...menu,
+    megaMenu: menu.megaMenu.filter(
+      (category) => DEPLOYED.loan || !category.href.startsWith('/products/loan'),
+    ),
+  }))
+  // 카테고리가 하나도 안 남은 상위 메뉴는 빈 드롭다운이 되므로 통째로 내린다.
+  .filter((menu) => menu.megaMenu.length > 0)
 
 interface StoredUser { name: string; email: string; customer_id: number }
 
@@ -309,7 +333,7 @@ export default function Header() {
     }
   }
 
-  const currentMenu = GNB_MENUS.find((m) => m.id === activeMenu)
+  const currentMenu = VISIBLE_MENUS.find((m) => m.id === activeMenu)
   const isLoginPage = pathname === '/login'
   const hideGnb = pathname.startsWith('/cert') || pathname.startsWith('/cert-biz') || isLoginPage || pathname.startsWith('/support')
 
@@ -341,7 +365,12 @@ export default function Header() {
         {/* 우측: 사용자 영역 */}
         {!isLoginPage && (
           <div className="flex items-center gap-2 text-[14px] flex-shrink-0">
-            <Link href="/admin/login"
+            {/*
+              직원 로그인은 /login 하나다. 예전 /admin/login 은 상담 서비스의 상담원
+              로그인이라 은행 직원 계정으로는 들어갈 수 없고, 성공해도 백엔드 JWT 가
+              아닌 mock 토큰을 만들어 게이트웨이가 모든 호출을 거절한다.
+            */}
+            <Link href="/login?returnUrl=%2Fadmin%2Ffraud"
               className="px-3 py-1 text-[12px] font-semibold rounded-full border border-gray-300 text-gray-400 transition-colors hover:bg-gray-50">
               관리자
             </Link>
@@ -397,7 +426,7 @@ export default function Header() {
       >
         <div className="max-w-kb-container mx-auto px-6">
           <ul className="flex items-stretch w-full" style={{ height: '48px' }}>
-            {GNB_MENUS.map((menu) => {
+            {VISIBLE_MENUS.map((menu) => {
               const isActive = pathname === menu.href || pathname.startsWith(menu.href + '/')
               const isOpen = activeMenu === menu.id
               return (

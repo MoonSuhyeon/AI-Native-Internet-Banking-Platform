@@ -58,7 +58,56 @@ export function clearAuthStorage(): void {
   for (const key of [
     'accessToken', 'access_token', 'refreshToken',
     'sessionExpiry', 'user', 'customerId', 'customerNo',
+    // 직원 로그인이 남기는 것. 여기서 지우지 않으면 로그아웃 뒤에도 AdminGuard 가
+    // 직원으로 판정해, 토큰 없이 관리자 화면이 열렸다가 API 만 전부 401 이 된다.
+    'admin_roles', 'admin_user',
   ]) {
     localStorage.removeItem(key)
   }
+}
+
+
+/**
+ * JWT payload 의 클레임을 읽는다. **서명은 검증하지 않는다.**
+ *
+ * <p>브라우저는 서명을 검증할 수 없고 해서도 안 된다 — 그건 게이트웨이의 일이다.
+ * 여기서 읽은 값으로 <b>인가를 판정하면 안 된다.</b> 쓰임은 하나다: 화면을 어디로
+ * 보낼지, 어떤 메뉴를 그릴지 정하는 것. 실제 접근 통제는 매 요청마다 게이트웨이와
+ * 각 서비스가 다시 한다.
+ *
+ * <p>그래서 이 값을 고쳐도 뚫리지 않는다. localStorage 의 역할 배열을 손으로
+ * 바꾸면 메뉴는 보이지만, 그 화면이 부르는 API 는 토큰의 진짜 역할로 판정되어
+ * 전부 거절된다.
+ */
+export function readTokenClaims(token: string | null | undefined): Record<string, unknown> | null {
+  if (!looksLikeJwt(token)) return null
+  try {
+    // base64url → base64. atob 는 -/_ 를 모르고, 패딩이 없으면 던진다.
+    const payload = token!.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4)
+    // 한글 이름이 들어 있어 escape/decodeURIComponent 없이 바로 파싱하면 깨진다.
+    const json = decodeURIComponent(
+      atob(padded)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(''),
+    )
+    const parsed: unknown = JSON.parse(json)
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 토큰이 말하는 역할 목록. 없거나 못 읽으면 빈 배열.
+ *
+ * <p>백엔드가 {@code roles} 클레임에 {@code ROLE_HQ_RISK} 같은 authority 를 담는다
+ * (JwtProvider.CLAIM_ROLES). 고객은 {@code ROLE_CUSTOMER} 하나다.
+ */
+export function readTokenRoles(token: string | null | undefined): string[] {
+  const claims = readTokenClaims(token)
+  const roles = claims?.roles
+  if (!Array.isArray(roles)) return []
+  return roles.filter((r): r is string => typeof r === 'string')
 }
