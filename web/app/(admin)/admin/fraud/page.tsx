@@ -331,6 +331,29 @@ function TraceView({ result }: { result: InvestigateResponse }) {
           )}
         </div>
 
+        {/* 규정 근거.
+            등급만 보여주면 "왜 L4인가" 에 답할 수 없다 — 감사에서 묻는 것이
+            그것이고, 답이 "결정적 사실이라서" 면 등급을 정한 규칙 자신이라 순환이다.
+            조항과 원문 위치를 함께 둔다: 조항만으로는 원문을 못 찾고, 위치만으로는
+            우리 색인에서 되짚지 못한다. */}
+        {rec.regulation && (
+          <div className="mb-3 rounded border border-gray-200 bg-gray-50 px-3 py-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-bold text-gray-500 tracking-wide">규정 근거</span>
+              <span className="text-[11px] font-mono font-semibold text-gray-700">
+                {rec.regulation.clause}
+              </span>
+              <span className="text-[11px] text-gray-400 font-mono">
+                {rec.regulation.source}
+              </span>
+              <span className="ml-auto text-[10px] text-gray-500">
+                {rec.regulation.track} · 가중치 {rec.regulation.weight}
+              </span>
+            </div>
+            <p className="text-[12px] text-gray-600">{rec.regulation.basis}</p>
+          </div>
+        )}
+
         <p className="text-[11px] font-semibold text-gray-500 mb-1">근거 사슬</p>
         <ol className="space-y-0.5 mb-3">
           {rec.rationale_chain.map((line, i) => (

@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from . import liability
 from .models import (
     ActionType,
     AgentState,
@@ -104,14 +105,19 @@ def build_recommendation(state: AgentState, rationale_text: str = "") -> Recomme
     #    경합 가설(top)은 미확정이라 헤드라인 근거가 아니다 — decisive_fact 를 따로 실어
     #    소비자(프론트)가 "사망/후견"을 헤드라인으로 쓰게 한다.
     if status == RecommendationStatus.FAIL_CLOSED:
+        # 등급을 코드가 정하지 않는다. §12-3 등급표에서 가져온다 — 그래야 감사에서
+        # "왜 L4인가" 에 규정으로 답할 수 있다.
+        ref = liability.for_decisive_fact(state.decisive_fact.kind)
         return Recommendation(
             scenario=top,
             status=status,
             tags=tags,
             decisive_fact=state.decisive_fact,
             rationale_chain=chain
-            + [f"결정적 사실: {state.decisive_fact.kind.value} (fail-closed, 예산 무관)"],
-            liability_grade=LiabilityGrade.L4,
+            + [f"결정적 사실: {state.decisive_fact.kind.value} (fail-closed, 예산 무관)"]
+            + ([f"규정 근거: {ref.label()}"] if ref else []),
+            liability_grade=liability.grade_of(ref, LiabilityGrade.L4),
+            regulation=ref.model_dump() if ref else None,
             actions=[
                 ProposedAction(
                     type=ActionType.FREEZE_PAYMENT,
@@ -121,7 +127,12 @@ def build_recommendation(state: AgentState, rationale_text: str = "") -> Recomme
             ],
         )
 
-    grade = _GRADE_BY_SCENARIO.get(top, LiabilityGrade.L0)
+    # 우세 가설의 규정 근거. 없으면(정상·미등재) 시나리오 매핑을 그대로 쓴다 —
+    # 근거가 없다는 사실은 regulation=None 으로 드러난다.
+    ref = liability.for_scenario(top)
+    grade = liability.grade_of(ref, _GRADE_BY_SCENARIO.get(top, LiabilityGrade.L0))
+    if ref:
+        chain.append(f"규정 근거: {ref.label()}")
 
     # 3. 예산 소진 — fail-soft: 빈손이 아니라 부분결과를 넘긴다
     if status == RecommendationStatus.PROVISIONAL:
@@ -136,5 +147,6 @@ def build_recommendation(state: AgentState, rationale_text: str = "") -> Recomme
         tags=tags,
         rationale_chain=chain,
         liability_grade=grade,
+        regulation=ref.model_dump() if ref else None,
         actions=_actions(grade, top),
     )

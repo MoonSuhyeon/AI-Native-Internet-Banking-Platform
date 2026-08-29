@@ -76,12 +76,30 @@ export type DecisiveFact = {
   detail?: string | null
 }
 
+/** corpus_registry §12-3 책임 등급표의 한 행. */
+export type RegulationRef = {
+  rule_id: string   // 등급표 행 번호 (B-01 …)
+  clause: string    // 코퍼스 청크 ID (T2B-03)
+  source: string    // 원문 위치 (1_5 p10-16)
+  basis: string     // 이 등급인 이유
+  weight: number    // 책임 가중치 — 트리아지 정렬 값
+  track: string     // 처리 경로 — 즉시 · 가중 · NOTIFY · 이상도만
+}
+
 export type Recommendation = {
   scenario: AttackScenario
   status: RecommendationStatus
   tags: string[]
   rationale_chain: string[]
   liability_grade: LiabilityGrade
+  /**
+   * 등급의 규정 근거. 없으면 null — 규정 위반이 아닌 사건(정상)도 있고,
+   * 아직 등급표에 없는 사건도 있다.
+   *
+   * 이게 없으면 "왜 L4인가" 의 답이 "결정적 사실이라서" 가 되는데, 등급을 정한
+   * 근거가 등급을 정한 규칙 자신이라 감사에서 순환이 된다.
+   */
+  regulation?: RegulationRef | null
   actions: ProposedAction[]
   decisive_fact?: DecisiveFact | null   // fail-closed(사망·후견) 헤드라인 근거
 }

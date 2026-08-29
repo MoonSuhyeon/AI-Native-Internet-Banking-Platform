@@ -166,6 +166,13 @@ class Recommendation(BaseModel):
     tags: list[Tag] = Field(default_factory=list)
     rationale_chain: list[str] = Field(default_factory=list)  # 근거 사슬
     liability_grade: LiabilityGrade
+    # 등급의 규정 근거. 없으면 None — 규정 위반이 아닌 사건(정상)도 있고, 아직
+    # 등급표에 없는 사건도 있다. 근거 없이 등급만 붙는 것을 감추지 않는다.
+    #
+    # 순환을 끊으려고 둔 필드다. 이것이 없으면 "왜 L3인가" 의 답이 "시나리오가
+    # H1이라서" 가 되는데, 등급을 정한 근거가 등급을 정한 규칙 자신이 된다.
+    # 타입은 dict 로 둔다 — liability 모듈이 models 를 import 하므로 역참조가 된다.
+    regulation: dict | None = None
     actions: list[ProposedAction] = Field(default_factory=list)
     decisive_fact: DecisiveFact | None = None  # 사망·후견 등 결정적 사실(fail-closed 헤드라인 근거)
 
