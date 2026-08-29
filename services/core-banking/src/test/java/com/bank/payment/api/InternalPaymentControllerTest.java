@@ -1,6 +1,11 @@
 package com.bank.payment.api;
 
+import com.bank.common.security.service.AuthorizationDecision;
+import com.bank.common.security.service.DenyReason;
+import com.bank.common.security.service.ServiceOperation;
+import com.bank.deposit.exception.BusinessException;
 import com.bank.payment.api.dto.PaymentDetailResponse;
+import com.bank.payment.security.ServiceAuthorizationService;
 import com.bank.payment.domain.PaymentInstruction;
 import com.bank.payment.domain.service.PaymentTransactionService;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import java.time.OffsetDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,8 +34,19 @@ import static org.mockito.Mockito.when;
  */
 class InternalPaymentControllerTest {
 
+    private static final String CREDENTIAL = "fds-credential";
+
     private final PaymentTransactionService service = mock(PaymentTransactionService.class);
-    private final InternalPaymentController controller = new InternalPaymentController(service);
+    private final ServiceAuthorizationService authorization = mock(ServiceAuthorizationService.class);
+    private final InternalPaymentController controller =
+            new InternalPaymentController(service, authorization);
+
+    /** 인가를 통과시킨다. 조회 자체를 보는 테스트들이 쓴다. */
+    private void allowFds() {
+        when(authorization.authorize(any(), any(), any()))
+                .thenReturn(AuthorizationDecision.allow(
+                        "FDS_DETECTOR", ServiceOperation.PAYMENT_DETAIL_READ));
+    }
 
     private PaymentInstruction sample() {
         return PaymentInstruction.builder()
@@ -55,9 +73,10 @@ class InternalPaymentControllerTest {
     @Test
     @DisplayName("탐지 룰이 쓰는 필드가 모두 채워져 나온다")
     void returnsFieldsUsedByDetectionRules() {
+        allowFds();
         when(service.selectById(anyString())).thenReturn(sample());
 
-        PaymentDetailResponse body = controller.getPaymentDetail("PI-1").getBody();
+        PaymentDetailResponse body = controller.getPaymentDetail(CREDENTIAL, "PI-1").getBody();
 
         assertThat(body).isNotNull();
         // 분할·속도 룰의 집계 키
@@ -78,9 +97,10 @@ class InternalPaymentControllerTest {
     @Test
     @DisplayName("계좌번호와 예금주명은 거래 시점 스냅샷을 쓴다")
     void usesSnapshotFieldsNotLiveReferences() {
+        allowFds();
         when(service.selectById(anyString())).thenReturn(sample());
 
-        PaymentDetailResponse body = controller.getPaymentDetail("PI-1").getBody();
+        PaymentDetailResponse body = controller.getPaymentDetail(CREDENTIAL, "PI-1").getBody();
 
         assertThat(body).isNotNull();
         // senderAccountId(내부 식별자)가 아니라 senderAccountNoSnap 이어야 한다.
@@ -94,13 +114,27 @@ class InternalPaymentControllerTest {
     @Test
     @DisplayName("없는 결제지시는 404 — 탐지기가 보강 실패를 구분할 수 있어야 한다")
     void unknownPaymentReturns404() {
+        allowFds();
         when(service.selectById(anyString())).thenReturn(null);
 
-        ResponseEntity<PaymentDetailResponse> res = controller.getPaymentDetail("PI-NONE");
+        ResponseEntity<PaymentDetailResponse> res = controller.getPaymentDetail(CREDENTIAL, "PI-NONE");
 
         // 200 에 빈 본문을 주면 탐지기가 "값이 없는 거래"와 "못 찾은 거래"를
         // 구별하지 못해 조용히 오탐/미탐이 된다.
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(res.getBody()).isNull();
+    }
+
+    @Test
+    @DisplayName("권한이 없으면 결제 상세를 주지 않는다")
+    void deniesWithoutPermission() {
+        when(authorization.authorize(any(), any(), any()))
+                .thenReturn(AuthorizationDecision.deny(
+                        null, null, DenyReason.UNKNOWN_CREDENTIAL));
+
+        // 자금을 움직이지 않는 조회라도 인가를 지난다. 읽기라고 면제하면
+        // "무엇을 할 수 있는가" 의 목록이 반쪽이 된다.
+        assertThatThrownBy(() -> controller.getPaymentDetail(null, "PI-1"))
+                .isInstanceOf(BusinessException.class);
     }
 }

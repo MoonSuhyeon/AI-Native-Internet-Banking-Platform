@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     # core-banking 연동 — 자금 이동은 여기를 거친다.
     # 챗봇이 직접 SQL 로 옮기면 락·멱등키·한도 검증이 없는 두 번째 원장 구현이 된다.
     core_banking_url: str = "http://localhost:8082"
+    # 서비스 자격증명. core-banking 의 service_principal.credential_hash(V36)와
+    # 맞아야 신원이 선다. 서비스마다 자기 값을 갖는다 — 공유 토큰을 쓰면 신원이
+    # 하나가 되어, 그 토큰을 가진 무엇이든 상담을 사칭할 수 있다.
+    #
+    # 기본값의 dev-secret 은 의도된 표식이다.
+    core_banking_credential: str = "dev-secret-consultation-service-credential"
     # 하네스 감사 기록 — 챗봇이 고객에게 무엇을 답했는지 남긴다.
     # 기본값을 켜 둔 것은 의도적이다. 감사는 켜는 것이 기본이고 끄는 것이 예외다.
     # 끄더라도 NoOp 이 들어가므로 의존하는 쪽은 깨지지 않는다.

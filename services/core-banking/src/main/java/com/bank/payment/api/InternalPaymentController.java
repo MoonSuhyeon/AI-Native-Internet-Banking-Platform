@@ -3,7 +3,15 @@ package com.bank.payment.api;
 import com.bank.payment.api.dto.PaymentDetailResponse;
 import com.bank.payment.domain.PaymentInstruction;
 import com.bank.payment.domain.service.PaymentTransactionService;
+import com.bank.common.security.service.AuthorizationDecision;
+import com.bank.common.security.service.ServiceOperation;
+import com.bank.deposit.exception.BusinessException;
+import com.bank.deposit.exception.ErrorCode;
+import com.bank.payment.security.ServiceAuthorizationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p><b>쓰기 없음.</b> 조회만 둔다. 탐지·조사는 결제 상태를 바꾸지 않는다 —
  * 지급정지 같은 조치는 권고까지만 하고 사람이 실행한다(HITL).
  */
+@Slf4j
 @RestController
 // context-path 가 이미 /api 다. 여기에 또 /api 를 쓰면 외부 URL 이
 // /api/api/... 가 되어 호출부가 404 를 받는다. 결제 컨트롤러가 /v1/payments 로
@@ -35,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class InternalPaymentController {
 
     private final PaymentTransactionService paymentTransactionService;
+    private final ServiceAuthorizationService serviceAuthorizationService;
 
     /**
      * 결제지시 한 건의 상세.
@@ -44,7 +54,27 @@ public class InternalPaymentController {
      */
     @GetMapping("/{paymentInstructionId}")
     public ResponseEntity<PaymentDetailResponse> getPaymentDetail(
+            @RequestHeader(value = "X-Internal-Token", required = false) String credential,
             @PathVariable String paymentInstructionId) {
+
+        // 자금을 움직이지 않지만 같은 인가 관문을 지난다. 읽기라고 권한을 면제하면
+        // "무엇을 할 수 있는가" 의 목록이 반쪽이 된다.
+        //
+        // 자격증명을 required=false 로 받는 이유는 헤더가 없다는 사실 자체가 감사에
+        // 남아야 하기 때문이다. required=true 면 스프링이 400 을 던져 아무것도
+        // 남지 않는데, 그 시도가 가장 봐야 할 기록이다.
+        AuthorizationDecision decision = serviceAuthorizationService.authorize(
+                credential,
+                ServiceOperation.PAYMENT_DETAIL_READ.code(),
+                new ServiceAuthorizationService.RequestContext(
+                        null, null, null, MDC.get("traceId"),
+                        "/api/v1/internal/payments/{paymentInstructionId}"));
+
+        if (!decision.allowed()) {
+            log.warn("결제 상세 조회 인가 거절 service={} reason={}",
+                    decision.serviceId(), decision.denyReason());
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
 
         PaymentInstruction pi = paymentTransactionService.selectById(paymentInstructionId);
         if (pi == null) {

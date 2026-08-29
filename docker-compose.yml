@@ -634,6 +634,10 @@ services:
       # 챗봇 이체는 core-banking 을 거친다(락·멱등키·한도·소유권 검증).
       # 기본값은 localhost 라 컨테이너 안에서는 반드시 지정해야 한다.
       CONSULTATION_CORE_BANKING_URL: http://core-banking-a:8082
+      # 상담의 서비스 자격증명. core-banking 이 이 값의 SHA-256 으로 신원을 찾는다
+      # (service_principal — db-payment V36). 서비스마다 자기 값을 갖는다 — 공유
+      # 토큰을 쓰면 신원이 하나가 되어 서로를 사칭할 수 있다.
+      CONSULTATION_CORE_BANKING_CREDENTIAL: ${CONSULTATION_CORE_BANKING_CREDENTIAL:-dev-secret-consultation-service-credential}
       CONSULTATION_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONSULTATION_KAFKA_ENABLED: "false"
       # 게이트웨이와 나눠 갖는 시크릿. 이 값이 비면 직원용 조회(STAFF_*)가 거절된다 —
@@ -1134,6 +1138,9 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       CORE_BANKING_URL: http://core-banking-a:8082
+      # 탐지기의 서비스 자격증명. 결제 상세 조회(PAYMENT_DETAIL_READ)에만 쓰인다 —
+      # 읽기 권한만 주면 탐지기가 뚫려도 자금이 움직이지 않는다.
+      FDS_CORE_BANKING_CREDENTIAL: ${FDS_CORE_BANKING_CREDENTIAL:-dev-secret-fds-detector-credential}
       FRAUD_AGENT_URL: http://fraud-agent:8090
       # 사이드카와 같아야 한다. 다르면 조사 인계가 403 이다.
       FRAUD_DISPATCH_SHARED_SECRET: ${FRAUD_DISPATCH_SHARED_SECRET:-}

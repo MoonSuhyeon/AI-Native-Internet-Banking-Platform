@@ -37,8 +37,15 @@ def _get(path: str, params: dict[str, Any] | None = None,
     경로는 행위자 없이는 거절된다 — 빠뜨리면 조용히 통과하는 것이 아니라 막힌다.
     공개 카탈로그(상품·약관)는 행위자를 요구하지 않으므로 붙이지 않는다.
     """
-    url = f"{get_settings().core_banking_url}{path}"
+    settings = get_settings()
+    url = f"{settings.core_banking_url}{path}"
     headers = access_context.current().headers() if with_actor else {}
+    # 서비스 신원. core-banking 이 이 값의 SHA-256 으로 호출자를 찾는다.
+    #
+    # 행위자 헤더(X-Employee-Id 등)와 역할이 다르다. 행위자는 "누구를 대신해
+    # 부르는가" 이고 이것은 "어느 서비스가 부르는가" 다. 앞의 것은 주장이라 감사에
+    # 쓰고, 뒤의 것은 자격증명이라 인증에 쓴다.
+    headers["X-Internal-Token"] = settings.core_banking_credential
     try:
         with httpx.Client(timeout=_TIMEOUT) as client:
             resp = client.get(url, params=params or {}, headers=headers)

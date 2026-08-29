@@ -27,13 +27,25 @@ public class PaymentDetailClient {
 
     private final RestClient restClient;
 
+    /**
+     * 서비스 자격증명. core-banking 이 이 값의 SHA-256 으로 신원을 찾는다.
+     *
+     * <p>서비스마다 자기 값을 갖는다. 공유 토큰을 쓰면 신원이 하나가 되어, 그 토큰을
+     * 가진 무엇이든 탐지기를 사칭할 수 있다.
+     *
+     * <p>기본값의 dev-secret 은 의도된 표식이다 — DevSecretGuard 가 운영 프로파일에서
+     * 이 표식을 보고 기동을 거부한다.
+     */
+    private final String credential;
+
     // 생성자가 둘이라(테스트 seam) 스프링이 어느 것을 쓸지 모른다.
     // 표시하지 않으면 부팅이 NoSuchMethodException 으로 죽는다.
     @Autowired
     public PaymentDetailClient(
             RestClient.Builder builder,
             @Value("${fds.core-banking.base-url:http://core-banking:8082}") String baseUrl,
-            @Value("${fds.core-banking.timeout-ms:3000}") int timeoutMs) {
+            @Value("${fds.core-banking.timeout-ms:3000}") int timeoutMs,
+            @Value("${fds.core-banking.credential:dev-secret-fds-detector-credential}") String credential) {
 
         // 타임아웃을 반드시 건다. 기본값은 무제한이라, 결제계가 응답만 안 하고
         // 연결은 살아 있으면 컨슈머 스레드가 그대로 묶여 탐지가 통째로 멈춘다.
@@ -41,6 +53,7 @@ public class PaymentDetailClient {
         factory.setConnectTimeout(Duration.ofMillis(timeoutMs));
         factory.setReadTimeout(Duration.ofMillis(timeoutMs));
 
+        this.credential = credential;
         this.restClient = builder.baseUrl(baseUrl).requestFactory(factory).build();
     }
 
@@ -49,6 +62,10 @@ public class PaymentDetailClient {
         try {
             PaymentDetail detail = restClient.get()
                     .uri("/api/v1/internal/payments/{id}", paymentInstructionId)
+                    // 신원은 자격증명에서 나온다. "나는 탐지기다" 라고 주장하는
+                    // 헤더를 보내지 않는 이유는, 그런 헤더를 믿으면 토큰 하나를
+                    // 가진 무엇이든 탐지기를 사칭할 수 있기 때문이다.
+                    .header("X-Internal-Token", credential)
                     .retrieve()
                     .body(PaymentDetail.class);
             return Optional.ofNullable(detail);
@@ -62,6 +79,7 @@ public class PaymentDetailClient {
 
     /** 테스트에서 임의 RestClient 를 주입하기 위한 생성자. */
     PaymentDetailClient(RestClient restClient) {
+        this.credential = "test-credential";
         this.restClient = restClient;
     }
 }

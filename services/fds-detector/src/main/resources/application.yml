@@ -30,6 +30,11 @@ fds:
     consumer-group: ${FDS_CONSUMER_GROUP:fds-detector}
   core-banking:
     base-url: ${CORE_BANKING_URL:http://core-banking:8082}
+    # 서비스 자격증명. 환경변수 이름을 여기 명시하는 이유는, 프로퍼티 이름에
+    # 하이픈이 있어 relaxed binding 이 FDS_COREBANKING_CREDENTIAL 을 찾기 때문이다.
+    # compose 가 주는 FDS_CORE_BANKING_CREDENTIAL 과 어긋나면 조용히 기본값으로
+    # 떨어져, 운영에 개발용 자격증명이 실린 채로 뜬다.
+    credential: ${FDS_CORE_BANKING_CREDENTIAL:dev-secret-fds-detector-credential}
     # 타임아웃을 반드시 건다. 결제계가 응답만 안 하고 연결은 살아 있으면
     # 컨슈머 스레드가 묶여 탐지가 통째로 멈춘다.
     timeout-ms: ${FDS_ENRICH_TIMEOUT_MS:3000}
