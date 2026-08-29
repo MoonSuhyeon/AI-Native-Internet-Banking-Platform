@@ -1,7 +1,8 @@
 # 여신 자금이동 경로 추적 — Loan → Payment → Deposit → Ledger
 
 <!-- plan-status -->
-> **상태: 🔨 진행 중** — 추적은 끝났다(2026-08-28). 발견된 차단 4겹은 아직 하나도 고치지 않았다.
+> **상태: 🔨 진행 중** — 차단 4겹을 모두 풀었고 대출 실행 1건이 원장까지 도달했다(2026-08-29).
+> 남은 것은 회계 완결(C1 ③④⑤)과 아래 "풀고 나서 드러난 것" 이다.
 >
 > 상태 어휘는 넷뿐이다(구현됨 · 진행 중 · 설계만 · 폐기).
 > 전체 목록은 [`docs/plan/README.md`](README.md).
@@ -280,6 +281,75 @@ DELETE FROM repayment_account WHERE racct_id = 1 AND cntr_id = 9001;
 ②를 복구한 뒤 같은 프로브를 다시 돌릴 것이라면 남겨 두는 편이 편하다.
 
 ---
+
+## 해소 결과 (2026-08-29)
+
+차단 넷을 모두 풀고 대출 실행 1건을 실제로 태웠다.
+
+| 차단 | 해소 |
+|---|---|
+| 1 배선 없음 | compose 에 `PAYMENT_SERVICE_URL` 주입 |
+| 2 헤더가 두 역할을 겸함 | 내부 경로 분리. 여신이 `X-Auth-Token-Id` 를 만들지 않고, core 가 `auth_token_id` 에 null 을 넣는다 |
+| 3 승인 게이트 목록 누락 | 시스템 개시 거래는 승인 게이트가 아니라 서비스 인가를 지난다 |
+| 4 집행·수납 계좌 부재 | `db-deposit/V29` 로 실존화 |
+
+**자행 실행 결과 (`EXEC-9001-C1-E2E-002`, 2,000,000원)**
+
+```
+service_authorization_log   LOAN_SERVICE / LOAN_DISBURSE / ALLOW / 2,000,000
+payment_instruction         P-…, sender_user_id=LOAN_SERVICE, auth_token_id=NULL, COMPLETED
+ledger  JN-20260829-000017  0040000000002  DEBIT   TRANSFER_OUT  2,000,000
+                            12345678905678 CREDIT  TRANSFER_IN   2,000,000   균형
+loan_execution              DONE
+```
+
+**이 문서를 쓰게 만든 질문 — "여신이 결제를 태운 적이 있는가" — 에 이제 있다고 답할 수 있다.**
+
+## 풀고 나서 드러난 것
+
+경로를 열자 그동안 가려져 있던 것 셋이 보였다. 셋 다 이 문서 범위 밖이지만
+기록해 둔다.
+
+### 타행 실행은 CLEARING 에서 멎는다
+
+첫 시도(`EXEC-9001-C1-E2E-001`)는 수신처가 타행이라 `CLEARING` 으로 접수됐다.
+그런데 `LoanExecutionService` 는 `COMPLETED` 만 성공으로 보므로 `loan_execution` 이
+`FAILED` 로 남는다. **자금은 청산대기 분개로 이미 빠져나갔는데 여신은 실패로 안다.**
+
+자동이체에는 완결 콜백(`AutoDebitCallbackController`)이 있지만 **실행 경로에는 없다.**
+타행 실행을 지원하려면 같은 완결 경로가 필요하다.
+
+### 데모 계좌 대부분이 타행으로 취급된다
+
+자행 코드는 `004` 다(`BankCodeMapper.toNumeric("A")`). 그런데 deposit 계좌 39건 중
+33건이 `bank_code='001'` 이다. 즉 대부분의 고객 계좌가 타행으로 라우팅된다.
+시연 계좌 4건과 이번에 만든 시스템 계좌 2건만 `004` 다.
+
+### 마이그레이션이 시드에 기대고 있었다
+
+V29 초안은 계약이 참조할 상품으로 데모 시드의 `banking_product_id=1` 을 썼다.
+개발 DB 에는 그 행이 있어서 잘 돌았는데, **마이그레이션만 도는 새 DB — 테스트
+컨테이너 — 에서는 FK 위반으로 기동이 죽었다.** 통합 테스트 7개가 한꺼번에 넘어져서
+드러났다.
+
+마이그레이션은 시드에 기대면 안 된다. 시드는 환경마다 있고 없다. V29 가 자기
+상품 행을 만들게 고쳤다.
+
+고치는 과정에서 하나 더 걸렸다. deposit 스키마에 이름이 비슷한 테이블이 둘 있다.
+
+```
+deposit_banking_products   상품 마스터. PK = banking_product_id   ← FK 가 가리키는 쪽
+banking_deposit_products   예금 상세.   PK = deposit_product_id
+```
+
+처음에 뒤엣것에 넣어 `ON CONFLICT` 가 맞는 제약을 못 찾고 또 실패했다. 이름이
+이렇게 가까우면 다음에도 같은 실수가 난다.
+
+### `JE-{uuid}` 는 아직 그대로다
+
+실행이 성공하면 여신이 여전히 자기 회계번호를 UUID 로 만들어 붙인다
+(`journalEntryNo=JE-932912AD-C46`). 원장의 `journal_no` 와 아무 관계가 없다.
+C1 ③(회계 식별자 단일화)에서 없앤다.
 
 ## 관련 문서
 
