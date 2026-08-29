@@ -38,7 +38,13 @@ def _get(path: str, params: dict[str, Any] | None = None,
     공개 카탈로그(상품·약관)는 행위자를 요구하지 않으므로 붙이지 않는다.
     """
     settings = get_settings()
-    url = f"{settings.core_banking_url}{path}"
+    # core-banking 의 context-path 는 /api 다. 붙이지 않으면 전부 404 가 나는데
+    # 아래에서 상태코드를 None 으로 삼키므로 "자료가 없다" 와 구별되지 않는다 —
+    # 조용히 빈 화면이 되고 아무도 모른다.
+    #
+    # 같은 파일의 customer-service 호출(_verify_staff)은 /api 를 붙이고 있었다.
+    # 한쪽만 빠져 있었던 것이다.
+    url = f"{settings.core_banking_url}/api{path}"
     headers = access_context.current().headers() if with_actor else {}
     # 서비스 신원. core-banking 이 이 값의 SHA-256 으로 호출자를 찾는다.
     #
