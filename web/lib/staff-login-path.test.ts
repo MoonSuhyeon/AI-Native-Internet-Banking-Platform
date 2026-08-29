@@ -94,11 +94,22 @@ describe('배포되지 않은 서비스의 메뉴', () => {
     ).toBe(true)
   })
 
+  it('대표상품의 여신 탭은 배포될 때만 나온다', () => {
+    const showcase = read('components', 'home', 'ProductShowcase.tsx')
+    expect(
+      showcase.includes("['수신', '여신'] as Tab[]"),
+      '여신 탭을 무조건 그리고 있다 — loan-service 없이 누르면 빈 화면이 된다',
+    ).toBe(false)
+    expect(showcase).toContain('DEPLOYED.loan')
+  })
+
   it('메뉴 정의 자체는 지우지 않는다', () => {
     // 빵부스러기(AutoBreadcrumb)·PageLayout 이 같은 배열로 경로를 해석하고,
     // LoanNavConsistencyTest 가 이 정의를 읽는다. 지우면 그 검사가 무력해진다.
     const header = read('components', 'layout', 'Header.tsx')
     expect(header).toContain("href: '/products/loan/credit'")
+    // 대표상품의 여신 슬라이드도 남긴다. 서비스를 다시 올리면 한 줄로 돌아온다.
+    expect(read('components', 'home', 'ProductShowcase.tsx')).toContain('LOAN_SLIDES')
   })
 })
 

@@ -4,6 +4,7 @@ import { KB_GOLD, KB_MINT } from '@/lib/theme'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { fetchDepositProducts, DepositProduct } from '@/lib/deposit-api'
+import { DEPLOYED } from '@/lib/deployed-services'
 
 type Slide = {
   badge: string; category: string; sub: string; title: string
@@ -111,6 +112,17 @@ const LOAN_CATEGORIES = [
 
 type Tab = '수신' | '여신'
 
+/**
+ * 보여 줄 탭.
+ *
+ * <p>여신은 loan-service 가 배포될 때만 낸다. 슬라이드와 카테고리 정의는 남겨 두므로
+ * (LOAN_SLIDES · LOAN_CATEGORIES) 서비스를 다시 올리면 `DEPLOYED.loan` 한 줄로 돌아온다.
+ *
+ * <p>탭이 하나만 남으면 전환할 데가 없어 머리말처럼 읽힌다 — 눌러도 아무 일이 없는
+ * 탭을 두는 것보다는 낫다.
+ */
+const TABS: Tab[] = DEPLOYED.loan ? ['수신', '여신'] : ['수신']
+
 export default function ProductShowcase() {
   const [activeTab, setActiveTab] = useState<Tab>('수신')
   const [depositSlide, setDepositSlide] = useState(0)
@@ -164,7 +176,7 @@ export default function ProductShowcase() {
 
           {/* 탭 바 */}
           <div className="flex border-b border-kb-border px-4">
-            {(['수신', '여신'] as Tab[]).map(tab => (
+            {TABS.map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
