@@ -1,5 +1,6 @@
 package com.bank.deposit.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.bank.deposit.common.BaseEntity;
 import com.bank.deposit.domain.enums.AccountStatus;
 import com.bank.deposit.domain.enums.ProductType;
@@ -76,7 +77,22 @@ public class Account extends BaseEntity {
     @Builder.Default
     private String currency = "KRW";
 
-    /** BCrypt 해시 값 저장. 평문 비밀번호는 저장하지 않는다. */
+    /**
+     * BCrypt 해시 값 저장. 평문 비밀번호는 저장하지 않는다.
+     *
+     * <p><b>응답에 실리지 않는다.</b> 이 엔티티는 여러 컨트롤러가 그대로 반환하는데,
+     * 그 바람에 고객 계좌 목록 응답에 계좌비밀번호 해시가 함께 나가고 있었다.
+     * 브라우저 개발자도구를 열면 그대로 보였다.
+     *
+     * <p>해시라서 괜찮은 것이 아니다. 계좌비밀번호는 네 자리라 후보가 만 개뿐이고,
+     * 해시가 손에 들어오면 서버를 거치지 않고 오프라인에서 맞춰 볼 수 있다 —
+     * 시도 횟수 제한도, 잠금도, 탐지도 그때는 걸리지 않는다.
+     *
+     * <p>{@code WRITE_ONLY} 는 들어오는 것은 허용하고 나가는 것만 막는다. 지금은
+     * 이 엔티티를 JSON 에서 만드는 곳이 없지만, 나중에 생기더라도 이 필드 때문에
+     * 막히지는 않게 해 둔다.
+     */
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "account_password", length = 255, nullable = false)
     private String accountPassword;
 

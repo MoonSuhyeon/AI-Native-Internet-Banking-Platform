@@ -131,7 +131,7 @@ class AccountControllerTest {
                 .customerId("CUST-001")
                 .contractId(1L)
                 .accountType(ProductType.DEPOSIT)
-                .accountPassword("1234")
+                .accountPassword(PASSWORD_HASH)
                 .openedAt(java.time.LocalDate.of(2026, 1, 1))
                 .accountStatus(AccountStatus.DORMANT)
                 .build();
@@ -263,6 +263,54 @@ class AccountControllerTest {
     }
 
     // ── 픽스처 ──────────────────────────────────────────────────────────────
+
+    // ── 계좌비밀번호는 응답에 실리지 않는다 ──────────────────────────────────
+
+    @Test
+    @DisplayName("계좌 목록 응답에 계좌비밀번호 해시가 실리지 않는다")
+    void list_does_not_expose_account_password() throws Exception {
+        // 이 엔티티를 컨트롤러가 그대로 반환하는 바람에, 고객 계좌 목록 응답에
+        // 계좌비밀번호 해시가 함께 나가고 있었다. 개발자도구를 열면 그대로 보였다.
+        //
+        // 해시라서 괜찮은 것이 아니다. 계좌비밀번호는 네 자리라 후보가 만 개뿐이고,
+        // 해시를 손에 넣으면 서버를 거치지 않고 오프라인에서 맞춰 볼 수 있다 —
+        // 시도 횟수 제한도 잠금도 탐지도 그때는 걸리지 않는다.
+        given(accountService.findByCustomer("CUST-001"))
+                .willReturn(List.of(account("ACC-001", "CUST-001")));
+
+        String body = mockMvc.perform(get("/accounts")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001")
+                        .param("customerId", "CUST-001"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        org.assertj.core.api.Assertions.assertThat(body)
+                .as("계좌비밀번호 해시가 응답에 나갔다")
+                .doesNotContain(PASSWORD_HASH)
+                .doesNotContain("accountPassword");
+        org.assertj.core.api.Assertions.assertThat(body)
+                .as("가리느라 필요한 값까지 사라지면 화면이 빈다")
+                .contains("ACC-001");
+    }
+
+    @Test
+    @DisplayName("단건 조회에도 실리지 않는다")
+    void get_does_not_expose_account_password() throws Exception {
+        // 목록만 막고 단건을 두면 한 줄 우회로 그대로 새어 나간다.
+        given(accountService.findById(1L)).willReturn(account("ACC-001", "CUST-001"));
+        given(accountRepository.findById(1L))
+                .willReturn(java.util.Optional.of(account("ACC-001", "CUST-001")));
+
+        String body = mockMvc.perform(get("/accounts/1")
+                        .header(AuthenticatedCustomerValidator.CUSTOMER_ID_HEADER, "CUST-001"))
+                .andReturn().getResponse().getContentAsString();
+
+        org.assertj.core.api.Assertions.assertThat(body).doesNotContain(PASSWORD_HASH);
+    }
+
+    /** 실제 저장 형태와 같은 BCrypt 해시. 평문 "1234" 로는 유출을 알아채기 어렵다. */
+    private static final String PASSWORD_HASH =
+            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
     private Account account(String number, String customerId) {
         return Account.builder()
