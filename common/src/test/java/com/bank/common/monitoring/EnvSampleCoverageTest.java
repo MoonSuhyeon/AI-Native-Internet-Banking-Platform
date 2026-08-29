@@ -37,6 +37,11 @@ class EnvSampleCoverageTest {
     private static final Path COMPOSE = ROOT.resolve("docker-compose.yml");
     private static final Path SAMPLE = ROOT.resolve(".env.sample");
 
+    /** 배포 스택과 그 정본 템플릿. 로컬과 다른 파일 쌍이라 따로 센다. */
+    private static final Path DEMO_COMPOSE =
+            ROOT.resolve("infra").resolve("docker").resolve("docker-compose.demo.yml");
+    private static final Path PROD_SAMPLE = ROOT.resolve(".env.prod.sample");
+
     /** {@code ${NAME}} · {@code ${NAME:-default}} */
     private static final Pattern REF = Pattern.compile("\\$\\{([A-Z][A-Z0-9_]*)(:-[^}]*)?\\}");
     private static final Pattern DECLARED = Pattern.compile("(?m)^([A-Z][A-Z0-9_]*)=");
@@ -105,9 +110,78 @@ class EnvSampleCoverageTest {
                 .isEmpty();
     }
 
+    /**
+     * 배포용 템플릿도 같은 기준으로 센다.
+     *
+     * <p><b>왜 따로 두는가.</b> 위 검사는 로컬 {@code docker-compose.yml} 과
+     * {@code .env.sample} 만 봤다. 배포는 <b>다른 compose 와 다른 템플릿</b>을 쓰는데
+     * 아무도 그 쌍을 대조하지 않아 {@code .env.prod.sample} 이 조용히 낡았다 —
+     * 게이트웨이가 기동에 요구하는 {@code GATEWAY_*} 여덟 개와 조사 사이드카
+     * 시크릿 둘이 통째로 빠져 있었다.
+     *
+     * <p>드러나는 자리가 배포 서버뿐이라, 그때는 이미 늦다.
+     */
+    @Test
+    @DisplayName("배포 compose 가 요구하는 변수는 .env.prod.sample 에 있다")
+    void everyRequiredVarIsInProdSample() throws IOException {
+        Set<String> declared = declaredNames(PROD_SAMPLE);
+        assertThat(declared)
+                .as(".env.prod.sample 에서 변수를 하나도 읽지 못했다 — 검사가 의미 없어진다")
+                .isNotEmpty();
+
+        String compose = Files.readString(DEMO_COMPOSE);
+        Set<String> missing = new TreeSet<>();
+
+        Matcher m = REF.matcher(compose);
+        while (m.find()) {
+            String name = m.group(1);
+            boolean hasDefault = m.group(2) != null;
+            if (declared.contains(name)) {
+                continue;
+            }
+            if (!hasDefault || MUST_BE_IN_SAMPLE.contains(name)) {
+                missing.add(name);
+            }
+        }
+
+        assertThat(missing)
+                .as("배포 compose 가 쓰는데 .env.prod.sample 에 없는 변수다. "
+                    + "서버에서 처음 뜰 때야 드러나고, 기본값 없는 것은 기동 자체가 "
+                    + "실패한다")
+                .isEmpty();
+    }
+
+    /**
+     * 기능이 죽는 기본값을 가진 변수는 배포 템플릿에도 있어야 한다.
+     *
+     * <p>compose 가 그 변수를 {@code ${VAR}} 로 참조하지 않고 {@code env_file} 로만
+     * 넘기면 위 검사에 걸리지 않는다. 조사 사이드카 시크릿이 그 경우다.
+     */
+    @Test
+    @DisplayName("기능이 죽는 기본값을 가진 변수는 .env.prod.sample 에도 있다")
+    void secretsWithBrokenDefaultsAreInProdSample() throws IOException {
+        Set<String> declared = declaredNames(PROD_SAMPLE);
+
+        Set<String> missing = new TreeSet<>();
+        for (String name : MUST_BE_IN_SAMPLE) {
+            if (!declared.contains(name)) {
+                missing.add(name);
+            }
+        }
+
+        assertThat(missing)
+                .as("배포하면 컨테이너는 뜨지만 그 기능만 죽는다. "
+                    + ".env.prod.sample 이 정본이라, 여기 없으면 아무도 설정하지 않는다")
+                .isEmpty();
+    }
+
     private static Set<String> declaredNames() throws IOException {
+        return declaredNames(SAMPLE);
+    }
+
+    private static Set<String> declaredNames(Path file) throws IOException {
         Set<String> names = new LinkedHashSet<>();
-        Matcher m = DECLARED.matcher(Files.readString(SAMPLE));
+        Matcher m = DECLARED.matcher(Files.readString(file));
         while (m.find()) {
             names.add(m.group(1));
         }
