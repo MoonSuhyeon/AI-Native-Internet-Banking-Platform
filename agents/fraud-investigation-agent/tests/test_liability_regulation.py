@@ -180,3 +180,75 @@ class TestRecommendationCarriesRule:
         assert rec.regulation["implication"], "확인할 사항이 없다"
         assert rec.regulation["verified"] is False, "검증 상태가 잘못 실렸다"
         assert any("조사등급 근거" in line for line in rec.rationale_chain)
+
+
+class TestPromotionGuard:
+    """``verified=True`` 는 플래그가 아니라 조건이다.
+
+    플래그 하나로 근거의 질이 바뀌면 "검증됨" 이 아무 의미가 없다. 나중에 실제
+    법령을 찾아 올릴 때, 실수로 혹은 편의로 플래그만 켜는 것을 막는다.
+    """
+
+    def _sources(self, **over):
+        base = dict(
+            type=SourceType.STATUTE,
+            ref="○○법 제○조",
+            quote="조문 원문",
+        )
+        base.update(over)
+        return [liability.EvidenceSource(**base)]
+
+    def _rule(self, **over):
+        base = dict(
+            rule_id="T-1",
+            fact="사실",
+            sources=self._sources(),
+            implication=["확인 필요"],
+            grade=LiabilityGrade.L4,
+            weight=95,
+            track="즉시",
+            verified=True,
+            verified_by="컴플라이언스 검토자",
+        )
+        base.update(over)
+        return liability.TriageRule(**base)
+
+    def test_조건을_갖추면_올라간다(self):
+        assert self._rule().verified is True
+
+    def test_업무자료만으로는_못_올린다(self):
+        # 교재를 법령처럼 쓰는 것이 이 프로젝트가 피하려던 바로 그것이다.
+        with pytest.raises(ValueError, match="업무 자료만으로는"):
+            self._rule(sources=self._sources(type=SourceType.MANUAL))
+
+    def test_원문이_없으면_못_올린다(self):
+        # 요약만 남기면 그 요약이 맞는지 나중에 확인할 방법이 없다.
+        with pytest.raises(ValueError, match="원문이 없는"):
+            self._rule(sources=self._sources(quote=None))
+
+    def test_공백_원문도_원문이_아니다(self):
+        with pytest.raises(ValueError, match="원문이 없는"):
+            self._rule(sources=self._sources(quote="   "))
+
+    def test_확인한_사람이_없으면_못_올린다(self):
+        # 검증에는 책임자가 있어야 한다. 없으면 나중에 누구에게도 물을 수 없다.
+        with pytest.raises(ValueError, match="누가 확인했는지"):
+            self._rule(verified_by=None)
+
+    def test_미검증은_조건을_따지지_않는다(self):
+        # 지금 상태(업무자료·원문 없음)가 그대로 통과해야 한다 —
+        # 미검증이라고 정직하게 표시한 것을 막으면 안 된다.
+        rule = self._rule(
+            verified=False, verified_by=None,
+            sources=self._sources(type=SourceType.MANUAL, quote=None),
+        )
+        assert rule.verified is False
+
+    def test_지금_규칙들은_승격_조건을_통과하지_못한다(self):
+        # 현재 근거는 전부 업무자료다. 플래그만 켜면 막혀야 한다 —
+        # 이것이 통과하면 승격 조건이 실제로는 안 걸린다는 뜻이다.
+        for rule in ALL_RULES:
+            with pytest.raises(ValueError):
+                rule.model_copy(update={"verified": True}).model_validate(
+                    rule.model_copy(update={"verified": True}).model_dump()
+                )

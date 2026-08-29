@@ -37,7 +37,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .models import AttackScenario, DecisiveFactKind, LiabilityGrade
 
@@ -62,8 +62,19 @@ class EvidenceSource(BaseModel):
     ref: str                      # 원문 위치 — 조/항 또는 문서·페이지
     note: str | None = None       # 자료에 적힌 내용 요약 (해석 아님)
 
+    # 원문 그대로. 검증된 근거에는 반드시 있어야 한다.
+    #
+    # 요약만 남기면 나중에 그 요약이 맞는지 확인할 방법이 없고, 요약이 틀린 채로
+    # 감사에 나가면 없는 근거를 댄 것이 된다. 원문을 함께 두면 다음 사람이
+    # 요약과 대조할 수 있다.
+    quote: str | None = None
+
     def label(self) -> str:
         return f"[{self.type.value}] {self.ref}"
+
+    def is_authoritative(self) -> bool:
+        """업무 자료가 아니라 공식 근거인가."""
+        return self.type in (SourceType.STATUTE, SourceType.PRECEDENT, SourceType.GUIDANCE)
 
 
 class TriageRule(BaseModel):
@@ -82,8 +93,40 @@ class TriageRule(BaseModel):
 
     # 법령·판례로 확인됐는가. 거짓이면 아직 업무 자료 수준의 근거다.
     # 사람이 확인한 뒤에만 참으로 바꾼다 — 자동으로 올리지 않는다.
+    #
+    # 참으로 올리는 조건은 아래 검사기가 강제한다. 플래그만 바꿔서는 올릴 수 없다 —
+    # 그렇게 둘 수 있으면 "검증됨" 이 아무 의미가 없어진다.
     verified: bool = False
     verified_note: str | None = None
+    verified_by: str | None = None   # 누가 확인했나. 검증에는 책임자가 있어야 한다
+
+    @model_validator(mode="after")
+    def _check_promotion(self) -> "TriageRule":
+        """``verified=True`` 로 올릴 수 있는 조건.
+
+        플래그 하나로 근거의 질이 바뀌지 않는다. 올리려면 실제로 갖춰야 한다 —
+        공식 출처, 원문, 그리고 확인한 사람.
+        """
+        if not self.verified:
+            return self
+
+        official = [s for s in self.sources if s.is_authoritative()]
+        if not official:
+            raise ValueError(
+                f"{self.rule_id}: 업무 자료만으로는 검증됨으로 올릴 수 없다. "
+                f"법령·판례·당국 자료가 있어야 한다"
+            )
+        missing = [s.ref for s in official if not (s.quote or "").strip()]
+        if missing:
+            raise ValueError(
+                f"{self.rule_id}: 원문이 없는 근거가 있다({missing}). "
+                f"요약만 남기면 나중에 그 요약이 맞는지 확인할 수 없다"
+            )
+        if not (self.verified_by or "").strip():
+            raise ValueError(
+                f"{self.rule_id}: 누가 확인했는지가 없다. 검증에는 책임자가 있어야 한다"
+            )
+        return self
 
     def summary(self) -> str:
         """감사 로그 한 줄. 등급이 내부 기준임을 문장 안에 남긴다."""
