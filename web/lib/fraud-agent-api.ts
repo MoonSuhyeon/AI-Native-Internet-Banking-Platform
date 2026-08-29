@@ -49,6 +49,17 @@ export type CaseSummary = {
   payee?: string | null
   channel?: string | null
   anomaly_score: number
+
+  // ── 사전 트리아지 결과 ────────────────────────────────────────────────
+  // 조사 전에 값싼 조회(get_party) 한 번으로 매긴 값. 조사 결과가 아니다.
+  /** 내부 조사 우선순위 등급 — 법정 등급이 아니다. */
+  grade: LiabilityGrade
+  /** 즉시 · 가중 · NOTIFY · 이상도만 */
+  track: string
+  /** 정렬 값. 즉시 밴드는 이상도를 보지 않는다. */
+  priority: number
+  /** 등급 근거. null이면 규정상 걸리는 것이 없었다. */
+  basis?: TriageBasis | null
 }
 
 export type TraceStep = {

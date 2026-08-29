@@ -32,6 +32,18 @@ export default function FraudInvestigationPage() {
   const [result, setResult]     = useState<InvestigateResponse | null>(null)
   const [running, setRunning]   = useState(false)
   const [loadingCases, setLoadingCases] = useState(false)
+
+  /**
+   * 큐 정렬 기준. 기본은 책임 순 — 서버가 그렇게 내려준다.
+   *
+   * 이상도 순은 **대비용**이다. 기존 FDS 방식으로 보면 규정상 확인할 것이 많은
+   * 건이 어디로 묻히는지 한눈에 보인다. 서버 순서를 화면이 다시 계산하지 않는
+   * 이유는, 그러면 실제 조사 투입 순서와 화면이 어긋날 수 있어서다.
+   */
+  const [queueSort, setQueueSort] = useState<'liability' | 'anomaly'>('liability')
+  const queue = queueSort === 'liability'
+    ? cases
+    : [...cases].sort((a, b) => b.anomaly_score - a.anomaly_score)
   const [error, setError]       = useState<string | null>(null)
 
   // HITL
@@ -102,23 +114,56 @@ export default function FraudInvestigationPage() {
           {error && <div className="mb-4 px-4 py-2 bg-red-50 border border-red-300 text-red-700 text-sm rounded">{error}</div>}
 
           <div className="grid grid-cols-[300px_1fr] gap-5">
-            {/* ── 조사 큐 (트리아지 입력) ── */}
+            {/* ── 조사 큐 (사전 트리아지 결과) ──
+                서버가 이미 책임 순으로 내려준다. 이상도 순은 대비용으로만 다시 세운다 —
+                화면이 따로 정렬하면 실제 투입 순서와 어긋날 수 있다. */}
             <div>
-              <h2 className="text-[13px] font-semibold text-gray-700 mb-2">조사 큐 (사건 선택)</h2>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-[13px] font-semibold text-gray-700">조사 큐</h2>
+                <div className="flex rounded border border-gray-200 overflow-hidden">
+                  {([['liability', '책임 순'], ['anomaly', '이상도 순']] as const).map(([k, label]) => (
+                    <button key={k} onClick={() => setQueueSort(k)}
+                      className={`px-2 py-1 text-[11px] transition-colors ${
+                        queueSort === k ? 'bg-kb-admin text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-[11px] text-gray-400 mb-2 leading-snug">
+                {queueSort === 'liability'
+                  ? '조사 전 값싼 조회로 권리자 적격성을 확인해 줄을 세웠다. 즉시 밴드는 이상도를 보지 않는다.'
+                  : '기존 FDS 방식. 규정상 확인할 것이 많은 건이 아래로 묻힌다.'}
+              </p>
+
               <div className="space-y-2">
-                {cases.map(c => (
+                {queue.map((c, i) => (
                   <button key={c.name} onClick={() => investigate(c.name)} disabled={running}
                     className={`w-full text-left border rounded-lg p-3 transition-colors disabled:opacity-60
                       ${selected === c.name ? 'border-kb-admin bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[11px] font-bold text-gray-400 tabular-nums w-4">{i + 1}</span>
                       <span className="text-[12px] font-bold text-gray-800 font-mono">{c.alert_id}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                      {c.track === '즉시' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-rose-600 text-white">
+                          즉시 · {c.grade}
+                        </span>
+                      )}
+                      <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded font-semibold ${
                         c.anomaly_score >= 70 ? 'bg-red-100 text-red-700' :
                         c.anomaly_score >= 40 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'}`}>
                         이상도 {c.anomaly_score.toFixed(0)}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-600 mb-1">{won(c.amount)} → {c.payee ?? '-'} ({c.channel ?? '-'})</p>
+                    {/* 왜 이 순위인지. 순서를 정한 단계에도 근거가 있어야 설명할 수 있다. */}
+                    {c.basis && (
+                      <p className="text-[10px] text-rose-700 mb-1">
+                        {c.basis.fact}
+                        {!c.basis.verified && <span className="ml-1 text-amber-600">(미검증 근거)</span>}
+                      </p>
+                    )}
                     {c.description && <p className="text-[10px] text-gray-400 line-clamp-2">{c.description}</p>}
                   </button>
                 ))}
