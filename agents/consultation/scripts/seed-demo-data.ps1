@@ -1,8 +1,12 @@
+# demo-data.sql 은 **수신(deposit) 표**에 붓는 데모 데이터다.
+#
+# 상담 DB 가 아니다. 상담은 수신 데이터를 core-banking 내부 API 로만 읽으므로(A2),
+# 이 시드는 core-banking 의 DB 를 향해야 한다. 상담 전용 DB 에 부으면 표가 없어 실패한다.
 param(
     [string] $HostName = "localhost",
-    [int]    $Port = 5432,
-    [string] $Database = "deposit_db",
-    [string] $User = "deposit",
+    [int]    $Port = 5433,
+    [string] $Database = "core_banking",
+    [string] $User = "core",
     [string] $PsqlPath = "C:\Program Files\PostgreSQL\16\bin\psql.exe"
 )
 
