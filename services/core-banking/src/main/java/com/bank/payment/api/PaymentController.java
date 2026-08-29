@@ -133,7 +133,8 @@ public class PaymentController {
                 result.transactionNo(),
                 result.status(),
                 result.completedAt(),
-                result.failureCategory()
+                result.failureCategory(),
+                result.journalNo()
         );
 
         // 자행 동기 완결 → 200 OK (COMPLETED/FAILED 모두 비즈니스 정상결과)

@@ -34,15 +34,28 @@ public record PaymentResponse(
         List<String> delayReasons,
 
         /** 고객에게 보여 줄 안내 — 왜 미뤘고, 지금 무엇을 할 수 있는지. */
-        RiskGuidance guidance
+        RiskGuidance guidance,
+        /**
+         * 원장 분개 묶음 번호. 자행 완결에서만 채워진다.
+         *
+         * <p>호출부가 자기 회계번호를 따로 만들지 않게 하려고 싣는다. 번호 체계가
+         * 둘이면 어느 쪽이 원장의 사실인지 알 수 없다.
+         */
+        String journalNo
 ) {
 
     /** 지연 없이 끝난 보통의 응답. */
     public static PaymentResponse of(String paymentInstructionId, String transactionNo,
                                      String status, OffsetDateTime completedAt,
                                      String failureCategory) {
+        return of(paymentInstructionId, transactionNo, status, completedAt, failureCategory, null);
+    }
+
+    public static PaymentResponse of(String paymentInstructionId, String transactionNo,
+                                     String status, OffsetDateTime completedAt,
+                                     String failureCategory, String journalNo) {
         return new PaymentResponse(paymentInstructionId, transactionNo, status,
-                completedAt, failureCategory, null, null, null);
+                completedAt, failureCategory, null, null, null, journalNo);
     }
 
     /** 이상거래 점검이 지연을 지시한 응답. */
@@ -50,6 +63,6 @@ public record PaymentResponse(
                                           OffsetDateTime delayedUntil, List<String> reasons,
                                           RiskGuidance guidance) {
         return new PaymentResponse(paymentInstructionId, transactionNo, "SCHEDULED",
-                null, null, delayedUntil, reasons, guidance);
+                null, null, delayedUntil, reasons, guidance, null);
     }
 }

@@ -287,7 +287,7 @@ public class PaymentTransactionService {
         // 8. 멱등키 완료 (스냅샷 = Outbox payload 재활용)
         idempotencyKeyMapper.updateStatus(command.idempotencyKey(), "COMPLETED", payload);
 
-        return new PaymentResult(piId, pi.getTransactionNo(), "COMPLETED", null, now);
+        return new PaymentResult(piId, pi.getTransactionNo(), "COMPLETED", null, now, journalNo);
     }
 
     /**
@@ -381,7 +381,7 @@ public class PaymentTransactionService {
         // 8. 멱등키 완료 (등록 요청의 멱등키 — 재시도 시 COMPLETED 반환)
         idempotencyKeyMapper.updateStatus(command.idempotencyKey(), "COMPLETED", payload);
 
-        return new PaymentResult(piId, pi.getTransactionNo(), "COMPLETED", null, now);
+        return new PaymentResult(piId, pi.getTransactionNo(), "COMPLETED", null, now, journalNo);
     }
 
     /**

@@ -128,7 +128,8 @@ public class SystemPaymentController {
                 result.transactionNo(),
                 result.status(),
                 result.completedAt(),
-                result.failureCategory());
+                result.failureCategory(),
+                result.journalNo());
 
         if ("CLEARING".equals(result.status())) {
             return ResponseEntity.accepted().body(response);
