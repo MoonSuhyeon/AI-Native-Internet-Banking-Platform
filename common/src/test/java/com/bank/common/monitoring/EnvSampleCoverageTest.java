@@ -60,7 +60,11 @@ class EnvSampleCoverageTest {
             // 이체가 막힌 고객의 맞춤 안내가 조용히 기본형으로 내려간다.
             "FRAUD_GATEWAY_SHARED_SECRET",
             // 탐지기 → 조사 인계. 비어 있으면 탐지는 도는데 조사 큐가 영원히 빈다.
-            "FRAUD_DISPATCH_SHARED_SECRET");
+            "FRAUD_DISPATCH_SHARED_SECRET",
+            // 이쪽은 반대로 기본값이 아예 없어 **부팅이 실패한다**(CryptoProperties).
+            // compose 는 env_file 로만 넘기므로 ${...} 참조 검사에도 걸리지 않아,
+            // 두 검사 사이로 빠져나갔다 — 배포 서버에서 재시작 70회로 드러났다.
+            "CRYPTO_KEY_BASE64");
 
     @Test
     @DisplayName("기본값 없는 환경변수는 .env.sample 에 있다")
