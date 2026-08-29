@@ -1,3 +1,4 @@
+import { GATEWAY_BASE_URL } from '@/lib/gateway-url'
 import axios from 'axios'
 import { getAdminGatewayHeaders } from '@/lib/admin-loan-auth'
 import { readAccessToken } from '@/lib/token'
@@ -7,7 +8,7 @@ import { readAccessToken } from '@/lib/token'
 // 게이트웨이를 거친다. 서비스 주소를 직접 가리키면 검증된 신원 헤더가 붙지 않아
 // 역할 기반 인가가 통째로 무의미해진다.
 const aiApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  baseURL: GATEWAY_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 

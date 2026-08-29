@@ -48,12 +48,18 @@ push(main)
 | `deploy-loan-service.yml` | loan-service | ✅ |
 | `deploy-review-ai-gateway.yml` | review-ai-gateway | ✅ |
 | `deploy-consultation-service.yml` | consultation-service (Python) | — |
+| `deploy-fds-detector.yml` | fds-detector (이체 사전점검) | ✅ |
+| `deploy-fraud-agent.yml` | fraud-agent (조사 에이전트, Python) | — |
 | `deploy-web.yml` | web (Next.js) | 타입·린트 |
 | `deploy-infra.yml` | compose · Caddyfile · prometheus · grafana 파일 SCP 동기화 | — |
 
 > 이 표가 오래 낡아 있었다. `deploy-deposit-service.yml`·`deploy-payment-service.yml`
 > 을 적어 뒀지만 둘은 병합돼 `deploy-core-banking.yml` 하나가 됐고,
 > "loan-service 워크플로가 없다" 고 적혀 있었지만 실제로는 있었다.
+>
+> `deploy-fds-detector.yml`·`deploy-fraud-agent.yml` 은 나중에 추가했다. 그전까지
+> 두 서비스는 **이미지를 만드는 워크플로가 없어** 배포 대상에서 통째로 빠져 있었고,
+> 하필 데모의 차단·조사 장면이 이 둘에서 나온다.
 
 ### 트리거 경로 함정
 
@@ -100,6 +106,14 @@ A 레코드   www.example.com   → <VM 외부 IP>   (쓸 경우)
 ```bash
 dig +short example.com        # VM IP 가 나와야 한다
 ```
+
+**도메인이 없다면.** 무료 동적 DNS(DuckDNS 등)로 `<이름>.duckdns.org` 를 받아
+같은 자리에 쓴다. Let's Encrypt 인증서가 정상 발급되므로 HTTPS 는 동일하게 켜진다.
+
+`sslip.io`·`nip.io` 같은 IP 매핑 도메인도 되지만 권하지 않는다. 도메인을 여러
+사용자가 공유해 **발급 한도를 남이 먼저 써버릴 수 있다.** IP 로만 접속하는 것도
+피한다 — 인증서를 못 받아 브라우저가 "안전하지 않음" 을 띄우는데, 하필 은행
+화면에서 그 경고가 뜨면 보는 사람이 먼저 그것을 본다.
 
 방화벽은 **80·443 만** 연다. 80 은 Let's Encrypt 검증에 필요하다(Caddy 가 443 으로
 넘긴다). 8080 을 열 이유는 없다 — 게이트웨이는 Caddy 뒤에 있다.
@@ -148,6 +162,47 @@ docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.prod up -
 1. Secrets 에 `DEPLOY_SSH_HOST` · `DEPLOY_SSH_USER` · `DEPLOY_SSH_KEY` 등록
 2. Variables 에 `DEPLOY_ENABLED = true` 등록
 3. 다음 push 부터 deploy 잡이 활성화된다
+
+### 3-4. 데모 스택으로 올릴 때
+
+제출·시연용으로 **영상 대본이 지나는 경로만** 올리는 구성이다. 정의는
+`infra/docker/docker-compose.demo.yml` 이고, 운영 정의와 별도 파일로 둔다 —
+운영 쪽을 데모 사정으로 깎으면 나중에 되돌릴 때 무엇이 데모용이었는지 알 수 없다.
+
+빠지는 것: 여신·상담·자동심사·스키마레지스트리·Prometheus·Grafana·타행.
+아키텍처 문서에는 있고 이 스택에는 없다 — 제출 문서에서 구분해 적을 것.
+
+```bash
+# 이미지 태그와 도메인이 .env.prod 에 있어야 한다
+docker compose -f infra/docker/docker-compose.demo.yml --env-file .env.prod pull
+docker compose -f infra/docker/docker-compose.demo.yml --env-file .env.prod up -d
+```
+
+운영 정의와 다른 점, 그리고 그 이유:
+
+| 항목 | 데모 | 왜 |
+|---|---|---|
+| `payment-topic-init` | **있다** | 토픽 자동생성이 꺼져 있고 core-banking 은 없는 토픽에 붙으면 죽는다. 운영 정의에는 이 서비스가 없어 그대로 올리면 기동에 실패한다 |
+| `fds-detector`·`fraud-agent` | **있다** | 데모의 차단·조사 장면이 이 둘에서 나온다. 운영 정의에는 없다 |
+| api-gateway `REDIS_HOST` | **준다** | 속도제한이 Redis 를 쓴다. 없으면 컨테이너 안 localhost 를 찾다 unhealthy 가 된다 |
+| api-gateway `GATEWAY_*` 8개 | **준다** | `application.yml` 에 기본값이 없다. 하나라도 비면 기동하지 않는다 |
+| `PAYMENT_SERVICE_PORT` | `8082` | 결제는 core-banking 병합분이라 8082 다. 운영 정의의 `8084` 는 병합 전 값이 남은 것이다 |
+
+`GATEWAY_*` 여덟 개의 값은 커밋된 `.env.sample` 이 정본이다. `.env.prod` 에 그대로
+옮긴다 — 데모를 위해 새 숫자를 만들지 않는다.
+
+```bash
+grep '^GATEWAY_' .env.sample >> .env.prod
+```
+
+메모리 합계는 약 6.1GB 다. **8GB 이상** 인스턴스를 쓴다(시스템·이미지 pull 여유 포함).
+4GB 로는 JVM 다섯 개가 동시에 뜨면서 OOM 으로 밀린다.
+
+#### 데모 스택에서 감사 저장은 꺼져 있다
+
+`FRAUD_AUDIT_DSN` 을 주지 않으므로 조사 에이전트의 권고 기록은 NoOp 다(코드가
+의도한 데모 경로). 감사 저장까지 보여야 하면 DSN 을 주고 `agent-schema.sql` 을
+적용한 DB 를 함께 올려야 한다 — 그 경로는 데모 스택에서 확인하지 않았다.
 
 ---
 

@@ -1,0 +1,50 @@
+name: Deploy fds-detector
+
+# 이상거래 사전점검. 이체 임계 경로에 인라인으로 들어가므로 배포에서 빠지면
+# 데모의 "의심 거래가 막히는" 장면이 통째로 나오지 않는다 — 게이트가 탐지기를
+# 부르지 못하면 구간별 장애 정책에 따라 소액은 그냥 통과한다.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/fds-detector/**'
+      - 'common/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/deploy-fds-detector.yml'
+      - '.github/workflows/reusable-*.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/fds-detector/**'
+      - 'common/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/reusable-java-build.yml
+    with:
+      service-name: fds-detector
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/reusable-docker-publish.yml
+    with:
+      service-name: fds-detector
+
+  deploy:
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    needs: publish
+    permissions: {}
+    uses: ./.github/workflows/reusable-deploy-ssh.yml
+    with:
+      service-name: fds-detector
+      image-tag: ${{ needs.publish.outputs.image-tag }}
+    secrets: inherit

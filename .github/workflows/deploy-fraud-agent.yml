@@ -1,0 +1,39 @@
+name: Deploy fraud-agent
+
+# 조사 에이전트. 파이썬이라 자바 빌드 워크플로를 건너뛰고 바로 이미지로 간다.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agents/fraud-investigation-agent/**'
+      # 하네스 공유 계약. 이미지에 함께 들어가므로 여기가 바뀌면 다시 빌드해야 한다.
+      # 빠뜨리면 배포된 이미지가 옛 계약(감사 스키마·PII 규칙)을 든 채로 남는다.
+      - 'agents/harness-core/python/**'
+      - '.github/workflows/deploy-fraud-agent.yml'
+      - '.github/workflows/reusable-docker-publish.yml'
+      - '.github/workflows/reusable-deploy-ssh.yml'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/reusable-docker-publish.yml
+    with:
+      service-name: fraud-agent
+      # 컨텍스트가 agents/ 인 이유는 consultation 과 같다 — harness-core/python 의
+      # 공유 계약이 이미지에 들어가야 하는데 Docker 는 컨텍스트 밖을 COPY 할 수 없다.
+      build-context: agents
+      dockerfile-path: agents/fraud-investigation-agent/Dockerfile
+
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true'
+    needs: publish
+    permissions: {}
+    uses: ./.github/workflows/reusable-deploy-ssh.yml
+    with:
+      service-name: fraud-agent
+      image-tag: ${{ needs.publish.outputs.image-tag }}
+    secrets: inherit

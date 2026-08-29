@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 
 /**
  * API 폴백 주소가 게이트웨이를 가리키는지 고정한다.
@@ -105,5 +105,77 @@ describe('API 폴백 주소', () => {
     const files = SCAN_DIRS.flatMap(sourceFiles)
     expect(files.length).toBeGreaterThan(5)
     expect(files.some(f => f.endsWith('api.ts'))).toBe(true)
+  })
+})
+
+/**
+ * 폴백이 **배포에서** 무엇이 되는지 고정한다.
+ *
+ * 위 검사는 포트가 맞는지만 봤다. 그래서 다음이 통과했다: 운영 이미지는
+ * `ARG NEXT_PUBLIC_API_URL=""` 로 빌드되는데, 빈 문자열이 falsy 라
+ * `"" || 'http://localhost:8080'` 이 되어 방문자 브라우저가 **자기 PC 의 8080** 을
+ * 불렀다. 포트는 8080 으로 "맞았고", 사이트만 통째로 죽었다.
+ *
+ * 화면은 정상으로 뜨고 API 만 실패하므로 눈으로는 원인이 보이지 않는다. 여기서 센다.
+ */
+describe('배포 번들의 게이트웨이 주소', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  async function resolveBase(env: Record<string, string>) {
+    for (const [k, v] of Object.entries(env)) vi.stubEnv(k, v)
+    vi.resetModules()
+    return (await import('./gateway-url')).GATEWAY_BASE_URL
+  }
+
+  it('운영 빌드에서 주소가 비면 같은 오리진 상대경로가 된다', async () => {
+    // Caddy 가 같은 도메인에서 /api 를 게이트웨이로 넘긴다. 상대경로면 도메인이
+    // 무엇이든 맞물리므로 이미지를 도메인마다 다시 만들 필요가 없다.
+    expect(
+      await resolveBase({ NEXT_PUBLIC_API_URL: '', NODE_ENV: 'production' }),
+      '운영 빌드가 localhost 로 떨어지면 배포된 사이트의 모든 API 호출이 방문자 PC 로 간다',
+    ).toBe('')
+  })
+
+  it('개발 빌드에서는 로컬 게이트웨이를 가리킨다', async () => {
+    // 로컬은 3000(Next)과 8080(게이트웨이)이 따로 뜨고 그 사이에 프록시가 없다.
+    // 여기까지 상대경로로 만들면 개발이 죽는다 — 그래서 두 경우를 가른다.
+    expect(await resolveBase({ NEXT_PUBLIC_API_URL: '', NODE_ENV: 'development' }))
+      .toBe('http://localhost:8080')
+  })
+
+  it('명시된 주소가 있으면 그것이 이긴다', async () => {
+    expect(await resolveBase({
+      NEXT_PUBLIC_API_URL: 'https://example.test',
+      NODE_ENV: 'production',
+    })).toBe('https://example.test')
+  })
+})
+
+/**
+ * 폴백을 다시 흩뜨리지 못하게 한다.
+ *
+ * 아홉 곳에 같은 `|| 'http://localhost:8080'` 이 복사돼 있었고, 그래서 한 곳을
+ * 고쳐도 나머지 여덟이 남았다. 브라우저 클라이언트는 gateway-url 만 쓰게 묶는다.
+ */
+describe('게이트웨이 주소를 정하는 곳', () => {
+  it('브라우저 클라이언트는 lib/gateway-url 만 본다', () => {
+    const offenders: string[] = []
+    for (const file of sourceFiles(join(WEB_ROOT, 'lib'))) {
+      const rel = relative(WEB_ROOT, file).split(sep).join('/')
+      if (rel === 'lib/gateway-url.ts') continue
+      if (readFileSync(file, 'utf-8').includes('process.env.NEXT_PUBLIC_API_URL')) {
+        offenders.push(rel)
+      }
+    }
+    expect(
+      offenders,
+      'NEXT_PUBLIC_API_URL 을 직접 읽는 곳이 생겼다.\n' +
+        '@/lib/gateway-url 의 GATEWAY_BASE_URL 을 쓸 것 — 직접 읽으면 운영 빌드의\n' +
+        '빈 문자열 처리가 그 파일에서만 다시 빠진다.\n' +
+        offenders.join('\n'),
+    ).toEqual([])
   })
 })

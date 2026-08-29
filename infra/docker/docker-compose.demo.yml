@@ -1,0 +1,329 @@
+# =============================================================================
+# 데모 스택 — 영상 대본이 지나는 경로만.
+#
+# **왜 운영 compose 를 그대로 쓰지 않는가.** 운영 정의에는 여신·상담·자동심사·
+# 관측이 함께 있다. 그것까지 올리면 서버 사양이 커지고 기동이 길어지는데,
+# 데모에서는 화면에 한 번도 나오지 않는다.
+#
+# **무엇이 빠졌나** — 여신·상담·자동심사·스키마레지스트리·Prometheus·Grafana·
+# 타행(core-banking-b). 아키텍처에는 있고 이 스택에는 없다. 제출 문서의
+# "실제 구현 / 시뮬레이션 / 목표 아키텍처" 구분이 이 파일과 짝이다.
+#
+# **Kafka 와 토픽 초기화는 왜 남았나.** core-banking 은 없는 토픽에 붙으면
+# 죽는다(payment.kafka.missing-topics-fatal). 대외계 흐름은 데모에 안 나오지만
+# 브로커와 payment-topic-init 이 없으면 **기동 자체가 실패한다.**
+#
+# 메모리 합계 약 6.1GB. 8GB 서버를 권한다(시스템·pull 여유 포함).
+#
+# 사용:
+#   docker compose -f infra/docker/docker-compose.demo.yml --env-file .env.prod pull
+#   docker compose -f infra/docker/docker-compose.demo.yml --env-file .env.prod up -d
+#
+# .env.prod 는 커밋하지 않는다. 필요한 키는 .env.sample 과 docs/DEPLOY.md 에 있다.
+# =============================================================================
+name: safeline-demo
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-restart: &default-restart
+  restart: unless-stopped
+
+services:
+  # ── 저장소 ─────────────────────────────────────────────────────────────────
+  customer-db:
+    image: postgres:16-alpine
+    container_name: ib-customer-db
+    <<: *default-restart
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: ${CUSTOMER_DB_NAME:-customer_db}
+      POSTGRES_USER: ${CUSTOMER_DB_USER:-customer}
+      POSTGRES_PASSWORD: ${CUSTOMER_DB_PASSWORD}
+    volumes:
+      - customer-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CUSTOMER_DB_USER:-customer} -d ${CUSTOMER_DB_NAME:-customer_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 384m
+
+  core-banking-db:
+    image: postgres:16-alpine
+    container_name: ib-core-banking-db
+    <<: *default-restart
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: ${CORE_BANKING_DB_NAME:-core_banking}
+      POSTGRES_USER: ${CORE_BANKING_DB_USER:-core}
+      POSTGRES_PASSWORD: ${CORE_BANKING_DB_PASSWORD}
+    volumes:
+      - core-banking-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CORE_BANKING_DB_USER:-core} -d ${CORE_BANKING_DB_NAME:-core_banking}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+
+  redis:
+    image: redis:7-alpine
+    container_name: ib-redis
+    <<: *default-restart
+    logging: *default-logging
+    command: ["redis-server", "--maxmemory", "200mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    mem_limit: 256m
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: ib-kafka
+    <<: *default-restart
+    logging: *default-logging
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # 토픽은 아래 payment-topic-init 이 파티션·보존기간까지 정해서 만든다.
+      # 자동 생성을 켜면 오타 난 토픽 이름이 조용히 만들어져 이벤트가 사라진다.
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms256M"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    mem_limit: 768m
+
+  # 토픽을 만들고 끝나는 일회성 작업. core-banking 이 이 완료를 기다린다.
+  #
+  # 운영 compose 에는 이것이 없다. 즉 auto-create 가 꺼진 채 토픽을 만들 주체가
+  # 없어, 그대로 올리면 core-banking 이 기동에 실패한다.
+  payment-topic-init:
+    image: apache/kafka:3.8.0
+    container_name: ib-payment-topic-init
+    logging: *default-logging
+    restart: "no"
+    environment:
+      KAFKA_BOOTSTRAP: kafka:29092
+    volumes:
+      - ../../services/core-banking/infra/init-topics.sh:/init-topics.sh:ro
+    entrypoint: ["/bin/bash", "/init-topics.sh"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ── 서비스 ─────────────────────────────────────────────────────────────────
+  customer-service:
+    image: ghcr.io/${GITHUB_OWNER}/customer-service:${CUSTOMER_IMAGE_TAG:-latest}
+    container_name: ib-customer-service
+    <<: *default-restart
+    logging: *default-logging
+    env_file: ../../.env.prod
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      CUSTOMER_DB_HOST: customer-db
+      REDIS_HOST: redis
+    mem_limit: 640m
+    depends_on:
+      customer-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  core-banking:
+    image: ghcr.io/${GITHUB_OWNER}/core-banking:${CORE_BANKING_IMAGE_TAG:-latest}
+    container_name: ib-core-banking
+    <<: *default-restart
+    logging: *default-logging
+    env_file: ../../.env.prod
+    environment:
+      # db-payment/V23 의 UTC 해석 전제와 한 세트다. 바뀌면 저장된 시각의 의미가 어긋난다.
+      TZ: UTC
+      SPRING_PROFILES_ACTIVE: prod
+      CORE_BANKING_APP_PORT: 8082
+      BANK_CODE: "A"
+      CORE_BANKING_DB_HOST: core-banking-db
+      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KFTC_KAFKA_BOOTSTRAP: kafka:29092
+      BOK_KAFKA_BOOTSTRAP: kafka:29092
+      INTERNAL_KAFKA_BOOTSTRAP: kafka:29092
+      KFTC_CONSUMER_GROUP: core-banking-kftc-a
+      BOK_CONSUMER_GROUP: core-banking-bok-a
+      INTERNAL_CONSUMER_GROUP: core-banking-internal-a
+      # 이상거래 사전점검. 꺼 두면 데모의 차단 장면이 통째로 나오지 않는다.
+      DEPOSIT_FDS_ENABLED: "true"
+      DEPOSIT_FDS_BASE_URL: http://fds-detector:8092
+      DEPOSIT_FDS_TIMEOUT_MS: ${DEPOSIT_FDS_TIMEOUT_MS:-400}
+    mem_limit: 1g
+    depends_on:
+      core-banking-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      payment-topic-init:
+        condition: service_completed_successfully
+
+  # 이체 임계 경로의 사전점검. 임계값은 전부 이미지 기본값을 쓴다
+  # (FDS_HIGH_AMOUNT·FDS_VELOCITY_* 등 — services/fds-detector/application.yml).
+  # 데모를 위해 여기서 새 숫자를 만들지 않는다.
+  fds-detector:
+    image: ghcr.io/${GITHUB_OWNER}/fds-detector:${FDS_DETECTOR_IMAGE_TAG:-latest}
+    container_name: ib-fds-detector
+    <<: *default-restart
+    logging: *default-logging
+    env_file: ../../.env.prod
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      FDS_DETECTOR_PORT: 8092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CORE_BANKING_URL: http://core-banking:8082
+      FRAUD_AGENT_URL: http://fraud-agent:8090
+    mem_limit: 512m
+    depends_on:
+      redis:
+        condition: service_healthy
+      payment-topic-init:
+        condition: service_completed_successfully
+
+  # 조사 에이전트(사이드카). 게이트웨이만 부를 수 있고 밖으로 열지 않는다.
+  #
+  # FRAUD_AUDIT_DSN 은 주지 않는다 → 감사 저장은 NoOp. 로컬에서 확인한 것과 같은
+  # 구성이고, 여기에 DB 를 붙이면 확인하지 않은 경로를 데모에서 처음 돌리게 된다.
+  fraud-agent:
+    image: ghcr.io/${GITHUB_OWNER}/fraud-agent:${FRAUD_AGENT_IMAGE_TAG:-latest}
+    container_name: ib-fraud-agent
+    <<: *default-restart
+    logging: *default-logging
+    env_file: ../../.env.prod
+    environment:
+      TRIAGE_BACKEND_URL: http://customer-service:8081
+      # TRIAGE_LLM_PROVIDER 는 일부러 주지 않는다 — 미설정이 mock 이라 키 없이
+      # 결정적으로 돈다. 실제 LLM 을 쓸 때만 .env.prod 에 provider 와 키를 넣는다.
+    mem_limit: 512m
+    depends_on:
+      - customer-service
+
+  # 유일한 진입점. 신원 검증과 헤더 주입이 여기서 일어난다.
+  api-gateway:
+    image: ghcr.io/${GITHUB_OWNER}/api-gateway:${API_GATEWAY_IMAGE_TAG:-latest}
+    container_name: ib-api-gateway
+    <<: *default-restart
+    logging: *default-logging
+    env_file: ../../.env.prod
+    environment:
+      GATEWAY_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET}
+      # 속도제한이 Redis 를 쓴다. 없으면 컨테이너 안의 localhost 를 찾다 unhealthy 가 된다.
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # 라우팅 대상 — api-gateway 변수명은 *_SERVICE_HOST / *_SERVICE_PORT.
+      # 결제도 core-banking 병합분이라 8082 다(application.yml 기본값과 같다).
+      CUSTOMER_SERVICE_HOST: customer-service
+      CUSTOMER_SERVICE_PORT: 8081
+      DEPOSIT_SERVICE_HOST: core-banking
+      DEPOSIT_SERVICE_PORT: 8082
+      PAYMENT_SERVICE_HOST: core-banking
+      PAYMENT_SERVICE_PORT: 8082
+      FRAUD_AGENT_HOST: fraud-agent
+      FRAUD_AGENT_PORT: 8090
+      # 아래 8개는 application.yml 에 기본값이 없다 — 하나라도 비면 기동하지 않는다.
+      # 값의 정본은 커밋된 .env.sample 이다. 여기서 숫자를 새로 만들지 않는다.
+      GATEWAY_AUTH_REPLENISH_RATE:        ${GATEWAY_AUTH_REPLENISH_RATE}
+      GATEWAY_AUTH_BURST_CAPACITY:        ${GATEWAY_AUTH_BURST_CAPACITY}
+      GATEWAY_CUSTOMER_REPLENISH_RATE:    ${GATEWAY_CUSTOMER_REPLENISH_RATE}
+      GATEWAY_CUSTOMER_BURST_CAPACITY:    ${GATEWAY_CUSTOMER_BURST_CAPACITY}
+      GATEWAY_LOAN_REPLENISH_RATE:        ${GATEWAY_LOAN_REPLENISH_RATE}
+      GATEWAY_LOAN_BURST_CAPACITY:        ${GATEWAY_LOAN_BURST_CAPACITY}
+      GATEWAY_AUTO_REVIEW_REPLENISH_RATE: ${GATEWAY_AUTO_REVIEW_REPLENISH_RATE}
+      GATEWAY_AUTO_REVIEW_BURST_CAPACITY: ${GATEWAY_AUTO_REVIEW_BURST_CAPACITY}
+    # 호스트 포트를 열지 않는다. Caddy 가 유일한 외부 진입점이고, 게이트웨이를
+    # 밖에 직접 노출하면 HTTPS 를 우회해 평문으로 부를 수 있는 길이 남는다.
+    expose:
+      - "8080"
+    mem_limit: 640m
+    depends_on:
+      redis:
+        condition: service_healthy
+      customer-service:
+        condition: service_started
+      core-banking:
+        condition: service_started
+
+  # 프론트(Next.js).
+  #
+  # NEXT_PUBLIC_* 은 빌드 시점에 번들에 박히므로 여기서 주어도 소용이 없다.
+  # 이미지는 그 값을 비운 채 만들어지고, 브라우저는 같은 오리진의 상대경로로
+  # /api 를 부른다(lib/gateway-url.ts). Caddy 가 그것을 게이트웨이로 넘긴다.
+  # 아래 둘은 컨테이너 안에서 도는 서버측 프록시(app/api/**)가 쓰는 런타임 값이다.
+  web:
+    image: ghcr.io/${GITHUB_OWNER}/web:${WEB_IMAGE_TAG:-latest}
+    container_name: ib-web
+    <<: *default-restart
+    logging: *default-logging
+    environment:
+      CUSTOMER_API_URL: http://api-gateway:8080
+    expose:
+      - "3000"
+    mem_limit: 512m
+    depends_on:
+      - api-gateway
+
+  # ── 바깥으로 열리는 유일한 것 ──────────────────────────────────────────────
+  #
+  # SITE_DOMAIN 이 이 서버를 실제로 가리킨 뒤에 올려야 한다. DNS 가 붙기 전에
+  # 띄우면 Let's Encrypt 검증이 실패하고, 반복하면 발급 한도에 걸린다.
+  caddy:
+    image: caddy:2-alpine
+    container_name: ib-caddy
+    <<: *default-restart
+    logging: *default-logging
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # 발급받은 인증서. 볼륨이 없으면 재시작마다 재발급을 시도하다
+      # Let's Encrypt 발급 한도(주당 5회)에 걸린다.
+      - caddy-data:/data
+      - caddy-config:/config
+      - caddy-logs:/var/log/caddy
+    mem_limit: 128m
+    depends_on:
+      - web
+      - api-gateway
+
+volumes:
+  customer-db-data:
+  core-banking-db-data:
+  redis-data:
+  kafka-data:
+  caddy-data:
+  caddy-config:
+  caddy-logs:

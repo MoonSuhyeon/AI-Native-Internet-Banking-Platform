@@ -1,16 +1,10 @@
+import { GATEWAY_BASE_URL } from '@/lib/gateway-url'
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { readAccessToken } from "@/lib/token";
 
 export const api = axios.create({
-  // 게이트웨이(8080). 폴백 값은 .env 의 GATEWAY_APP_PORT 와 같아야 한다.
-  //
-  // 한동안 8088 이었다. payment-service-a 가 8080 을 물고 있던 시절의 우회였는데,
-  // 그 서비스가 core-banking 으로 병합되면서 8080 은 게이트웨이로 돌아왔고 8088 은
-  // review-ai-gateway(AIGATEWAY_APP_PORT)가 가져갔다. 즉 폴백이 **다른 서비스**를
-  // 가리키게 됐는데, .env.local 이 NEXT_PUBLIC_API_URL 을 8080 으로 덮어 주고 있어
-  // 로컬에서는 드러나지 않았다 — 그 파일이 없는 곳(새로 받은 저장소·CI·컨테이너)
-  // 에서만 조용히 엉뚱한 데로 갔다.
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+  // 게이트웨이. 주소를 고르는 규칙과 그 이력은 lib/gateway-url.ts 에 모았다.
+  baseURL: GATEWAY_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 

@@ -1,3 +1,4 @@
+import { GATEWAY_BASE_URL } from '@/lib/gateway-url'
 import axios from 'axios'
 import type { Account } from '@/lib/mock-data'
 import { readAccessToken } from '@/lib/token'
@@ -6,7 +7,7 @@ import { readAccessToken } from '@/lib/token'
 // 라우팅하므로 서비스 주소를 직접 가리킬 이유가 없다 — 직접 가리키면 검증된 신원
 // 헤더가 붙지 않는다.
 function depositBaseUrl() {
-  const gateway = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
+  const gateway = (GATEWAY_BASE_URL).replace(/\/$/, '')
   return `${gateway}/api`
 }
 
