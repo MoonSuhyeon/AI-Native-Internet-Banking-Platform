@@ -42,62 +42,168 @@ discarded before it reached the screen.
 ## Architecture
 
 ```
-                    ┌──────────────────────────┐
-                    │        CHANNELS          │
-                    │ Customer │ Employee │ AI │
-                    │   Web    │  Admin   │Bot │
-                    └────────────┬─────────────┘
-                                 │
-                                 ▼
-                    ┌──────────────────────────┐
-                    │       API GATEWAY        │
-                    │  JWT · Identity · RBAC   │
-                    │  Routing · CORS · Guard  │
-                    └────────────┬─────────────┘
-                                 │
-              ┌──────────────────┴──────────────────┐
-              ▼                                     ▼
-    ┌──────────────────┐              ┌──────────────────────────┐
-    │  CUSTOMER / AUTH │◀─── look up ─│      CORE BANKING        │
-    │                  │   (limits,   │                          │
-    │  CIF · Party     │    holder)   │ Deposit · Payment · Loan │
-    │  Auth · Role     │──────────────▶│                          │
-    │  Audit           │              │ ├ Double-entry Ledger    │
-    └──────────────────┘              │ ├ Outbox / Saga          │
-                                      │ └ Orchestration          │
-                                      └────────────┬─────────────┘
-                                                   │
-                        ┌──────────────────────────┼───────────────────┐
-                        ▼                          ▼                   ▼
-              ┌──────────────────┐      ┌──────────────────┐  ┌───────────────┐
-              │       FDS        │      │      KAFKA       │  │ AI / DECISION │
-              │                  │      │                  │  │               │
-              │ PreCheck Gate    │      │  Events / MQ     │  │ Loan Review   │
-              │ Detector         │      └────────┬─────────┘  │ Review AI     │
-              │ Fraud Agent      │               │            │ Document Agent│
-              │ HITL             │               │            │ Consultation  │
-              └──────────────────┘               │            └───────────────┘
-                                                 │
-                        ┌────────────────────────┼────────────────────────┐
-                        ▼                        ▼                        ▼
-              ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-              │ EXTERNAL SYSTEMS │    │  FDS Detector    │    │      SPARK       │
-              │                  │    │                  │    │                  │
-              │ KFTC · BOK       │    │ post-hoc         │    │ windowed         │
-              │ Clearing/Settle  │    │ detection        │    │ aggregation      │
-              │ Reconciliation   │    └──────────────────┘    └──────────────────┘
-              └──────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CHANNELS                                       │
+│                                                                             │
+│        Customer Web          Employee Admin             AI Bot              │
+│             │                       │                      │                 │
+└─────────────┼───────────────────────┼──────────────────────┼────────────────┘
+              │                       │                      │
+              └───────────────────────┼──────────────────────┘
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            API GATEWAY                                      │
+│                                                                             │
+│  External Authentication                                                    │
+│  ├─ JWT / Identity                                                          │
+│  ├─ Customer / Employee Context                                             │
+│  ├─ RBAC                                                                    │
+│  ├─ Routing / CORS                                                          │
+│  └─ External API Boundary                                                   │
+│                                                                             │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                     ──────────────┼──────────────
+                         TRUST BOUNDARY #1
+                     External → Internal
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            CORE BANKING                                     │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                    INTERNAL SECURITY BOUNDARY                          │  │
+│  │                                                                       │  │
+│  │  Service Authentication                                               │  │
+│  │  ├─ Credential                                                          │  │
+│  │  ├─ Credential Hash → Service Identity                                 │  │
+│  │  └─ Service Principal                                                   │  │
+│  │                                                                       │  │
+│  │  Service Authorization                                                  │  │
+│  │  ├─ Operation Permission                                                │  │
+│  │  ├─ Resource / Account Scope                                            │  │
+│  │  ├─ Amount Limit                                                        │  │
+│  │  └─ Fail-Closed                                                         │  │
+│  │                                                                       │  │
+│  │  Audit                                                                   │  │
+│  │  └─ Authentication / Authorization Decision History                    │  │
+│  │                                                                       │  │
+│  └───────────────────────────────┬───────────────────────────────────────┘  │
+│                                  │                                          │
+│             ┌────────────────────┼────────────────────┐                     │
+│             │                    │                    │                     │
+│             ▼                    ▼                    ▼                     │
+│      ┌──────────────┐     ┌──────────────┐     ┌──────────────┐            │
+│      │   CUSTOMER   │     │    DEPOSIT   │     │     LOAN     │            │
+│      │   / PARTY    │     │    / SAVING  │     │    / CREDIT  │            │
+│      │              │     │              │     │              │            │
+│      │ CIF / Party  │     │ Accounts     │     │ Contracts    │            │
+│      │ Auth / Role  │     │ Balance      │     │ Principal    │            │
+│      │ Consent SoR  │     │ Deposit      │     │ Interest     │            │
+│      │ Audit        │     │ Transactions │     │ Repayment    │            │
+│      └──────────────┘     └──────┬───────┘     └──────┬───────┘            │
+│                                  │                    │                     │
+│                                  └────────┬───────────┘                     │
+│                                           ▼                                 │
+│                              ┌─────────────────────┐                        │
+│                              │       PAYMENT       │                        │
+│                              │                     │                        │
+│                              │ Payment Instruction │                        │
+│                              │ Idempotency         │                        │
+│                              │ Clearing            │                        │
+│                              │ Internal Payment    │                        │
+│                              └──────────┬──────────┘                        │
+│                                         │                                  │
+│                          ────────────────┼────────────────                   │
+│                              TRANSACTION BOUNDARY                           │
+│                                         │                                  │
+│                                         ▼                                  │
+│                              ┌─────────────────────┐                        │
+│                              │       LEDGER        │                        │
+│                              │                     │                        │
+│                              │ Double Entry        │                        │
+│                              │ Journal             │                        │
+│                              │ Journal No          │                        │
+│                              │ Loan Receivable     │                        │
+│                              │ Interest Revenue    │                        │
+│                              │ Reversal            │                        │
+│                              └──────────┬──────────┘                        │
+│                                         │                                  │
+│                              ┌──────────▼──────────┐                        │
+│                              │   OUTBOX / SAGA      │                        │
+│                              │ Transaction Events   │                        │
+│                              └──────────┬──────────┘                        │
+│                                         │                                  │
+└─────────────────────────────────────────┼───────────────────────────────────┘
+                                          │
+                         ─────────────────┼────────────────
+                              TRUST BOUNDARY #2
+                              Sync → Async
+                                          │
+                                          ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ASYNC / RISK LAYER                                  │
+│                                                                             │
+│   ┌────────────────┐     ┌────────────────┐     ┌────────────────────────┐ │
+│   │     KAFKA      │────▶│     SPARK      │────▶│   FDS POST DETECTOR    │ │
+│   │ Events / MQ    │     │ Windowed Agg.  │     │ Post-time Detection    │ │
+│   └───────┬────────┘     └────────────────┘     └────────────────────────┘ │
+│           │                                                                 │
+│           ▼                                                                 │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │                         AI / DECISION                                │   │
+│   │                                                                     │   │
+│   │  FDS Fraud Agent ──► Policy / Decision ──► HITL                     │   │
+│   │  Consultation Agent                                                │   │
+│   │  Loan Review Agent                                                  │   │
+│   │  Document Agent                                                     │   │
+│   │                                                                     │   │
+│   │  AI does NOT become the final authority over the ledger.            │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                          │
+                                          ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          EXTERNAL FINANCIAL SYSTEMS                          │
+│                                                                             │
+│                 KFTC / BOK / Clearing / Settlement / Reconciliation         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-              ┌──────────────────────────────────────────────────┐
-              │                    DATA                          │
-              │  PostgreSQL 16 · pgvector · Redis 7              │
-              └──────────────────────────────────────────────────┘
 
-              ┌──────────────────────────────────────────────────┐
-              │                OBSERVABILITY                     │
-              │  Prometheus · Grafana · Loki · Alertmanager      │
-              │  Phoenix (LLM / agent tracing)                   │
-              └──────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              DATA LAYER                                     │
+│                                                                             │
+│  Customer DB          Deposit DB          Payment DB          Loan DB        │
+│      │                    │                   │                  │           │
+│      │                    │                   │                  │           │
+│      └─────────────── Domain-owned data ─────┴──────────────────┘           │
+│                                                                             │
+│                     PostgreSQL · Redis · Vector Store                       │
+│                                                                             │
+│  Loan Subsidiary Accounting ────────────────┐                               │
+│                                             ▼                               │
+│                                      Reconciliation                         │
+│                                             ▲                               │
+│                                             │                               │
+│  Ledger (GL / SoR) ────────────────────────┘                               │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            AUDIT / OBSERVABILITY                            │
+│                                                                             │
+│  Security Audit          Transaction Audit          AI Audit                │
+│  ├ Authentication        ├ Payment ID              ├ Agent Trace           │
+│  ├ Authorization         ├ Journal No              ├ Decision              │
+│  ├ Service Identity      ├ Idempotency             ├ Tool Call             │
+│  └ Permission Change     └ Reversal                └ HITL                  │
+│                                                                             │
+│        Prometheus · Grafana · Loki · Phoenix · WORM Audit                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
