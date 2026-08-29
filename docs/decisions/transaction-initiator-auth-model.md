@@ -64,7 +64,7 @@
           │                                 │
           ▼                                 ▼
    Customer API                       Internal API
-   /api/v1/payments                   /api/internal/payments
+   /api/v1/payments                   /api/v1/internal/payments
           │                                 │
    사용자 인증                          서비스 인증
    + 고객 인가                          + 서비스 인가
