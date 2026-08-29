@@ -127,6 +127,58 @@ class JwtAuthenticationFilterTest {
         assertThat(chainCalled.get()).isTrue();
     }
 
+    // ── 어드민 콘솔 로그인 ──────────────────────────────────────────────────
+    //
+    // 토큰을 받으러 오는 요청이라 토큰을 요구하면 들어올 방법이 없다. 실제로 이
+    // 경로가 막혀 콘솔 진입 자체가 불가능했다.
+    //
+    // 다만 여는 문은 정확히 그 크기여야 한다. 로그인 하나를 열려고 접두사를 쓰면
+    // 그 아래가 통째로 열리고, 상담 조회 경로에는 고객 개인정보가 실려 나간다.
+
+    @Test
+    @DisplayName("어드민 콘솔 로그인은 토큰 없이 통과한다")
+    void adminConsoleLogin_isPublic() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/v1/consultation/auth/agent/login").build());
+
+        AtomicReference<Boolean> chainCalled = new AtomicReference<>(false);
+        filter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        }).block();
+
+        assertThat(chainCalled.get())
+                .as("로그인 경로가 막히면 콘솔에 들어갈 방법이 없다")
+                .isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/api/v1/consultation/auth/agent/login/extra",
+            "/api/v1/consultation/auth/agent",
+            "/api/v1/consultation/agents",
+            "/api/v1/consultation/consultations",
+    })
+    @DisplayName("로그인 옆 경로까지 열리지는 않는다")
+    void neighbouringConsultationPaths_stayProtected(String path) {
+        // 접두사로 열었다면 여기가 전부 통과한다. 그 경로들에는 고객 개인정보와
+        // 상담 이력이 실려 나간다.
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post(path).build());
+
+        AtomicReference<Boolean> chainCalled = new AtomicReference<>(false);
+        filter.filter(exchange, ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        }).block();
+
+        assertThat(chainCalled.get())
+                .as("%s 이 토큰 없이 통과했다", path)
+                .isFalse();
+        assertThat(exchange.getResponse().getStatusCode())
+                .isEqualTo(org.springframework.http.HttpStatus.UNAUTHORIZED);
+    }
+
     // 고객이 실제로 쓰는 경로는 버전 없는 쪽이다(/api/accounts·/api/transactions).
     // #72 를 처음 넣을 때 /api/v1/accounts(=payment↔deposit 서비스 간 API)만 올려서,
     // 정작 자금이 나가는 문에는 가드가 걸려 있지 않았다.

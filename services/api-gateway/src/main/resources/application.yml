@@ -4,6 +4,15 @@ server:
 spring:
   application:
     name: api-gateway
+  # 속도제한 버킷이 사는 곳. RequestRateLimiter 는 Redis 없이는 동작하지 않는다.
+  #
+  # 이 설정이 없으면 기본값 localhost 로 붙으러 가고, 컨테이너 안에서 localhost 는
+  # 게이트웨이 자신이라 연결이 거절된다 — 헬스체크가 DOWN 으로 떨어져 컨테이너가
+  # unhealthy 가 되고, 그 컨테이너에 의존하는 것들이 함께 못 뜬다.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   cloud:
     gateway:
       globalcors:

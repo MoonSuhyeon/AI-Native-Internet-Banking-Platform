@@ -587,6 +587,12 @@ services:
     # docker compose exec consultation-db psql 로 붙는다.
     volumes:
       - consultation-db-data:/var/lib/postgresql/data
+      # 상담원 계정 시드.
+      #
+      # 상담 서비스는 나머지 표를 create_all() 로 만들지만 이 표의 **행**은 만들지
+      # 않는다. 전용 DB 로 옮기면서 빈 채로 생성돼, 어드민 콘솔 로그인이 통째로
+      # 막혔다 — 표는 있는데 계정이 0건이라 로그인 화면에서 더 갈 수가 없었다.
+      - ./agents/consultation/sql/agent-schema.sql:/docker-entrypoint-initdb.d/01_agents.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${CONSULTATION_DB_USER:-consultation} -d ${CONSULTATION_DB_NAME:-consultation}"]
       interval: 10s
@@ -897,6 +903,21 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-internet-banking-jwt-secret-key-must-be-at-least-32-chars!!}
+      # 속도제한. application.yml 이 기본값 없이 참조하므로 없으면 게이트웨이가
+      # 아예 뜨지 않는다 — 정책값을 코드에 두지 않으려는 의도다. compose 가
+      # 넘기지 않으면 .env 에 있어도 컨테이너에는 닿지 않아 여기서 전달한다.
+      #
+      # 폴백을 두지 않는다. 두면 근거 없는 수치가 코드에 남고, .env 를 지운 채로도
+      # 조용히 뜨게 된다 — 그때 어떤 제한이 걸려 있는지 아무도 모른다.
+      # 값과 그 근거는 .env(.env.sample) 에 있다.
+      GATEWAY_AUTH_REPLENISH_RATE:        ${GATEWAY_AUTH_REPLENISH_RATE}
+      GATEWAY_AUTH_BURST_CAPACITY:        ${GATEWAY_AUTH_BURST_CAPACITY}
+      GATEWAY_CUSTOMER_REPLENISH_RATE:    ${GATEWAY_CUSTOMER_REPLENISH_RATE}
+      GATEWAY_CUSTOMER_BURST_CAPACITY:    ${GATEWAY_CUSTOMER_BURST_CAPACITY}
+      GATEWAY_LOAN_REPLENISH_RATE:        ${GATEWAY_LOAN_REPLENISH_RATE}
+      GATEWAY_LOAN_BURST_CAPACITY:        ${GATEWAY_LOAN_BURST_CAPACITY}
+      GATEWAY_AUTO_REVIEW_REPLENISH_RATE: ${GATEWAY_AUTO_REVIEW_REPLENISH_RATE}
+      GATEWAY_AUTO_REVIEW_BURST_CAPACITY: ${GATEWAY_AUTO_REVIEW_BURST_CAPACITY}
       CUSTOMER_SERVICE_HOST: customer-service
       CUSTOMER_SERVICE_PORT: 8081
       DEPOSIT_SERVICE_HOST: core-banking-a

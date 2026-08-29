@@ -37,6 +37,25 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     );
 
     /**
+     * 인증 없이 통과할 <b>정확한</b> 경로.
+     *
+     * <p>접두사가 아니라 완전 일치다. 로그인 하나를 열려고 접두사를 쓰면 그 아래가
+     * 통째로 열린다 — 지금은 상담 서비스의 {@code /auth/} 아래에 로그인뿐이지만,
+     * 나중에 무엇이 생길지 모른다. 여는 문은 정확히 그 크기여야 한다.
+     *
+     * <p>어드민 콘솔 로그인이다. 토큰을 받으러 오는 요청이라 토큰을 요구하면
+     * 들어올 방법이 없다 — 실제로 이 경로가 막혀 콘솔 진입 자체가 불가능했다.
+     *
+     * <p>⚠ 이 경로는 상담 서비스가 자기 {@code employees} 표로 인증한다. 직원
+     * 자격증명의 정본이 customer-service 와 두 곳이라는 뜻이고, 그쪽 상태 변화
+     * (퇴직·정지)를 여기서는 모른다. 별도 항목으로 남아 있다 —
+     * {@code docs/plan/consultation-db-direct-access-removal.md} 참조.
+     */
+    private static final List<String> PUBLIC_EXACT_PATHS = List.of(
+            "/api/v1/consultation/auth/agent/login"
+    );
+
+    /**
      * 고객 본인만 호출 가능한 경로(자금이동·계좌·고객 자가설정). 직원/관리자 세션 토큰은 ROLE_CUSTOMER 가 없어 차단된다.
      * 직원용 조회·처리는 {@code /api/v1/internal/**} 로 분리돼 있고, 직원의 개인 거래·자가설정은
      * 사용자 모드(ROLE_CUSTOMER) 로그인으로 정상 수행한다.
@@ -140,7 +159,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublic(String path) {
-        return PUBLIC_PATH_PREFIXES.stream().anyMatch(path::startsWith);
+        return PUBLIC_PATH_PREFIXES.stream().anyMatch(path::startsWith)
+                || PUBLIC_EXACT_PATHS.contains(path);
     }
 
     /** 경로가 고객 전용(자금이동·계좌)인지 — base 자체 또는 그 하위 경로면 true. */
