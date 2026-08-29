@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bank.payment.security.EmployeeOperationMapper">
+
+    <insert id="insertOperationLog"
+            parameterType="com.bank.payment.security.EmployeeOperationLogEntry">
+        INSERT INTO employee_operation_log (
+            employee_id, actor_roles, operation, parameters,
+            decision, deny_reason, trace_id, request_path
+        ) VALUES (
+            #{employeeId}, #{actorRoles}, #{operation}, #{parameters},
+            #{decision}, #{denyReason}, #{traceId}, #{requestPath}
+        )
+    </insert>
+
+</mapper>

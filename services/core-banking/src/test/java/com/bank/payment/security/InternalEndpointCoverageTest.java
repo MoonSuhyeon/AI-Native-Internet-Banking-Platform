@@ -49,10 +49,17 @@ class InternalEndpointCoverageTest {
     /**
      * 직원 신원으로 인가한다.
      *
-     * <p>A2 가 세운 열람 관문이다. 행위자를 세우고 자원 접근을 판정한다 —
-     * 서비스 자격증명과는 다른 주체 모델이다.
+     * <p>둘 다 서비스 자격증명과는 다른 주체 모델이다.
+     *
+     * <ul>
+     *   <li>{@code ResourceAccessGuard} — A2 가 세운 <b>열람</b> 관문. 행위자를 세우고
+     *       고객 자원 접근을 판정한다.</li>
+     *   <li>{@code EmployeeOperationGuard} — <b>운영 작업</b> 관문. 대상 고객이 없는
+     *       작업(대사 실행 등)을 역할로 인가한다.</li>
+     * </ul>
      */
-    private static final String EMPLOYEE_AUTHORIZATION = "ResourceAccessGuard";
+    private static final List<String> EMPLOYEE_AUTHORIZATION =
+            List.of("ResourceAccessGuard", "EmployeeOperationGuard");
 
     /**
      * 아직 인가가 없는 것.
@@ -60,11 +67,12 @@ class InternalEndpointCoverageTest {
      * <p>비워 두면 새 컨트롤러를 막을 수 없고, 그렇다고 여기 적어 두면 영원히
      * 남는다. 그래서 <b>왜 아직인지와 어디서 다루는지를 함께</b> 적는다.
      * 전환이 끝나면 이 목록은 비어야 한다.
+     *
+     * <p><b>지금은 비어 있다.</b> 내부 API 여섯 개가 모두 인가를 지난다 — 다섯은
+     * 서비스 신원으로, 하나(대사 실행)는 직원 신원으로. 다시 채워지면 그것은
+     * 인가 없는 API 가 생겼다는 뜻이다.
      */
-    private static final Map<String, String> PENDING = new TreeMap<>(Map.of(
-            "InternalReconciliationController.java",
-            "사람이 부르는 운영 작업. 직원 인증 경로로 다룬다 — ADR §7"
-    ));
+    private static final Map<String, String> PENDING = new TreeMap<>(Map.of());
 
     // 파일 단위로 센다. 같은 경로를 여는 컨트롤러가 둘일 수 있기 때문이다 —
     // /v1/internal/payments 는 조회(InternalPaymentController)와
@@ -96,7 +104,7 @@ class InternalEndpointCoverageTest {
             return null;
         }
         boolean authorized = source.contains(SERVICE_AUTHORIZATION)
-                || source.contains(EMPLOYEE_AUTHORIZATION);
+                || EMPLOYEE_AUTHORIZATION.stream().anyMatch(source::contains);
         return new InternalController(m.group(1), file.getFileName().toString(), authorized);
     }
 

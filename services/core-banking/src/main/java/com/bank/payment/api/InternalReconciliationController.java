@@ -3,7 +3,10 @@ package com.bank.payment.api;
 import com.bank.payment.domain.mapper.ReconciliationBreakRow;
 import com.bank.payment.domain.reconciliation.ReconciliationBreak;
 import com.bank.payment.domain.service.ReconciliationService;
+import com.bank.payment.security.EmployeeOperation;
+import com.bank.payment.security.EmployeeOperationGuard;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +31,7 @@ import java.util.Map;
 public class InternalReconciliationController {
 
     private final ReconciliationService reconciliationService;
+    private final EmployeeOperationGuard employeeOperationGuard;
 
     /**
      * 대사 실행.
@@ -37,8 +41,29 @@ public class InternalReconciliationController {
      */
     @PostMapping("/run")
     public ResponseEntity<Map<String, Object>> run(
+            @RequestHeader(value = EmployeeOperationGuard.EMPLOYEE_ID_HEADER, required = false)
+            String employeeId,
+            @RequestHeader(value = EmployeeOperationGuard.ROLE_HEADER, required = false)
+            String roles,
             @RequestParam String businessDate,
             @RequestParam(required = false) String network) {
+
+        // 사람이 부르는 운영 작업이다. 서비스 자격증명이 아니라 직원 신원과 역할로
+        // 인가한다 — 확인되지 않은 호출자를 위해 OPERATOR 라는 서비스 신원을 만들면
+        // 그 신원이 곧 우회로가 된다.
+        //
+        // 헤더를 required=false 로 받는 이유는, 헤더가 없다는 사실 자체가 감사에
+        // 남아야 하기 때문이다. required=true 면 스프링이 400 을 던져 아무것도
+        // 남지 않는데, 그 시도가 가장 봐야 할 기록이다.
+        //
+        // 무엇을 실행하는지도 함께 남긴다. "누가 대사를 돌렸다" 만으로는 어느
+        // 영업일을 다시 돌렸는지 알 수 없고, 재실행이 흔한 작업이라 그 구분이 곧
+        // 조사의 출발점이다.
+        employeeOperationGuard.require(
+                employeeId, roles, EmployeeOperation.RECONCILIATION_RUN,
+                "businessDate=" + businessDate + ",network="
+                        + (network == null || network.isBlank() ? "ALL" : network),
+                "/api/v1/internal/reconciliation/run");
 
         List<ReconciliationBreak> breaks = (network == null || network.isBlank())
                 ? reconciliationService.runAll(businessDate)
