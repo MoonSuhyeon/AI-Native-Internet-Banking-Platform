@@ -10,20 +10,8 @@ dependencies {
     testImplementation 'org.wiremock:wiremock-standalone:3.9.1'
 }
 
-// advisory-service 소스를 같은 JVM에서 컴파일 (com.bank.loan.advisory.* 패키지)
-// advisory-service는 agents/로 이동됨 → 경로: services/loan-service 기준 ../../agents/advisory-service
-sourceSets {
-    main {
-        java {
-            srcDirs += ['../../agents/advisory-service/src/main/java']
-        }
-        resources {
-            srcDirs += ['../../agents/advisory-service/src/main/resources']
-        }
-    }
-    test {
-        java {
-            srcDirs += ['../../agents/advisory-service/src/test/java']
-        }
-    }
-}
+// advisory 코드(com.bank.loan.advisory.*)는 loan-service 소스 안에 있다.
+// 예전에는 agents/advisory-service 를 srcDirs 로 끌어다 컴파일했는데, 그 디렉터리는
+// 이제 비어 있다(파일 0개). git 은 빈 디렉터리를 추적하지 않으므로 새 체크아웃에는
+// 아예 없고, Dockerfile 의 COPY 가 거기서 실패했다 — 깨끗한 클론에서 이미지가
+// 빌드되지 않았다.
