@@ -71,6 +71,13 @@
         ORDER BY ledger_id
     </select>
 
+    <select id="selectByJournalNo" resultType="com.bank.payment.domain.Ledger">
+        SELECT *
+        FROM ledger
+        WHERE journal_no = #{journalNo}
+        ORDER BY ledger_id
+    </select>
+
     <select id="selectOriginalsByPaymentId" resultType="com.bank.payment.domain.Ledger">
         SELECT *
         FROM ledger

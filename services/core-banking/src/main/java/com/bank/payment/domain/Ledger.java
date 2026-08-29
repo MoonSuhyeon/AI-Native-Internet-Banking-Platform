@@ -601,4 +601,82 @@ public class Ledger {
                 .postingStatus("POSTED")
                 .build();
     }
+
+    // ── 대출 실행 분개 [LOAN JN-01] ─────────────────────────
+    /** 대출채권 계정. */
+    public static final String LOAN_RECEIVABLE_ACCOUNT = "KB-LOAN-CR";
+
+    /**
+     * 대출채권 발생 분개. KB-LOAN-CR DEBIT LOAN_RECEIVABLE.
+     *
+     * <p>대출 실행은 자금이동이 아니다. 은행 회계에서는 자산(대출채권)이 생기고
+     * 부채(고객 예금)가 생기는 하나의 사건이고, 집행계좌는 이 분개에 등장하지 않는다.
+     * 근거는 {@code docs/decisions/transaction-initiator-auth-model.md} §5-1.
+     *
+     * <p>내부계정이라 잔액을 갖지 않는다 — KB-CLR-088·KB-FEE-001 과 같다.
+     *
+     * <p>{@code paymentInstructionId} 는 null 이다. 결제를 거치지 않으므로 결제지시가
+     * 없다. 원장 스키마가 이 컬럼을 nullable 로 둔 것이 이런 경우를 위해서다.
+     */
+    public static Ledger loanReceivable(
+            String ledgerId, String journalNo, Long amount,
+            String currency, String transactionDate, String postingDate, String valueDate,
+            OffsetDateTime postedAt, String systemDescription) {
+        return Ledger.builder()
+                .ledgerId(ledgerId)
+                .paymentInstructionId(null)
+                .accountId(LOAN_RECEIVABLE_ACCOUNT)
+                .journalNo(journalNo)
+                .accountNoSnap(LOAN_RECEIVABLE_ACCOUNT)
+                .holderNameSnap("KB대출채권")
+                .debitCredit("DEBIT")
+                .journalType("LOAN_RECEIVABLE")
+                .amount(amount)
+                .currency(currency)
+                .balanceBefore(0L)
+                .balanceAfter(0L)
+                .transactionDate(transactionDate)
+                .postingDate(postingDate)
+                .valueDate(valueDate)
+                .postedAt(postedAt)
+                .systemDescription(systemDescription)
+                .isReversal(false)
+                .postingStatus("POSTED")
+                .build();
+    }
+
+    /**
+     * 대출 실행 예금 분개. 고객계좌 CREDIT LOAN_DISBURSE_DEPOSIT.
+     *
+     * <p>{@link #loanReceivable} 의 대변 상대편이다. 같은 {@code journalNo} 로 묶인다.
+     * 고객 예금은 은행의 부채이므로 증가가 CREDIT 이다.
+     */
+    public static Ledger loanDisburseDeposit(
+            String ledgerId, String accountId, String journalNo,
+            String accountNoSnap, String holderNameSnap,
+            Long amount, Long balanceBefore, Long balanceAfter,
+            String currency, String transactionDate, String postingDate, String valueDate,
+            OffsetDateTime postedAt, String systemDescription) {
+        return Ledger.builder()
+                .ledgerId(ledgerId)
+                .paymentInstructionId(null)
+                .accountId(accountId)
+                .journalNo(journalNo)
+                .accountNoSnap(accountNoSnap)
+                .holderNameSnap(holderNameSnap)
+                .debitCredit("CREDIT")
+                .journalType("LOAN_DISBURSE_DEPOSIT")
+                .amount(amount)
+                .currency(currency)
+                .balanceBefore(balanceBefore)
+                .balanceAfter(balanceAfter)
+                .transactionDate(transactionDate)
+                .postingDate(postingDate)
+                .valueDate(valueDate)
+                .postedAt(postedAt)
+                .systemDescription(systemDescription)
+                .isReversal(false)
+                .postingStatus("POSTED")
+                .build();
+    }
 }
