@@ -162,6 +162,16 @@ public class TransactionService {
                     .getAccountId();
         }
 
+        // 자기 계좌로의 이체는 자금 이동 전에 막는다.
+        //
+        // 예전에는 이 검사가 상담 서비스의 사전 조회에만 있었다. 그러면 다른 경로 —
+        // 앱·창구·배치 — 로 같은 요청이 들어오면 그대로 통과해, 같은 계좌를 두 번 잠그고
+        // 출금·입금 두 건을 남긴다. 잔액은 그대로인데 거래 내역만 생기므로 원장이 사실과
+        // 어긋난다. 검사는 락을 쥔 쪽, 즉 여기 있어야 모든 경로에 걸린다.
+        if (resolvedType == TransferType.INTERNAL && fromAccountId.equals(toAccountId)) {
+            throw new BusinessException(ErrorCode.TRANSFER_SAME_ACCOUNT);
+        }
+
         Account source;
         Account target = null;
         if (resolvedType == TransferType.INTERNAL) {
