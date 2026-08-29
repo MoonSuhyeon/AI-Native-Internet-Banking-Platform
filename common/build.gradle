@@ -84,6 +84,10 @@ tasks.named('test') {
         // 계획 문서 상태 줄(PlanStatusTest). 선언하지 않으면 계획서를 추가해도
         // 검사가 UP-TO-DATE 로 안 돌아, 상태 없는 문서가 통과한다.
         include 'docs/plan/*.md'
+        // 구조 문서 ↔ compose 대조(ArchitectureDiagramFreshnessTest). 문서만 고치면
+        // 소스가 안 바뀌므로, 선언하지 않으면 그림을 훼손해도 검사가 UP-TO-DATE 로
+        // 안 돈다 — 실제로 그 변이가 통과하는 것을 확인했다.
+        include 'docs/architecture.md'
         // 개발 스크립트 ↔ Gradle 모듈 대조(DevScriptModuleTest).
         include 'scripts/*.ps1'
         include 'settings.gradle'

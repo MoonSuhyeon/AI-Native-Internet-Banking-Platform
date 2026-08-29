@@ -4,7 +4,7 @@
 > **최종 수정**: 2026-06-12
 > **스코프**: 고객·인증(customer/auth) 도메인 — `customer-service` 백엔드 + `fraud-investigation-agent` + web 프론트(로그인·마이페이지·어드민 고객계)
 > **정본 기준**: 본 문서는 설계안이 아니라 **현재 브랜치에 실제 구현·적용된 코드**(컨트롤러, `SecurityConfig`, Flyway V1~V27, `BankRole`)를 정본으로 한다.
-> **다이어그램**: Mermaid (GitHub·VSCode 미리보기에서 렌더링). 전체 시스템 그림은 [`architecture.svg`](architecture.svg) 참조.
+> **다이어그램**: Mermaid (GitHub·VSCode 미리보기에서 렌더링). 전체 시스템 그림은 [`architecture.md`](architecture.md) 참조.
 > **스키마 상세**: 본 문서는 테이블 DDL을 중복하지 않는다. [`customer_ddl_design.md`](customer_ddl_design.md) · [`auth_security_ddl_design.md`](auth_security_ddl_design.md) 참조.
 
 ---
@@ -392,7 +392,7 @@ Flyway 마이그레이션 이력(`services/customer-service/src/main/resources/d
 ## 참고 문서
 
 - 작업공유: [인증서 기술 스택](share/cert-tech-stack.md) · [고객계·인증보안계](share/customer-auth-worknote.md) · [Fraud Investigation Agent](share/fraud-agent-worknote.md)
-- 전체 시스템 그림: [`architecture.svg`](architecture.svg)
+- 전체 시스템 그림: [`architecture.md`](architecture.md)
 - 역할·권한 매트릭스: [`role-permission-matrix.svg`](role-permission-matrix.svg)
 - 고객계 DDL: [`customer_ddl_design.md`](customer_ddl_design.md)
 - 인증보안계 DDL: [`auth_security_ddl_design.md`](auth_security_ddl_design.md)

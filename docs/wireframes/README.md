@@ -5,7 +5,7 @@ Internet Banking MVP 전체 화면의 **로우-피델리티 와이어프레임**
 
 - 프론트엔드: Next.js(App Router) `web/app/(personal)`, `web/app/(admin)`
 - 화면 기능 정의(텍스트): [`loan_screens.md`](../loan_screens.md) 등 도메인별 문서 참조
-- 시스템 구조: [`architecture.svg`](../architecture.svg), 서비스 책임 분리: 아래 [00-system-overview](./00-system-overview.md)
+- 시스템 구조: [`architecture.md`](../architecture.md), 서비스 책임 분리: 아래 [00-system-overview](./00-system-overview.md)
 
 ---
 
