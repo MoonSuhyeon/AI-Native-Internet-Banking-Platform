@@ -32,14 +32,14 @@
 > 존재한 적이 없다.
 
 - **서비스 수**: 11
-- **컨트롤러 수**: 135
-- **엔드포인트 수**: 466
+- **컨트롤러 수**: 138
+- **엔드포인트 수**: 474
 
 ---
 
 ## 목차
-- [Customer Service (고객·인증·인증서)](#customer-service) — 120개
-- [Core Banking (수신·계좌·예적금·이체)](#core-banking) — 114개
+- [Customer Service (고객·인증·인증서)](#customer-service) — 121개
+- [Core Banking (수신·계좌·예적금·이체)](#core-banking) — 121개
 - [Loan Service (여신·대출·심사자문)](#loan-service) — 159개
 - [FDS Detector (이상거래 탐지)](#fds-detector) — 1개
 - [Auto Loan Review (AI 자동심사)](#auto-loan-review) — 4개
@@ -133,6 +133,12 @@
 | `GET` | `/api/v1/notifications/deposit-alerts` |
 | `POST` | `/api/v1/notifications/deposit-alerts` |
 | `DELETE` | `/api/v1/notifications/deposit-alerts/{subscriptionId}` |
+
+### EmployeeAuthorizationController
+
+| Method | Path |
+|---|---|
+| `POST` | `/api/v1/internal/authorization/employee` |
 
 ### FavoriteTransferController
 
@@ -410,6 +416,17 @@
 | `GET` | `/api/interests/income-statement` |
 | `GET` | `/api/interests/{interestId}` |
 
+### InternalBankingReadController
+
+| Method | Path |
+|---|---|
+| `GET` | `/api/v1/internal/banking/customers/{customerId}/accounts` |
+| `GET` | `/api/v1/internal/banking/customers/{customerId}/contracts` |
+| `GET` | `/api/v1/internal/banking/customers/{customerId}/interest-history` |
+| `GET` | `/api/v1/internal/banking/customers/{customerId}/transactions` |
+| `GET` | `/api/v1/internal/banking/products` |
+| `GET` | `/api/v1/internal/banking/special-terms` |
+
 ### InternalPaymentController
 
 | Method | Path |
@@ -506,6 +523,12 @@
 |---|---|
 | `GET` | `/api/subscription-payment-histories` |
 | `GET` | `/api/subscription-payment-histories/{id}` |
+
+### SystemPaymentController
+
+| Method | Path |
+|---|---|
+| `POST` | `/api/v1/internal/payments` |
 
 ### TargetGroupController
 
