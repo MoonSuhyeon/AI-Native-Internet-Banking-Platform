@@ -118,6 +118,21 @@ public abstract class AbstractLoanIntegrationTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"journalNo\":\"JN-TEST-0001\",\"balanceAfter\":3000000}")));
+
+        // 보조부↔원장 대사가 읽는 원장 집계.
+        //
+        // 여기서는 스텁이라 실제 원장이 아니고, 그래서 대사는 대개 불일치로 판정된다.
+        // 그것이 EOD 를 세우지 않는 것이 의도다 — 불일치는 기록하고 넘어가야 뒤따르는
+        // 단계가 밀리지 않는다. 판정 로직 자체는 LoanLedgerReconcilerTest 가 본다.
+        //
+        // 반대로 이 스텁이 없으면 조회가 실패해 Job 이 선다. 맞는지 틀린지를 모르는
+        // 상태를 통과로 넘기지 않기 위해서다.
+        PAYMENT_MOCK.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/v1/internal/ledger/loan-summary"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"baseDate\":\"20260101\",\"disbursedAmount\":0,"
+                                + "\"disbursedCount\":0,\"repaidAmount\":0,\"repaidCount\":0}")));
     }
 
     @DynamicPropertySource

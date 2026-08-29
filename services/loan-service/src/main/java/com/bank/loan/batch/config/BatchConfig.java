@@ -1,6 +1,7 @@
 package com.bank.loan.batch.config;
 
 import com.bank.loan.accounting.service.AccountingSummaryBatchService;
+import com.bank.loan.reconciliation.LoanLedgerReconciliationService;
 import com.bank.loan.accrual.service.InterestAccrualBatchService;
 import com.bank.loan.applicationexpiry.service.ApplicationExpiryBatchService;
 import com.bank.loan.autodebit.service.AutoDebitBatchService;
@@ -64,6 +65,7 @@ public class BatchConfig {
     private final MaturityBatchService maturityBatchService;
     private final NotificationFlushBatchService notificationFlushBatchService;
     private final AccountingSummaryBatchService accountingSummaryBatchService;
+    private final LoanLedgerReconciliationService loanLedgerReconciliationService;
 
     @Bean
     public Job loanEodJob(JobRepository jobRepository,
@@ -75,6 +77,7 @@ public class BatchConfig {
                           Step guaranteeInsuranceExpiryStep,
                           Step maturityStep,
                           Step accountingSummaryStep,
+                          Step ledgerReconciliationStep,
                           Step notificationFlushStep,
                           EodNotificationListener eodNotificationListener) {
         return new JobBuilder("loanEodJob", jobRepository)
@@ -87,6 +90,7 @@ public class BatchConfig {
                 .next(guaranteeInsuranceExpiryStep)
                 .next(maturityStep)
                 .next(accountingSummaryStep)
+                .next(ledgerReconciliationStep)
                 .next(notificationFlushStep)
                 .build();
     }
@@ -234,6 +238,33 @@ public class BatchConfig {
                         // CRITICAL: 회계 요약 적재 실패 = 일일 재무 데이터 유실 → Job 중단
                         log.error("[EOD][{}] accountingSummary 실패 — Job 중단: {}", baseDate, e.getMessage(), e);
                         throw e;
+                    }
+                    return RepeatStatus.FINISHED;
+                }, txManager)
+                .build();
+    }
+
+    /**
+     * 보조부와 원장을 맞춰 본다.
+     *
+     * <p>회계 요약 다음이다. 보조부가 만들어진 뒤라야 견줄 값이 생긴다.
+     *
+     * <p><b>불일치라고 Job 을 멈추지 않는다.</b> 멈추면 뒤따르는 단계가 통째로 밀리고
+     * 다음 날 대사도 못 하게 된다 — 발견을 위한 장치가 발견을 막는 셈이다. 대신
+     * 기록을 남기고 error 로 남긴다.
+     *
+     * <p>다만 <b>대사 자체가 돌지 못한 것</b>은 다르다. 원장을 읽지 못했다면 맞는지
+     * 틀린지를 모르는 상태이고, 그것을 통과로 넘기면 대사가 있는 것이 없는 것보다
+     * 나빠진다. 그때는 Job 을 세운다.
+     */
+    @Bean
+    public Step ledgerReconciliationStep(JobRepository jobRepository, PlatformTransactionManager txManager) {
+        return new StepBuilder("ledgerReconciliationStep", jobRepository)
+                .tasklet((contribution, chunkContext) -> {
+                    String baseDate = baseDate(chunkContext);
+                    var result = loanLedgerReconciliationService.reconcile(baseDate);
+                    if (result.isMismatch()) {
+                        log.error("[EOD][{}] 대사 불일치 — {}", baseDate, result.getBreakDetail());
                     }
                     return RepeatStatus.FINISHED;
                 }, txManager)

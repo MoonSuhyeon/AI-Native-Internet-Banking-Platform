@@ -214,10 +214,14 @@ class LoanEodJobTest extends AbstractLoanIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].baseDate").value(EOD_DUE_DATE))
                 .andExpect(jsonPath("$.data[0].status").value("COMPLETED"))
-                .andExpect(jsonPath("$.data[0].steps.length()").value(9))
+                // 9 → 10: 보조부↔원장 대사 단계(ledgerReconciliationStep)가 회계 요약
+                // 뒤에 붙었다. 보조부가 만들어진 다음이라야 견줄 값이 생긴다.
+                .andExpect(jsonPath("$.data[0].steps.length()").value(10))
                 .andExpect(jsonPath("$.data[0].steps[0].stepName").value("interestAccrualStep"))
                 .andExpect(jsonPath("$.data[0].steps[7].stepName").value("accountingSummaryStep"))
-                .andExpect(jsonPath("$.data[0].steps[8].stepName").value("notificationFlushStep"));
+                // 대사는 회계 요약 바로 뒤다. 순서가 뒤집히면 견줄 보조부가 아직 없다.
+                .andExpect(jsonPath("$.data[0].steps[8].stepName").value("ledgerReconciliationStep"))
+                .andExpect(jsonPath("$.data[0].steps[9].stepName").value("notificationFlushStep"));
     }
 
     @Test @Order(51)

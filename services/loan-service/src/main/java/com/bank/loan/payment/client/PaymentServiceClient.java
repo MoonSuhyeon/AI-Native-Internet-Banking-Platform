@@ -1,6 +1,7 @@
 package com.bank.loan.payment.client;
 
 import com.bank.loan.payment.client.dto.LoanDisbursementRequest;
+import com.bank.loan.payment.client.dto.LoanLedgerSummary;
 import com.bank.loan.payment.client.dto.LoanDisbursementResponse;
 import com.bank.loan.payment.client.dto.PaymentRequest;
 import com.bank.loan.payment.client.dto.PaymentResponse;
@@ -33,6 +34,7 @@ public class PaymentServiceClient {
 
     private static final String INTERNAL_PAYMENTS_PATH = "/api/v1/internal/payments";
     private static final String LOAN_DISBURSEMENTS_PATH = "/api/v1/internal/loan-disbursements";
+    private static final String LOAN_LEDGER_SUMMARY_PATH = "/api/v1/internal/ledger/loan-summary";
 
     private final RestClient restClient;
     private final String credential;
@@ -90,5 +92,20 @@ public class PaymentServiceClient {
         log.info("대출 실행 응답 idemKey={} journalNo={}",
                 idempotencyKey, resp != null ? resp.journalNo() : null);
         return resp;
+    }
+
+    /**
+     * 원장이 말한 하루치 여신 집계를 읽는다.
+     *
+     * <p>보조부와 맞춰 보기 위한 정본 쪽 값이다. 원장은 원장에서만 계산해 넘어온다 —
+     * 여기서 보조부를 참조하면 대사가 항등식이 된다.
+     */
+    public LoanLedgerSummary loanLedgerSummary(String baseDate) {
+        return restClient.get()
+                .uri(uriBuilder -> uriBuilder.path(LOAN_LEDGER_SUMMARY_PATH)
+                        .queryParam("baseDate", baseDate).build())
+                .header("X-Internal-Token", credential)
+                .retrieve()
+                .body(LoanLedgerSummary.class);
     }
 }

@@ -32,14 +32,14 @@
 > 존재한 적이 없다.
 
 - **서비스 수**: 11
-- **컨트롤러 수**: 139
-- **엔드포인트 수**: 475
+- **컨트롤러 수**: 140
+- **엔드포인트 수**: 476
 
 ---
 
 ## 목차
 - [Customer Service (고객·인증·인증서)](#customer-service) — 121개
-- [Core Banking (수신·계좌·예적금·이체)](#core-banking) — 122개
+- [Core Banking (수신·계좌·예적금·이체)](#core-banking) — 123개
 - [Loan Service (여신·대출·심사자문)](#loan-service) — 159개
 - [FDS Detector (이상거래 탐지)](#fds-detector) — 1개
 - [Auto Loan Review (AI 자동심사)](#auto-loan-review) — 4개
@@ -452,6 +452,12 @@
 | Method | Path |
 |---|---|
 | `POST` | `/api/v1/internal/loan-disbursements` |
+
+### LoanLedgerSummaryController
+
+| Method | Path |
+|---|---|
+| `GET` | `/api/v1/internal/ledger/loan-summary` |
 
 ### PaymentController
 
