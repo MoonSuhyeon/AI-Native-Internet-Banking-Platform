@@ -362,6 +362,15 @@ services:
       # 그 탓에 도커 스택에서 여신 자금이동이 한 번도 성공한 적이 없다 —
       # 근거는 docs/plan/loan-payment-ledger-trace.md.
       PAYMENT_SERVICE_URL: http://core-banking-a:8082
+      # 여신의 서비스 자격증명. 이 값의 SHA-256 이 core_banking 의
+      # service_principal.credential_hash(V32)와 맞아야 신원이 선다.
+      #
+      # 서비스마다 자기 값을 갖는다. 공유 토큰을 쓰면 신원이 하나가 되어,
+      # 그 토큰을 가진 무엇이든 여신을 사칭할 수 있다.
+      #
+      # 기본값의 'dev-secret' 은 의도된 표식이다 — DevSecretGuard 가 운영
+      # 프로파일에서 이 표식을 보고 기동을 거부한다.
+      LOAN_SERVICE_CREDENTIAL: ${LOAN_SERVICE_CREDENTIAL:-dev-secret-loan-service-credential}
       CRYPTO_KEY_BASE64: ${CRYPTO_KEY_BASE64:-aW50ZXJuZXQtYmFuay1kZXYta2V5LTMyYnl0ZXMhISE=}
       LOG_DIR: /logs
       # 서류 원본 보관. 기본 스택은 filesystem + 영속 볼륨을 쓴다.

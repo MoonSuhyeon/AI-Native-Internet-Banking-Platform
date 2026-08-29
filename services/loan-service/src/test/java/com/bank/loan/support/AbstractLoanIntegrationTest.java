@@ -96,11 +96,11 @@ public abstract class AbstractLoanIntegrationTest {
         // 미확인 약정 차단(LOAN_201)이 한 번도 발화하지 않았고, 그런데도 전 테스트가
         // 초록이었다. 통제가 없는 것과 통제가 통과하는 것이 구별되지 않았다.
 
-        // 기본 stub: POST /api/v1/payments → COMPLETED
+        // 기본 stub: POST /api/v1/internal/payments → COMPLETED
         // 개별 테스트에서 priority=1 스텁으로 특정 X-Idempotency-Key 에 대해 FAILED 등을 오버라이드 가능
         PAYMENT_MOCK = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         PAYMENT_MOCK.start();
-        PAYMENT_MOCK.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/payments"))
+        PAYMENT_MOCK.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/internal/payments"))
                 .willReturn(WireMock.aResponse().withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"paymentInstructionId\":\"PI-TEST-001\"," +

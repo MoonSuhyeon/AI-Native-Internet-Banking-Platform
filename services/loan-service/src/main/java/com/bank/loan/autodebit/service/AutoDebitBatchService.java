@@ -1,5 +1,6 @@
 package com.bank.loan.autodebit.service;
 
+import com.bank.common.security.service.ServiceOperation;
 import com.bank.loan.autodebit.domain.AutoDebitClearingPending;
 import com.bank.loan.autodebit.dto.AutoDebitRunResponse;
 import com.bank.loan.autodebit.repository.AutoDebitClearingPendingRepository;
@@ -174,6 +175,7 @@ public class AutoDebitBatchService {
         String senderAccountNo = cryptoService.decrypt(account.getAccountNoEnc());
         CommonAccount collection = systemAccountProvider.collectionAccount();
         return new PaymentRequest(
+                ServiceOperation.LOAN_REPAY.code(),
                 senderAccountNo,
                 collection.getBankCd(),
                 collection.getAccountNo(),

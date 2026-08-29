@@ -1,5 +1,6 @@
 package com.bank.loan.execution.service;
 
+import com.bank.common.security.service.ServiceOperation;
 import com.bank.common.audit.StatusChangeEvent;
 import com.bank.common.audit.StatusHistoryPublisher;
 import com.bank.common.persistence.CurrentActorProvider;
@@ -148,6 +149,7 @@ public class LoanExecutionService {
         String payIdemKey = "EXEC-" + contract.getCntrId() + "-"
                 + (idempotencyKey != null && !idempotencyKey.isBlank() ? idempotencyKey : saved.getExecId());
         PaymentRequest payReq = new PaymentRequest(
+                ServiceOperation.LOAN_DISBURSE.code(),
                 systemAccountProvider.disbursementAccount().getAccountNo(),
                 req.disbursementBankCd(),
                 req.disbursementAccountNo(),

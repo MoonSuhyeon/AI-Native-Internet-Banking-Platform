@@ -139,7 +139,7 @@ class OnlineRepaymentFlowTest extends AbstractLoanIntegrationTest {
     @Test @Order(13)
     void payment_FAILED_422_LOAN187_FAILED_tx_기록() throws Exception {
         // 2회차 상환 시 FAILED 응답 스텁
-        PAYMENT_MOCK.stubFor(WireMock.post(urlEqualTo("/api/v1/payments"))
+        PAYMENT_MOCK.stubFor(WireMock.post(urlEqualTo("/api/v1/internal/payments"))
                 .withHeader("X-Idempotency-Key", containing("onl-fail"))
                 .atPriority(1)
                 .willReturn(aResponse().withStatus(200)
@@ -183,7 +183,7 @@ class OnlineRepaymentFlowTest extends AbstractLoanIntegrationTest {
 
         // payment-service 가 이 요청으로 인해 호출되지 않았는지: 창구 수납 idempotencyKey 로 piId=null 확인
         // (WireMock 미검증 — channelCd=MANUAL + SUCCESS 가 핵심 검증)
-        PAYMENT_MOCK.verify(0, postRequestedFor(urlEqualTo("/api/v1/payments"))
+        PAYMENT_MOCK.verify(0, postRequestedFor(urlEqualTo("/api/v1/internal/payments"))
                 .withHeader("X-Idempotency-Key", containing("manual-")));
     }
 

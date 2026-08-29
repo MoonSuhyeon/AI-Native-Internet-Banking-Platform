@@ -1,5 +1,6 @@
 package com.bank.loan.repayment.service;
 
+import com.bank.common.security.service.ServiceOperation;
 import com.bank.common.security.crypto.CryptoService;
 import com.bank.common.web.BusinessException;
 import com.bank.commonaccount.domain.CommonAccount;
@@ -145,6 +146,7 @@ public class OnlineRepaymentService {
         String senderAccountNo = cryptoService.decrypt(account.getAccountNoEnc());
         CommonAccount collection = systemAccountProvider.collectionAccount();
         return new PaymentRequest(
+                ServiceOperation.LOAN_REPAY.code(),
                 senderAccountNo,
                 collection.getBankCd(),
                 collection.getAccountNo(),

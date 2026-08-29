@@ -7,56 +7,60 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-
+/**
+ * core-banking 내부 결제 호출.
+ *
+ * <p><b>왜 고객 경로를 쓰지 않는가.</b> 예전에는 {@code /api/v1/payments} 를 불렀다.
+ * 그 경로는 고객 이체 승인(step-up)을 요구하는데 여신은 그 토큰을 가질 수 없다.
+ * 보내지 않으면 {@code TRANSFER_APPROVAL_REQUIRED}, 만들어 보내면
+ * {@code TRANSFER_APPROVAL_INVALID} — 어느 쪽으로도 통과할 수 없었다.
+ *
+ * <p>배치가 개시한 거래에는 "본인이 이 거래를 지시했습니까" 라고 물을 본인이 없다.
+ * 검증해야 할 것은 다른 질문이다 — "이 거래를 실행할 권한이 있는 시스템인가".
+ * 근거는 {@code docs/decisions/transaction-initiator-auth-model.md}.
+ *
+ * <p><b>X-Auth-Token-Id 를 더 이상 만들지 않는다.</b> 예전에는 payment 의
+ * {@code auth_token_id} 가 UNIQUE 라는 이유로 멱등키를 SHA-256 해시해 채웠는데,
+ * core 는 같은 값을 고객 승인 토큰으로 읽어 검증하러 갔다. 한 헤더가 두 의미를
+ * 겸하고 있었다. 내부 경로는 이 헤더를 요구하지 않고, core 가 {@code auth_token_id}
+ * 에 null 을 넣는다 — 고객 인증이 없었으므로 그것이 정확한 표현이다.
+ */
 @Slf4j
 @Component
 public class PaymentServiceClient {
 
-    private static final String PAYMENTS_PATH = "/api/v1/payments";
+    private static final String INTERNAL_PAYMENTS_PATH = "/api/v1/internal/payments";
 
     private final RestClient restClient;
+    private final String credential;
 
     public PaymentServiceClient(RestClient.Builder builder, PaymentServiceProperties props) {
         this.restClient = builder.baseUrl(props.url()).build();
+        this.credential = props.credential();
     }
 
+    /**
+     * 결제를 요청한다.
+     *
+     * <p>신원은 자격증명에서 나온다. "나는 여신이다" 라고 주장하는 헤더를 보내지
+     * 않는 이유는, 그런 헤더를 믿으면 토큰 하나를 가진 무엇이든 여신을 사칭할 수
+     * 있기 때문이다.
+     */
     public PaymentResponse pay(String idempotencyKey, PaymentRequest req) {
-        log.debug("payment-service 출금 요청 idemKey={} amount={}", idempotencyKey, req.transferAmount());
+        log.debug("내부 결제 요청 operation={} idemKey={} amount={}",
+                req.operation(), idempotencyKey, req.transferAmount());
         PaymentResponse resp = restClient.post()
-                .uri(PAYMENTS_PATH)
+                .uri(INTERNAL_PAYMENTS_PATH)
                 .header("X-Idempotency-Key", idempotencyKey)
-                .header("X-User-Id", "SYSTEM")
-                .header("X-Auth-Token-Id", deriveAuthTokenId(idempotencyKey))
+                .header("X-Internal-Token", credential)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(req)
                 .retrieve()
                 .body(PaymentResponse.class);
-        log.info("payment-service 응답 idemKey={} status={} piId={}",
-                idempotencyKey, resp != null ? resp.status() : null,
+        log.info("내부 결제 응답 operation={} idemKey={} status={} piId={}",
+                req.operation(), idempotencyKey,
+                resp != null ? resp.status() : null,
                 resp != null ? resp.paymentInstructionId() : null);
         return resp;
-    }
-
-    /**
-     * X-Auth-Token-Id 파생값을 생성한다.
-     *
-     * payment 의 auth_token_id 컬럼은 VARCHAR(20) UNIQUE 라 호출마다 유일한 값이어야 한다
-     * (고정값을 보내면 두 번째 호출부터 UNIQUE 위반으로 실패). 멱등키는 흐름별로 고유하므로
-     * (EXEC-/AUTO-/ONL-/REV-) 이를 SHA-256 해시해 16진수 앞 20자로 파생한다. 멱등키 길이가
-     * 20자를 넘거나 접두부가 겹칠 수 있어 단순 절단은 충돌하므로 해시를 쓴다. 같은 멱등키는
-     * 항상 같은 값으로 파생되어 재시도 시 멱등성도 유지된다.
-     */
-    static String deriveAuthTokenId(String idempotencyKey) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(idempotencyKey.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest).substring(0, 20);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 미지원 환경", e);
-        }
     }
 }

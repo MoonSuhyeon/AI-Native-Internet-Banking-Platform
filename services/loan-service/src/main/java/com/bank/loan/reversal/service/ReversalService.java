@@ -1,5 +1,6 @@
 package com.bank.loan.reversal.service;
 
+import com.bank.common.security.service.ServiceOperation;
 import com.bank.common.audit.StatusChangeEvent;
 import com.bank.common.audit.StatusHistoryPublisher;
 import com.bank.common.persistence.CurrentActorProvider;
@@ -297,6 +298,7 @@ public class ReversalService {
         String refundIdemKey = "REV-" + target.getCntrId() + "-" + target.getRtxId();
 
         PaymentRequest req = new PaymentRequest(
+                ServiceOperation.LOAN_REVERSE.code(),
                 systemAccountProvider.collectionAccount().getAccountNo(),
                 account.getBankCd(),
                 receiverAccountNo,

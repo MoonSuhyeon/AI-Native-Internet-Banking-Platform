@@ -176,7 +176,7 @@ class LoanExecutionFlowTest extends AbstractLoanIntegrationTest {
     void payment_실패시_LOAN_185_반환_FAILED_row_저장() throws Exception {
         String idemKey = "exec-fail-test";
         // 이 키를 포함하는 X-Idempotency-Key 에 대해서만 FAILED 반환 (priority=1 > 기본 stub)
-        PAYMENT_MOCK.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/payments"))
+        PAYMENT_MOCK.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/internal/payments"))
                 .atPriority(1)
                 .withHeader("X-Idempotency-Key", WireMock.containing("exec-fail-test"))
                 .willReturn(WireMock.aResponse().withStatus(200)
