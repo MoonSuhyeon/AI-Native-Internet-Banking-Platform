@@ -24,8 +24,8 @@ import com.bank.loan.commonsync.outbox.CommonSyncOutboxAppender;
 import com.bank.loan.notification.outbox.NotificationOutboxAppender;
 import com.bank.loan.payment.SystemAccountProvider;
 import com.bank.loan.payment.client.PaymentServiceClient;
-import com.bank.loan.payment.client.dto.PaymentRequest;
-import com.bank.loan.payment.client.dto.PaymentResponse;
+import com.bank.loan.payment.client.dto.LoanDisbursementRequest;
+import com.bank.loan.payment.client.dto.LoanDisbursementResponse;
 import com.bank.loan.product.repository.LoanProductRepository;
 import com.bank.loan.repaymentaccount.domain.RepaymentAccount;
 import com.bank.loan.repaymentaccount.repository.RepaymentAccountRepository;
@@ -36,7 +36,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 /**
  * 자금 인출 (Drawdown) 서비스.
@@ -145,26 +144,30 @@ public class LoanExecutionService {
                 .idempotencyKey(idempotencyKey)
                 .build());
 
-        // 5) payment-service 출금 호출
+        // 5) 대출 실행 기장
+        //
+        //    결제가 아니다. 대출 실행은 집행계좌에서 돈을 빼오는 일이 아니라 대출채권
+        //    (자산)과 고객 예금(부채)이 동시에 생기는 하나의 회계 사건이다. 예전에는
+        //    집행계좌 → 고객계좌 이체로 처리해 실행할 때마다 집행계좌 잔액이 줄었다.
+        //
+        //    상환·자동이체·역분개 환급은 실제 자금이동이므로 결제 경로를 그대로 쓴다.
+        //    근거: docs/decisions/transaction-initiator-auth-model.md §5-1
         String payIdemKey = "EXEC-" + contract.getCntrId() + "-"
                 + (idempotencyKey != null && !idempotencyKey.isBlank() ? idempotencyKey : saved.getExecId());
-        PaymentRequest payReq = new PaymentRequest(
-                ServiceOperation.LOAN_DISBURSE.code(),
-                systemAccountProvider.disbursementAccount().getAccountNo(),
-                req.disbursementBankCd(),
-                req.disbursementAccountNo(),
-                contract.getCntrNo(),
-                BigDecimal.valueOf(requested),
-                "대출실행 " + contract.getCntrNo(),
-                "대출실행",
-                CHANNEL_OPEN_BANKING,
-                contract.getCntrNo()
-        );
-        PaymentResponse payResp = paymentServiceClient.pay(payIdemKey, payReq);
+        LoanDisbursementResponse disbursed = paymentServiceClient.disburse(payIdemKey,
+                new LoanDisbursementRequest(
+                        req.disbursementAccountNo(),
+                        BigDecimal.valueOf(requested),
+                        "대출실행 " + contract.getCntrNo()));
 
-        if (PaymentResponse.STATUS_COMPLETED.equals(payResp != null ? payResp.status() : null)) {
-            String journalEntryNo = "JE-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase();
-            saved.markDone(payResp.paymentInstructionId(), journalEntryNo);
+        if (disbursed != null && disbursed.journalNo() != null) {
+            // 회계번호는 원장이 발급한 것을 그대로 쓴다. 예전에는 여기서 JE-{uuid} 를
+            // 만들어 붙였는데, 원장의 journal_no 와 아무 관계가 없는 값이라 회계
+            // 식별자가 둘로 갈렸다.
+            //
+            // piId 는 없다. 결제를 거치지 않으므로 결제지시가 없고, 원장으로 가는
+            // 연결은 journal_no 하나다.
+            saved.markDone(null, disbursed.journalNo());
 
             if (isFirstDrawdown) {
                 String before = contract.currentStatus();
@@ -194,12 +197,15 @@ public class LoanExecutionService {
             return LoanExecutionResponse.of(saved, cumul);
         }
 
-        // FAILED 또는 CLEARING — FAILED 기록 후 예외 (noRollbackFor 로 커밋됨)
-        String piId = payResp != null ? payResp.paymentInstructionId() : null;
-        String failDetail = payResp != null
-                ? "status=" + payResp.status() + ", failureCategory=" + payResp.failureCategory()
-                : "payment-service 응답 없음";
-        saved.markFailed(piId);
+        // 기장이 되지 않았다 — FAILED 기록 후 예외 (noRollbackFor 로 커밋됨)
+        //
+        // 결제 시절에는 CLEARING(타행 청산대기)이라는 중간 상태가 있어 성공도 실패도
+        // 아닌 응답을 받았다. 대출 실행은 회계 거래라 그런 상태가 없다 — 분개가
+        // 남았거나 남지 않았거나 둘 중 하나다.
+        String failDetail = disbursed == null
+                ? "core-banking 응답 없음"
+                : "분개번호 없음";
+        saved.markFailed(null);
         throw new BusinessException(LoanErrorCode.LOAN_185, failDetail);
     }
 

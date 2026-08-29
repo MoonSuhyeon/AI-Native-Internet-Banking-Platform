@@ -106,7 +106,18 @@ public abstract class AbstractLoanIntegrationTest {
                         .withBody("{\"paymentInstructionId\":\"PI-TEST-001\"," +
                                   "\"transactionNo\":\"TXN-TEST-001\"," +
                                   "\"status\":\"COMPLETED\"," +
+                                  // 원장이 발급한 분개 번호. 여신은 이 값을 그대로
+                                  // 저장해야 한다 — 자기 번호를 만들면 안 된다.
+                                  "\"journalNo\":\"JN-TEST-0001\"," +
                                   "\"failureCategory\":null}")));
+
+        // 대출 실행은 결제가 아니라 회계 거래라 경로가 다르다.
+        // 상환·자동이체·역분개 환급만 위의 결제 경로를 쓴다.
+        PAYMENT_MOCK.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/internal/loan-disbursements"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"journalNo\":\"JN-TEST-0001\",\"balanceAfter\":3000000}")));
     }
 
     @DynamicPropertySource

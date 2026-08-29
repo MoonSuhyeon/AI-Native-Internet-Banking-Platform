@@ -1,5 +1,7 @@
 package com.bank.loan.payment.client;
 
+import com.bank.loan.payment.client.dto.LoanDisbursementRequest;
+import com.bank.loan.payment.client.dto.LoanDisbursementResponse;
 import com.bank.loan.payment.client.dto.PaymentRequest;
 import com.bank.loan.payment.client.dto.PaymentResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.springframework.web.client.RestClient;
 public class PaymentServiceClient {
 
     private static final String INTERNAL_PAYMENTS_PATH = "/api/v1/internal/payments";
+    private static final String LOAN_DISBURSEMENTS_PATH = "/api/v1/internal/loan-disbursements";
 
     private final RestClient restClient;
     private final String credential;
@@ -61,6 +64,31 @@ public class PaymentServiceClient {
                 req.operation(), idempotencyKey,
                 resp != null ? resp.status() : null,
                 resp != null ? resp.paymentInstructionId() : null);
+        return resp;
+    }
+
+    /**
+     * 대출을 실행한다.
+     *
+     * <p>결제가 아니라 회계 거래다. 대출 실행은 집행계좌에서 돈을 빼오는 일이 아니라
+     * 대출채권(자산)과 고객 예금(부채)이 동시에 생기는 하나의 사건이다. 결제 경로에
+     * 밀어 넣으면 집행계좌가 회계적 중간계정이 되어 실행할 때마다 잔액이 줄어든다.
+     *
+     * <p>상환·자동이체·역분개 환급은 실제 자금이동이므로 {@link #pay} 를 그대로 쓴다.
+     */
+    public LoanDisbursementResponse disburse(String idempotencyKey, LoanDisbursementRequest req) {
+        log.debug("대출 실행 요청 idemKey={} accountNo={} amount={}",
+                idempotencyKey, req.accountNo(), req.amount());
+        LoanDisbursementResponse resp = restClient.post()
+                .uri(LOAN_DISBURSEMENTS_PATH)
+                .header("X-Idempotency-Key", idempotencyKey)
+                .header("X-Internal-Token", credential)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(req)
+                .retrieve()
+                .body(LoanDisbursementResponse.class);
+        log.info("대출 실행 응답 idemKey={} journalNo={}",
+                idempotencyKey, resp != null ? resp.journalNo() : null);
         return resp;
     }
 }

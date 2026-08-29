@@ -112,7 +112,9 @@ class LoanExecutionFlowTest extends AbstractLoanIntegrationTest {
                 .andExpect(jsonPath("$.data.executedAmount").value(amount))
                 .andExpect(jsonPath("$.data.cumulativeExecutedAmount").value(amount))
                 .andExpect(jsonPath("$.data.disbursementAccountMasked").exists())
-                .andExpect(jsonPath("$.data.journalEntryNo").exists())
+                // 원장이 준 번호를 그대로 쓴다. 예전에는 여기서 JE-{uuid} 를 만들어
+                // 붙였고, 그러면 회계 식별자가 원장과 여신 둘로 갈렸다.
+                .andExpect(jsonPath("$.data.journalEntryNo").value("JN-TEST-0001"))
                 .andExpect(jsonPath("$.data.executedAt").exists())
                 .andReturn();
         JsonNode data = extractData(result);
@@ -169,22 +171,22 @@ class LoanExecutionFlowTest extends AbstractLoanIntegrationTest {
     // ============================================================
 
     /**
-     * payment-service 가 FAILED 를 반환하면 LOAN_185(422) 가 응답되고,
-     * loan_execution row 는 STATUS_FAILED + pi_id 로 커밋되어야 한다.
+     * 기장이 되지 않으면 LOAN_185(422) 가 응답되고, loan_execution row 는
+     * STATUS_FAILED 로 커밋되어야 한다.
+     *
+     * <p>대출 실행은 결제가 아니라 회계 거래라 CLEARING 같은 중간 상태가 없다.
+     * 분개가 남았거나 남지 않았거나 둘 중 하나이므로, 실패는 분개번호가 없는 응답이다.
      */
     @Test @Order(40)
     void payment_실패시_LOAN_185_반환_FAILED_row_저장() throws Exception {
         String idemKey = "exec-fail-test";
         // 이 키를 포함하는 X-Idempotency-Key 에 대해서만 FAILED 반환 (priority=1 > 기본 stub)
-        PAYMENT_MOCK.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/internal/payments"))
+        PAYMENT_MOCK.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/internal/loan-disbursements"))
                 .atPriority(1)
                 .withHeader("X-Idempotency-Key", WireMock.containing("exec-fail-test"))
                 .willReturn(WireMock.aResponse().withStatus(200)
                         .withHeader("Content-Type", "application/json")
-                        .withBody("{\"paymentInstructionId\":\"PI-FAIL-001\"," +
-                                  "\"transactionNo\":\"TXN-FAIL\"," +
-                                  "\"status\":\"FAILED\"," +
-                                  "\"failureCategory\":\"INSUFFICIENT_BALANCE\"}")));
+                        .withBody("{\"journalNo\":null,\"balanceAfter\":null}")));
 
         mockMvc.perform(post("/api/loan-contracts/{cntrId}/executions", cntrId)
                         .header("Idempotency-Key", idemKey)
@@ -195,7 +197,10 @@ class LoanExecutionFlowTest extends AbstractLoanIntegrationTest {
 
         LoanExecution failed = executionRepository.findByIdempotencyKey(idemKey).orElseThrow();
         assertThat(failed.getExecStatusCd()).isEqualTo(LoanExecution.STATUS_FAILED);
-        assertThat(failed.getPiId()).isEqualTo("PI-FAIL-001");
+        // 결제지시가 없다. 대출 실행은 결제를 거치지 않는 회계 거래이므로 원장으로
+        // 가는 연결은 journal_no 하나뿐이고, 실패하면 그것도 없다.
+        assertThat(failed.getPiId()).isNull();
+        assertThat(failed.getJournalEntryNo()).isNull();
     }
 
     /**
