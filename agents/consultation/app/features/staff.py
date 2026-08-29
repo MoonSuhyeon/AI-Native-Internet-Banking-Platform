@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+from app import core_banking_client
 from app.features.base import FeatureExecutorBase
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse
 
@@ -42,24 +43,7 @@ class StaffFeatureExecutor(FeatureExecutorBase):
             return self._staff_auth_required("STAFF_TRANSFER_FLOW", "이체 흐름 조회에는 고객번호와 직원 권한이 필요합니다.")
         if not self._validate_staff(request.staff_id):
             return self._staff_auth_required("STAFF_TRANSFER_FLOW", "유효하지 않은 직원 계정입니다.")
-        rows = self._rows(
-            """
-            SELECT t.transaction_id,
-                   t.transaction_number,
-                   a.account_number,
-                   a.customer_id AS customer_no,
-                   t.transaction_type,
-                   t.status AS transaction_status,
-                   t.amount,
-                   t.transaction_at
-              FROM deposit_transactions t
-              JOIN deposit_accounts a ON a.account_id = t.account_id
-             WHERE a.customer_id = :customer_no
-             ORDER BY t.transaction_at DESC
-             LIMIT 20
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = core_banking_client.fetch_customer_transactions(request.customer_no, size=20)
         return self._data_response(
             "STAFF_TRANSFER_FLOW", rows, "이체 흐름 조회를 완료했습니다.", "조회된 이체 내역이 없습니다.", requires_staff_auth=True
         )
@@ -98,23 +82,7 @@ class StaffFeatureExecutor(FeatureExecutorBase):
             return self._staff_auth_required("STAFF_CASH_FLOW", "고객 현금 흐름 조회에는 고객번호와 직원 권한이 필요합니다.")
         if not self._validate_staff(request.staff_id):
             return self._staff_auth_required("STAFF_CASH_FLOW", "유효하지 않은 직원 계정입니다.")
-        rows = self._rows(
-            """
-            SELECT t.transaction_id,
-                   a.account_number,
-                   a.customer_id AS customer_no,
-                   t.transaction_type,
-                   t.amount,
-                   t.status AS transaction_status,
-                   t.transaction_at
-              FROM deposit_transactions t
-              JOIN deposit_accounts a ON a.account_id = t.account_id
-             WHERE a.customer_id = :customer_no
-             ORDER BY t.transaction_at DESC
-             LIMIT 20
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = core_banking_client.fetch_customer_transactions(request.customer_no, size=20)
         return self._data_response(
             "STAFF_CASH_FLOW", rows, "고객 현금 흐름 조회를 완료했습니다.", "조회된 거래 내역이 없습니다.", requires_staff_auth=True
         )

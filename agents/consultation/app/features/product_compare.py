@@ -105,36 +105,12 @@ def _find_products_by_name(db: Any, query: str) -> list[dict]:
 
 
 def _fetch_products_by_ids(db: Any, product_ids: list[int]) -> list[dict]:
-    # ANY(:ids) 대신 IN + expanding 바인드를 쓴다.
-    # ANY 는 PostgreSQL 전용이라 테스트가 도는 SQLite 에서 "no such function: ANY" 로
-    # 죽었고, 그 결과 상품 비교 경로가 통째로 검증되지 않고 있었다.
-    # 생성되는 SQL 은 두 엔진 모두에서 같은 결과를 낸다.
-    from sqlalchemy import bindparam, text
-    rows = db.execute(text(
-        """
-        SELECT p.banking_product_id   AS product_id,
-               p.deposit_product_name AS product_name,
-               p.deposit_product_type AS product_type,
-               p.description,
-               p.base_interest_rate,
-               p.preferential_rate_condition,
-               p.min_join_amount,
-               p.max_join_amount,
-               p.min_period_month,
-               p.max_period_month,
-               p.is_early_termination_allowed,
-               p.is_tax_benefit_available,
-               p.is_auto_renewal_available,
-               p.is_passbook_issued,
-               d.is_compound_interest
-          FROM deposit_banking_products p
-          LEFT JOIN banking_deposit_products d
-                 ON d.banking_product_id = p.banking_product_id
-         WHERE p.banking_product_id IN :ids
-        """,
-    ).bindparams(bindparam("ids", expanding=True)),
-        {"ids": product_ids}).mappings().all()
-    return [dict(r) for r in rows]
+    """비교 대상 상품의 상세. core-banking 상품 API 에서 읽는다.
+
+    ``db`` 는 더 이상 쓰지 않는다. 부르는 쪽 시그니처를 그대로 두려고 남겨 뒀다.
+    """
+    from app import core_banking_client
+    return core_banking_client.fetch_products_by_ids(product_ids)
 
 
 # ── GPT 비교 분석 ─────────────────────────────────────────────────────────────

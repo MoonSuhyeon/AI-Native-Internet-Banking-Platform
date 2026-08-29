@@ -78,6 +78,22 @@ from app.services import ChatbotService
 # 돌려준다. 픽스처를 고정 JSON 으로 바꾸지 않는 이유는 시드와 기대값이 두 곳으로
 # 갈라지지 않게 하려는 것이다.
 
+def _safe_query(session, sql, params=None):
+    """stub 조회가 실패해도 호출자의 작업을 날리지 않게 한다.
+
+    예전에는 실패 시 ``session.rollback()`` 을 했다. 그런데 이 세션은 서비스가 쓰는
+    바로 그 세션이라, 시드에 없는 표를 한 번 건드리면 서비스가 방금 넣은 메시지까지
+    같이 사라졌다 — 조회가 답을 못 찾은 것이 아니라 <b>남의 쓰기를 지운</b> 것이다.
+
+    그래서 SAVEPOINT 안에서 돌린다. 실패는 그 지점까지만 되감기고, 바깥 작업은 남는다.
+    """
+    try:
+        with session.begin_nested():
+            return session.execute(text(sql), params or {}).mappings().all()
+    except Exception:
+        return []
+
+
 def _install_catalog_stub(session):
     """세션이 보는 시드로 상품 카탈로그를 구성해 클라이언트에 심는다."""
     from app import core_banking_client
@@ -100,11 +116,7 @@ def _install_catalog_stub(session):
             return []
 
         def _safe(sql, params=None):
-            try:
-                return session.execute(text(sql), params or {}).mappings().all()
-            except Exception:
-                session.rollback()
-                return []
+            return _safe_query(session, sql, params)
 
         entries = []
         for r in rows:
@@ -182,16 +194,138 @@ def _install_catalog_stub(session):
                 ("special_term_name", "special_term_content", "special_term_summary"))]
         return out[:10]
 
+    # ── 고객 데이터 ──────────────────────────────────────────────────────
+    #
+    # 런타임은 행위자 헤더를 붙여 core-banking 을 부른다. 테스트에서는 그 경로를
+    # 세우지 않고, 시드된 행을 그대로 돌려준다. 인가·감사가 실제로 걸리는지는
+    # core-banking 쪽 테스트(AccessAuditTest·ResourceAccessGuardTest)가 본다.
+
+    def _safe(sql, params=None):
+        return _safe_query(session, sql, params)
+
+    def _fetch_accounts(customer_no):
+        if not customer_no:
+            return []
+        return [{
+            "account_id":     r["account_id"],
+            "account_number": r.get("account_number"),
+            "customer_no":    customer_no,
+            "account_type":   r.get("account_type"),
+            "account_alias":  r.get("account_alias"),
+            "balance":        r.get("balance"),
+            "currency":       r.get("currency"),
+            "account_status": r.get("account_status"),
+            "opened_at":      r.get("opened_at"),
+            "closed_at":      r.get("closed_at"),
+        } for r in _safe("""
+            SELECT * FROM deposit_accounts WHERE customer_id = :cno ORDER BY account_id
+        """, {"cno": customer_no})]
+
+    def _fetch_transactions(customer_no, size=200):
+        if not customer_no:
+            return []
+        own_ids = {a["account_id"] for a in _safe(
+            "SELECT account_id FROM deposit_accounts WHERE customer_id = :cno",
+            {"cno": customer_no})}
+        return [{
+            "transaction_id":     r.get("transaction_id"),
+            "transaction_number": r.get("transaction_number"),
+            "account_id":         r.get("account_id"),
+            "transaction_type":   r.get("transaction_type"),
+            "direction_type":     r.get("direction_type"),
+            "amount":             r.get("amount"),
+            "balance_after":      r.get("balance_after"),
+            "status":             r.get("status"),
+            "transaction_memo":   r.get("transaction_memo"),
+            "transaction_at":     r.get("transaction_at"),
+            "internal_transfer":  r.get("counterparty_account_id") in own_ids,
+        } for r in _safe("""
+            SELECT t.* FROM deposit_transactions t
+              JOIN deposit_accounts a ON a.account_id = t.account_id
+             WHERE a.customer_id = :cno
+             ORDER BY t.transaction_at DESC
+        """, {"cno": customer_no})][:size]
+
+    def _fetch_contracts(customer_no):
+        if not customer_no:
+            return []
+        return [{
+            "contract_id":            r.get("contract_id"),
+            "contract_no":            r.get("contract_number"),
+            "customer_no":            customer_no,
+            "join_amount":            r.get("join_amount"),
+            "contract_interest_rate": r.get("contract_interest_rate"),
+            "started_at":             r.get("started_at"),
+            "maturity_at":            r.get("maturity_at"),
+            "contract_status":        r.get("contract_status"),
+            "product_id":             r.get("banking_product_id"),
+            "product_name":           r.get("deposit_product_name"),
+            "product_type":           r.get("deposit_product_type"),
+        } for r in _safe("""
+            SELECT c.*, p.deposit_product_name, p.deposit_product_type
+              FROM deposit_contracts c
+              LEFT JOIN deposit_banking_products p
+                     ON p.banking_product_id = c.banking_product_id
+             WHERE c.customer_id = :cno ORDER BY c.contract_id
+        """, {"cno": customer_no})]
+
+    def _fetch_interest_history(customer_no, size=20):
+        if not customer_no:
+            return []
+        return [{
+            "interest_id":               r.get("interest_id"),
+            "contract_id":               r.get("contract_id"),
+            "account_id":                r.get("account_id"),
+            "applied_interest_rate":     r.get("applied_interest_rate"),
+            "interest_amount":           r.get("interest_amount"),
+            "interest_after_tax_amount": r.get("interest_after_tax"),
+            "paid_at":                   r.get("interest_paid_at"),
+        } for r in _safe("""
+            SELECT h.* FROM deposit_interest_history h
+              JOIN deposit_accounts a ON a.account_id = h.account_id
+             WHERE a.customer_id = :cno
+             ORDER BY h.interest_id DESC
+        """, {"cno": customer_no})][:size]
+
+    def _authorize_employee(employee_id, resource, action="READ",
+                            target_customer_no=None, reason=None):
+        """직원 인가는 시드된 employees 로 판단한다.
+
+        런타임은 customer-service 인가 API 를 부른다. 그 계약이 실제로 지켜지는지는
+        customer-service 쪽 테스트(EmployeeAuthorizationServiceTest)가 본다.
+        """
+        if not employee_id:
+            return False
+        rows = _safe("SELECT 1 FROM employees WHERE employee_id = :sid AND status = 'ACTIVE'",
+                     {"sid": employee_id})
+        return len(rows) > 0
+
     originals = (core_banking_client.fetch_product_catalog,
-                 core_banking_client.fetch_special_terms)
+                 core_banking_client.fetch_special_terms,
+                 core_banking_client.fetch_customer_accounts,
+                 core_banking_client.fetch_customer_transactions,
+                 core_banking_client.fetch_customer_contracts,
+                 core_banking_client.authorize_employee,
+                 core_banking_client.fetch_customer_interest_history)
     core_banking_client.fetch_product_catalog = _fetch_catalog
     core_banking_client.fetch_special_terms = _fetch_special_terms
+    core_banking_client.fetch_customer_accounts = _fetch_accounts
+    core_banking_client.fetch_customer_transactions = _fetch_transactions
+    core_banking_client.fetch_customer_contracts = _fetch_contracts
+    core_banking_client.authorize_employee = _authorize_employee
+    core_banking_client.fetch_customer_interest_history = _fetch_interest_history
     return originals
 
 
 def _restore_catalog_stub(originals):
     from app import core_banking_client
-    core_banking_client.fetch_product_catalog, core_banking_client.fetch_special_terms = originals
+    (core_banking_client.fetch_product_catalog,
+     core_banking_client.fetch_special_terms,
+     core_banking_client.fetch_customer_accounts,
+     core_banking_client.fetch_customer_transactions,
+     core_banking_client.fetch_customer_contracts,
+     core_banking_client.authorize_employee,
+     core_banking_client.fetch_customer_interest_history) = originals
 
 
 @pytest.fixture(autouse=True)

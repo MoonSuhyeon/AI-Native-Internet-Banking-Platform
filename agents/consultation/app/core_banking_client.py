@@ -23,16 +23,25 @@ from typing import Any
 
 import httpx
 
+from app import access_context
 from app.config import get_settings
 
 _TIMEOUT = 2.0
 
 
-def _get(path: str, params: dict[str, Any] | None = None) -> Any:
+def _get(path: str, params: dict[str, Any] | None = None,
+         with_actor: bool = False) -> Any:
+    """core-banking 조회.
+
+    ``with_actor`` 가 참이면 이 요청의 행위자를 헤더로 실어 보낸다. 고객 데이터
+    경로는 행위자 없이는 거절된다 — 빠뜨리면 조용히 통과하는 것이 아니라 막힌다.
+    공개 카탈로그(상품·약관)는 행위자를 요구하지 않으므로 붙이지 않는다.
+    """
     url = f"{get_settings().core_banking_url}{path}"
+    headers = access_context.current().headers() if with_actor else {}
     try:
         with httpx.Client(timeout=_TIMEOUT) as client:
-            resp = client.get(url, params=params or {})
+            resp = client.get(url, params=params or {}, headers=headers)
         if resp.status_code != 200:
             return None
         body = resp.json()
@@ -400,4 +409,240 @@ def fetch_products_with_target_groups(exclude_types: list[str] | None = None) ->
                         "target_group_name": g.get("targetGroupName"),
                         "min_age":           g.get("minAge"),
                         "max_age":           g.get("maxAge")})
+    return out
+
+
+# ── 고객 데이터 ──────────────────────────────────────────────────────────────
+#
+# 여기부터는 행위자와 사유가 붙는다. core-banking 이 인가 판단을 직접 확인하고,
+# 자기 자원 기준으로 한 번 더 보고, 요청·판단·결과를 감사에 남긴다.
+
+def fetch_customer_accounts(customer_no: str) -> list[dict[str, Any]]:
+    """고객의 계좌 요약. 실패·거절 시 빈 목록."""
+    if not customer_no:
+        return []
+    data = _get(f"/v1/internal/banking/customers/{customer_no}/accounts", with_actor=True)
+    if not isinstance(data, list):
+        return []
+    return [{
+        "account_id":     a.get("accountId"),
+        "account_number": a.get("accountNumber"),
+        "customer_no":    customer_no,
+        "account_type":   a.get("accountType"),
+        "account_alias":  a.get("accountAlias"),
+        "balance":        a.get("balance"),
+        "currency":       a.get("currency"),
+        "account_status": a.get("accountStatus"),
+        "opened_at":      a.get("openedAt"),
+        "closed_at":      a.get("closedAt"),
+    } for a in data]
+
+
+def fetch_customer_transactions(customer_no: str, size: int = 200) -> list[dict[str, Any]]:
+    """고객의 최근 거래. 건수 상한은 서버가 다시 자른다."""
+    if not customer_no:
+        return []
+    data = _get(f"/v1/internal/banking/customers/{customer_no}/transactions",
+                {"size": size}, with_actor=True)
+    if not isinstance(data, list):
+        return []
+    return [{
+        "transaction_id":     t.get("transactionId"),
+        "transaction_number": t.get("transactionNumber"),
+        "account_id":         t.get("accountId"),
+        "transaction_type":   t.get("transactionType"),
+        "direction_type":     t.get("directionType"),
+        "amount":             t.get("amount"),
+        "balance_after":      t.get("balanceAfter"),
+        "status":             t.get("status"),
+        "transaction_memo":   t.get("memo"),
+        "transaction_at":     t.get("transactionAt"),
+        # 상대 계좌는 내려오지 않는다. 본인 계좌 사이의 이체인지만 서버가 계산해 준다 —
+        # 현금흐름 집계에서 내부 이체를 빼는 데 필요한 것은 그 참·거짓 하나뿐이다.
+        "internal_transfer":  bool(t.get("internalTransfer")),
+    } for t in data]
+
+
+def fetch_customer_contracts(customer_no: str) -> list[dict[str, Any]]:
+    """고객의 수신 계약."""
+    if not customer_no:
+        return []
+    data = _get(f"/v1/internal/banking/customers/{customer_no}/contracts", with_actor=True)
+    if not isinstance(data, list):
+        return []
+    return [{
+        "contract_id":            c.get("contractId"),
+        "contract_no":            c.get("contractNumber"),
+        "customer_no":            customer_no,
+        "join_amount":            c.get("joinAmount"),
+        "contract_interest_rate": c.get("contractInterestRate"),
+        "started_at":             c.get("startedAt"),
+        "maturity_at":            c.get("maturityAt"),
+        "contract_status":        c.get("contractStatus"),
+        "product_id":             c.get("productId"),
+        "product_name":           c.get("productName"),
+        "product_type":           c.get("productType"),
+    } for c in data]
+
+
+def fetch_customer_interest_history(customer_no: str, size: int = 20) -> list[dict[str, Any]]:
+    """고객의 이자 지급 내역."""
+    if not customer_no:
+        return []
+    data = _get(f"/v1/internal/banking/customers/{customer_no}/interest-history",
+                {"size": size}, with_actor=True)
+    if not isinstance(data, list):
+        return []
+    return [{
+        "interest_id":               h.get("interestId"),
+        "contract_id":               h.get("contractId"),
+        "account_id":                h.get("accountId"),
+        "applied_interest_rate":     h.get("appliedInterestRate"),
+        "interest_amount":           h.get("interestAmount"),
+        "interest_after_tax_amount": h.get("interestAfterTaxAmount"),
+        "paid_at":                   h.get("paidAt"),
+    } for h in data]
+
+
+# ── 직원 인가 ────────────────────────────────────────────────────────────────
+
+def authorize_employee(employee_id: str | None, resource: str, action: str = "READ",
+                       target_customer_no: str | None = None,
+                       reason: str | None = None) -> bool:
+    """이 직원이 이 자원을 봐도 되는지 customer-service 에 묻는다.
+
+    <b>왜 employees 테이블을 직접 읽지 않는가.</b> 직원 신원의 정본은
+    customer-service 이고(party → party_role → employee), 이 서비스가 붙는 DB 에는
+    그 테이블이 아예 없다. 예전 코드는 그것을 직접 읽으려다 예외를 삼키고 늘
+    False 를 돌려줬다 — 직원 기능이 조용히 전부 막혀 있었다.
+
+    판단을 못 받으면 거절한다. 인가 서비스 장애가 곧 전면 개방이 되면 안 된다.
+    """
+    if not employee_id:
+        return False
+    ctx = access_context.current()
+    url = f"{get_settings().customer_service_url}/api/v1/internal/authorization/employee"
+    body = {
+        "employeeId": int(employee_id) if str(employee_id).isdigit() else None,
+        "resource": resource,
+        "action": action,
+        "targetCustomerId": target_customer_no,
+        "reason": reason or ctx.reason or "상담 직원 조회",
+    }
+    if body["employeeId"] is None:
+        return False
+    try:
+        with httpx.Client(timeout=_TIMEOUT) as client:
+            resp = client.post(url, json=body)
+        if resp.status_code != 200:
+            return False
+        return (resp.json() or {}).get("decision") == "ALLOW"
+    except Exception:
+        return False
+
+
+# ── services.py 가 쓰는 모양 ────────────────────────────────────────────────
+#
+# 아래 넷은 컬럼 이름과 정렬·건수 제한까지 예전 SQL 그대로 맞춘다.
+# 응답 키가 바뀌면 화면과 테스트가 같이 깨지므로, 경계만 옮기고 모양은 두는 것이다.
+
+def fetch_products_guide_rows(product_type: str | None = None,
+                              product_types: list[str] | None = None,
+                              order: str = "id",
+                              limit: int = 20,
+                              with_description: bool = True) -> list[dict[str, Any]]:
+    """판매 중 상품을 상담 화면이 쓰는 컬럼 이름으로 돌려준다.
+
+    ``order`` 는 ``"id"``(상품번호 순) 또는 ``"rate"``(기본금리 내림차순).
+    """
+    rows = []
+    for e in fetch_product_catalog():
+        ptype = e.get("productType")
+        if product_type and ptype != product_type:
+            continue
+        if product_types and ptype not in product_types:
+            continue
+        row = {
+            "product_id":         e.get("productId"),
+            "product_name":       e.get("productName"),
+            "product_type":       ptype,
+            "base_interest_rate": e.get("baseInterestRate"),
+            "min_join_amount":    e.get("minJoinAmount"),
+            "max_join_amount":    e.get("maxJoinAmount"),
+            "min_period_month":   e.get("minPeriodMonth"),
+            "max_period_month":   e.get("maxPeriodMonth"),
+        }
+        if with_description:
+            row["description"] = e.get("description")
+        row["product_status"] = "SELLING"
+        rows.append(row)
+
+    def rate_desc(r):
+        # NULLS LAST 를 흉내 낸다. 금리 없는 상품이 앞으로 올라오면 안내가 뒤집힌다.
+        v = r.get("base_interest_rate")
+        try:
+            return (0, -float(v))
+        except (TypeError, ValueError):
+            return (1, 0.0)
+
+    if order == "rate":
+        rows.sort(key=lambda r: (rate_desc(r), r.get("product_id") or 0))
+    else:
+        rows.sort(key=lambda r: r.get("product_id") or 0)
+    return rows[:limit]
+
+
+def fetch_rate_guide_rows(limit: int = 200,
+                          exclude_name_keywords: tuple[str, ...] = ()) -> list[dict[str, Any]]:
+    """상품별 금리 목록. 이름에 제외 키워드가 든 상품은 뺀다."""
+    rows = []
+    for e in fetch_product_catalog():
+        name = e.get("productName") or ""
+        if any(k in name for k in exclude_name_keywords):
+            continue
+        for r in (e.get("interestRates") or []):
+            rows.append({
+                "rate_id":                 r.get("rateId"),
+                "product_id":              e.get("productId"),
+                "product_name":            name,
+                "rate_type":               r.get("rateType"),
+                "minimum_contract_period": r.get("minimumContractPeriod"),
+                "maximum_contract_period": r.get("maximumContractPeriod"),
+                "interest_rate":           r.get("rate"),
+                "condition_description":   r.get("conditionDescription"),
+            })
+    rows.sort(key=lambda r: ((r["product_id"] or 0), (r["rate_id"] or 0)))
+    return rows[:limit]
+
+
+def fetch_rates_by_product_ids(product_ids: list[int]) -> list[dict[str, Any]]:
+    """지정 상품들의 금리 행. 기간·유형 집계는 부르는 쪽이 한다."""
+    wanted = {int(i) for i in product_ids if i is not None}
+    if not wanted:
+        return []
+    rows = []
+    for e in fetch_product_catalog():
+        pid = e.get("productId")
+        if pid not in wanted:
+            continue
+        for r in (e.get("interestRates") or []):
+            rows.append({
+                "banking_product_id":      pid,
+                "rate_id":                 r.get("rateId"),
+                "rate_type":               r.get("rateType"),
+                "rate":                    r.get("rate"),
+                "condition_description":   r.get("conditionDescription"),
+                "minimum_contract_period": r.get("minimumContractPeriod"),
+                "maximum_contract_period": r.get("maximumContractPeriod"),
+            })
+    return rows
+
+
+def fetch_target_group_product_ids(target_group_id: int) -> set[int]:
+    """해당 대상군에 묶인 상품 번호. 나이 제한 상품을 거를 때 쓴다."""
+    out = set()
+    for e in fetch_product_catalog():
+        for g in (e.get("targetGroups") or []):
+            if g.get("targetGroupId") == target_group_id:
+                out.add(int(e.get("productId")))
     return out

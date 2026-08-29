@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.audit import ensure_harness_audit_schema
 from app import identity
+from app import access_context
 from app import core_banking_client
 from app.config import get_settings
 from app.database import Base, engine, get_db
@@ -452,7 +453,19 @@ def execute_chatbot_feature(
     if request.staff_id is None:
         request.customer_no = identity.customer_no(http_request)
 
-    result = service.execute_feature(feature_code, request)
+    # 아래 계층이 core-banking 고객 데이터를 읽을 때 실어 보낼 행위자.
+    # 여기서 담지 않으면 헤더가 안 붙고 core-banking 이 거절한다 —
+    # 빠뜨렸을 때 조용히 통과하지 않고 막히는 쪽이 안전하다.
+    if request.staff_id is not None:
+        access_context.set_context(access_context.for_employee(
+            request.staff_id, reason=f"상담 기능 {feature_code}"))
+    else:
+        access_context.set_context(access_context.for_customer(request.customer_no))
+
+    try:
+        result = service.execute_feature(feature_code, request)
+    finally:
+        access_context.clear()
     if result.status == "NOT_FOUND":
         raise HTTPException(status_code=404, detail=result.message)
     return result

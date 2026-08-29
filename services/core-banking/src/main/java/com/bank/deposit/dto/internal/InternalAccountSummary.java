@@ -18,7 +18,9 @@ public record InternalAccountSummary(
         Long balance,
         String currency,
         String accountStatus,
-        LocalDate openedAt
+        LocalDate openedAt,
+        /** 해지 계좌만 값이 있다. 상담에서 활성 여부를 가르는 데 쓴다. */
+        LocalDate closedAt
 ) {
     public static InternalAccountSummary from(Account a) {
         return new InternalAccountSummary(
@@ -29,7 +31,8 @@ public record InternalAccountSummary(
                 a.getBalance(),
                 a.getCurrency(),
                 a.getAccountStatus() != null ? a.getAccountStatus().name() : null,
-                a.getOpenedAt()
+                a.getOpenedAt(),
+                a.getClosedAt()
         );
     }
 }

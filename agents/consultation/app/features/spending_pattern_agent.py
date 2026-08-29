@@ -16,6 +16,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from typing import Any
 
+from app import core_banking_client
 from app.features.base import FeatureExecutorBase
 from app.schemas import ChatbotFeatureExecuteRequest, ChatbotFeatureExecuteResponse
 
@@ -611,40 +612,21 @@ class SpendingPatternAgent(FeatureExecutorBase):
     # ── 공통 유틸 ─────────────────────────────────────────────────────────────
 
     def _fetch_outflow_transactions(self, customer_no: str, cutoff: date) -> list[dict[str, Any]]:
-        accounts = self._rows(
-            "SELECT account_id FROM deposit_accounts WHERE customer_id = :cno",
-            {"cno": customer_no},
-        )
+        accounts = core_banking_client.fetch_customer_accounts(customer_no)
         if not accounts:
             return []
 
-        id_list = ",".join(str(a["account_id"]) for a in accounts)
         own_ids = {int(a["account_id"]) for a in accounts}
 
-        rows = self._rows(
-            f"""
-            SELECT t.transaction_type,
-                   t.direction_type,
-                   t.amount,
-                   t.transaction_summary,
-                   t.transaction_memo,
-                   t.transaction_at,
-                   t.created_at,
-                   t.counterparty_account_id,
-                   t.counterparty_account_no,
-                   t.status
-              FROM deposit_transactions t
-             WHERE t.account_id IN ({id_list})
-               AND COALESCE(t.transaction_at, t.created_at) >= :cutoff
-               AND t.direction_type = 'OUT'
-             ORDER BY COALESCE(t.transaction_at, t.created_at)
-            """,
-            {"cutoff": cutoff.strftime("%Y-%m-%d")},
-        )
+        rows = core_banking_client.fetch_customer_transactions(customer_no)
 
         filtered = []
         for r in rows:
             if str(r.get("status") or "").upper() not in ("", "SUCCESS", "COMPLETED", "NORMAL"):
+                continue
+            # 기간 필터. SQL WHERE 절이 하던 몫이라 빼면 오래된 지출까지 섞인다.
+            at = str(r.get("transaction_at") or "")[:10]
+            if at and at < cutoff.isoformat():
                 continue
             cp_id = r.get("counterparty_account_id")
             if cp_id is not None and int(cp_id) in own_ids:

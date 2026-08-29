@@ -3,15 +3,19 @@ package com.bank.deposit.controller;
 import com.bank.deposit.audit.AccessActor;
 import com.bank.deposit.audit.AccessActorResolver;
 import com.bank.deposit.audit.ResourceAccessGuard;
+import com.bank.deposit.domain.entity.Product;
 import com.bank.deposit.domain.enums.ContractStatus;
 import com.bank.deposit.dto.internal.InternalAccountSummary;
 import com.bank.deposit.dto.internal.InternalContractSummary;
+import com.bank.deposit.dto.internal.InternalInterestHistory;
 import com.bank.deposit.dto.internal.InternalProductCatalogEntry;
 import com.bank.deposit.dto.internal.InternalSpecialTerm;
 import com.bank.deposit.dto.internal.InternalTransactionSummary;
 import com.bank.deposit.service.AccountService;
 import com.bank.deposit.service.ContractService;
 import com.bank.deposit.service.InternalProductCatalogService;
+import com.bank.deposit.repository.InterestHistoryRepository;
+import com.bank.deposit.repository.ProductRepository;
 import com.bank.deposit.repository.SpecialTermRepository;
 import com.bank.deposit.service.TransactionService;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +24,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.bank.deposit.audit.AccessActorResolver.*;
 
@@ -45,6 +52,7 @@ public class InternalBankingReadController {
     private static final String RESOURCE_ACCOUNT     = "DEPOSIT_ACCOUNT";
     private static final String RESOURCE_TRANSACTION = "DEPOSIT_TRANSACTION";
     private static final String RESOURCE_CONTRACT    = "DEPOSIT_CONTRACT";
+    private static final String RESOURCE_INTEREST    = "DEPOSIT_TRANSACTION";
     private static final String ACTION_READ = "READ";
 
     /** 상담 한 번이 훑는 양의 상한. 없으면 한 번의 조회가 전 이력을 끌어간다. */
@@ -53,8 +61,10 @@ public class InternalBankingReadController {
     private final AccountService accountService;
     private final TransactionService transactionService;
     private final ContractService contractService;
+    private final ProductRepository productRepository;
     private final InternalProductCatalogService productCatalogService;
     private final SpecialTermRepository specialTermRepository;
+    private final InterestHistoryRepository interestHistoryRepository;
     private final AccessActorResolver actorResolver;
     private final ResourceAccessGuard accessGuard;
 
@@ -109,8 +119,15 @@ public class InternalBankingReadController {
 
         var pageable = PageRequest.of(0, Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
                 Sort.by(Sort.Direction.DESC, "transactionAt"));
+
+        // 본인 계좌 사이의 이체를 표시해 주기 위해 계좌 목록을 먼저 읽는다.
+        // 상대 계좌 자체는 내보내지 않고, 본인 계좌인지 여부만 계산해 담는다.
+        Set<Long> ownAccountIds = accountService.findByCustomer(customerId).stream()
+                .map(a -> a.getAccountId())
+                .collect(Collectors.toSet());
+
         return transactionService.findByCustomer(customerId, pageable).getContent().stream()
-                .map(InternalTransactionSummary::from)
+                .map(t -> InternalTransactionSummary.from(t, ownAccountIds))
                 .toList();
     }
 
@@ -130,8 +147,15 @@ public class InternalBankingReadController {
                 RESOURCE_CONTRACT + "_" + ACTION_READ, customerId);
         accessGuard.authorizeRead(actor, RESOURCE_CONTRACT, ACTION_READ, customerId);
 
-        return contractService.findAll(customerId, contractStatus).stream()
-                .map(InternalContractSummary::from)
+        var contracts = contractService.findAll(customerId, contractStatus);
+        // 상품은 공개 카탈로그다. 계약 수만큼 개별 조회하지 않도록 한 번에 읽어 붙인다.
+        Map<Long, Product> products = productRepository.findAllById(
+                        contracts.stream().map(c -> c.getProductId())
+                                .filter(java.util.Objects::nonNull).distinct().toList()).stream()
+                .collect(Collectors.toMap(Product::getProductId, java.util.function.Function.identity(), (a, b) -> a));
+
+        return contracts.stream()
+                .map(c -> InternalContractSummary.from(c, products.get(c.getProductId())))
                 .toList();
     }
 
@@ -157,6 +181,40 @@ public class InternalBankingReadController {
     public List<InternalSpecialTerm> specialTerms() {
         return specialTermRepository.findAll().stream()
                 .map(InternalSpecialTerm::from)
+                .toList();
+    }
+
+    /**
+     * 고객의 이자 지급 내역.
+     *
+     * <p>자원 코드는 거래와 같은 것을 쓴다. 이자도 계좌에 실제로 들어온 돈이므로
+     * 거래 열람과 같은 무게로 다룬다 — 따로 두면 거래는 막고 이자는 열리는
+     * 조합이 생긴다.
+     */
+    @GetMapping("/customers/{customerId}/interest-history")
+    public List<InternalInterestHistory> interestHistory(
+            @PathVariable String customerId,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestHeader(value = EMPLOYEE_ID_HEADER, required = false) String employeeId,
+            @RequestHeader(value = CUSTOMER_ID_HEADER, required = false) String callerCustomerId,
+            @RequestHeader(value = SERVICE_HEADER,     required = false) String service,
+            @RequestHeader(value = REASON_HEADER,      required = false) String reason,
+            @RequestHeader(value = TRACE_HEADER,       required = false) String traceId) {
+
+        AccessActor actor = actorResolver.resolve(
+                employeeId, callerCustomerId, service, reason, traceId,
+                RESOURCE_INTEREST + "_" + ACTION_READ, customerId);
+        accessGuard.authorizeRead(actor, RESOURCE_INTEREST, ACTION_READ, customerId);
+
+        List<Long> accountIds = accountService.findByCustomer(customerId).stream()
+                .map(a -> a.getAccountId())
+                .toList();
+        if (accountIds.isEmpty()) {
+            return List.of();
+        }
+        return interestHistoryRepository.findByAccountIdInOrderByInterestIdDesc(accountIds).stream()
+                .limit(Math.min(Math.max(size, 1), MAX_PAGE_SIZE))
+                .map(InternalInterestHistory::from)
                 .toList();
     }
 }

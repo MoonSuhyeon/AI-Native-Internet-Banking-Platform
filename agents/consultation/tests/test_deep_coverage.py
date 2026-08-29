@@ -141,75 +141,78 @@ class TestExecuteTransfer:
             memo=memo,
         )
 
-    def test_source_account_not_found(self, transfer_service):
-        result = transfer_service.execute_transfer(
-            ChatbotTransferRequest(
-                customer_no=CUST,
-                from_account_id=99999,
-                to_account_number="001-002-000001",
-                amount=100_000,
-            )
-        )
-        assert result.status == "ERROR"
-        assert "출금 계좌" in result.message
+    # ── 거절 사유는 core-banking 이 판단한다 ────────────────────────────────
+    #
+    # 예전에는 상담이 이체를 부르기 전에 DB 를 직접 읽어 출금 계좌 소유·출금가능·잔액·
+    # 수취 계좌 존재·동일 계좌를 검사했다. 아래 테스트들도 그 문구를 확인했다.
+    #
+    # 그 검사들은 이제 core-banking 안, 그것도 계좌 락을 쥔 뒤에 있다. 밖에서 미리 보면
+    # 읽고 나서 부르기까지 사이에 잔액이 바뀌어 "맞다고 본 것이 틀려지고", 같은 검사가
+    # 두 곳에 생겨 한쪽만 고치면 조용히 어긋난다 — 실제로 동일 계좌 검사는 상담에만
+    # 있어서 다른 경로에는 걸리지 않았다.
+    #
+    # 그래서 여기서 물을 것이 바뀌었다. "상담이 막는가" 가 아니라
+    # <b>"core-banking 이 막은 사유가 고객에게 그대로 닿는가"</b> 다.
+    # 검사 자체가 서는지는 core-banking 의 TransferSameAccountTest 등이 본다.
 
-    def test_wrong_customer_returns_error(self, transfer_service):
-        # account_id=1은 CUST001 소유 — CUST999로 조회 시 없음
-        result = transfer_service.execute_transfer(
-            ChatbotTransferRequest(
-                customer_no="CUST999",
-                from_account_id=1,
-                to_account_number="001-002-000001",
-                amount=100_000,
-            )
-        )
-        assert result.status == "ERROR"
-        assert "출금 계좌" in result.message
+    @staticmethod
+    def _rejection(message, status_code=400):
+        class _Resp:
+            pass
 
-    def test_non_withdrawable_account(self, transfer_service):
-        result = transfer_service.execute_transfer(
-            ChatbotTransferRequest(
-                customer_no="CUST003",
-                from_account_id=3,
-                to_account_number="001-001-000001",
-                amount=100_000,
-            )
-        )
-        assert result.status == "ERROR"
-        assert "출금이 불가능" in result.message
+        _Resp.status_code = status_code
+        _Resp.text = message
 
-    def test_insufficient_balance(self, transfer_service):
-        result = transfer_service.execute_transfer(
-            ChatbotTransferRequest(
-                customer_no="CUST004",
-                from_account_id=4,
-                to_account_number="001-001-000001",
-                amount=500_000,
-            )
-        )
-        assert result.status == "ERROR"
-        assert "잔액이 부족" in result.message
+        @staticmethod
+        def _json():
+            return {"message": message}
 
-    def test_zero_amount_error(self, transfer_service):
-        # amount=0 → 잔액(1,000,000) >= 0 이므로 잔액 체크 통과 → 금액 체크에서 걸림
-        result = transfer_service.execute_transfer(self._req(amount=0))
-        assert result.status == "ERROR"
-        assert "0원보다 커야" in result.message
+        _Resp.json = _json
+        return _Resp()
 
-    def test_destination_not_found(self, transfer_service):
-        result = transfer_service.execute_transfer(
-            self._req(to_acc="999-999-999999")
-        )
-        assert result.status == "ERROR"
-        assert "수취 계좌" in result.message
+    @pytest.mark.parametrize("reason", [
+        "계좌를 찾을 수 없습니다.",
+        "출금이 불가능한 계좌입니다.",
+        "잔액이 부족합니다.",
+        "출금 계좌와 수취 계좌가 동일합니다.",
+        "하루 이체 금액 한도를 초과했습니다.",
+    ])
+    def test_core_banking_rejection_reaches_customer(self, transfer_service, monkeypatch, reason):
+        """거절 사유를 상담이 삼키면 고객은 무엇을 고쳐야 할지 알 수 없다."""
+        self._patch_core_banking(monkeypatch, self._rejection(reason))
 
-    def test_same_account_error(self, transfer_service):
-        # from=1(계좌번호 001-001-000001), to=001-001-000001 → 동일 계좌
-        result = transfer_service.execute_transfer(
-            self._req(to_acc="001-001-000001")
-        )
+        result = transfer_service.execute_transfer(self._req())
+
         assert result.status == "ERROR"
-        assert "동일" in result.message
+        assert reason in result.message
+
+    def test_no_pre_check_query_before_calling_core_banking(self, transfer_service, monkeypatch):
+        """이체 전에 상담이 계좌를 따로 읽지 않는다.
+
+        사전 조회가 되살아나면 검사가 두 곳으로 갈라지고, 읽은 시점과 부르는 시점 사이가
+        벌어진다. 그래서 '부르기 전에 DB 를 건드리지 않는다' 를 직접 고정한다.
+        """
+        sent = self._patch_core_banking(monkeypatch, self._ok_response())
+
+        executed = []
+        original_execute = transfer_service.db.execute
+
+        def _spy(statement, *args, **kwargs):
+            executed.append(str(statement))
+            return original_execute(statement, *args, **kwargs)
+
+        monkeypatch.setattr(transfer_service.db, "execute", _spy)
+
+        result = transfer_service.execute_transfer(self._req())
+
+        assert result.status == "OK"
+        assert sent["json"]["toAccountNo"] == "001-002-000001"
+        assert "toAccountId" not in sent["json"], (
+            "수취 계좌를 미리 찾아 넘기면 찾은 뒤 부르기까지 사이가 벌어진다"
+        )
+        assert not [q for q in executed if "deposit_accounts" in q], (
+            f"이체 전 계좌 직접 조회가 남아 있다: {executed}"
+        )
 
     # ── 자금 이동은 core-banking 이 한다 ────────────────────────────────────
     #

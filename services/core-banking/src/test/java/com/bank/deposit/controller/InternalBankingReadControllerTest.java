@@ -8,6 +8,7 @@ import com.bank.deposit.domain.enums.ProductType;
 import com.bank.deposit.exception.BusinessException;
 import com.bank.deposit.exception.ErrorCode;
 import com.bank.deposit.service.AccountService;
+import com.bank.deposit.repository.ProductRepository;
 import com.bank.deposit.service.ContractService;
 import com.bank.deposit.service.TransactionService;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +50,7 @@ class InternalBankingReadControllerTest {
     @Mock AccountService accountService;
     @Mock TransactionService transactionService;
     @Mock ContractService contractService;
+    @Mock ProductRepository productRepository;
     @Mock AccessActorResolver actorResolver;
     @Mock ResourceAccessGuard accessGuard;
 

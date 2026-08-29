@@ -46,23 +46,7 @@ class UserFinanceFeatureExecutor(FeatureExecutorBase):
     def execute_interest_history(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         if not request.customer_no:
             return self._auth_required("INTEREST_HISTORY", "이자 내역 조회에는 고객번호와 본인 인증이 필요합니다.")
-        rows = self._rows(
-            """
-            SELECT h.interest_id,
-                   h.contract_id,
-                   h.account_id,
-                   h.applied_interest_rate,
-                   h.interest_amount,
-                   h.interest_after_tax AS interest_after_tax_amount,
-                   h.interest_paid_at AS paid_at
-              FROM deposit_interest_history h
-              JOIN deposit_accounts a ON a.account_id = h.account_id
-             WHERE a.customer_id = :customer_no
-             ORDER BY h.interest_id DESC
-             LIMIT 20
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = core_banking_client.fetch_customer_interest_history(request.customer_no)
         return self._data_response(
             "INTEREST_HISTORY", rows, "이자 내역 조회를 완료했습니다.", "조회된 이자 내역이 없습니다.", requires_auth=True
         )
@@ -72,22 +56,7 @@ class UserFinanceFeatureExecutor(FeatureExecutorBase):
     def execute_my_cash_flow(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         if not request.customer_no:
             return self._auth_required("MY_CASH_FLOW", "현금 흐름 조회에는 고객번호와 본인 인증이 필요합니다.")
-        rows = self._rows(
-            """
-            SELECT t.transaction_id,
-                   a.account_number,
-                   t.transaction_type,
-                   t.amount,
-                   t.status AS transaction_status,
-                   t.transaction_at
-              FROM deposit_transactions t
-              JOIN deposit_accounts a ON a.account_id = t.account_id
-             WHERE a.customer_id = :customer_no
-             ORDER BY t.transaction_at DESC
-             LIMIT 20
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = core_banking_client.fetch_customer_transactions(request.customer_no, size=20)
         return self._data_response(
             "MY_CASH_FLOW", rows, "현금 흐름 조회를 완료했습니다.", "조회된 거래 내역이 없습니다.", requires_auth=True
         )

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, aliased
 
 from harness_core.tracing import current_trace_id, observe
 
+from app import core_banking_client
 from app.audit import record_chatbot_turn
 from app.features import ProductFeatureExecutor, StaffFeatureExecutor, UserFinanceFeatureExecutor
 from app.features.base import build_history_context
@@ -748,26 +749,8 @@ class ChatbotService:
         )
 
         if product_type_filter:
-            rows = self._rows(
-                """
-                SELECT banking_product_id AS product_id,
-                       deposit_product_name AS product_name,
-                       deposit_product_type AS product_type,
-                       description,
-                       base_interest_rate,
-                       min_join_amount,
-                       max_join_amount,
-                       min_period_month,
-                       max_period_month,
-                       deposit_product_status AS product_status
-                  FROM deposit_banking_products
-                 WHERE deposit_product_status = 'SELLING'
-                   AND deposit_product_type = :ptype
-                 ORDER BY base_interest_rate DESC NULLS LAST
-                 LIMIT 20
-                """,
-                {"ptype": product_type_filter},
-            )
+            rows = core_banking_client.fetch_products_guide_rows(
+                product_type=product_type_filter, order="rate", limit=20)
             # 적금·예금은 가입기간 있는 상품만 (통장 제외)
             if product_type_filter in ("SAVINGS", "DEPOSIT"):
                 rows = [r for r in rows if r.get("min_period_month") is not None]
@@ -788,24 +771,7 @@ class ChatbotService:
             )
 
         # ── DB 전체 목록 ──────────────────────────────────────────────────────
-        rows = self._rows(
-            """
-            SELECT banking_product_id AS product_id,
-                   deposit_product_name AS product_name,
-                   deposit_product_type AS product_type,
-                   description,
-                   base_interest_rate,
-                   min_join_amount,
-                   max_join_amount,
-                   min_period_month,
-                   max_period_month,
-                   deposit_product_status AS product_status
-              FROM deposit_banking_products
-             WHERE deposit_product_status = 'SELLING'
-             ORDER BY banking_product_id
-             LIMIT 20
-            """
-        )
+        rows = core_banking_client.fetch_products_guide_rows(order="id", limit=20)
         return self._data_response("PRODUCT_GUIDE", rows, "상품 안내 조회를 완료했습니다.", "등록된 수신 상품 데이터가 없습니다.")
 
     def _try_rag_answer(self, query: str) -> str | None:
@@ -869,10 +835,7 @@ class ChatbotService:
         - 잔액: ACTIVE 계좌 합산
         Returns {total_balance, monthly_surplus, monthly_tx_count, has_data, _debug}
         """
-        accounts = self._rows(
-            "SELECT account_id, balance, account_status FROM deposit_accounts WHERE customer_id = :cno",
-            {"cno": customer_no},
-        )
+        accounts = core_banking_client.fetch_customer_accounts(customer_no)
         if not accounts:
             return None
 
@@ -890,29 +853,16 @@ class ChatbotService:
         if not all_ids:
             return None
 
-        id_list = ",".join(str(i) for i in all_ids)
-
-        # 본인 계좌번호 목록 (counterparty_account_no 대조용)
-        own_acc_numbers = {
-            str(r["account_number"])
-            for r in self._rows(
-                f"SELECT account_number FROM deposit_accounts WHERE account_id IN ({id_list})"
-            )
-        }
-
         # 날짜 컷오프를 Python에서 계산 → SQLite·PostgreSQL 모두 호환
         from datetime import datetime, timedelta, timezone
         cutoff = (datetime.now(timezone.utc) - timedelta(days=30 * months)).strftime("%Y-%m-%d")
 
-        tx_rows = self._rows(
-            f"""
-            SELECT *
-              FROM deposit_transactions
-             WHERE account_id IN ({id_list})
-               AND COALESCE(transaction_at, created_at) >= :cutoff
-             """,
-            {"cutoff": cutoff},
-        )
+        # 기간 컷오프는 여기서 건다. SQL 시절 WHERE 절이 하던 몫이라, 빼면 오래된 거래까지
+        # 월평균에 섞여 현금흐름이 실제보다 낮게 나온다.
+        tx_rows = [
+            r for r in core_banking_client.fetch_customer_transactions(customer_no)
+            if str(r.get("transaction_at") or "")[:10] >= cutoff
+        ]
 
         if not tx_rows:
             return {
@@ -930,18 +880,15 @@ class ChatbotService:
             ttype  = str(r.get("transaction_type") or "")
             status = str(r.get("status") or r.get("transaction_status") or "").upper()
             amount = float(r.get("amount") or 0)
-            cp_id  = r.get("counterparty_account_id")
 
             if status and status not in ("SUCCESS", "COMPLETED"):
                 continue
             # TRANSFER 타입 전체 제외
             if ttype == "TRANSFER":
                 continue
-            # counterparty 기반 내부 이체 제외
-            cp_no = str(r.get("counterparty_account_no") or "")
-            if cp_id is not None and int(cp_id) in all_ids:
-                continue
-            if cp_no and cp_no in own_acc_numbers:
+            # 본인 계좌 사이의 이체 제외. 상대 계좌는 내려오지 않고, 본인 것인지 여부만
+            # core-banking 이 계산해 준다 — 집계에 필요한 것은 그 판단뿐이다.
+            if r.get("internal_transfer"):
                 continue
             if ttype == "DEPOSIT":
                 inflow += amount
@@ -973,44 +920,13 @@ class ChatbotService:
         }
 
     def _execute_rate_guide(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
-        rows = self._rows(
-            """
-            SELECT r.rate_id,
-                   r.banking_product_id AS product_id,
-                   p.deposit_product_name AS product_name,
-                   r.rate_type,
-                   r.minimum_contract_period,
-                   r.maximum_contract_period,
-                   r.rate AS interest_rate,
-                   r.condition_description
-              FROM banking_deposit_product_interest_rates r
-              JOIN deposit_banking_products p ON p.banking_product_id = r.banking_product_id
-             WHERE p.deposit_product_status = 'SELLING'
-               AND p.deposit_product_name NOT LIKE '%장병%'
-               AND p.deposit_product_name NOT LIKE '%군인%'
-             ORDER BY r.banking_product_id, r.rate_id
-             LIMIT 200
-            """
-        )
+        # 장병·군인 전용 상품은 일반 금리 안내에서 뺀다 — SQL 시절 NOT LIKE 가 하던 몫이다.
+        rows = core_banking_client.fetch_rate_guide_rows(
+            limit=200, exclude_name_keywords=("장병", "군인"))
         return self._data_response("RATE_GUIDE", rows, "금리/우대금리 조회를 완료했습니다.", "등록된 금리 데이터가 없습니다.")
 
     def _execute_join_condition(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
-        rows = self._rows(
-            """
-            SELECT banking_product_id AS product_id,
-                   deposit_product_name AS product_name,
-                   min_join_amount,
-                   max_join_amount,
-                   min_period_month,
-                   max_period_month,
-                   is_early_termination_allowed,
-                   is_tax_benefit_available,
-                   deposit_product_status AS product_status
-              FROM deposit_banking_products
-             ORDER BY banking_product_id
-             LIMIT 20
-            """
-        )
+        rows = core_banking_client.fetch_join_conditions()
         return self._data_response("JOIN_CONDITION", rows, "가입 조건 조회를 완료했습니다.", "등록된 가입 조건 데이터가 없습니다.")
 
     def _execute_product_compare(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
@@ -1085,23 +1001,7 @@ class ChatbotService:
 
         # ── 특정 상품 ID 비교 ────────────────────────────────────────────────
         if product_ids:
-            rows = self._rows(
-                """
-                SELECT banking_product_id AS product_id,
-                       deposit_product_name AS product_name,
-                       deposit_product_type AS product_type,
-                       base_interest_rate,
-                       min_join_amount,
-                       max_join_amount,
-                       min_period_month,
-                       max_period_month
-                  FROM deposit_banking_products
-                 WHERE banking_product_id IN :product_ids
-                 ORDER BY banking_product_id
-                """,
-                {"product_ids": tuple(product_ids)},
-                expanding_params=("product_ids",),
-            )
+            rows = core_banking_client.fetch_compare_by_ids(list(product_ids))
         else:
             # "둘 중 어느 게 나아?" 같은 후속 질문은 문장만으로는 무엇을 비교하는지
             # 알 수 없다. 이전 대화에서 상품 맥락을 채워 넘긴다.
@@ -1118,25 +1018,8 @@ class ChatbotService:
     def _execute_terms_search(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         query = (request.query or "").strip()
 
-        # SQL LIKE 검색 (빈 쿼리 시 "%" → 전체 반환)
-        like = f"%{query}%" if query else "%"
-        rows = self._rows(
-            """
-            SELECT special_term_id,
-                   special_term_name,
-                   special_term_content,
-                   special_term_summary,
-                   is_required,
-                   status
-              FROM deposit_special_terms
-             WHERE special_term_name LIKE :query
-                OR special_term_content LIKE :query
-                OR special_term_summary LIKE :query
-             ORDER BY special_term_id
-             LIMIT 10
-            """,
-            {"query": like},
-        )
+        # 검색어 매칭은 클라이언트에서 한다 — SQL LIKE 를 서비스 경계 너머로 넘기지 않는다.
+        rows = core_banking_client.fetch_special_terms(query)
         return self._data_response("TERMS_RAG", rows, "약관 검색을 완료했습니다.", "검색 가능한 약관 데이터가 없습니다.")
 
     def _execute_faq(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
@@ -1358,23 +1241,7 @@ class ChatbotService:
     def _execute_interest_history(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         if not request.customer_no:
             return self._auth_required("INTEREST_HISTORY", "이자 내역 조회에는 고객번호와 본인 인증이 필요합니다.")
-        rows = self._rows(
-            """
-            SELECT h.interest_id,
-                   h.contract_id,
-                   h.account_id,
-                   h.applied_interest_rate,
-                   h.interest_amount,
-                   h.interest_after_tax AS interest_after_tax_amount,
-                   h.interest_paid_at AS paid_at
-              FROM deposit_interest_history h
-              JOIN deposit_accounts a ON a.account_id = h.account_id
-             WHERE a.customer_id = :customer_no
-             ORDER BY h.interest_id DESC
-             LIMIT 20
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = core_banking_client.fetch_customer_interest_history(request.customer_no, size=20)
         return self._data_response(
             "INTEREST_HISTORY", rows, "이자 내역 조회를 완료했습니다.", "조회된 이자 내역이 없습니다.", requires_auth=True
         )
@@ -1382,22 +1249,7 @@ class ChatbotService:
     def _execute_my_cash_flow(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         if not request.customer_no:
             return self._auth_required("MY_CASH_FLOW", "현금 흐름 조회에는 고객번호와 본인 인증이 필요합니다.")
-        rows = self._rows(
-            """
-            SELECT t.transaction_id,
-                   a.account_number,
-                   t.transaction_type,
-                   t.amount,
-                   t.status AS transaction_status,
-                   t.created_at
-              FROM deposit_transactions t
-              JOIN deposit_accounts a ON a.account_id = t.account_id
-             WHERE a.customer_id = :customer_no
-             ORDER BY t.transaction_id DESC
-             LIMIT 20
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = self._customer_tx_rows(request.customer_no, limit=20)
         return self._data_response(
             "MY_CASH_FLOW", rows, "현금 흐름 조회를 완료했습니다.", "조회된 거래 내역이 없습니다.", requires_auth=True
         )
@@ -1405,64 +1257,32 @@ class ChatbotService:
     def _execute_my_transfers(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         if not request.customer_no:
             return self._auth_required("MY_TRANSFERS", "이체 내역 조회에는 고객번호가 필요합니다.")
-        rows = self._rows(
-            """
-            SELECT t.transaction_id,
-                   a.account_number,
-                   t.transaction_type,
-                   t.amount,
-                   t.status AS transaction_status,
-                   t.created_at
-              FROM deposit_transactions t
-              JOIN deposit_accounts a ON a.account_id = t.account_id
-             WHERE a.customer_id = :customer_no
-               AND t.transaction_type = 'TRANSFER'
-             ORDER BY t.transaction_id DESC
-             LIMIT 10
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = self._customer_tx_rows(request.customer_no, limit=10, only_transfer=True)
         return self._data_response(
             "MY_TRANSFERS", rows, "최근 이체 내역입니다.", "조회된 이체 내역이 없습니다.", requires_auth=True
         )
 
     def execute_transfer(self, req: ChatbotTransferRequest) -> ChatbotTransferResponse:
+        """이체 요청을 core-banking 으로 넘긴다.
+
+        **사전 조회를 두지 않는 이유.** 예전에는 여기서 출금 계좌를 직접 읽어 소유자·
+        출금가능·잔액을, 수취 계좌를 읽어 존재·동일계좌 여부를 검사했다. 그 검사들은
+        지금 전부 core-banking 안에, 그것도 <b>계좌 락을 쥔 뒤</b> 있다.
+
+        밖에서 미리 보는 검사는 두 가지로 해롭다. 하나는 읽고 나서 부르기까지 사이에
+        잔액이 바뀔 수 있어 <b>맞다고 본 것이 틀려진다</b>. 다른 하나는 같은 검사가 두
+        곳에 생겨, 한쪽만 고치면 조용히 어긋난다. 실제로 동일계좌 검사는 여기에만 있어
+        상담을 거치지 않는 경로에는 걸리지 않았다 — 그래서 core-banking 으로 옮겼다.
+
+        거절 사유는 core-banking 이 도메인 메시지로 돌려주므로 그대로 고객에게 보인다.
+        """
         try:
-            # 출금 계좌 검증
-            src = self.db.execute(
-                text("SELECT account_id, account_number, balance, is_withdrawable FROM deposit_accounts WHERE account_id = :aid AND customer_id = :cno"),
-                {"aid": req.from_account_id, "cno": req.customer_no},
-            ).mappings().first()
-            if not src:
-                return ChatbotTransferResponse(status="ERROR", message="출금 계좌를 찾을 수 없습니다.")
-            if not src["is_withdrawable"]:
-                return ChatbotTransferResponse(status="ERROR", message="출금이 불가능한 계좌입니다.")
-            if src["balance"] < req.amount:
-                return ChatbotTransferResponse(status="ERROR", message=f"잔액이 부족합니다. (현재 잔액: {int(src['balance']):,}원)")
-            if req.amount <= 0:
-                return ChatbotTransferResponse(status="ERROR", message="이체 금액은 0원보다 커야 합니다.")
-
-            # 수취 계좌 조회
-            dst = self.db.execute(
-                text("SELECT account_id, account_number, customer_id FROM deposit_accounts WHERE account_number = :ano AND account_status = 'ACTIVE'"),
-                {"ano": req.to_account_number},
-            ).mappings().first()
-            if not dst:
-                return ChatbotTransferResponse(status="ERROR", message="수취 계좌를 찾을 수 없습니다.")
-            if dst["account_id"] == req.from_account_id:
-                return ChatbotTransferResponse(status="ERROR", message="출금 계좌와 수취 계좌가 동일합니다.")
-
-            # 실제 자금 이동은 core-banking 이 한다. 예전에는 여기서 직접 INSERT·UPDATE 로
-            # 옮겼는데, 그러면 원장 구현이 둘이 된다 — 그리고 이쪽에는 비관적 락도,
-            # 멱등키도, 일일 한도 검증도 없었다. 잔액을 읽고 검사한 뒤 갱신하므로 동시에
-            # 두 건이 들어오면 둘 다 통과해 잔액이 음수가 될 수 있었다.
-            return self._call_core_banking_transfer(req, dst)
+            return self._call_core_banking_transfer(req)
         except Exception as exc:
-            self.db.rollback()
             logger.exception("이체 처리 오류: %s", exc)
             return ChatbotTransferResponse(status="ERROR", message="이체 처리 중 오류가 발생했습니다.")
 
-    def _call_core_banking_transfer(self, req: ChatbotTransferRequest, dst) -> ChatbotTransferResponse:
+    def _call_core_banking_transfer(self, req: ChatbotTransferRequest) -> ChatbotTransferResponse:
         """core-banking 이체 API 호출.
 
         여기서 자체 SQL 을 쓰지 않는 이유는 자금 이동 경로를 하나로 두기 위해서다.
@@ -1482,7 +1302,8 @@ class ChatbotService:
         )
         payload = {
             "fromAccountId": req.from_account_id,
-            "toAccountId": dst["account_id"],
+            # 수취 계좌 번호만 보낸다. 번호를 계좌로 옮기는 일은 core-banking 이 락 안에서
+            # 한다 — 여기서 미리 찾아 넘기면 찾은 뒤 부르기까지 사이가 벌어진다.
             "toAccountNo": req.to_account_number,
             "amount": req.amount,
             "transferType": "INTERNAL",
@@ -1569,32 +1390,20 @@ class ChatbotService:
         return "\n".join(lines)
 
     def _fallback_compare_recommendations(self, query: str = "") -> list[dict[str, Any]]:
-        rows = self._rows(
-            f"""
-            SELECT banking_product_id AS product_id,
-                   deposit_product_name AS product_name,
-                   deposit_product_type AS product_type,
-                   base_interest_rate,
-                   min_join_amount,
-                   max_join_amount,
-                   min_period_month,
-                   max_period_month,
-                   description
-              FROM deposit_banking_products
-             WHERE deposit_product_status = 'SELLING'
-               AND deposit_product_type IN ('DEPOSIT', 'SAVINGS', 'SUBSCRIPTION')
-             ORDER BY
-                   CASE deposit_product_type
-                       WHEN 'SAVINGS' THEN 1
-                       WHEN 'DEPOSIT' THEN 2
-                       WHEN 'SUBSCRIPTION' THEN 3
-                       ELSE 4
-                   END,
-                   base_interest_rate DESC NULLS LAST,
-                   banking_product_id
-             LIMIT 50
-            """
-        )
+        # 적금 → 예금 → 청약 순으로 보여 준다. 예전 SQL 의 CASE 정렬을 그대로 옮긴 것이다.
+        _TYPE_ORDER = {"SAVINGS": 1, "DEPOSIT": 2, "SUBSCRIPTION": 3}
+        rows = core_banking_client.fetch_products_guide_rows(
+            product_types=["DEPOSIT", "SAVINGS", "SUBSCRIPTION"], order="rate", limit=1000)
+
+        def _rate(r):
+            try:
+                return (0, -float(r.get("base_interest_rate")))
+            except (TypeError, ValueError):
+                return (1, 0.0)
+
+        rows.sort(key=lambda r: (_TYPE_ORDER.get(r.get("product_type"), 4),
+                                 _rate(r), r.get("product_id") or 0))
+        rows = rows[:50]
         include_limited = any(word in query for word in ("청년", "장병", "군인", "군무원"))
         if not include_limited:
             rows = [
@@ -1872,24 +1681,8 @@ class ChatbotService:
     def _execute_staff_transfer_flow(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         if not request.customer_no or not request.staff_id:
             return self._staff_auth_required("STAFF_TRANSFER_FLOW", "이체 흐름 조회에는 고객번호와 직원 권한이 필요합니다.")
-        rows = self._rows(
-            """
-            SELECT t.transaction_id,
-                   t.transaction_number,
-                   a.account_number,
-                   a.customer_id AS customer_no,
-                   t.transaction_type,
-                   t.status AS transaction_status,
-                   t.amount,
-                   t.created_at
-              FROM deposit_transactions t
-              JOIN deposit_accounts a ON a.account_id = t.account_id
-             WHERE a.customer_id = :customer_no
-             ORDER BY t.transaction_id DESC
-             LIMIT 20
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = self._customer_tx_rows(
+            request.customer_no, limit=20, with_customer_no=True, with_tx_number=True)
         return self._data_response(
             "STAFF_TRANSFER_FLOW", rows, "이체 흐름 조회를 완료했습니다.", "조회된 이체 내역이 없습니다.", requires_staff_auth=True
         )
@@ -1951,14 +1744,7 @@ class ChatbotService:
         if age is None:
             return products
 
-        youth_ids = {
-            int(r["banking_product_id"])
-            for r in self._rows("""
-                SELECT banking_product_id
-                  FROM banking_deposit_product_target_groups
-                 WHERE target_group_id = 3
-            """)
-        }
+        youth_ids = core_banking_client.fetch_target_group_product_ids(3)
 
         filtered = []
         for p in products:
@@ -1972,19 +1758,17 @@ class ChatbotService:
         """주어진 기간에 적용되는 실제 BASE + PREFERENTIAL 금리를 반환."""
         if not product_ids:
             return {}
-        id_list = ",".join(str(i) for i in product_ids)
-        rows = self._rows(
-            f"""
-            SELECT banking_product_id, rate_type,
-                   COALESCE(SUM(rate), 0) AS total_rate
-              FROM banking_deposit_product_interest_rates
-             WHERE banking_product_id IN ({id_list})
-               AND minimum_contract_period <= :period
-               AND maximum_contract_period >= :period
-             GROUP BY banking_product_id, rate_type
-            """,
-            {"period": max(period, 1)},
-        )
+        # 기간 조건과 유형별 합산은 여기서 한다 — 예전 WHERE·GROUP BY 가 하던 몫이다.
+        p = max(period, 1)
+        totals: dict[tuple[int, str], float] = {}
+        for r in core_banking_client.fetch_rates_by_product_ids(product_ids):
+            lo, hi = r.get("minimum_contract_period"), r.get("maximum_contract_period")
+            if lo is None or hi is None or not (lo <= p <= hi):
+                continue
+            key = (r["banking_product_id"], r.get("rate_type"))
+            totals[key] = totals.get(key, 0.0) + float(r.get("rate") or 0)
+        rows = [{"banking_product_id": pid, "rate_type": rtype, "total_rate": total}
+                for (pid, rtype), total in totals.items()]
         result: dict[int, dict[str, Any]] = {}
         for r in rows:
             pid = r["banking_product_id"]
@@ -2000,18 +1784,20 @@ class ChatbotService:
         """상품별 전체 기간에 걸친 최소~최대 적용 가능 금리 범위를 반환."""
         if not product_ids:
             return {}
-        id_list = ",".join(str(i) for i in product_ids)
-        rows = self._rows(
-            f"""
-            SELECT banking_product_id,
-                   MIN(CASE WHEN rate_type='BASE' THEN rate END) AS min_base,
-                   MAX(CASE WHEN rate_type='BASE' THEN rate END) AS max_base,
-                   MAX(CASE WHEN rate_type='PREFERENTIAL' THEN rate END) AS max_pref
-              FROM banking_deposit_product_interest_rates
-             WHERE banking_product_id IN ({id_list})
-             GROUP BY banking_product_id
-            """
-        )
+        agg: dict[int, dict[str, Any]] = {}
+        for r in core_banking_client.fetch_rates_by_product_ids(product_ids):
+            pid = r["banking_product_id"]
+            a = agg.setdefault(pid, {"min_base": None, "max_base": None, "max_pref": None})
+            rate = r.get("rate")
+            if rate is None:
+                continue
+            rate = float(rate)
+            if r.get("rate_type") == "BASE":
+                a["min_base"] = rate if a["min_base"] is None else min(a["min_base"], rate)
+                a["max_base"] = rate if a["max_base"] is None else max(a["max_base"], rate)
+            elif r.get("rate_type") == "PREFERENTIAL":
+                a["max_pref"] = rate if a["max_pref"] is None else max(a["max_pref"], rate)
+        rows = [{"banking_product_id": pid, **v} for pid, v in agg.items()]
         return {
             r["banking_product_id"]: {
                 "min_base": float(r["min_base"] or 0),
@@ -2071,16 +1857,8 @@ class ChatbotService:
 
         # 청약 선택 시 단순 안내만 (채점 없이)
         if ptype == "SUBSCRIPTION":
-            rows = self._rows("""
-                SELECT p.banking_product_id AS product_id, p.deposit_product_name AS product_name,
-                       p.deposit_product_type AS product_type, p.base_interest_rate,
-                       p.min_period_month, p.max_period_month, p.min_join_amount, p.max_join_amount,
-                       p.description
-                  FROM deposit_banking_products p
-                 WHERE p.deposit_product_status = 'SELLING'
-                   AND p.deposit_product_type = 'SUBSCRIPTION'
-                 ORDER BY p.base_interest_rate DESC NULLS LAST LIMIT 5
-            """)
+            rows = core_banking_client.fetch_products_guide_rows(
+                product_type="SUBSCRIPTION", order="rate", limit=5)
             data = [
                 {"row_type": "recommended_product", "rank": i + 1,
                  "product_id": p.get("product_id") or p.get("banking_product_id"),
@@ -2103,40 +1881,22 @@ class ChatbotService:
 
         # ── DEPOSIT / SAVINGS / 전체 → _rank_products 기반 채점 ──────────────
         EXCLUDE_KEYWORDS = ['장병', '군인', '군무원', '청년', 'Youth', 'Young']
-        kw_conds = " AND ".join(f"p.deposit_product_name NOT LIKE '%{kw}%'" for kw in EXCLUDE_KEYWORDS)
 
-        type_cond = ""
-        if ptype in ("DEPOSIT", "SAVINGS"):
-            type_cond = f"AND p.deposit_product_type = '{ptype}'"
-        else:
-            # 유형 미지정: DEPOSIT + SAVINGS 전체 (청약 제외)
-            type_cond = "AND p.deposit_product_type IN ('DEPOSIT', 'SAVINGS')"
-
-        products = self._rows(
-            f"""
-            SELECT p.banking_product_id        AS product_id,
-                   p.deposit_product_name      AS deposit_product_name,
-                   p.deposit_product_type      AS deposit_product_type,
-                   p.base_interest_rate,
-                   p.min_period_month, p.max_period_month,
-                   p.min_join_amount,  p.max_join_amount,
-                   p.is_early_termination_allowed,
-                   p.is_tax_benefit_available
-              FROM deposit_banking_products p
-             WHERE p.deposit_product_status = 'SELLING'
-               AND p.min_period_month IS NOT NULL
-               AND {kw_conds}
-               {type_cond}
-             ORDER BY p.base_interest_rate DESC NULLS LAST
-             LIMIT 50
-            """
-        )
+        # 전용 상품은 일반 추천에서 뺀다 — 예전 NOT LIKE 절이 하던 몫이다.
+        # 가입기간 없는 상품(입출금 통장)도 채점 대상이 아니다.
+        type_filter = [ptype] if ptype in ("DEPOSIT", "SAVINGS") else ["DEPOSIT", "SAVINGS"]
+        products = [
+            p for p in core_banking_client.fetch_products_basic()
+            if p.get("deposit_product_type") in type_filter
+            and p.get("min_period_month") is not None
+            and not any(kw in (p.get("deposit_product_name") or "") for kw in EXCLUDE_KEYWORDS)
+        ][:50]
 
         # 고객 나이 조회 → 나이 기반 상품 필터 (customer-service 연동)
         customer_age = self._get_customer_age(request.customer_no) if request.customer_no else None
         if customer_age is not None:
             products = self._filter_by_age(products, customer_age)
-        # (키워드 필터는 kw_conds SQL에서 이미 처리됨)
+        # (키워드 필터는 위 목록을 고를 때 이미 걸렀다)
 
         # 고객 현금흐름 조회 (없으면 입력 금액으로 대체 cf 구성)
         cf = None
@@ -2253,23 +2013,7 @@ class ChatbotService:
     def _execute_staff_cash_flow(self, request: ChatbotFeatureExecuteRequest) -> ChatbotFeatureExecuteResponse:
         if not request.customer_no or not request.staff_id:
             return self._staff_auth_required("STAFF_CASH_FLOW", "고객 현금 흐름 조회에는 고객번호와 직원 권한이 필요합니다.")
-        rows = self._rows(
-            """
-            SELECT t.transaction_id,
-                   a.account_number,
-                   a.customer_id AS customer_no,
-                   t.transaction_type,
-                   t.amount,
-                   t.status AS transaction_status,
-                   t.created_at
-              FROM deposit_transactions t
-              JOIN deposit_accounts a ON a.account_id = t.account_id
-             WHERE a.customer_id = :customer_no
-             ORDER BY t.transaction_id DESC
-             LIMIT 20
-            """,
-            {"customer_no": request.customer_no},
-        )
+        rows = self._customer_tx_rows(request.customer_no, limit=20, with_customer_no=True)
         return self._data_response(
             "STAFF_CASH_FLOW", rows, "고객 현금 흐름 조회를 완료했습니다.", "조회된 거래 내역이 없습니다.", requires_staff_auth=True
         )
@@ -2297,48 +2041,51 @@ class ChatbotService:
         )
 
     def _account_rows(self, customer_no: str) -> list[dict[str, Any]]:
-        return self._rows(
-            """
-            SELECT account_id,
-                   account_number,
-                   customer_id AS customer_no,
-                   account_type,
-                   account_alias,
-                   balance,
-                   currency,
-                   account_status,
-                   opened_at,
-                   closed_at
-              FROM deposit_accounts
-             WHERE customer_id = :customer_no
-             ORDER BY account_id
-             LIMIT 20
-            """,
-            {"customer_no": customer_no},
-        )
+        # 건수 상한은 예전 SQL 의 LIMIT 20 을 그대로 이어받는다. API 는 전부 주므로
+        # 여기서 자르지 않으면 계좌가 많은 고객의 응답이 조용히 길어진다.
+        return core_banking_client.fetch_customer_accounts(customer_no)[:20]
 
     def _contract_rows(self, customer_no: str) -> list[dict[str, Any]]:
-        return self._rows(
-            """
-            SELECT c.contract_id,
-                   c.contract_number AS contract_no,
-                   c.customer_id AS customer_no,
-                   c.join_amount,
-                   c.contract_interest_rate,
-                   c.started_at,
-                   c.maturity_at,
-                   c.contract_status,
-                   p.banking_product_id AS product_id,
-                   p.deposit_product_name AS product_name,
-                   p.deposit_product_type AS product_type
-              FROM deposit_contracts c
-              LEFT JOIN deposit_banking_products p ON p.banking_product_id = c.banking_product_id
-             WHERE c.customer_id = :customer_no
-             ORDER BY c.contract_id
-             LIMIT 20
-            """,
-            {"customer_no": customer_no},
-        )
+        return core_banking_client.fetch_customer_contracts(customer_no)[:20]
+
+    def _customer_tx_rows(
+        self,
+        customer_no: str,
+        limit: int,
+        only_transfer: bool = False,
+        with_customer_no: bool = False,
+        with_tx_number: bool = False,
+    ) -> list[dict[str, Any]]:
+        """고객 거래를 예전 SQL 이 돌려주던 모양으로 맞춰 돌려준다.
+
+        예전 질의는 계좌와 조인해 ``account_number`` 를 같이 뽑았다. API 는 거래와 계좌를
+        따로 주므로, 계좌 목록을 한 번 읽어 계좌번호를 붙인다. 정렬·건수 제한도 SQL 절이
+        하던 몫이라 여기서 그대로 건다 — 빼면 화면에 오래된 거래가 섞인다.
+        """
+        rows = core_banking_client.fetch_customer_transactions(customer_no)
+        if only_transfer:
+            rows = [r for r in rows if str(r.get("transaction_type") or "") == "TRANSFER"]
+        acc_no_by_id = {
+            a.get("account_id"): a.get("account_number")
+            for a in core_banking_client.fetch_customer_accounts(customer_no)
+        }
+        rows = sorted(rows, key=lambda r: r.get("transaction_id") or 0, reverse=True)[:limit]
+        out = []
+        for r in rows:
+            item = {
+                "transaction_id":     r.get("transaction_id"),
+                "account_number":     acc_no_by_id.get(r.get("account_id")),
+                "transaction_type":   r.get("transaction_type"),
+                "amount":             r.get("amount"),
+                "transaction_status": r.get("status"),
+                "created_at":         r.get("transaction_at"),
+            }
+            if with_tx_number:
+                item["transaction_number"] = r.get("transaction_number")
+            if with_customer_no:
+                item["customer_no"] = customer_no
+            out.append(item)
+        return out
 
     def _rows(
         self,

@@ -13,6 +13,7 @@ import httpx
 from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
 
+from app import core_banking_client
 from app.schemas import ChatbotFeatureExecuteResponse
 
 # ChatMessageHistory 모델 임포트 (history context 조회용)
@@ -92,31 +93,32 @@ PREF_COND_FALLBACK: list[tuple[str, str]] = [
 def fetch_pref_conditions(rows_fn, product_ids: list[int]) -> dict[int, dict]:
     """상품별 우대금리 조건 설명 및 합산 금리 조회.
 
-    rows_fn 은 SQL 을 실행해 dict 목록을 돌려주는 함수(_rows)다. ChatbotService 와
-    FeatureExecutorBase 가 각자 _rows 를 갖고 있어 함수로 받는다.
+    ``rows_fn`` 은 더 이상 쓰지 않는다. 상품 금리는 core-banking API 에서 읽으므로
+    호출자의 DB 세션이 필요 없어졌다. 부르는 곳이 여럿이라 시그니처는 그대로 뒀다.
     """
     if not product_ids:
         return {}
-    id_list = ",".join(str(i) for i in product_ids)
-    rows = rows_fn(
-        f"""
-        SELECT banking_product_id,
-               STRING_AGG(condition_description, ' / ' ORDER BY rate_id) AS pref_conditions,
-               SUM(rate) AS total_pref_rate
-          FROM banking_deposit_product_interest_rates
-         WHERE banking_product_id IN ({id_list})
-           AND rate_type = 'PREFERENTIAL'
-           AND condition_description IS NOT NULL
-         GROUP BY banking_product_id
-        """
-    )
-    return {
-        r["banking_product_id"]: {
-            "condition": r["pref_conditions"],
-            "rate": float(r["total_pref_rate"] or 0.0),
+
+    # 우대금리 조건은 상품별로 여러 행이라, 예전에는 SQL 이 STRING_AGG 로 이어 붙이고
+    # SUM 으로 더했다. 그 집계를 여기서 그대로 한다 — rate_id 순서까지 맞춰야 설명 문구가
+    # 예전과 같은 차례로 나온다.
+    by_product: dict[int, list[dict[str, Any]]] = {}
+    for r in core_banking_client.fetch_rates_by_product_ids(product_ids):
+        if r.get("rate_type") != "PREFERENTIAL":
+            continue
+        by_product.setdefault(r["banking_product_id"], []).append(r)
+
+    out: dict[int, dict[str, Any]] = {}
+    for pid, rates in by_product.items():
+        described = [r for r in rates if r.get("condition_description")]
+        if not described:
+            continue
+        described.sort(key=lambda r: r.get("rate_id") or 0)
+        out[pid] = {
+            "condition": " / ".join(r["condition_description"] for r in described),
+            "rate": float(sum(float(r.get("rate") or 0) for r in described)),
         }
-        for r in rows
-    }
+    return out
 
 
 def enrich_pref_conditions(rows_fn, products: list[dict[str, Any]]) -> None:
@@ -195,47 +197,11 @@ class FeatureExecutorBase:
             return []
 
     def _account_rows(self, customer_no: str) -> list[dict[str, Any]]:
-        return self._rows(
-            """
-            SELECT account_id,
-                   account_number,
-                   customer_id AS customer_no,
-                   account_type,
-                   account_alias,
-                   balance,
-                   currency,
-                   account_status,
-                   opened_at,
-                   closed_at
-              FROM deposit_accounts
-             WHERE customer_id = :customer_no
-             ORDER BY account_id
-             LIMIT 20
-            """,
-            {"customer_no": customer_no},
-        )
+        # 예전 SQL 의 LIMIT 20 을 이어받는다.
+        return core_banking_client.fetch_customer_accounts(customer_no)[:20]
 
     def _contract_rows(self, customer_no: str) -> list[dict[str, Any]]:
-        return self._rows(
-            """
-            SELECT c.contract_id,
-                   c.contract_number AS contract_no,
-                   c.customer_id AS customer_no,
-                   c.banking_product_id AS product_id,
-                   p.deposit_product_name AS product_name,
-                   c.join_amount,
-                   c.contract_interest_rate,
-                   c.started_at,
-                   c.maturity_at,
-                   c.contract_status
-              FROM deposit_contracts c
-              LEFT JOIN deposit_banking_products p ON p.banking_product_id = c.banking_product_id
-             WHERE c.customer_id = :customer_no
-             ORDER BY c.contract_id
-             LIMIT 20
-            """,
-            {"customer_no": customer_no},
-        )
+        return core_banking_client.fetch_customer_contracts(customer_no)[:20]
 
     def _analyze_customer_cash_flow(self, customer_no: str, months: int = 3) -> dict[str, Any] | None:
         """고객의 전체 계좌 완료 거래를 집계해 현금흐름 지표를 반환한다.
@@ -244,34 +210,22 @@ class FeatureExecutorBase:
             {total_balance, monthly_surplus, monthly_tx_count, has_data}
             계좌 없으면 None
         """
-        accounts = self._rows(
-            "SELECT account_id, balance FROM deposit_accounts WHERE customer_id = :cno",
-            {"cno": customer_no},
-        )
+        accounts = core_banking_client.fetch_customer_accounts(customer_no)
         if not accounts:
             return None
 
         total_balance = sum(float(a.get("balance") or 0) for a in accounts)
-        account_ids = tuple(a["account_id"] for a in accounts)
 
         # 날짜 컷오프를 Python에서 계산 → SQLite·PostgreSQL 모두 호환
         cutoff = (datetime.now(timezone.utc) - timedelta(days=30 * months)).strftime("%Y-%m-%d")
-        tx_rows = self._rows(
-            """
-            SELECT transaction_type,
-                   status,
-                   amount
-              FROM deposit_transactions
-             WHERE account_id IN :account_ids
-               AND transaction_at >= :cutoff
-            """,
-            {"account_ids": account_ids, "cutoff": cutoff},
-            expanding_params=("account_ids",),
-        )
+        tx_rows = core_banking_client.fetch_customer_transactions(customer_no)
 
+        # 상태·기간 필터는 여기서 건다. 기간을 빼면 오래된 거래까지 월평균에 섞여
+        # 현금흐름이 실제보다 낮게 나온다 — SQL 시절 WHERE 절이 하던 몫이다.
         tx_rows = [
             r for r in tx_rows
             if str(r.get("status") or "").upper() in ("SUCCESS", "COMPLETED")
+            and str(r.get("transaction_at") or "")[:10] >= cutoff
         ]
 
         if not tx_rows:
@@ -310,7 +264,9 @@ class FeatureExecutorBase:
     ) -> ChatbotFeatureExecuteResponse:
         if requires_staff_auth and (not request.customer_no or not request.staff_id):
             return self._staff_auth_required(feature_code, "계약 조회에는 고객번호와 직원 권한이 필요합니다.")
-        if requires_staff_auth and request.staff_id and not self._validate_staff(request.staff_id):
+        if requires_staff_auth and request.staff_id and not self._validate_staff(
+                request.staff_id, resource="DEPOSIT_CONTRACT",
+                target_customer_no=request.customer_no):
             return self._staff_auth_required(feature_code, "유효하지 않은 직원 계정입니다.")
         if not requires_staff_auth and not request.customer_no:
             return self._auth_required(feature_code, "계약 조회에는 고객번호와 본인 인증이 필요합니다.")
@@ -362,21 +318,20 @@ class FeatureExecutorBase:
 
     # ── 인증/권한 검증 ────────────────────────────────────────────────────────
 
-    def _validate_staff(self, staff_id: str) -> bool:
-        """staff_id 가 employees 테이블에 실제로 존재하는 유효한 직원인지 확인한다.
+    def _validate_staff(self, staff_id: str,
+                        resource: str = "DEPOSIT_TRANSACTION",
+                        target_customer_no: str | None = None) -> bool:
+        """이 직원이 이 자원을 봐도 되는지 customer-service 에 묻는다.
 
-        여기까지 오는 staff_id 는 execute_chatbot_feature 에서 **게이트웨이가 검증해
-        주입한 X-Employee-Id 로 덮어쓴 값**이다. 클라이언트가 body 로 보낸 값은 그 지점에서
-        버려지므로 이 메서드에 도달하지 않는다.
+        예전에는 employees 테이블을 직접 읽었다. 그런데 그 테이블은 이 서비스가
+        붙는 DB 에 없고, 조회 예외가 삼켜져 늘 False 가 됐다 — 직원 기능이 조용히
+        전부 막혀 있었다. 신원의 정본은 customer-service 이므로 거기에 묻는다.
 
-        그러니 이 조회는 "사칭 방지"가 아니라 **유효성 확인**이다 — 퇴사자·정지 계정의
-        토큰이 남아 있을 수 있으므로 employees 에 ACTIVE 로 존재하는지 본다.
+        그리고 이것은 이제 "유효한 직원인가" 가 아니라 <b>"이 자원을 봐도 되는가"</b> 다.
+        역할까지 함께 판단되므로, 유효하기만 하면 통과하던 이전보다 좁다.
         """
-        rows = self._rows(
-            "SELECT employee_id FROM employees WHERE employee_id = :sid AND status = 'ACTIVE'",
-            {"sid": staff_id},
-        )
-        return len(rows) > 0
+        return core_banking_client.authorize_employee(
+            staff_id, resource=resource, target_customer_no=target_customer_no)
 
     def _get_customer_age(self, customer_no: str | None) -> int | None:
         """customer-service에서 생년월일을 조회해 만 나이를 반환. 실패 시 None.

@@ -59,29 +59,7 @@ class MaturityManagementAgent(FeatureExecutorBase):
 
     def _maturity_targets(self, customer_no: str) -> list[MaturityTarget]:
         today = date.today()
-        rows = self._rows(
-            """
-            SELECT c.contract_id,
-                   c.contract_number AS contract_no,
-                   c.customer_id AS customer_no,
-                   c.banking_product_id AS product_id,
-                   p.deposit_product_name AS product_name,
-                   p.deposit_product_type AS product_type,
-                   c.join_amount,
-                   c.contract_interest_rate,
-                   c.started_at,
-                   c.maturity_at,
-                   c.contract_status
-              FROM deposit_contracts c
-              LEFT JOIN deposit_banking_products p ON p.banking_product_id = c.banking_product_id
-             WHERE c.customer_id = :customer_no
-               AND c.maturity_at IS NOT NULL
-               AND COALESCE(c.contract_status, 'ACTIVE') IN ('ACTIVE', 'NORMAL', 'OPEN')
-             ORDER BY c.maturity_at
-             LIMIT 20
-            """,
-            {"customer_no": customer_no},
-        )
+        rows = core_banking_client.fetch_customer_contracts(customer_no)
 
         targets: list[MaturityTarget] = []
         for row in rows:
@@ -204,10 +182,7 @@ class MaturityManagementAgent(FeatureExecutorBase):
         if analyzed is not None:
             return analyzed
 
-        accounts = self._rows(
-            "SELECT account_id, balance FROM deposit_accounts WHERE customer_id = :customer_no",
-            {"customer_no": customer_no},
-        )
+        accounts = core_banking_client.fetch_customer_accounts(customer_no)
         total_balance = sum(float(account.get("balance") or 0) for account in accounts)
         return {
             "total_balance": total_balance,
