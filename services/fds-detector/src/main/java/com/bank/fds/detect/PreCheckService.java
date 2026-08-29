@@ -40,7 +40,21 @@ public class PreCheckService {
     @Value("${fds.rule.velocity-threshold:5}")
     private long velocityThreshold;
 
-    /** 1일 누적 보고 기준. 규제 항목이라 점수와 무관하게 사람에게 간다. */
+    /**
+     * 1일 누적 검토 기준.
+     *
+     * <p>점수와 무관하게 사람에게 간다 — "모델이 낮게 봤으니 통과" 가 성립하지 않는
+     * 종류로 다룬다.
+     *
+     * <p><b>기본값 2천만원은 데모 값이다. 현행 규정 금액이 아니다.</b> 규정으로 쓰려면
+     * 두 가지를 함께 확인해야 한다.
+     * <ul>
+     *   <li><b>금액</b> — 현행 기준을 원 자료로 확인할 것. 지어내면 안 된다.</li>
+     *   <li><b>대상</b> — 고액현금거래보고(CTR)는 <b>현금</b> 거래를 센다. 이 규칙이
+     *       세는 것은 <b>계좌이체 누적</b>이라, 금액을 맞춰도 CTR 그 자체는 아니다.
+     *       규정 항목으로 쓰려면 무엇을 세는지부터 맞춰야 한다.</li>
+     * </ul>
+     */
     @Value("${fds.rule.daily-cumulative-threshold:20000000}")
     private long dailyCumulativeThreshold;
 
@@ -69,7 +83,7 @@ public class PreCheckService {
                     "고액 이체 " + req.amount() + "원"));
         }
 
-        // 오늘 누적 + 이번 건이 보고 기준을 넘는가. 읽기만 한다 — 더하는 것은
+        // 오늘 누적 + 이번 건이 검토 기준을 넘는가. 읽기만 한다 — 더하는 것은
         // 거래가 실제로 완료된 뒤 사후가 한다.
         if (req.amount() != null) {
             riskStateStore.dailyAmount(req.senderUserId())
@@ -77,7 +91,7 @@ public class PreCheckService {
                     .filter(total -> total >= dailyCumulativeThreshold)
                     .ifPresent(total -> signals.add(DetectionSignal.of(
                             "DAILY_CUMULATIVE_THRESHOLD", Severity.MANDATORY,
-                            "1일 누적 예상 " + total + "원 — 보고 기준 초과")));
+                            "1일 누적 예상 " + total + "원 — 내부 검토 기준(데모값) 초과")));
         }
 
         ResponseTier tier = tierPolicy.decide(signals, true);

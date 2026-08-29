@@ -127,7 +127,7 @@ class PostHocDetectionServiceTest {
     }
 
     @Test
-    @DisplayName("1일 누적이 보고 기준을 넘으면 다른 신호가 없어도 사람에게 간다")
+    @DisplayName("1일 누적이 검토 기준을 넘으면 다른 신호가 없어도 사람에게 간다")
     void dailyCumulativeThresholdIsMandatory() {
         // 규제가 요구하는 항목이라 점수와 무관하다. 이 신호를 만드는 곳이 없으면
         // 정책의 MANDATORY 분기는 영원히 실행되지 않는 죽은 코드가 된다.
