@@ -26,7 +26,7 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import hypotheses
 from .audit import record_action_execution, record_investigation
@@ -517,6 +517,123 @@ def investigate(
         thread_id=thread_id,
         hitl_pending=True,
     )
+
+
+class TriageRunRequest(BaseModel):
+    """조사 용량. 큐 상위 몇 건까지 투입할지."""
+
+    capacity: int = Field(default=2, ge=1, le=10)
+
+
+class TriageQueueItem(BaseModel):
+    """큐 한 줄 — 조사됐는지, 안 됐으면 왜인지."""
+
+    rank: int
+    name: str
+    alert_id: str
+    grade: str
+    track: str
+    priority: float
+    anomaly_score: float
+    amount: int
+    basis: dict | None = None
+
+    investigated: bool
+    # 조사하지 않았으면 그 이유. 빈칸으로 두면 "안 걸렸다" 와 "순서가 밀렸다" 가
+    # 구별되지 않는다.
+    deferred_reason: str | None = None
+    recommendation: dict | None = None
+    thread_id: str | None = None
+
+
+class TriageRunResponse(BaseModel):
+    capacity: int
+    queue: list[TriageQueueItem]
+
+
+@app.post("/api/triage/run", response_model=TriageRunResponse)
+def triage_run(
+    req: TriageRunRequest,
+    x_employee_id: str | None = Header(default=None, alias="X-Employee-Id"),
+    x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+    x_service_auth: str | None = Header(default=None, alias="X-Service-Auth"),
+) -> TriageRunResponse:
+    """3층을 한 번에 — 사전 프로브로 줄을 세우고, 상위 몇 건만 조사한다.
+
+    <b>왜 용량이 있는가.</b> 조사는 사건 하나를 깊게 파는 일이라 알림 전부에 돌릴 수
+    없다. 그러면 무엇을 조사할지 고르는 일이 생기고, 그 선택 기준이 이상도면
+    "이상하지 않지만 규정상 확인할 것이 많은" 거래가 영영 순서를 못 받는다.
+
+    <b>왜 안 한 것도 돌려주는가.</b> 조사한 것만 보여주면 고르는 단계가 화면에서
+    사라진다. 밀린 건과 그 이유가 함께 보여야 "왜 이 사건을 먼저 봤나" 를 설명할 수
+    있고, 그것이 이 구조의 요점이다.
+
+    <b>직원이거나 탐지기여야 한다.</b> 조사가 고객 이력을 끌어와 보므로
+    /api/investigate 와 같은 기준으로 막는다.
+    """
+    _require_investigator(x_gateway_auth, x_employee_id, x_service_auth)
+
+    scored: list[tuple[PreTriageResult, Case]] = []
+    for path in sorted(Path(CASES_DIR).glob("*.json")):
+        try:
+            case = load_case(path.stem)
+        except Exception:
+            continue
+        try:
+            pt = probe(case)
+        except Exception:
+            a = case.alert
+            pt = PreTriageResult(
+                alert_id=a.id, customer_id=a.customer_id,
+                anomaly_score=a.anomaly_score, priority=a.anomaly_score,
+            )
+        scored.append((pt, case))
+
+    by_alert = {pt.alert_id: case for pt, case in scored}
+    ranked = order([pt for pt, _ in scored])
+
+    items: list[TriageQueueItem] = []
+    for rank, pt in enumerate(ranked, start=1):
+        case = by_alert[pt.alert_id]
+        item = TriageQueueItem(
+            rank=rank,
+            name=case.name,
+            alert_id=pt.alert_id,
+            grade=pt.grade.value,
+            track=pt.track,
+            priority=pt.priority,
+            anomaly_score=pt.anomaly_score,
+            amount=case.alert.tx_context.amount,
+            basis=pt.basis,
+            investigated=False,
+        )
+
+        if rank > req.capacity:
+            item.deferred_reason = f"조사 용량({req.capacity}건) 밖 — 순위 {rank}"
+            items.append(item)
+            continue
+
+        try:
+            steps, rec, state = _run_trace(case)
+        except Exception:
+            # 한 건이 터져도 큐 전체를 버리지 않는다. 실패를 이유로 남긴다 —
+            # 조용히 빼면 "조사했는데 결과가 없다" 와 구별되지 않는다.
+            fraud_investigation_failed_total.inc()
+            item.deferred_reason = "조사 실패"
+            items.append(item)
+            continue
+
+        fraud_investigation_total.labels(status=rec.status.value).inc()
+        thread_id = f"inv-{case.alert.id}"
+        _PENDING[thread_id] = rec        # HITL — approve 가 참조
+        record_investigation(state, case_name=case.name)
+
+        item.investigated = True
+        item.recommendation = rec.model_dump(mode="json")
+        item.thread_id = thread_id
+        items.append(item)
+
+    return TriageRunResponse(capacity=req.capacity, queue=items)
 
 
 @app.post("/api/approve", response_model=ApproveResponse)

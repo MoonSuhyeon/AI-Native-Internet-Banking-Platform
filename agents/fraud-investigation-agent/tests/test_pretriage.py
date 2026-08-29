@@ -178,3 +178,80 @@ class TestQueueEndpoint:
         # 정렬은 순서를 바꾸는 것이지 거르는 것이 아니다.
         q = self._queue(client)
         assert len(q) == len(list(CASES_DIR.glob("*.json")))
+
+
+class TestTriageRun:
+    """3층이 한 번에 도는가 — 프로브 → 정렬 → 상위만 조사.
+
+    **무엇을 지키는가.** "조사가 돈다" 가 아니라 <b>고르는 일이 실제로 일어난다</b>
+    를 지킨다. 용량이 없으면 전부 조사하게 되고, 그러면 트리아지를 둔 이유가 없다.
+    """
+
+    def _run(self, client, capacity=2):
+        resp = client.post("/api/triage/run", json={"capacity": capacity},
+                           headers=GATEWAY_HEADERS)
+        assert resp.status_code == 200, resp.text
+        return resp.json()
+
+    def test_상위_용량만큼만_조사한다(self, client):
+        r = self._run(client, capacity=2)
+        done = [q for q in r["queue"] if q["investigated"]]
+
+        assert len(done) == 2, f"용량 2인데 {len(done)}건 조사했다"
+        assert [q["rank"] for q in done] == [1, 2], "상위가 아닌 것을 조사했다"
+
+    def test_조사한_것은_책임_상위다(self, client):
+        r = self._run(client, capacity=2)
+        done = [q for q in r["queue"] if q["investigated"]]
+
+        # 이상도가 아니라 책임으로 골랐는지 — 조사된 건이 즉시 밴드여야 한다.
+        assert all(q["track"] == "즉시" for q in done), (
+            f"이상도 순으로 골랐다: {[(q['name'], q['track']) for q in done]}"
+        )
+
+    def test_이상도가_가장_높은_건은_밀린다(self, client):
+        # 이 검사가 이 단계의 주장이다. 이상도 80짜리가 조사되고 사망계좌가
+        # 밀리면 트리아지가 아무 일도 하지 않은 것이다.
+        r = self._run(client, capacity=2)
+        loudest = max(r["queue"], key=lambda q: q["anomaly_score"])
+
+        assert not loudest["investigated"], (
+            f"이상도 최고({loudest['name']}, {loudest['anomaly_score']})가 조사됐다"
+        )
+        assert loudest["deferred_reason"], "밀린 이유가 없다"
+
+    def test_밀린_건도_큐에_남는다(self, client):
+        # 조사한 것만 돌려주면 고르는 단계가 화면에서 사라진다.
+        r = self._run(client, capacity=1)
+        assert len(r["queue"]) == len(list(CASES_DIR.glob("*.json")))
+
+        deferred = [q for q in r["queue"] if not q["investigated"]]
+        assert deferred, "밀린 건이 하나도 없다"
+        assert all(q["deferred_reason"] for q in deferred), (
+            "밀린 이유가 비어 있다 — '안 걸렸다'와 '순서가 밀렸다'가 구별되지 않는다"
+        )
+
+    def test_조사된_건은_HITL_로_넘어간다(self, client):
+        # 에이전트는 권고까지다. 승인 없이 동작하지 않는다.
+        r = self._run(client, capacity=1)
+        top = r["queue"][0]
+
+        assert top["investigated"]
+        assert top["thread_id"], "승인으로 이어질 손잡이가 없다"
+        assert top["recommendation"] is not None
+
+    def test_용량을_늘리면_더_조사한다(self, client):
+        assert len([q for q in self._run(client, 1)["queue"] if q["investigated"]]) == 1
+        assert len([q for q in self._run(client, 3)["queue"] if q["investigated"]]) == 3
+
+    def test_용량은_범위를_벗어날_수_없다(self, client):
+        # 상한이 없으면 한 번 호출로 전부 조사할 수 있고, 그러면 비용과 처리량을
+        # 아무나 소진시킬 수 있다.
+        assert client.post("/api/triage/run", json={"capacity": 0},
+                           headers=GATEWAY_HEADERS).status_code == 422
+        assert client.post("/api/triage/run", json={"capacity": 99},
+                           headers=GATEWAY_HEADERS).status_code == 422
+
+    def test_신원_없이는_부를_수_없다(self, client):
+        # 조사는 고객 이력을 끌어와 본다. /api/investigate 와 같은 기준이어야 한다.
+        assert client.post("/api/triage/run", json={"capacity": 1}).status_code in (401, 403)
