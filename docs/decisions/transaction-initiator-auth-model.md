@@ -243,6 +243,65 @@ CREDIT  고객 예금     (부채 증가)
 원래 의미를 그대로 유지한다. internal 경로는 이 헤더를 요구하지 않으므로
 loan 이 가짜 값을 만들어 낼 이유가 사라진다.
 
+### 7. Core Banking 의 internal API 는 전부 인증을 요구한다
+
+> **최종 보안 모델은 모든 Core Banking internal API 에 인증을 요구한다. 단, 호출 주체에
+> 따라 서비스 신원과 직원 신원을 구분한다. 서비스 간 호출은 credential 기반 service
+> principal + operation permission 으로 인가하고, 직원 운영 작업은 직원 identity +
+> RBAC/step-up 으로 인가한다.**
+
+```
+Gateway 의 외부 인증
+      ↓
+Core Banking 의 서비스·직원 주체 인증      ← 여기가 비어 있었다
+      ↓
+작업별 인가
+      ↓
+감사
+```
+
+`payment/config/SecurityConfig` 는 `anyRequest().permitAll()` 이고 그 주석은
+"게이트웨이가 JWT 인증 → 백엔드는 통과" 다. 서비스 간 호출은 게이트웨이를 지나지
+않으므로 이 전제가 성립하지 않는다(원칙 1·2).
+
+**`/v1/internal/reconciliation/run` 은 직원 운영 경로로 본다.** 호출자 코드가 0건이라
+사람이 부르는 것으로 보이고, 확인되지 않은 호출자를 위해 `OPERATOR` 라는 서비스
+신원을 만들면 그 신원이 곧 우회로가 된다. 서비스가 아닌 것을 서비스로 등록하지 않는다.
+
+#### 전환 절차
+
+현재 무인증 호출을 즉시 차단하지 않는다. 승인 게이트를 켤 때 경로 목록을 사람이
+주석에 적고 켰다가 여신 넷을 빠뜨린 일이 있었다(§문제 정의). 같은 실수를 반복하지
+않으려면 목록을 **데이터로** 확인해야 한다.
+
+```
+1  발판    /v1/internal/** 에서 신원을 세우되 거절하지 않는다.
+           미인증 호출만 감사에 남겨 누가 인증 없이 들어오는지 확인한다.
+2  배선    확인된 호출자에게 신원과 작업 권한을 부여하고 자격증명을 보내게 한다.
+3  강제    미인증 호출이 0 이 된 것을 확인한 뒤 거절로 전환한다.
+4  방지    internal 컨트롤러가 인가 없이 추가되는 것을 잡는 테스트를 둔다.
+```
+
+> **1단계의 allow 는 최종 보안 정책이 아니라 전환 절차다.**
+> 이 문장을 적어 두는 이유는, 임시 허용이 아무도 고치지 않는 채로 정책이 되는 일이
+> 흔하기 때문이다. 설정 이름(`enforce`)과 기본값이 그 상태를 드러내야 한다.
+
+확인된 호출자와 필요한 작업 권한:
+
+| 경로 | 호출자 | 주체 | 필요한 것 |
+|---|---|---|---|
+| `POST /v1/internal/payments` | loan-service | 서비스 | ✅ 이미 있음 |
+| `POST /v1/internal/loan-disbursements` | loan-service | 서비스 | ✅ 이미 있음 |
+| `GET /v1/internal/ledger/loan-summary` | loan-service | 서비스 | ✅ 이미 있음 |
+| `GET /v1/internal/payments/{id}` | fds-detector | 서비스 | 신원 + `PAYMENT_DETAIL_READ` |
+| `GET /v1/internal/banking/**` | agents/consultation | 서비스 | 신원 (인가는 A2 의 `ResourceAccessGuard` 가 이미 한다) |
+| `POST /v1/internal/reconciliation/run` | 사람 | 직원 | 직원 인증 + RBAC |
+
+> `/v1/internal/banking/**` 을 "무인증" 이라고 적었던 것은 부정확했다. A2 가 세운
+> `ResourceAccessGuard` 가 행위자를 세우고 자원 접근을 판정한다 — **직원 인가는
+> 있고 서비스 인증이 없다.** 두 주체 모델이 겹치는 자리이므로, 이 경로에 필요한
+> 것은 작업 권한이 아니라 호출한 서비스의 신원이다.
+
 ## 이 결정이 하지 않는 것
 
 - **서비스 인증의 전송 수단을 정하지 않는다.** 현재는 `X-Internal-Token` 이 그 자리를
