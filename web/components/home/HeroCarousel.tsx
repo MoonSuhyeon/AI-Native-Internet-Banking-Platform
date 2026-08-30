@@ -62,11 +62,20 @@ export const HERO_SLIDES = [
  *
  * <p>여기를 옮기면 원과 이미지가 함께 움직인다. 따로 맞출 필요가 없다.
  */
-const ART_ANCHOR_RIGHT = 470
+const ART_ANCHOR_RIGHT = 370
 
 /** 두 원이 기준점에서 벌어지는 거리. 대칭이라 겹치는 한가운데가 기준점이 된다. */
 const CIRCLE_SPREAD_X = 40
 const CIRCLE_SPREAD_Y = 100
+
+/**
+ * 이미지만 기준점에서 더 밀어내는 거리. 양수면 오른쪽이다.
+ *
+ * <p>0 이면 이미지 중심이 원 겹치는 한가운데와 정확히 겹친다. 지금은 눈으로 보기에
+ * 이미지가 왼쪽으로 치우쳐 보여 오른쪽으로 밀어 둔 값이고, <b>원은 따라오지 않는다.</b>
+ * 그만큼 중심이 어긋나는 것은 의도된 것이다 — 계산상 정합보다 보기를 택했다.
+ */
+const IMAGE_SHIFT_X = 100
 
 interface HeroCarouselProps {
   current: number
@@ -111,7 +120,7 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
             transform: 'translate(-50%, -50%)', backgroundColor: slide.accent,
           }} />
 
-        <div className="absolute" style={{ transform: 'translate(-50%, -50%)' }}>
+        <div className="absolute" style={{ left: IMAGE_SHIFT_X, transform: 'translate(-50%, -50%)' }}>
           <Image
             src={`/images/personal-hero${current + 1}.png`}
             alt={slide.badge}
