@@ -8,17 +8,34 @@ import { KB_PRIMARY } from '@/lib/theme'
 type Child = { label: string; href: string }
 type SidebarItem = { label: string; expandable?: boolean; href?: string; children?: Child[] }
 
+/**
+ * 상단 드롭다운(Header.GNB_MENUS 의 '금융상품')과 같은 갈래로 둔다.
+ *
+ * <p>예전에는 사이드바가 '예금 상품/가입' + '예금 조회/해지' 로 나뉘어, 드롭다운의
+ * '예금상품' · '결과/내역 조회' 와 항목 구성이 어긋났다. 같은 화면을 두 경로로
+ * 들어오는데 분류가 다르면, 지금 어디에 있는지가 사이드바에서 읽히지 않는다.
+ *
+ * <p>둘은 손으로 관리되는 별개의 배열이라 한쪽만 고치기 쉽다. 드롭다운을 바꿀 때
+ * 여기도 함께 본다.
+ */
 const NAV: SidebarItem[] = [
-  { label: '예금 상품/가입', href: '/products/deposit/list' },
   {
-    label: '예금 조회/해지',
+    label: '예금상품',
+    expandable: true,
+    children: [
+      { label: '예금가입', href: '/products/deposit/list' },
+      { label: '예금해지', href: '/products/deposit/inquiry/terminate' },
+    ],
+  },
+  {
+    label: '결과/내역 조회',
     expandable: true,
     children: [
       { label: '신규결과/내역 조회', href: '/products/deposit/inquiry/new' },
-      { label: '예금해지',         href: '/products/deposit/inquiry/terminate' },
       { label: '해지결과/내역 조회', href: '/products/deposit/inquiry/terminate-result' },
     ],
-  },]
+  },
+]
 
 export default function DepositSidebar() {
   const pathname = usePathname()

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import ConsultModal from '@/components/layout/ConsultModal'
+import { DEPLOYED } from '@/lib/deployed-services'
 
 
 function IconHome() {
@@ -81,14 +82,18 @@ export default function FloatingSidebar() {
         </svg>
         <span className={labelCls}>예금계산기</span>
       </Link>
-      <Link href="/calculator/loan" className={itemCls}>
-        <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="9"/>
-          <line x1="12" y1="7" x2="12" y2="17"/>
-          <line x1="7" y1="12" x2="17" y2="12"/>
-        </svg>
-        <span className={labelCls}>대출계산기</span>
-      </Link>
+      {/* 대출계산기 — 여신을 올리지 않은 배포에서는 내린다. 상품·심사 화면으로
+          이어지지 않는 계산기만 남으면 막다른 길이 된다. */}
+      {DEPLOYED.loan && (
+        <Link href="/calculator/loan" className={itemCls}>
+          <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <line x1="12" y1="7" x2="12" y2="17"/>
+            <line x1="7" y1="12" x2="17" y2="12"/>
+          </svg>
+          <span className={labelCls}>대출계산기</span>
+        </Link>
+      )}
 
       {/* 상담신청 */}
       <button onClick={() => setShowConsult(true)} className={itemCls}>
