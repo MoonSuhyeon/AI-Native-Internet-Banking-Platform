@@ -56,6 +56,18 @@ export const HERO_SLIDES = [
   },
 ]
 
+/**
+ * 장식과 이미지가 공유하는 기준점. 히어로 오른쪽 끝에서 이만큼 떨어진 지점이며,
+ * 세로는 한가운데다.
+ *
+ * <p>여기를 옮기면 원과 이미지가 함께 움직인다. 따로 맞출 필요가 없다.
+ */
+const ART_ANCHOR_RIGHT = 470
+
+/** 두 원이 기준점에서 벌어지는 거리. 대칭이라 겹치는 한가운데가 기준점이 된다. */
+const CIRCLE_SPREAD_X = 40
+const CIRCLE_SPREAD_Y = 100
+
 interface HeroCarouselProps {
   current: number
   paused: boolean
@@ -79,25 +91,37 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
     <div className="relative w-full overflow-hidden transition-colors duration-700"
       style={{ backgroundColor: slide.bg, height: '400px' }}>
 
-      {/* 배경 장식 */}
-      <div className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none overflow-hidden">
-        <div className="absolute right-[-60px] top-[-60px] w-[400px] h-[400px] rounded-full opacity-20"
-          style={{ backgroundColor: slide.accent }} />
-        <div className="absolute right-[80px] bottom-[-80px] w-[280px] h-[280px] rounded-full opacity-10"
-          style={{ backgroundColor: slide.accent }} />
-      </div>
+      {/* 배경 장식 · 히어로 이미지 — 기준점 하나를 공유한다.
+          예전에는 원과 이미지가 서로 다른 좌표계에서 각자 px 로 놓여 있었다.
+          원 중심은 오른쪽에서 140·220px, 이미지 중심은 480px 이라 300px 넘게
+          어긋났고, 원이 배경이 아니라 따로 노는 장식으로 보였다.
+          지금은 셋 다 이 한 점을 기준으로 놓이므로 어긋날 수가 없다. */}
+      <div className="absolute pointer-events-none" style={{ right: ART_ANCHOR_RIGHT, top: '50%' }}>
 
-      {/* 히어로 이미지 */}
-      <div className="absolute right-[180px] top-1/2 -translate-y-1/2 pointer-events-none">
-        <Image
-          src={`/images/personal-hero${current + 1}.png`}
-          alt={slide.badge}
-          width={600}
-          height={380}
-          className="object-contain drop-shadow-lg"
-          style={{ transform: `scale(${slide.imageScale})` }}
-          priority
-        />
+        {/* 두 원은 기준점을 사이에 두고 대칭이다 — 그래서 겹치는 한가운데가
+            기준점과 정확히 일치한다. 오프셋 부호만 반대다. */}
+        <div className="absolute rounded-full opacity-20"
+          style={{
+            width: 400, height: 400, left: -CIRCLE_SPREAD_X, top: -CIRCLE_SPREAD_Y,
+            transform: 'translate(-50%, -50%)', backgroundColor: slide.accent,
+          }} />
+        <div className="absolute rounded-full opacity-10"
+          style={{
+            width: 280, height: 280, left: CIRCLE_SPREAD_X, top: CIRCLE_SPREAD_Y,
+            transform: 'translate(-50%, -50%)', backgroundColor: slide.accent,
+          }} />
+
+        <div className="absolute" style={{ transform: 'translate(-50%, -50%)' }}>
+          <Image
+            src={`/images/personal-hero${current + 1}.png`}
+            alt={slide.badge}
+            width={600}
+            height={380}
+            className="object-contain drop-shadow-lg"
+            style={{ transform: `scale(${slide.imageScale})` }}
+            priority
+          />
+        </div>
       </div>
 
 
