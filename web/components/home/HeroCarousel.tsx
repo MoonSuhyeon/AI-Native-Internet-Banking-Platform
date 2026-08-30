@@ -164,7 +164,7 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
           기하학적으로는 맞아도 눈에는 아래로 처진 것으로 읽힌다. */}
       <div className="absolute -translate-y-1/2 pointer-events-none"
         style={{
-          right: current === 0 ? 185 : current === 2 ? 80 : IMAGE_RIGHT,
+          right: current === 0 ? 187 : current === 2 ? 80 : IMAGE_RIGHT,
           top: HERO_HEIGHT / 2,
         }}
       >
@@ -172,12 +172,12 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
         src={`/images/personal-hero${current + 1}.png`}
         alt={slide.badge}
         width={
-            current === 0 ? 487 :
+            current === 0 ? 492 :
             current === 1 ? 634 :
             621
         }
         height={
-            current === 0 ? 308 :
+            current === 0 ? 311 :
             current === 1 ? 402 :
             395
         }
