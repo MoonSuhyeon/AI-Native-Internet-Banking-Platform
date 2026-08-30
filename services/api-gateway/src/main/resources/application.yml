@@ -25,7 +25,18 @@ spring:
             # 브라우저는 같은 오리진이어도 POST 에 Origin 헤더를 붙이고, 목록에 없는
             # 오리진이면 스프링이 403 을 낸다. GET 은 Origin 을 안 보내 401(토큰 없음)로
             # 보였기 때문에, 화면에서는 "로그인만 안 되는" 것으로 나타났다.
-            allowedOriginPatterns: ${GATEWAY_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,https://axfulbank.store,https://*.vercel.app}
+            #
+            # 쉼표로 이은 문자열 하나(${...}) 로 둬 봤는데 이 설정에서는 리스트로
+            # 바인딩되지 않았다. 목록이 통째로 비어 **모든 오리진이 거절됐다** —
+            # 고치려던 것보다 넓게 망가진다. 목록은 목록으로 두고 항목만 늘린다.
+            allowedOriginPatterns:
+              - "http://localhost:3000"
+              - "http://localhost:3001"
+              - "https://axfulbank.store"
+              - "https://*.vercel.app"
+              # 배포 도메인. 기본값을 위 항목과 겹치게 두어, 설정하지 않으면
+              # 목록이 실질적으로 늘지 않는다.
+              - "${GATEWAY_CORS_EXTRA_ORIGIN:https://axfulbank.store}"
             allowedMethods:
               - GET
               - POST
