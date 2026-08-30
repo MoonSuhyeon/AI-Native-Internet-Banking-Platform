@@ -163,7 +163,11 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
           교점의 y(237)를 그대로 쓰면 위아래 여백이 237 대 163 으로 어긋나 보인다 —
           기하학적으로는 맞아도 눈에는 아래로 처진 것으로 읽힌다. */}
       <div className="absolute -translate-y-1/2 pointer-events-none"
-        style={{ right: IMAGE_RIGHT, top: HERO_HEIGHT / 2 }}>
+        style={{
+          right: current === 2 ? 80 : IMAGE_RIGHT,
+          top: HERO_HEIGHT / 2,
+        }}
+      >
         <Image
         src={`/images/personal-hero${current + 1}.png`}
         alt={slide.badge}
