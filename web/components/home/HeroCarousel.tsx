@@ -119,7 +119,7 @@ void IMAGE_CENTER // 세로 위치는 HERO_HEIGHT/2 로 고정하므로 현재�
  * 사라진다. 초광폭 모니터에서 이미지가 텍스트와 조금 멀어져 보일 수 있지만,
  * 여기서는 "사이드바 바로 앞 여백"을 없애는 쪽을 우선한다.
  */
-const IMAGE_RIGHT = -20
+const IMAGE_RIGHT = 130
 
 interface HeroCarouselProps {
   current: number
