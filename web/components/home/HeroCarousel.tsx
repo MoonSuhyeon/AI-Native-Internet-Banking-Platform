@@ -32,7 +32,7 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: '#E8F7F3',
     accent: KB_PRIMARY,
-    imageScale: 0.667,
+    imageScale: 1,
   },
   {
     badge: '규제 준수',
@@ -42,7 +42,7 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: '#EDF3FF',
     accent: '#1E3A8A',
-    imageScale: 0.667,
+    imageScale: 1,
   },
   {
     badge: '사람 승인',
@@ -52,7 +52,7 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: KB_PRIMARY_BG,
     accent: KB_MINT,
-    imageScale: 0.667,
+    imageScale: 1,
   },
 ]
 
