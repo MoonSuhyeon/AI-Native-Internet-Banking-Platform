@@ -1,41 +1,58 @@
 'use client'
-import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
+import { KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
 
 import { useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
 
+/**
+ * 히어로 슬라이드.
+ *
+ * <p><b>왜 셋 다 이상거래 조사인가.</b> 이 배포는 해커톤 제출용이고 심사위원에게
+ * 주어지는 것은 URL 하나뿐이다. 안내 문서도 영상도 함께 가지 않으므로, 첫 화면에서
+ * 무엇을 만들었는지 보이지 않으면 찾아가지 못한다.
+ *
+ * <p>세 장이 같은 말을 세 번 하지 않는다 — 조사가 어떻게 도는가(1), 무엇을 먼저
+ * 보는가(2), 실행을 누가 통제하는가(3)로 갈린다.
+ *
+ * <p><b>링크가 /login 인 이유.</b> 조사 화면은 직원 전용이라 로그인이 필요하고,
+ * returnUrl 을 달아 두면 로그인 직후 그 화면으로 이어진다. 바로 /admin/fraud 로
+ * 보내면 가드가 로그인으로 되돌리면서 어디로 가려 했는지를 잃는다.
+ *
+ * <p>이미지는 순번으로 정해진다(/images/personal-heroN.png). 슬라이드를 늘리면
+ * 그 번호의 파일도 함께 넣어야 한다.
+ */
 export const HERO_SLIDES = [
   {
-    badge: 'AI 예금 추천',
-    title: 'AI가 분석한\n나만의 예금 전략',
-    desc: '수천만 건의 금융 데이터로 학습한 AI가\n내 패턴에 딱 맞는 최적의 예금상품을 추천합니다',
-    href: '/products/deposit/list',
-    bg: '#E8F7F3',
-    accent: KB_PRIMARY,
-    tag: '수신 AI',
+    badge: '이상거래 조사',
+    title: 'FDS 위험 신호를\n스스로 조사하는 AI 에이전트',
+    desc: '다섯 가지 공격 가설을 경합시키며\n필요한 자료를 골라 단계적으로 검증합니다',
+    cta: '이상거래 분석 보기',
+    href: '/login?returnUrl=%2Fadmin%2Ffraud',
+    bg: '#EDF3FF',
+    accent: '#1E3A8A',
     imageScale: 1,
   },
   {
-    badge: 'AI 대출 심사',
-    title: '편견 없는 AI의\n공정한 대출 심사',
-    desc: '사람의 편견을 제거한 AI 심사로\n더 많은 고객이 합리적인 금융 혜택을 누립니다',
-    href: '/loans/apply',
-    bg: '#EDF3FF',
-    accent: '#1E3A8A',
-    tag: '여신 AI',
-    imageScale: 1.15,
+    badge: '규제 준수',
+    title: '규정상 확인이 필요한 거래를\n먼저 보는 책임 트리아지',
+    desc: '사망·후견처럼 확인이 필요한 사실은\n이상 점수가 낮아도 큐 맨 앞에 둡니다',
+    cta: '이상거래 분석 보기',
+    href: '/login?returnUrl=%2Fadmin%2Ffraud',
+    bg: '#FBF3E8',
+    accent: '#9A6212',
+    imageScale: 1,
   },
   {
-    badge: 'AI 금융 관리',
-    title: '선제적으로 움직이는\nAI 금융 파트너',
-    desc: '시장 변화를 먼저 읽고 알려주는 AI가\n내 금융 자산을 더 스마트하게 지킵니다',
-    href: '/products/loan/status',
+    badge: '사람 승인',
+    title: '에이전트는 권고만,\n실행은 사람 승인',
+    desc: '권한이 검증된 담당자만 승인과 실행을 할 수 있고,\n그 과정은 기록됩니다',
+    cta: '이상거래 분석 보기',
+    href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: KB_PRIMARY_BG,
-    accent: KB_MINT,
-    tag: '사후관리 AI',
-    imageScale: 1.2,
+    accent: KB_PRIMARY,
+    imageScale: 1,
   },
 ]
 
@@ -105,7 +122,7 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
           <Link href={slide.href}
             className="self-start mt-1 px-6 py-2.5 text-[15px] font-bold text-white rounded-full transition-opacity hover:opacity-85"
             style={{ backgroundColor: slide.accent }}>
-            자세히 보기
+            {slide.cta}
           </Link>
 
           {/* 네비게이션 */}
