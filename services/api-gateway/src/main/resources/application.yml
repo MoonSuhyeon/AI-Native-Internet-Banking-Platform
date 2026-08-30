@@ -18,11 +18,14 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOriginPatterns:
-              - "http://localhost:3000"
-              - "http://localhost:3001"
-              - "https://axfulbank.store"
-              - "https://*.vercel.app"
+            # 배포 도메인을 여기에 박지 않는다. 도메인이 바뀔 때마다 이 파일을 고치고
+            # 다시 빌드해야 하는데, 그 사실을 아는 사람만 알 수 있어 조용히 막힌다.
+            #
+            # 실제로 그렇게 막혔다: 새 도메인으로 배포하니 로그인만 403 이 됐다.
+            # 브라우저는 같은 오리진이어도 POST 에 Origin 헤더를 붙이고, 목록에 없는
+            # 오리진이면 스프링이 403 을 낸다. GET 은 Origin 을 안 보내 401(토큰 없음)로
+            # 보였기 때문에, 화면에서는 "로그인만 안 되는" 것으로 나타났다.
+            allowedOriginPatterns: ${GATEWAY_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,https://axfulbank.store,https://*.vercel.app}
             allowedMethods:
               - GET
               - POST
