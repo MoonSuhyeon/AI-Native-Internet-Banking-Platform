@@ -161,7 +161,7 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
       <div
         className="absolute -translate-y-1/2 pointer-events-none"
         style={{
-          right: current === 0 ? 180 : current === 2 ? 80 : IMAGE_RIGHT,
+          right: current === 0 ? 170 : current === 2 ? 80 : IMAGE_RIGHT,
           top: HERO_HEIGHT / 2,
         }}
       >
@@ -169,12 +169,12 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
           src={`/images/personal-hero${current + 1}.png`}
           alt={slide.badge}
           width={
-            current === 0 ? 553 :
+            current === 0 ? 544 :
             current === 1 ? 634 :
             621
           }
           height={
-            current === 0 ? 350 :
+            current === 0 ? 344 :
             current === 1 ? 402 :
             395
           }
