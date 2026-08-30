@@ -3,6 +3,7 @@ import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
 
 import { useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 
 /**
@@ -64,6 +65,39 @@ const HERO_HEIGHT = 400
 const CIRCLE_BACK = { x: 140, y: 140, r: 200, opacity: 0.2 }
 const CIRCLE_FRONT = { x: 220, y: 340, r: 140, opacity: 0.1 }
 
+type Circle = typeof CIRCLE_BACK
+
+/** 이미지 상자 너비. 실제 그림 크기는 여기에 맞춰 object-contain 으로 들어간다. */
+const IMAGE_BOX_WIDTH = 600
+
+/**
+ * 두 원이 만나는 두 점 중 <b>화면에서 더 왼쪽</b>에 있는 점.
+ *
+ * <p>x 는 오른쪽 끝에서 잰 거리라 큰 쪽이 왼쪽이다. 두 교점은 중심을 잇는 선을
+ * 기준으로 대칭이므로, 그 선에 수직인 두 방향 중 x 가 커지는 쪽을 고른다.
+ */
+function leftIntersection(a: Circle, b: Circle): { x: number; y: number } {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const d = Math.hypot(dx, dy)
+  // a 중심에서 두 교점을 잇는 선까지의 거리
+  const t = (d * d + a.r * a.r - b.r * b.r) / (2 * d)
+  // 그 선 위 지점에서 교점까지의 거리
+  const h = Math.sqrt(Math.max(0, a.r * a.r - t * t))
+  const mx = a.x + (t * dx) / d
+  const my = a.y + (t * dy) / d
+  return { x: mx + (h * dy) / d, y: my - (h * dx) / d }
+}
+
+/**
+ * 이미지 중심이 놓일 자리 — 두 원이 겹치는 왼쪽 교점.
+ *
+ * <p>좌표를 손으로 맞추지 않는다. 원(CIRCLE_BACK·CIRCLE_FRONT)을 옮기면 이미지가
+ * 따라온다. 예전에는 둘이 서로 다른 px 로 놓여 있어, 원을 건드릴 때마다 이미지를
+ * 다시 맞춰야 했다.
+ */
+const IMAGE_CENTER = leftIntersection(CIRCLE_BACK, CIRCLE_FRONT)
+
 interface HeroCarouselProps {
   current: number
   paused: boolean
@@ -99,6 +133,19 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
         ))}
       </div>
 
+
+      {/* 히어로 이미지 — 중심을 두 원의 왼쪽 교점에 맞춘다. */}
+      <div className="absolute -translate-y-1/2 pointer-events-none"
+        style={{ right: IMAGE_CENTER.x - IMAGE_BOX_WIDTH / 2, top: IMAGE_CENTER.y }}>
+        <Image
+          src={`/images/personal-hero${current + 1}.png`}
+          alt={slide.badge}
+          width={IMAGE_BOX_WIDTH}
+          height={380}
+          className="object-contain drop-shadow-lg"
+          priority
+        />
+      </div>
 
       <div className="max-w-kb-container mx-auto px-8 h-full flex items-center">
         <div className="flex flex-col gap-4 max-w-[560px]">
