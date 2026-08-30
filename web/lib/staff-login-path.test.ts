@@ -152,3 +152,26 @@ describe('JWT 역할 읽기', () => {
     expect(readTokenRoles(null)).toEqual([])
   })
 })
+
+
+/**
+ * 어드민 메뉴가 배포되지 않은 서비스를 가리키지 않는지 본다.
+ *
+ * <p>조사 담당자(HQ_RISK)에게는 모니터링·AI 심사지원·대출 운영 섹션이 함께 보였다.
+ * 각각 Grafana 와 loan-service 를 부르는데 데모 스택에 없다 — 권한이 있어 메뉴는
+ * 뜨고, 누르면 깨진다.
+ */
+describe('어드민 사이드바의 배포 게이트', () => {
+  it('배포 목록을 보고 섹션을 거른다', () => {
+    const sidebar = read('components', 'admin', 'AdminSidebar.tsx')
+
+    expect(
+      sidebar.includes('.filter((g) => g.deployed !== false)'),
+      '권한만 보고 그리면 배포 안 된 서비스의 메뉴가 그대로 뜬다',
+    ).toBe(true)
+
+    expect(sidebar).toContain('DEPLOYED.monitoring')
+    expect(sidebar).toContain('DEPLOYED.consultation')
+    expect(sidebar).toContain('DEPLOYED.loan')
+  })
+})

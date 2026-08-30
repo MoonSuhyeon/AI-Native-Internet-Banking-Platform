@@ -52,4 +52,12 @@ export const DEPLOYED = {
    * 부르므로, 없으면 열리기만 하고 답이 오지 않는다.
    */
   consultation: false,
+
+  /**
+   * Prometheus + Grafana — 관측.
+   *
+   * 데모 스택에서 뺐다. 어드민의 모니터링 대시보드가 Grafana 를 부르므로,
+   * 없으면 화면은 열리는데 목록이 비거나 오류가 난다.
+   */
+  monitoring: false,
 } as const

@@ -1,5 +1,6 @@
 ﻿'use client'
 
+import { DEPLOYED } from '@/lib/deployed-services'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -11,7 +12,17 @@ import { KB_GNB_BIZ_ACTIVE } from '@/lib/theme'
 // 항목에 없으면 섹션 값을 상속한다. (ROLE_ADMIN 은 hasAnyRole 에서 항상 통과)
 type NavItem    = { label: string; href: string; bankRoles?: string[] }
 // domain = 도메인(계) 라벨. 같은 domain 끼리 한 블록으로 묶어 소유 경계를 시각화한다.
-type NavSection = { domain: string; section: string; dot: string; bankRoles: string[]; items: NavItem[] }
+/**
+ * {@code deployed} 가 false 면 그리지 않는다.
+ *
+ * <p>권한이 있어도 뒤에 서비스가 없으면 눌렀을 때 깨진다. 없는 기능이 안 보이는
+ * 것은 문제가 아니지만, 보이는데 안 되는 것은 서비스 전체가 고장 난 것처럼 읽힌다.
+ */
+type NavSection = {
+  domain: string; section: string; dot: string
+  bankRoles: string[]; items: NavItem[]
+  deployed?: boolean
+}
 
 // CUSTOMER 제외 전 직원(BankRole). break-glass 긴급 접근 등 '전 직원' 범위 게이팅에 사용.
 const EMPLOYEE_ROLES = [
@@ -66,6 +77,7 @@ const NAV: NavSection[] = [
   {
     domain: '수신계',
     section: '상담', dot: 'bg-teal-400',
+    deployed: DEPLOYED.consultation,
     bankRoles: AUDIT_VIEW,
     items: [
       { label: '고객 조회', href: '/admin/consultation/customer' },
@@ -81,6 +93,7 @@ const NAV: NavSection[] = [
     domain: '여신계',
     // 대출 어드민은 심사·운영·결재 직군이 사용한다.
     section: '대출', dot: 'bg-green-400',
+    deployed: DEPLOYED.loan,
     bankRoles: ['ROLE_DEPUTY_MANAGER', 'ROLE_OPS', 'ROLE_BRANCH_MANAGER', 'ROLE_HQ_REVIEWER'],
     items: [
       { label: '계약 모니터링',      href: '/admin/loan/contracts' },
@@ -100,6 +113,7 @@ const NAV: NavSection[] = [
     domain: '여신계',
     // RAG·자문·편향감사 관리 — 본사 심사·컴플라이언스 데스크(HQ_DESK).
     section: 'AI 심사지원', dot: 'bg-violet-400',
+    deployed: DEPLOYED.loan,
     bankRoles: HQ_DESK,
     items: [
       { label: 'RAG 문서관리',  href: '/admin/ai/rag-documents' },
@@ -123,6 +137,7 @@ const NAV: NavSection[] = [
     domain: '여신계',
     // break-glass 는 고객 제외 전 직원이 사용 → 섹션은 직원 역할 합집합, 항목은 개별 게이팅.
     section: '대출 운영·감사', dot: 'bg-emerald-400',
+    deployed: DEPLOYED.loan,
     bankRoles: EMPLOYEE_ROLES,
     items: [
       { label: 'EOD 배치',     href: '/admin/loan/eod',         bankRoles: ['ROLE_OPS'] },
@@ -137,6 +152,7 @@ const NAV: NavSection[] = [
     // 특정 계에 속하지 않는다 — 모든 서비스와 에이전트의 지표를 한자리에서 본다.
     // 운영(장애·지연)과 리스크(에이전트 판단 품질)가 같은 화면을 다른 이유로 본다.
     section: '모니터링', dot: 'bg-slate-400',
+    deployed: DEPLOYED.monitoring,
     bankRoles: ['ROLE_OPS', 'ROLE_HQ_RISK'],
     items: [
       { label: '대시보드', href: '/admin/monitoring' },
@@ -166,6 +182,9 @@ export default function AdminSidebar() {
 
   // BankRole(JWT) 단일 게이팅 — 섹션 표시 후, 항목은 자체 bankRoles 가 있으면 그걸로, 없으면 섹션 상속.
   const visibleNav = NAV
+    // 배포되지 않은 서비스의 섹션은 권한과 무관하게 내린다. 권한이 있어도
+    // 뒤에 서비스가 없으면 눌렀을 때 깨지고, 그게 더 나쁘게 읽힌다.
+    .filter((g) => g.deployed !== false)
     .filter((g) => hasAnyRole(adminRoles, ...g.bankRoles))
     .map((g) => ({
       ...g,
