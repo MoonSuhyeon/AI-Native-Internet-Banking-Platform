@@ -172,12 +172,12 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
         src={`/images/personal-hero${current + 1}.png`}
         alt={slide.badge}
         width={
-            current === 0 ? 445 :
+            current === 0 ? 467 :
             current === 1 ? 634 :
             598
         }
         height={
-            current === 0 ? 281 :
+            current === 0 ? 295 :
             current === 1 ? 402 :
             380
         }
