@@ -50,6 +50,9 @@ class AiMenuBackingTest {
         AI_BACKED_ROUTES.put("/loans/apply", "agents/auto-loan-review");
         // 지출 분석 화면이 /api/agent/spending 을 부른다.
         AI_BACKED_ROUTES.put("/spending", "agents/consultation spending_pattern_agent");
+        // 조사 콘솔이 /api/v1/internal/fraud/** 로 조사 에이전트를 부른다.
+        // 직원 전용이라 로그인을 거치지만, 그 화면이 부르는 것은 실제 에이전트다.
+        AI_BACKED_ROUTES.put("/admin/fraud", "agents/fraud-investigation-agent");
     }
 
     private static final Pattern ENTRY = Pattern.compile(

@@ -33,51 +33,51 @@ type QuickMenu = {
   ask?: string
 }
 
+/**
+ * 퀵메뉴 — <b>기능이 아니라 순서</b>다.
+ *
+ * <p>상단 탭과 드롭다운이 이미 기능별로 나뉘어 있다. 같은 화면을 여기 한 번 더
+ * 늘어놓으면 자리만 차지한다. 그래서 이 자리는 <b>무엇부터 해보면 되는가</b>를 놓는다 —
+ * 처음 온 사람이 위에서 아래로 누르기만 하면 시연 동선이 그대로 재현된다.
+ *
+ * <p>세 칸인 이유는 넷째로 넣을 것이 이 제출물의 범위가 아니어서다. 준법·심사 화면은
+ * 기존 플랫폼의 기능이라, 나란히 놓으면 무엇이 이번에 만든 것인지 흐려진다.
+ *
+ * <p>예전에는 넷 다 "AI" 로 시작했지만 셋은 상담 서비스의 챗봇을 열었고 하나는
+ * 여신으로 갔다. 둘 다 이 배포에 없어 <b>네 칸이 전부 눌리지 않는 상태</b>였다.
+ */
 const QUICK_MENUS: QuickMenu[] = [
   {
-    // consultation 챗봇 — 현금흐름 분석 기반 추천 + 약관 RAG + 상담사 연결.
-    // 예전 라벨은 'AI 상품 추천'(→ 정적 예금 목록)과 'AI 24시간 상담'
-    // (→ staff-chat, 직원용 콘솔) 둘로 쪼개져 있었다. 같은 백엔드라 합친다.
-    label: 'AI 상담·추천', ask: '현금 흐름 기반으로 상품 추천해줘',
+    label: '이체를 시도한다', href: '/transfer/account',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-        <line x1="9" y1="10" x2="15" y2="10"/>
-        <line x1="9" y1="14" x2="12" y2="14"/>
+        <polyline points="17 3 21 7 17 11"/>
+        <line x1="21" y1="7" x2="3" y2="7"/>
+        <polyline points="7 13 3 17 7 21"/>
+        <line x1="3" y1="17" x2="21" y2="17"/>
       </svg>
     ),
   },
   {
-    // auto-loan-review 가 실제로 트리거되는 지점.
-    label: 'AI 대출 심사', href: '/loans/apply',
+    label: '막힌 이유를 본다', href: '/inquiry/transactions',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
-        <polyline points="9 15 11 17 15 13"/>
+        <line x1="8" y1="13" x2="16" y2="13"/>
+        <line x1="8" y1="17" x2="13" y2="17"/>
       </svg>
     ),
   },
   {
-    // spending_pattern_agent. 예전에는 /inquiry/accounts(계좌조회)를 가리켰다 —
-    // 분석이 아니라 잔액 목록이라 라벨과 맞지 않았다.
-    label: 'AI 자산분석', ask: '이번 달 지출 패턴 분석해줘',
+    // 조사 콘솔. 직원 전용이라 로그인하지 않았으면 가드가 관리자 로그인으로 보내고,
+    // returnUrl 로 이 화면을 기억했다가 되돌려 준다.
+    label: 'AI 이상거래 조사', href: '/admin/fraud',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="20" x2="18" y2="10"/>
-        <line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
-        <polyline points="2 20 22 20"/>
-      </svg>
-    ),
-  },
-  {
-    // maturity_agent. 만들어져 있었지만 토글이 꺼져 있어 돌지 않던 것을 켰다.
-    label: 'AI 만기 관리', ask: '만기되면 어떻게 하는 게 좋을까?',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="9"/>
-        <polyline points="12 7 12 12 15 14"/>
+        <circle cx="11" cy="11" r="7"/>
+        <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+        <path d="M11 8v3l2 1.5"/>
       </svg>
     ),
   },
@@ -111,7 +111,7 @@ export default function HeroWithQuickMenu() {
       {/* 퀵메뉴 */}
       <section className="relative z-10 bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-kb-container mx-auto">
-          <div className="grid grid-cols-4">
+          <div className="grid grid-cols-3">
             {QUICK_MENUS.map((menu, idx) => {
               const inner = (
                 <>
