@@ -59,8 +59,8 @@ describe('직원 로그인 동선', () => {
     const page = read('app', '(admin)', 'admin', 'login', 'page.tsx')
 
     expect(
-      page.includes("api.post('/api/v1/auth/login'"),
-      '고객 로그인과 같은 백엔드 경로를 써야 한다. 상담 서비스는 은행 직원을 모른다',
+      page.includes("api.post('/api/v1/auth/employee/login'"),
+      '직원 전용 경로를 써야 한다. 고객 경로를 쓰면 고객도 일단 토큰을 받는다',
     ).toBe(true)
 
     // mock.<base64> 토큰은 readAccessToken 이 지우고 게이트웨이도 거절한다.

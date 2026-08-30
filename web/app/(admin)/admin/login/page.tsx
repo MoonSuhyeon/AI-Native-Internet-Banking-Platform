@@ -35,11 +35,13 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError('')
     try {
-      // 고객 로그인과 **같은 백엔드 경로**를 쓴다. 예전에는 상담 서비스의 상담원
-      // 로그인을 부르고 mock.<base64> 토큰을 스스로 만들었는데, 게이트웨이가 그
-      // 토큰을 거절해 화면만 열리고 모든 API 가 401 이었다. 은행 직원 계정으로는
-      // 아예 들어올 수도 없었다.
-      const { data } = await api.post('/api/v1/auth/login', { loginId: id, password })
+      // **직원 전용 경로다.** 고객 계정으로 여기 들어오면 백엔드가 403 을 내고
+      // 토큰을 아예 발급하지 않는다 — 화면에서 걸러내면 고객도 일단 토큰을 받는다.
+      //
+      // 예전에는 상담 서비스의 상담원 로그인을 부르고 mock.<base64> 토큰을 스스로
+      // 만들었다. 게이트웨이가 그 토큰을 거절해 화면만 열리고 모든 API 가 401 이었고,
+      // 은행 직원 계정으로는 아예 들어올 수도 없었다.
+      const { data } = await api.post('/api/v1/auth/employee/login', { loginId: id, password })
 
       // 갈 곳: returnUrl 이 있으면 그쪽, 없으면 조사 화면.
       const target = postLoginTarget()

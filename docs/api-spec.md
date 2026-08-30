@@ -33,12 +33,12 @@
 
 - **서비스 수**: 11
 - **컨트롤러 수**: 141
-- **엔드포인트 수**: 480
+- **엔드포인트 수**: 483
 
 ---
 
 ## 목차
-- [Customer Service (고객·인증·인증서)](#customer-service) — 125개
+- [Customer Service (고객·인증·인증서)](#customer-service) — 127개
 - [Core Banking (수신·계좌·예적금·이체)](#core-banking) — 123개
 - [Loan Service (여신·대출·심사자문)](#loan-service) — 159개
 - [FDS Detector (이상거래 탐지)](#fds-detector) — 1개
@@ -46,7 +46,7 @@
 - [Review AI Gateway (심사 AI 게이트웨이)](#review-ai-gateway) — 2개
 - [Doc Agent (서류 제출·검토)](#doc-agent) — 6개
 - [Consultation (상담·챗봇)](#consultation) — 27개
-- [Fraud Investigation (조사 에이전트)](#fraud-investigation) — 7개
+- [Fraud Investigation (조사 에이전트)](#fraud-investigation) — 8개
 - [Goal Agent (목표 상담)](#goal-agent) — 23개
 - [Inference Server (모델 추론)](#inference-server) — 3개
 
@@ -202,8 +202,10 @@
 
 | Method | Path |
 |---|---|
+| `POST` | `/api/v1/auth/employee/login` |
 | `POST` | `/api/v1/auth/login` |
 | `POST` | `/api/v1/auth/refresh` |
+| `GET` | `/api/v1/auth/verify` |
 
 ### MobileAuthController
 
@@ -1250,6 +1252,7 @@
 | `POST` | `/api/consult` |
 | `POST` | `/api/guidance` |
 | `POST` | `/api/investigate` |
+| `POST` | `/api/triage/run` |
 | `GET` | `/health` |
 | `GET` | `/metrics` |
 

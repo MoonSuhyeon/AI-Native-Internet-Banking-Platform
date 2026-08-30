@@ -1,5 +1,6 @@
 package com.bank.customer.login.service;
 
+import com.bank.common.security.BankRole;
 import com.bank.common.security.Sha256;
 import com.bank.common.security.jwt.JwtClaims;
 import com.bank.common.security.jwt.JwtProvider;
@@ -94,6 +95,28 @@ public class LoginService {
     }
 
     @Transactional
+    /**
+     * 직원 전용 로그인. **고객 계정에는 토큰을 내주지 않는다.**
+     *
+     * <p>관리자 화면은 이 문으로만 들어온다. 고객 로그인과 경로를 나눈 이유는,
+     * 화면에서 걸러내면 고객도 일단 토큰을 받기 때문이다 — 그 토큰으로 관리자
+     * API 를 부르면 어차피 거절되지만, 발급 자체를 하지 않는 편이 낫다.
+     *
+     * <p>인증은 통과했으나 직원이 아닌 경우다. 그래서 401 이 아니라 403 이다.
+     * 이때 이미 발급된 refresh 토큰은 돌려주지 않으며 스스로 만료된다.
+     */
+    public LoginResponse employeeLogin(LoginRequest request, String ip, String userAgent) {
+        LoginResponse response = login(request, ip, userAgent);
+
+        JwtClaims claims = jwtProvider.parseClaims(response.accessToken());
+        boolean employee = claims.roles().stream()
+                .anyMatch(role -> !BankRole.CUSTOMER.authority().equals(role));
+        if (!employee) {
+            throw new BusinessException(CommonErrorCode.COMMON_403);
+        }
+        return response;
+    }
+
     public LoginResponse refresh(RefreshRequest request) {
         JwtClaims claims;
         try {
