@@ -93,3 +93,28 @@ describe('드롭다운 화면의 로그인 요구', () => {
     expect(prefixes('PRIVATE_PREFIXES').length).toBeGreaterThan(3)
   })
 })
+
+
+/**
+ * 로그인 뒤 막다른 길로 보내지 않는지 본다.
+ *
+ * <p>홈 배너가 조사 화면을 가리키므로, 고객이 그 버튼을 누르면 returnUrl 에
+ * {@code /admin/...} 이 담긴 채 로그인한다. 그대로 보내면 AdminGuard 가 되돌리고,
+ * 화면에서는 <b>로그인이 안 되는 것과 구분되지 않는다.</b>
+ */
+describe('로그인 뒤 목적지', () => {
+  it('고객은 직원 화면으로 보내지 않는다', () => {
+    const login = readFileSync(
+      resolve(__dirname, '..', 'app', '(personal)', 'login', 'page.tsx'), 'utf-8')
+
+    expect(
+      login.includes('customerTarget'),
+      '고객 목적지를 따로 고르는 곳이 없다. returnUrl 이 /admin 이면 홈으로 보낼 것',
+    ).toBe(true)
+
+    expect(
+      login.includes("target.startsWith('/admin')"),
+      '/admin 으로 가려던 고객을 걸러내지 않는다 — 로그인 → 되돌림 → 로그인이 반복된다',
+    ).toBe(true)
+  })
+})

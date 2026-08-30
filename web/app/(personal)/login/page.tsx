@@ -546,7 +546,25 @@ async function persistLoginState(
     email: profile.email ?? '',
     customer_id: profile.customerId,
   }))
-  return postLoginTarget()
+  return customerTarget()
+}
+
+/**
+ * 고객이 로그인한 뒤 갈 곳.
+ *
+ * <p><b>직원 화면으로 가려던 참이었어도 그리로 보내지 않는다.</b> 홈의 배너처럼
+ * 조사 화면을 가리키는 링크가 있어서, 고객이 그 버튼을 누르면 returnUrl 에
+ * {@code /admin/...} 이 담긴 채 로그인하게 된다.
+ *
+ * <p>그대로 보내면 이렇게 된다: 로그인 성공 → /admin/fraud → AdminGuard 가 직원이
+ * 아니라고 판단 → 다시 로그인 화면. <b>화면에서는 로그인이 안 되는 것과 구분되지
+ * 않는다</b> — 아이디와 비밀번호를 몇 번이고 다시 넣게 된다.
+ *
+ * <p>권한이 없는 곳으로 보내는 대신 홈으로 보낸다. 막다른 길보다 낫다.
+ */
+function customerTarget(): string {
+  const target = postLoginTarget()
+  return target.startsWith('/admin') ? '/' : target
 }
 
 /**
