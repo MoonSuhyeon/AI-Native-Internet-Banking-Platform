@@ -1,5 +1,5 @@
 'use client'
-import { KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
+import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
 
 import { useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -30,8 +30,8 @@ export const HERO_SLIDES = [
     desc: '다섯 가지 공격 가설을 경합시키며\n필요한 자료를 골라 단계적으로 검증합니다',
     cta: '이상거래 분석 보기',
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
-    bg: '#EDF3FF',
-    accent: '#1E3A8A',
+    bg: '#E8F7F3',
+    accent: KB_PRIMARY,
     imageScale: 1,
   },
   {
@@ -40,8 +40,8 @@ export const HERO_SLIDES = [
     desc: '사망·후견처럼 확인이 필요한 사실은\n이상 점수가 낮아도 큐 맨 앞에 둡니다',
     cta: '이상거래 분석 보기',
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
-    bg: '#FBF3E8',
-    accent: '#9A6212',
+    bg: '#EDF3FF',
+    accent: '#1E3A8A',
     imageScale: 1,
   },
   {
@@ -51,7 +51,7 @@ export const HERO_SLIDES = [
     cta: '이상거래 분석 보기',
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: KB_PRIMARY_BG,
-    accent: KB_PRIMARY,
+    accent: KB_MINT,
     imageScale: 1,
   },
 ]
