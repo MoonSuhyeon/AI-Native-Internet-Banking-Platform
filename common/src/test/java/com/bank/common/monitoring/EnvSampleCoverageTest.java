@@ -64,7 +64,11 @@ class EnvSampleCoverageTest {
             // 이쪽은 반대로 기본값이 아예 없어 **부팅이 실패한다**(CryptoProperties).
             // compose 는 env_file 로만 넘기므로 ${...} 참조 검사에도 걸리지 않아,
             // 두 검사 사이로 빠져나갔다 — 배포 서버에서 재시작 70회로 드러났다.
-            "CRYPTO_KEY_BASE64");
+            "CRYPTO_KEY_BASE64",
+            // 조사 에이전트의 감사 저장소. 비어 있으면 DSN 이 반쯤 조립돼 접속에
+            // 실패하고, 감사는 NoOp 으로 떨어진다 — 화면은 똑같이 동작해서
+            // 아무것도 안 남는다는 것을 알아채기 어렵다.
+            "FRAUD_AUDIT_DB_PASSWORD");
 
     @Test
     @DisplayName("기본값 없는 환경변수는 .env.sample 에 있다")

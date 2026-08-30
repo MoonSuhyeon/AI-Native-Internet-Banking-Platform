@@ -44,6 +44,9 @@ MIGRATION_COPIES = {
     ],
     "consultation": [REPO_ROOT / "agents/consultation/sql/harness-audit.sql"],
     "goal-agent": [REPO_ROOT / "agents/goal-agent/sql/harness-audit.sql"],
+    "fraud-investigation-agent": [
+        REPO_ROOT / "agents/fraud-investigation-agent/sql/harness-audit.sql"
+    ],
 }
 
 # 자동 증가 PK 는 기록 주체가 채우지 않으므로 계약 대상이 아니다.

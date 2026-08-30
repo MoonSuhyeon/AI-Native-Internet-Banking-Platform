@@ -70,6 +70,32 @@ services:
       retries: 5
     mem_limit: 512m
 
+  # 조사 에이전트의 감사 저장소.
+  #
+  # **왜 따로 두는가.** 에이전트마다 자기 DB 를 갖는 것이 이 레포의 구조다
+  # (agents/*/sql/harness-audit.sql). 계정계 DB 에 얹으면 감사 기록이 원장 DB 의
+  # 백업·복구 정책에 묶여, 원장을 되돌릴 때 감사도 함께 되돌아간다.
+  #
+  # 스키마에 UPDATE·DELETE 를 거부하는 트리거가 있어 기록은 추가만 된다.
+  fraud-audit-db:
+    image: postgres:16-alpine
+    container_name: ib-fraud-audit-db
+    <<: *default-restart
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: ${FRAUD_AUDIT_DB_NAME:-fraud_audit}
+      POSTGRES_USER: ${FRAUD_AUDIT_DB_USER:-fraud_audit}
+      POSTGRES_PASSWORD: ${FRAUD_AUDIT_DB_PASSWORD}
+    volumes:
+      - fraud-audit-db-data:/var/lib/postgresql/data
+      - ../../agents/fraud-investigation-agent/sql/harness-audit.sql:/docker-entrypoint-initdb.d/01_audit.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${FRAUD_AUDIT_DB_USER:-fraud_audit} -d ${FRAUD_AUDIT_DB_NAME:-fraud_audit}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 256m
+
   redis:
     image: redis:7-alpine
     container_name: ib-redis
@@ -215,8 +241,7 @@ services:
 
   # 조사 에이전트(사이드카). 게이트웨이만 부를 수 있고 밖으로 열지 않는다.
   #
-  # FRAUD_AUDIT_DSN 은 주지 않는다 → 감사 저장은 NoOp. 로컬에서 확인한 것과 같은
-  # 구성이고, 여기에 DB 를 붙이면 확인하지 않은 경로를 데모에서 처음 돌리게 된다.
+  # 감사 저장소(fraud-audit-db)를 붙였다. 조사 권고와 승인 뒤 실행이 실제로 남는다.
   fraud-agent:
     image: ghcr.io/${GITHUB_OWNER}/fraud-agent:${FRAUD_AGENT_IMAGE_TAG:-latest}
     container_name: ib-fraud-agent
@@ -227,9 +252,17 @@ services:
       TRIAGE_BACKEND_URL: http://customer-service:8081
       # TRIAGE_LLM_PROVIDER 는 일부러 주지 않는다 — 미설정이 mock 이라 키 없이
       # 결정적으로 돈다. 실제 LLM 을 쓸 때만 .env.prod 에 provider 와 키를 넣는다.
+      #
+      # 감사 저장소. 이 값이 없으면 기록이 NoOp 이 되어 조사 권고도 승인 뒤 실행도
+      # 아무 데도 남지 않는다 — 화면은 똑같이 동작해 비어 있다는 것을 알아채기 어렵다.
+      FRAUD_AUDIT_DSN: >-
+        postgresql://${FRAUD_AUDIT_DB_USER:-fraud_audit}:${FRAUD_AUDIT_DB_PASSWORD}@fraud-audit-db:5432/${FRAUD_AUDIT_DB_NAME:-fraud_audit}
     mem_limit: 512m
     depends_on:
-      - customer-service
+      customer-service:
+        condition: service_started
+      fraud-audit-db:
+        condition: service_healthy
 
   # 유일한 진입점. 신원 검증과 헤더 주입이 여기서 일어난다.
   api-gateway:
@@ -329,6 +362,7 @@ services:
 
 volumes:
   customer-db-data:
+  fraud-audit-db-data:
   core-banking-db-data:
   redis-data:
   kafka-data:
