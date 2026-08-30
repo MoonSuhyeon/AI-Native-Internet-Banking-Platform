@@ -16,9 +16,12 @@ import Image from 'next/image'
  * <p>세 장이 같은 말을 세 번 하지 않는다 — 조사가 어떻게 도는가(1), 무엇을 먼저
  * 보는가(2), 실행을 누가 통제하는가(3)로 갈린다.
  *
- * <p><b>링크가 /login 인 이유.</b> 조사 화면은 직원 전용이라 로그인이 필요하고,
- * returnUrl 을 달아 두면 로그인 직후 그 화면으로 이어진다. 바로 /admin/fraud 로
- * 보내면 가드가 로그인으로 되돌리면서 어디로 가려 했는지를 잃는다.
+ * <p><b>링크는 조사 화면을 바로 가리킨다.</b> 로그인 주소를 적어 두지 않는다 —
+ * 이미 로그인한 사람까지 로그인 화면을 거치게 되고, 로그인 경로가 바뀌면 여기도
+ * 함께 고쳐야 한다.
+ *
+ * <p>로그인하지 않았으면 가드가 관리자 로그인으로 보내고 returnUrl 로 이 화면을
+ * 기억한다(AdminGuard.loginPathFor). 로그인 뒤 여기로 돌아온다.
  *
  * <p>이미지는 순번으로 정해진다(/images/personal-heroN.png). 슬라이드를 늘리면
  * 그 번호의 파일도 함께 넣어야 한다.
@@ -29,7 +32,7 @@ export const HERO_SLIDES = [
     title: 'FDS 위험 신호를\n스스로 조사하는 AI 에이전트',
     desc: '다섯 가지 공격 가설을 경합시키며\n필요한 자료를 골라 단계적으로 검증합니다',
     cta: '이상거래 분석 보기',
-    href: '/login?returnUrl=%2Fadmin%2Ffraud',
+    href: '/admin/fraud',
     bg: '#E8F7F3',
     accent: KB_PRIMARY,
   },
@@ -38,7 +41,7 @@ export const HERO_SLIDES = [
     title: '규정상 확인이 필요한 거래를\n먼저 보는 책임 트리아지',
     desc: '사망·후견처럼 확인이 필요한 사실은\n이상 점수가 낮아도 큐 맨 앞에 둡니다',
     cta: '이상거래 분석 보기',
-    href: '/login?returnUrl=%2Fadmin%2Ffraud',
+    href: '/admin/fraud',
     bg: '#EDF3FF',
     accent: '#1E3A8A',
   },
@@ -47,7 +50,7 @@ export const HERO_SLIDES = [
     title: '에이전트는 권고만,\n실행은 사람 승인',
     desc: '권한이 검증된 담당자만 승인과 실행을 할 수 있고,\n그 과정은 기록됩니다',
     cta: '이상거래 분석 보기',
-    href: '/login?returnUrl=%2Fadmin%2Ffraud',
+    href: '/admin/fraud',
     bg: KB_PRIMARY_BG,
     accent: KB_MINT,
   },

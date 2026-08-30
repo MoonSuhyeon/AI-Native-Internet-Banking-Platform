@@ -144,3 +144,33 @@ describe('관리자 가드의 토큰 검증', () => {
     ).toBe(false)
   })
 })
+
+
+/**
+ * 홈에서 조사 화면까지 이어지는지 본다.
+ *
+ * <p>히어로 버튼 → (미로그인이면) 관리자 로그인 → 다시 조사 화면. 중간에 returnUrl
+ * 이 끊기면 로그인에 성공해도 누른 적 없는 화면이 뜨고, 사용자에게는 버튼이 안 먹는
+ * 것으로 보인다.
+ */
+describe('홈에서 조사 화면으로', () => {
+  it('히어로 버튼이 조사 화면을 바로 가리킨다', () => {
+    const hero = readFileSync(
+      resolve(__dirname, '..', 'components', 'home', 'HeroCarousel.tsx'), 'utf-8')
+
+    expect(hero).toContain("href: '/admin/fraud'")
+
+    // 로그인 주소를 박아 두면 이미 로그인한 사람까지 로그인 화면을 거치고,
+    // 로그인 경로가 바뀔 때 여기도 함께 고쳐야 한다.
+    expect(
+      hero.includes('/login?returnUrl='),
+      '히어로가 로그인 주소를 직접 가리키고 있다 — 가드가 알아서 보내게 둘 것',
+    ).toBe(false)
+  })
+
+  it('가드가 되돌릴 때 원래 화면을 기억한다', () => {
+    const guard = readFileSync(
+      resolve(__dirname, '..', 'components', 'admin', 'AdminGuard.tsx'), 'utf-8')
+    expect(guard).toContain("'/admin/login?returnUrl='")
+  })
+})
