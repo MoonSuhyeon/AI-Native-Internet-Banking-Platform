@@ -56,16 +56,49 @@ export const HERO_SLIDES = [
   },
 ]
 
+const HERO_HEIGHT = 400
+/** 이미지 상자 너비. 실제 그림 크기는 여기에 imageScale 을 곱한 값이다. */
+const IMAGE_BOX_WIDTH = 600
+
 /**
- * 히어로 이미지 상자의 오른쪽 여백(px). **작을수록 오른쪽으로 간다.**
+ * 배경 원 둘.
  *
- * <p>상자 너비가 600 이므로 이미지 중심은 오른쪽 끝에서 {@code IMAGE_RIGHT + 300}
- * 지점에 온다. 배경 원은 이 값을 따라오지 않는다 — 원은 오른쪽 끝에 고정이다.
- *
- * <p>원과 이미지를 한 기준점에 묶어 본 적이 있는데, 그러면 이미지를 옮길 때마다
- * 원이 따라와 배경이 통째로 움직였다. 둘은 하는 일이 달라 좌표도 따로 둔다.
+ * <p>{@code x} 는 화면 오른쪽 끝에서 중심까지의 거리다 — <b>클수록 왼쪽</b>이다.
+ * {@code y} 는 히어로 위에서 중심까지다. 원을 그리는 것도, 아래에서 교점을 구하는
+ * 것도 이 값 하나를 쓴다. 예전에는 CSS 클래스에 좌표가 박혀 있어 원을 옮기면
+ * 이미지 위치를 손으로 다시 맞춰야 했다.
  */
-const IMAGE_RIGHT = -110
+const CIRCLE_BACK = { x: 140, y: 140, r: 200, opacity: 0.2 }
+const CIRCLE_FRONT = { x: 220, y: 340, r: 140, opacity: 0.1 }
+
+type Circle = typeof CIRCLE_BACK
+
+/**
+ * 두 원이 만나는 두 점 중 <b>화면에서 더 왼쪽</b>에 있는 점.
+ *
+ * <p>x 는 오른쪽 끝에서 잰 거리라 큰 쪽이 왼쪽이다. 두 교점은 중심을 잇는 선을
+ * 기준으로 대칭이므로, 그 선에 수직인 두 방향 중 x 가 커지는 쪽을 고른다.
+ */
+function leftIntersection(a: Circle, b: Circle): { x: number; y: number } {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const d = Math.hypot(dx, dy)
+  // a 중심에서 두 교점을 잇는 선까지의 거리
+  const t = (d * d + a.r * a.r - b.r * b.r) / (2 * d)
+  // 그 선 위 지점에서 교점까지의 거리
+  const h = Math.sqrt(Math.max(0, a.r * a.r - t * t))
+  const mx = a.x + (t * dx) / d
+  const my = a.y + (t * dy) / d
+  return { x: mx + (h * dy) / d, y: my - (h * dx) / d }
+}
+
+/**
+ * 이미지 중심이 놓일 자리 — 두 원이 겹치는 왼쪽 교점.
+ *
+ * <p>{@code transform: scale} 은 중심을 기준으로 커지고 작아지므로, 크기를 바꿔도
+ * 이 점은 움직이지 않는다.
+ */
+const IMAGE_CENTER = leftIntersection(CIRCLE_BACK, CIRCLE_FRONT)
 
 interface HeroCarouselProps {
   current: number
@@ -88,19 +121,23 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
 
   return (
     <div className="relative w-full overflow-hidden transition-colors duration-700"
-      style={{ backgroundColor: slide.bg, height: '400px' }}>
+      style={{ backgroundColor: slide.bg, height: HERO_HEIGHT }}>
 
-      {/* 배경 장식 — 오른쪽 끝에 고정. 이미지를 옮겨도 따라오지 않는다. */}
+      {/* 배경 장식 — 좌표는 CIRCLE_BACK · CIRCLE_FRONT 가 정본이다. */}
       <div className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none overflow-hidden">
-        <div className="absolute right-[-60px] top-[-60px] w-[400px] h-[400px] rounded-full opacity-20"
-          style={{ backgroundColor: slide.accent }} />
-        <div className="absolute right-[80px] bottom-[-80px] w-[280px] h-[280px] rounded-full opacity-10"
-          style={{ backgroundColor: slide.accent }} />
+        {[CIRCLE_BACK, CIRCLE_FRONT].map((c, i) => (
+          <div key={i} className="absolute rounded-full"
+            style={{
+              width: c.r * 2, height: c.r * 2,
+              right: c.x - c.r, top: c.y - c.r,
+              opacity: c.opacity, backgroundColor: slide.accent,
+            }} />
+        ))}
       </div>
 
-      {/* 히어로 이미지 — 가로 위치는 IMAGE_RIGHT 하나로 정한다. */}
-      <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-        style={{ right: IMAGE_RIGHT }}>
+      {/* 히어로 이미지 — 중심을 두 원의 왼쪽 교점에 맞춘다. */}
+      <div className="absolute -translate-y-1/2 pointer-events-none"
+        style={{ right: IMAGE_CENTER.x - IMAGE_BOX_WIDTH / 2, top: IMAGE_CENTER.y }}>
         <Image
           src={`/images/personal-hero${current + 1}.png`}
           alt={slide.badge}
