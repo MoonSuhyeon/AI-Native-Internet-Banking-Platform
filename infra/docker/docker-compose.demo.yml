@@ -171,6 +171,13 @@ services:
       # 게이트웨이를 거쳐 와도 이 서비스의 CORS 필터가 다시 본다. 배포 도메인이
       # 없으면 브라우저의 POST 가 403(Invalid CORS request)으로 막힌다.
       APP_CORS_ALLOWED_ORIGINS: https://${SITE_DOMAIN},http://localhost:3000,http://localhost:3001
+      # prod 프로파일은 기동할 때마다 데모 직원 계정을 CLOSED 로 닫는다. 그 비밀번호가
+      # 저장소에 공개돼 있기 때문이다(DemoEmployeeAccountGuard).
+      #
+      # 심사위원이 조사 콘솔을 보려면 계정 하나가 열려 있어야 해서 risk01 만 예외로
+      # 둔다. **의도적으로 낸 구멍이다** — 주소를 아는 누구나 이 권한으로 들어올 수
+      # 있다. 데이터가 전부 mock 이라는 것이 유일한 완충이고, 나머지 여덟은 닫힌 채다.
+      DEMO_EMPLOYEE_KEEP_OPEN: risk01
     mem_limit: 640m
     depends_on:
       customer-db:
