@@ -157,32 +157,29 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
       </div>
 
 
-      {/* 히어로 이미지.
-          가로는 화면 실제 오른쪽 끝(IMAGE_RIGHT, 사이드바 밑으로 살짝 파고듦)에
-          붙이고, 세로는 교점의 y 대신 히어로 한가운데(HERO_HEIGHT/2)에 둔다.
-          교점의 y(237)를 그대로 쓰면 위아래 여백이 237 대 163 으로 어긋나 보인다 —
-          기하학적으로는 맞아도 눈에는 아래로 처진 것으로 읽힌다. */}
-      <div className="absolute -translate-y-1/2 pointer-events-none"
+            {/* 히어로 이미지 */}
+      <div
+        className="absolute -translate-y-1/2 pointer-events-none"
         style={{
           right: current === 0 ? 210 : current === 2 ? 80 : IMAGE_RIGHT,
           top: HERO_HEIGHT / 2,
         }}
       >
         <Image
-        src={`/images/personal-hero${current + 1}.png`}
-        alt={slide.badge}
-        width={
-            current === 0 ? 487
+          src={`/images/personal-hero${current + 1}.png`}
+          alt={slide.badge}
+          width={
+            current === 0 ? 492 :
             current === 1 ? 634 :
             621
-        }
-        height={
-            current === 0 ? 308
+          }
+          height={
+            current === 0 ? 311 :
             current === 1 ? 402 :
             395
-        }
-        className="object-contain drop-shadow-lg"
-        priority
+          }
+          className="object-contain drop-shadow-lg"
+          priority
         />
       </div>
 
