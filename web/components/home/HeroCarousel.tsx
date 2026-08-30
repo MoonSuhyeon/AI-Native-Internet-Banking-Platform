@@ -165,12 +165,12 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
       <div className="absolute -translate-y-1/2 pointer-events-none"
         style={{ right: IMAGE_RIGHT, top: HERO_HEIGHT / 2 }}>
         <Image
-          src={`/images/personal-hero${current + 1}.png`}
-          alt={slide.badge}
-          width={current === 1 ? 720 : IMAGE_BOX_WIDTH}
-          height={current === 1 ? 456 : 380}
-          className="object-contain drop-shadow-lg"
-          priority
+        src={`/images/personal-hero${current + 1}.png`}
+        alt={slide.badge}
+        width={current === 0 ? 540 : current === 1 ? 720 : IMAGE_BOX_WIDTH}
+        height={current === 0 ? 342 : current === 1 ? 456 : 380}
+        className="object-contain drop-shadow-lg"
+        priority
         />
       </div>
 
