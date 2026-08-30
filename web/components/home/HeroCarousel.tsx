@@ -167,8 +167,8 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
         <Image
           src={`/images/personal-hero${current + 1}.png`}
           alt={slide.badge}
-          width={IMAGE_BOX_WIDTH}
-          height={380}
+          width={current === 1 ? 720 : IMAGE_BOX_WIDTH}
+          height={current === 1 ? 456 : 380}
           className="object-contain drop-shadow-lg"
           priority
         />
