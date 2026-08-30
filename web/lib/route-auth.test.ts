@@ -174,3 +174,35 @@ describe('홈에서 조사 화면으로', () => {
     expect(guard).toContain("'/admin/login?returnUrl='")
   })
 })
+
+
+/**
+ * 세션이 끊겼을 때 <b>어느 로그인 화면으로</b> 보내는지 본다.
+ *
+ * <p>인터셉터가 401 을 만나면 무조건 고객 로그인(/login)으로 보냈다. 관리자 화면에서
+ * 끊긴 직원까지 인증서·간편비밀번호 탭이 있는 고객 화면으로 넘어가, 자기 계정이
+ * 통하지 않는 자리에서 아이디를 넣게 됐다.
+ */
+describe('세션이 끊겼을 때 돌아갈 로그인 화면', () => {
+  it('관리자 화면은 관리자 로그인으로 보낸다', async () => {
+    const { loginScreenFor } = await import('./return-url')
+    expect(loginScreenFor('/admin/fraud')).toBe('/admin/login')
+    expect(loginScreenFor('/inquiry/accounts')).toBe('/login')
+  })
+
+  it('인터셉터가 로그인 화면을 박아 두지 않는다', () => {
+    const api = readFileSync(resolve(__dirname, 'api.ts'), 'utf-8')
+    expect(
+      api.includes('window.location.href = "/login"'),
+      '고객 로그인 화면이 박혀 있다 — 관리자 화면에서 끊긴 직원도 그리로 간다',
+    ).toBe(false)
+    expect(api).toContain('loginScreenFor(window.location.pathname)')
+  })
+
+  it('직원 로그인 실패를 세션 만료로 취급하지 않는다', () => {
+    const api = readFileSync(resolve(__dirname, 'api.ts'), 'utf-8')
+    // 자격이 틀린 401 을 갱신 대상으로 보면, 로그인 화면에 있는 사람을 다시
+    // 로그인 화면으로 보내 입력한 것이 사라진다.
+    expect(api).toContain('"/auth/employee/login"')
+  })
+})

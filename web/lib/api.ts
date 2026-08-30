@@ -1,6 +1,7 @@
 import { GATEWAY_BASE_URL } from '@/lib/gateway-url'
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { readAccessToken } from "@/lib/token";
+import { loginScreenFor } from "@/lib/return-url";
 
 export const api = axios.create({
   // 게이트웨이. 주소를 고르는 규칙과 그 이력은 lib/gateway-url.ts 에 모았다.
@@ -31,7 +32,16 @@ type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 // 자동 갱신 대상 아님. cert/issue 는 본문의 id/password 로 재인증하므로 401=세션만료가 아니라
 // "입력한 자격 오류" → 갱신·리다이렉트 없이 페이지 catch 가 인라인 에러로 처리해야 한다(#54).
-const AUTH_PATHS = ["/auth/login", "/auth/cert-login", "/auth/cert/issue", "/auth/refresh"];
+// 이 경로들의 401 은 "세션이 끊겼다" 가 아니라 "자격이 틀렸다" 이다. 갱신 대상이 아니고,
+// 로그인 화면으로 튕겨서도 안 된다 — 이미 로그인 화면에 있는 사람이 다시 로그인 화면으로
+// 보내지면 입력한 것이 사라지고 이유도 안 보인다.
+//
+// employee/login 이 빠져 있어서 실제로 그랬다. 직원 로그인에 실패하면 세션 만료로
+// 취급돼 고객 로그인 화면으로 넘어갔다.
+const AUTH_PATHS = [
+  "/auth/login", "/auth/employee/login", "/auth/cert-login",
+  "/auth/cert/issue", "/auth/refresh",
+];
 const SILENT_PATHS = ["/customers/me"]; // 실패해도 로그인으로 안 보냄(배경 보조 호출)
 
 function clearSession() {
@@ -84,7 +94,7 @@ api.interceptors.response.use(
     if (AUTH_PATHS.some((p) => url.includes(p))) {
       if (url.includes("/auth/refresh")) {
         clearSession();
-        window.location.href = "/login";
+        window.location.href = loginScreenFor(window.location.pathname);
       }
       return Promise.reject(err);
     }
@@ -92,7 +102,7 @@ api.interceptors.response.use(
     // 이미 한 번 재시도한 요청이면 더 갱신하지 않는다(무한 루프 방지).
     if (config._retry) {
       clearSession();
-      if (!isSilent) window.location.href = "/login";
+      if (!isSilent) window.location.href = loginScreenFor(window.location.pathname);
       return Promise.reject(err);
     }
     config._retry = true;
@@ -106,7 +116,7 @@ api.interceptors.response.use(
 
     if (!newToken) {
       clearSession();
-      if (!isSilent) window.location.href = "/login";
+      if (!isSilent) window.location.href = loginScreenFor(window.location.pathname);
       return Promise.reject(err);
     }
 

@@ -36,9 +36,23 @@ function isInternalPath(value: string): boolean {
 
 /** 가드가 보낼 로그인 주소. 지금 있던 곳을 실어 보낸다. */
 export function loginUrlFor(pathname: string, search = ''): string {
+  const base = loginScreenFor(pathname)
   const target = pathname + search
-  if (!isInternalPath(target)) return '/login'
-  return '/login?returnUrl=' + encodeURIComponent(target)
+  if (!isInternalPath(target)) return base
+  return base + '?returnUrl=' + encodeURIComponent(target)
+}
+
+/**
+ * 어느 로그인 화면으로 보낼 것인가.
+ *
+ * <p>관리자 화면에서 세션이 끊겼는데 고객 로그인으로 보내면, 직원은 자기 계정이
+ * 통하지 않는 화면(인증서·간편비밀번호 탭이 있는)에서 아이디를 넣게 된다. 실제로
+ * 그렇게 튕겼다 — 관리자 로그인을 눌렀는데 고객 인증서 화면이 떴다.
+ *
+ * <p>화면을 나눈 이상 되돌아갈 곳도 나뉜다.
+ */
+export function loginScreenFor(pathname: string): string {
+  return pathname.startsWith('/admin') ? '/admin/login' : '/login'
 }
 
 /**
