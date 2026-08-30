@@ -161,7 +161,7 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
       <div
         className="absolute -translate-y-1/2 pointer-events-none"
         style={{
-          right: current === 0 ? 230 : current === 2 ? 80 : IMAGE_RIGHT,
+          right: current === 0 ? 220 : current === 2 ? 80 : IMAGE_RIGHT,
           top: HERO_HEIGHT / 2,
         }}
       >
