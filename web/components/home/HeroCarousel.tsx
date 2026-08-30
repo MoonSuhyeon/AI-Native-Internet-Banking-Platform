@@ -32,7 +32,7 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: '#E8F7F3',
     accent: KB_PRIMARY,
-    imageScale: 1,
+    imageScale: 1.3,
   },
   {
     badge: '규제 준수',
@@ -42,7 +42,7 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: '#EDF3FF',
     accent: '#1E3A8A',
-    imageScale: 1,
+    imageScale: 1.3,
   },
   {
     badge: '사람 승인',
@@ -52,7 +52,7 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: KB_PRIMARY_BG,
     accent: KB_MINT,
-    imageScale: 1,
+    imageScale: 1.3,
   },
 ]
 
@@ -65,7 +65,7 @@ export const HERO_SLIDES = [
  * <p>원과 이미지를 한 기준점에 묶어 본 적이 있는데, 그러면 이미지를 옮길 때마다
  * 원이 따라와 배경이 통째로 움직였다. 둘은 하는 일이 달라 좌표도 따로 둔다.
  */
-const IMAGE_RIGHT = 90
+const IMAGE_RIGHT = -100
 
 interface HeroCarouselProps {
   current: number
