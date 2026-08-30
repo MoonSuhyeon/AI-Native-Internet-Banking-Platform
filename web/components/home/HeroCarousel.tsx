@@ -134,9 +134,12 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
       </div>
 
 
-      {/* 히어로 이미지 — 중심을 두 원의 왼쪽 교점에 맞춘다. */}
+      {/* 히어로 이미지.
+          가로는 두 원의 왼쪽 교점에 맞추고, 세로는 히어로 한가운데에 둔다.
+          교점의 y(237)를 그대로 쓰면 위아래 여백이 237 대 163 으로 어긋나 보인다 —
+          기하학적으로는 맞아도 눈에는 아래로 처진 것으로 읽힌다. */}
       <div className="absolute -translate-y-1/2 pointer-events-none"
-        style={{ right: IMAGE_CENTER.x - IMAGE_BOX_WIDTH / 2, top: IMAGE_CENTER.y }}>
+        style={{ right: IMAGE_CENTER.x - IMAGE_BOX_WIDTH / 2, top: HERO_HEIGHT / 2 }}>
         <Image
           src={`/images/personal-hero${current + 1}.png`}
           alt={slide.badge}
