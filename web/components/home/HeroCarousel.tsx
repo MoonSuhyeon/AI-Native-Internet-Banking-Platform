@@ -3,7 +3,6 @@ import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
 
 import { useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 
 
 /**
@@ -32,7 +31,6 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: '#E8F7F3',
     accent: KB_PRIMARY,
-    imageScale: 0.8,
   },
   {
     badge: '규제 준수',
@@ -42,7 +40,6 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: '#EDF3FF',
     accent: '#1E3A8A',
-    imageScale: 0.8,
   },
   {
     badge: '사람 승인',
@@ -52,14 +49,10 @@ export const HERO_SLIDES = [
     href: '/login?returnUrl=%2Fadmin%2Ffraud',
     bg: KB_PRIMARY_BG,
     accent: KB_MINT,
-    imageScale: 0.8,
   },
 ]
 
 const HERO_HEIGHT = 400
-/** 이미지 상자 너비. 실제 그림 크기는 여기에 imageScale 을 곱한 값이다. */
-const IMAGE_BOX_WIDTH = 600
-
 /**
  * 배경 원 둘.
  *
@@ -70,35 +63,6 @@ const IMAGE_BOX_WIDTH = 600
  */
 const CIRCLE_BACK = { x: 140, y: 140, r: 200, opacity: 0.2 }
 const CIRCLE_FRONT = { x: 220, y: 340, r: 140, opacity: 0.1 }
-
-type Circle = typeof CIRCLE_BACK
-
-/**
- * 두 원이 만나는 두 점 중 <b>화면에서 더 왼쪽</b>에 있는 점.
- *
- * <p>x 는 오른쪽 끝에서 잰 거리라 큰 쪽이 왼쪽이다. 두 교점은 중심을 잇는 선을
- * 기준으로 대칭이므로, 그 선에 수직인 두 방향 중 x 가 커지는 쪽을 고른다.
- */
-function leftIntersection(a: Circle, b: Circle): { x: number; y: number } {
-  const dx = b.x - a.x
-  const dy = b.y - a.y
-  const d = Math.hypot(dx, dy)
-  // a 중심에서 두 교점을 잇는 선까지의 거리
-  const t = (d * d + a.r * a.r - b.r * b.r) / (2 * d)
-  // 그 선 위 지점에서 교점까지의 거리
-  const h = Math.sqrt(Math.max(0, a.r * a.r - t * t))
-  const mx = a.x + (t * dx) / d
-  const my = a.y + (t * dy) / d
-  return { x: mx + (h * dy) / d, y: my - (h * dx) / d }
-}
-
-/**
- * 이미지 중심이 놓일 자리 — 두 원이 겹치는 왼쪽 교점.
- *
- * <p>{@code transform: scale} 은 중심을 기준으로 커지고 작아지므로, 크기를 바꿔도
- * 이 점은 움직이지 않는다.
- */
-const IMAGE_CENTER = leftIntersection(CIRCLE_BACK, CIRCLE_FRONT)
 
 interface HeroCarouselProps {
   current: number
@@ -133,20 +97,6 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
               opacity: c.opacity, backgroundColor: slide.accent,
             }} />
         ))}
-      </div>
-
-      {/* 히어로 이미지 — 중심을 두 원의 왼쪽 교점에 맞춘다. */}
-      <div className="absolute -translate-y-1/2 pointer-events-none"
-        style={{ right: IMAGE_CENTER.x - IMAGE_BOX_WIDTH / 2, top: IMAGE_CENTER.y }}>
-        <Image
-          src={`/images/personal-hero${current + 1}.png`}
-          alt={slide.badge}
-          width={600}
-          height={380}
-          className="object-contain drop-shadow-lg"
-          style={{ transform: `scale(${slide.imageScale})` }}
-          priority
-        />
       </div>
 
 
