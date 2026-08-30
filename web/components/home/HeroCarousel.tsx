@@ -174,12 +174,12 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
         width={
             current === 0 ? 467 :
             current === 1 ? 634 :
-            688
+            640
         }
         height={
             current === 0 ? 295 :
             current === 1 ? 402 :
-            437
+            407
         }
         className="object-contain drop-shadow-lg"
         priority
