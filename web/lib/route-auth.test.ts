@@ -118,3 +118,29 @@ describe('로그인 뒤 목적지', () => {
     ).toBe(true)
   })
 })
+
+
+/**
+ * 토큰 검증이 <b>불가능한</b> 경우와 <b>거절된</b> 경우를 가르는지 본다.
+ *
+ * <p>AdminGuard 가 부르는 /api/v1/auth/verify 는 Next 라우트 핸들러로만 있다.
+ * 운영에서는 Caddy 가 /api/* 를 전부 게이트웨이로 보내므로 백엔드에 없는 경로가 되어
+ * 404 가 난다. 그것을 무효 토큰으로 취급하면 <b>직원이 로그인 직후 튕겨 나간다</b> —
+ * 화면에서는 로그인이 안 되는 것과 구분되지 않는다.
+ */
+describe('관리자 가드의 토큰 검증', () => {
+  it('401·403 만 무효로 본다', () => {
+    const guard = readFileSync(
+      resolve(__dirname, '..', 'components', 'admin', 'AdminGuard.tsx'), 'utf-8')
+
+    expect(
+      guard.includes('res.status === 401 || res.status === 403'),
+      '응답 실패를 뭉뚱그려 로그아웃시키고 있다. 404·5xx 는 검증을 못 한 것이지 토큰이 틀린 것이 아니다',
+    ).toBe(true)
+
+    expect(
+      guard.includes('if (!res.ok) {'),
+      '!res.ok 로 판정하면 404 에도 로그아웃된다',
+    ).toBe(false)
+  })
+})

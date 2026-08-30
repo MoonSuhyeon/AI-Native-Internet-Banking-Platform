@@ -51,7 +51,18 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) {
+        // **401·403 만 "이 토큰은 아니다" 라는 답이다.** 그 밖의 실패(404·5xx)는
+        // 검증을 못 했다는 뜻이지 토큰이 틀렸다는 뜻이 아니다.
+        //
+        // 실제로 그 구분이 없어서 직원이 로그인 직후 튕겨 나갔다. 이 경로는 Next 의
+        // 라우트 핸들러로만 있는데, 운영에서는 Caddy 가 /api/* 를 전부 게이트웨이로
+        // 보내 백엔드에 없는 경로가 되어 404 가 난다. 가드는 그것을 무효 토큰으로
+        // 보고 저장소를 지운 뒤 로그인으로 되돌렸다 — 화면에서는 로그인이 안 되는
+        // 것과 구분되지 않는다.
+        //
+        // 검증이 불가능할 때 통과시켜도 뚫리지 않는다. 화면이 부르는 API 는 매번
+        // 게이트웨이와 서비스가 진짜 토큰으로 다시 판정한다.
+        if (res.status === 401 || res.status === 403) {
           localStorage.removeItem('accessToken')
           localStorage.removeItem('access_token')
           localStorage.removeItem('admin_roles')
