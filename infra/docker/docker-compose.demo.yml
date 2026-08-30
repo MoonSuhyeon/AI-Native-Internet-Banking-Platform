@@ -142,6 +142,9 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       CUSTOMER_DB_HOST: customer-db
       REDIS_HOST: redis
+      # 게이트웨이를 거쳐 와도 이 서비스의 CORS 필터가 다시 본다. 배포 도메인이
+      # 없으면 브라우저의 POST 가 403(Invalid CORS request)으로 막힌다.
+      APP_CORS_ALLOWED_ORIGINS: https://${SITE_DOMAIN},http://localhost:3000,http://localhost:3001
     mem_limit: 640m
     depends_on:
       customer-db:
@@ -173,6 +176,7 @@ services:
       # 이상거래 사전점검. 꺼 두면 데모의 차단 장면이 통째로 나오지 않는다.
       DEPOSIT_FDS_ENABLED: "true"
       DEPOSIT_FDS_BASE_URL: http://fds-detector:8092
+      APP_CORS_ALLOWED_ORIGINS: https://${SITE_DOMAIN},http://localhost:3000,http://localhost:3001
       DEPOSIT_FDS_TIMEOUT_MS: ${DEPOSIT_FDS_TIMEOUT_MS:-400}
     mem_limit: 1g
     depends_on:

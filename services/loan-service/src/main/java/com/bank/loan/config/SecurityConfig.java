@@ -44,6 +44,21 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    /**
+     * CORS 허용 오리진.
+     *
+     * <p><b>왜 설정으로 뺐는가.</b> 목록이 코드에 박혀 있어 localhost 만 허용했다.
+     * 게이트웨이가 CORS 를 처리하니 운영에서는 상관없다고 적혀 있었지만, 이 필터는
+     * 그대로 돌아 <b>목록에 없는 오리진을 403 으로 막는다.</b> 배포 도메인에서 브라우저가
+     * 보낸 POST 가 전부 "Invalid CORS request" 로 거절됐고, GET 은 Origin 을 안 보내
+     * 통과해서 화면에서는 "로그인만 안 되는" 것으로 보였다.
+     *
+     * <p>기본값은 예전 목록 그대로라 로컬 개발은 영향이 없다.
+     */
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:3001}")
+    private List<String> allowedOrigins;
+
+
     @Bean
     public GatewayHeaderAuthFilter gatewayHeaderAuthFilter() {
         return new GatewayHeaderAuthFilter();
@@ -199,7 +214,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
