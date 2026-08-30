@@ -170,11 +170,11 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
           alt={slide.badge}
           width={
             current === 0 ? 482 :
-            current === 1 ? 305:
+            current === 1 ? 634 :
             621
           }
           height={
-            current === 0 ? 314 :
+            current === 0 ? 305 :
             current === 1 ? 402 :
             395
           }
