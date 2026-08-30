@@ -95,43 +95,31 @@ function leftIntersection(a: Circle, b: Circle): { x: number; y: number } {
 /**
  * 이미지 중심이 놓일 자리 — 두 원이 겹치는 왼쪽 교점.
  *
- * <p>좌표를 손으로 맞추지 않는다. 원(CIRCLE_BACK·CIRCLE_FRONT)을 옮기면 이미지가
- * 따라온다. 예전에는 둘이 서로 다른 px 로 놓여 있어, 원을 건드릴 때마다 이미지를
- * 다시 맞춰야 했다.
+ * <p>배경 원(CIRCLE_BACK·CIRCLE_FRONT)의 장식용 좌표로만 쓴다. 이미지 자체의
+ * 가로 위치는 더 이상 이 교점을 따라가지 않는다(아래 IMAGE_RIGHT 참고) — 필요하면
+ * 세로 중심을 맞출 때 참고 값으로만 남겨 둔다.
  */
 const IMAGE_CENTER = leftIntersection(CIRCLE_BACK, CIRCLE_FRONT)
-
-// 텍스트 단이 놓이는 규격. tailwind.config 의 kb-container 와 히어로 마크업에서 온다.
-const KB_CONTAINER = 1280
-const CONTAINER_PADDING = 32
-const TEXT_MAX_WIDTH = 560
-
-/** 교점에 맞췄을 때의 오른쪽 여백. 여기서부터 왼쪽으로 민다. */
-const IMAGE_RIGHT_BASE = IMAGE_CENTER.x - IMAGE_BOX_WIDTH / 2
+void IMAGE_CENTER // 세로 위치는 HERO_HEIGHT/2 로 고정하므로 현재는 참고용
 
 /**
- * 텍스트와 이미지 사이 공백의 <b>절반만큼</b> 이미지를 왼쪽으로 민다.
+ * 이미지 오른쪽 끝 — 화면의 <b>실제 오른쪽 끝</b>에 거의 붙인다.
  *
- * <p>화면 폭 W 에서
- * <pre>
- *   텍스트 오른쪽 끝 = (W - 1280)/2 + 32 + 560 = W/2 - 48
- *   이미지 왼쪽 끝   = W - IMAGE_RIGHT_BASE - 600
- *   공백            = W/2 - IMAGE_RIGHT_BASE - 552
- * </pre>
- * 1920 에서 393px 이고, 그 절반인 196.5px 을 민다. 그러면 이미지가 텍스트와 화면
- * 오른쪽 끝 사이에 거의 가운데로 놓인다.
+ * <p><b>예전에는</b> 텍스트와 이미지 사이 공백의 절반만큼 이미지를 왼쪽으로 미는
+ * 공식(교점 기준 + 화면폭의 25%)을 썼다. 화면이 넓어질수록 이미지를 텍스트 쪽으로
+ * 당겨서 "이미지가 화면 오른쪽에 외따로 뜨는 것"은 막았지만, 그 대가로 1920px
+ * 화면에서 이미지 오른쪽 끝과 화면 끝 사이에 ~210px 짜리 배경색 띠가 남았다.
+ * FloatingSidebar(고정 80px 폭, z-50)가 그 위에 얹히면서, "이미지 → 배경색
+ * 여백 → 사이드바" 순서로 눈에 띄게 어색해 보이는 원인이 됐다(특히 이미지 자체
+ * 여백이 큰 원본을 썼을 때 배로 두드러졌다).
  *
- * <p><b>고정 px 로 두지 않는 이유.</b> 공백이 화면 폭을 따라 변한다. 1920 에서 맞춘
- * 값을 박아 두면 다른 폭에서는 다시 어긋난다. 그래서 폭의 함수로 쓴다.
- *
- * <p>{@code max()} 는 바닥이다. 폭이 좁아 공백이 음수가 되면 이미지가 원래보다
- * 오른쪽으로 밀려 잘리므로, 교점 위치보다 오른쪽으로는 가지 않게 막는다.
+ * <p><b>지금은</b> 화면 폭과 무관하게 사이드바 폭(80px)보다 작은 음수로 고정한다.
+ * FloatingSidebar 가 항상 그 위에 떠 있는 불투명 흰 배경이라, 이미지가 살짝
+ * 사이드바 밑으로 파고들어도 잘려 보이지 않고, 오히려 배경색 여백이 완전히
+ * 사라진다. 초광폭 모니터에서 이미지가 텍스트와 조금 멀어져 보일 수 있지만,
+ * 여기서는 "사이드바 바로 앞 여백"을 없애는 쪽을 우선한다.
  */
-const IMAGE_RIGHT_OFFSET =
-  (IMAGE_BOX_WIDTH + CONTAINER_PADDING + TEXT_MAX_WIDTH - KB_CONTAINER / 2) / 2
-  - IMAGE_RIGHT_BASE / 2
-
-const IMAGE_RIGHT = `max(${IMAGE_RIGHT_BASE}px, calc(25% - ${IMAGE_RIGHT_OFFSET}px))`
+const IMAGE_RIGHT = -20
 
 interface HeroCarouselProps {
   current: number
@@ -170,7 +158,8 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
 
 
       {/* 히어로 이미지.
-          가로는 두 원의 왼쪽 교점에 맞추고, 세로는 히어로 한가운데에 둔다.
+          가로는 화면 실제 오른쪽 끝(IMAGE_RIGHT, 사이드바 밑으로 살짝 파고듦)에
+          붙이고, 세로는 교점의 y 대신 히어로 한가운데(HERO_HEIGHT/2)에 둔다.
           교점의 y(237)를 그대로 쓰면 위아래 여백이 237 대 163 으로 어긋나 보인다 —
           기하학적으로는 맞아도 눈에는 아래로 처진 것으로 읽힌다. */}
       <div className="absolute -translate-y-1/2 pointer-events-none"
