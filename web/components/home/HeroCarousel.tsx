@@ -101,6 +101,38 @@ function leftIntersection(a: Circle, b: Circle): { x: number; y: number } {
  */
 const IMAGE_CENTER = leftIntersection(CIRCLE_BACK, CIRCLE_FRONT)
 
+// 텍스트 단이 놓이는 규격. tailwind.config 의 kb-container 와 히어로 마크업에서 온다.
+const KB_CONTAINER = 1280
+const CONTAINER_PADDING = 32
+const TEXT_MAX_WIDTH = 560
+
+/** 교점에 맞췄을 때의 오른쪽 여백. 여기서부터 왼쪽으로 민다. */
+const IMAGE_RIGHT_BASE = IMAGE_CENTER.x - IMAGE_BOX_WIDTH / 2
+
+/**
+ * 텍스트와 이미지 사이 공백의 <b>절반만큼</b> 이미지를 왼쪽으로 민다.
+ *
+ * <p>화면 폭 W 에서
+ * <pre>
+ *   텍스트 오른쪽 끝 = (W - 1280)/2 + 32 + 560 = W/2 - 48
+ *   이미지 왼쪽 끝   = W - IMAGE_RIGHT_BASE - 600
+ *   공백            = W/2 - IMAGE_RIGHT_BASE - 552
+ * </pre>
+ * 1920 에서 393px 이고, 그 절반인 196.5px 을 민다. 그러면 이미지가 텍스트와 화면
+ * 오른쪽 끝 사이에 거의 가운데로 놓인다.
+ *
+ * <p><b>고정 px 로 두지 않는 이유.</b> 공백이 화면 폭을 따라 변한다. 1920 에서 맞춘
+ * 값을 박아 두면 다른 폭에서는 다시 어긋난다. 그래서 폭의 함수로 쓴다.
+ *
+ * <p>{@code max()} 는 바닥이다. 폭이 좁아 공백이 음수가 되면 이미지가 원래보다
+ * 오른쪽으로 밀려 잘리므로, 교점 위치보다 오른쪽으로는 가지 않게 막는다.
+ */
+const IMAGE_RIGHT_OFFSET =
+  (IMAGE_BOX_WIDTH + CONTAINER_PADDING + TEXT_MAX_WIDTH - KB_CONTAINER / 2) / 2
+  - IMAGE_RIGHT_BASE / 2
+
+const IMAGE_RIGHT = `max(${IMAGE_RIGHT_BASE}px, calc(25% - ${IMAGE_RIGHT_OFFSET}px))`
+
 interface HeroCarouselProps {
   current: number
   paused: boolean
@@ -142,7 +174,7 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
           교점의 y(237)를 그대로 쓰면 위아래 여백이 237 대 163 으로 어긋나 보인다 —
           기하학적으로는 맞아도 눈에는 아래로 처진 것으로 읽힌다. */}
       <div className="absolute -translate-y-1/2 pointer-events-none"
-        style={{ right: IMAGE_CENTER.x - IMAGE_BOX_WIDTH / 2, top: HERO_HEIGHT / 2 }}>
+        style={{ right: IMAGE_RIGHT, top: HERO_HEIGHT / 2 }}>
         <Image
           src={`/images/personal-hero${current + 1}.png`}
           alt={slide.badge}
