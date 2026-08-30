@@ -964,6 +964,11 @@ function IdLoginTab() {
       const axiosErr = err as { code?: string; message?: string; response?: { data?: { message?: string } } }
       if (!axiosErr.response && (axiosErr.code === 'ERR_NETWORK' || axiosErr.message === 'Network Error')) {
         setError('로그인 서버에 연결할 수 없습니다. API Gateway(8080)와 customer-service(8081)를 확인해주세요.')
+      } else if (!axiosErr.response && err instanceof Error) {
+        // 로그인 자체는 통과하고 그다음 단계(본인 정보 조회·권한 확인)에서 실패한
+        // 것이다. 예전에는 이것도 '로그인에 실패했습니다' 로 덮여, 아이디·비밀번호를
+        // 의심하며 몇 번이고 다시 넣게 됐다. 실패한 단계를 그대로 보여준다.
+        setError(err.message)
       } else {
         setError(axiosErr.response?.data?.message ?? '로그인에 실패했습니다.')
       }
