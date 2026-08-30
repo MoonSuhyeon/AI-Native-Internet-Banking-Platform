@@ -65,7 +65,7 @@ export const HERO_SLIDES = [
  * <p>원과 이미지를 한 기준점에 묶어 본 적이 있는데, 그러면 이미지를 옮길 때마다
  * 원이 따라와 배경이 통째로 움직였다. 둘은 하는 일이 달라 좌표도 따로 둔다.
  */
-const IMAGE_RIGHT = -30
+const IMAGE_RIGHT = -120
 
 interface HeroCarouselProps {
   current: number
