@@ -28,18 +28,12 @@ function read(...parts: string[]): string {
 }
 
 describe('직원 로그인 동선', () => {
-  it('AdminGuard 는 동작하는 로그인 화면으로 보낸다', () => {
+  it('AdminGuard 는 원래 가려던 화면을 이어 준다', () => {
     const guard = read('components', 'admin', 'AdminGuard.tsx')
 
     expect(
-      guard.includes("router.replace('/admin/login')"),
-      '/admin/login 은 상담 서비스의 상담원 로그인이라 은행 직원은 들어갈 수 없다.\n' +
-        '거기로 되돌리면 로그인 → 실패 → 다시 로그인의 막다른 길이 된다.',
-    ).toBe(false)
-
-    expect(
-      guard.includes("'/login?returnUrl='"),
-      '가드가 되돌릴 곳은 /login 이고, 원래 가려던 화면을 returnUrl 로 이어야 한다',
+      guard.includes("'/admin/login?returnUrl='"),
+      '되돌릴 때 returnUrl 을 달지 않으면, 로그인에 성공해도 누른 적 없는 화면이 뜬다',
     ).toBe(true)
   })
 
@@ -61,12 +55,25 @@ describe('직원 로그인 동선', () => {
     ).toBe(false)
   })
 
-  it('헤더의 관리자 링크가 상담 서비스로 가지 않는다', () => {
-    const header = read('components', 'layout', 'Header.tsx')
+  it('관리자 로그인 화면은 진짜 백엔드로 인증한다', () => {
+    const page = read('app', '(admin)', 'admin', 'login', 'page.tsx')
+
     expect(
-      header.includes('href="/admin/login"'),
-      '관리자 진입점이 상담 서비스 로그인을 가리킨다',
+      page.includes("api.post('/api/v1/auth/login'"),
+      '고객 로그인과 같은 백엔드 경로를 써야 한다. 상담 서비스는 은행 직원을 모른다',
+    ).toBe(true)
+
+    // mock.<base64> 토큰은 readAccessToken 이 지우고 게이트웨이도 거절한다.
+    // 화면만 열리고 모든 API 가 401 이 되는, 가장 찾기 어려운 상태를 만든다.
+    expect(
+      page.includes("'mock.'"),
+      '토큰을 화면에서 만들고 있다 — 게이트웨이가 거절해 모든 호출이 401 이 된다',
     ).toBe(false)
+
+    expect(
+      page.includes('persistEmployeeSession'),
+      '직원 세션 저장을 공용 모듈로 해야 두 로그인 화면이 어긋나지 않는다',
+    ).toBe(true)
   })
 })
 

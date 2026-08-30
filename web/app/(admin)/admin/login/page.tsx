@@ -2,24 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AdminUser } from '@/lib/admin-mock-data'
-import { branchLabel } from '@/lib/admin-auth'
 import type { DemoAccount } from '@/lib/admin-demo-accounts'
-import { agentLogin, type AgentLoginResponse } from '@/lib/consultation-api'
+import { api } from '@/lib/api'
+import { persistEmployeeSession } from '@/lib/employee-session'
+import { postLoginTarget } from '@/lib/return-url'
 
 // 데모 모드: 로컬/개발 빌드에선 기본 노출, 운영 빌드에선 NEXT_PUBLIC_DEMO_MODE=true 일 때만.
 // (운영에 직원 명단을 인증 전 화면에 깔지 않기 위함)
 const DEMO_MODE =
   process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || process.env.NODE_ENV !== 'production'
 const DEMO_PASSWORD = 'Employee1234!'
-
-/**
- * 로그인 후 화면용 AdminUser 구성. 역할은 admin_roles(BankRole[])로 따로 저장하므로
- * 여기선 표시용 신원(이름·지점)만 담는다. 이름은 데모 계정이면 큐레이션, 아니면 loginId.
- */
-function buildAdminUser(loginId: string, branch?: string, name?: string): AdminUser {
-  return { loginId, name: name ?? loginId, branchCode: branch ?? '-', branchName: branchLabel(branch) }
-}
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -43,37 +35,24 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError('')
     try {
-      // 게이트웨이를 거친다. 예전에는 /api/consultation/... 프록시를 직접 불렀는데,
-      // 그 프록시가 Content-Type 외의 헤더를 버려서 신원이 서비스에 닿지 않았다.
-      let agent: AgentLoginResponse
-      try {
-        agent = await agentLogin(id, password)
-      } catch {
-        setError('아이디 또는 비밀번호가 올바르지 않습니다.')
-        setLoading(false)
-        return
-      }
+      // 고객 로그인과 **같은 백엔드 경로**를 쓴다. 예전에는 상담 서비스의 상담원
+      // 로그인을 부르고 mock.<base64> 토큰을 스스로 만들었는데, 게이트웨이가 그
+      // 토큰을 거절해 화면만 열리고 모든 API 가 401 이었다. 은행 직원 계정으로는
+      // 아예 들어올 수도 없었다.
+      const { data } = await api.post('/api/v1/auth/login', { loginId: id, password })
 
-      // 관리자/슈퍼바이저만 이 페이지로 접근 허용
-      if (agent.role !== 'ADMIN' && agent.role !== 'SUPERVISOR') {
-        setError('관리자 또는 슈퍼바이저 계정만 로그인할 수 있습니다.')
-        setLoading(false)
-        return
-      }
-
-      const roleMap: Record<string, string[]> = {
-        ADMIN: ['ROLE_ADMIN'],
-        SUPERVISOR: ['ROLE_ADMIN'],
-      }
-      const roles = roleMap[agent.role] ?? []
-      const token = 'mock.' + btoa(unescape(encodeURIComponent(JSON.stringify({ name: agent.name, roles })))) + '.' + Date.now()
-      localStorage.setItem('accessToken', token)
-      localStorage.setItem('access_token', token)
-      localStorage.setItem('admin_roles', JSON.stringify(roles))
-      localStorage.setItem('admin_user', JSON.stringify(buildAdminUser(id, undefined, agent.name)))
-      router.push('/admin/consultation/history')
-    } catch {
-      setError('로그인에 실패했습니다. 아이디·비밀번호를 확인하세요.')
+      // 갈 곳: returnUrl 이 있으면 그쪽, 없으면 조사 화면.
+      const target = postLoginTarget()
+      const next = persistEmployeeSession(
+        data.data.accessToken, id, target === '/' ? '/admin/fraud' : target)
+      router.push(next)
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } }
+      // 자격이 틀린 것과 '고객 계정이라 여기로 못 들어온다' 는 다른 일이다.
+      // 뭉뚱그리면 맞는 비밀번호를 몇 번이고 다시 넣게 된다.
+      setError(
+        e.response?.data?.message
+        ?? (err instanceof Error ? err.message : '로그인에 실패했습니다.'))
       setLoading(false)
     }
   }

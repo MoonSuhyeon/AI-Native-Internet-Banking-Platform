@@ -10,16 +10,14 @@ const PUBLIC_ADMIN_PATHS = ['/admin/login', '/admin/consultation']
 /**
  * 로그인 안 된 직원을 어디로 보낼 것인가.
  *
- * <p>예전에는 {@code /admin/login} 이었다. 그 화면은 상담 서비스의 상담원 로그인을
- * 부르고, 성공하면 백엔드 JWT 가 아니라 {@code mock.<base64>} 토큰을 스스로 만든다 —
- * {@code readAccessToken} 이 지우는 그 형태다. 상담 서비스를 올리든 안 올리든
- * <b>은행 직원은 그 문으로 들어올 수 없다.</b>
+ * <p>관리자 로그인 화면이다. 한동안 그 화면이 상담 서비스의 상담원 로그인을 부르고
+ * {@code mock.<base64>} 토큰을 스스로 만들어서 — 게이트웨이가 거절하는 형태다 —
+ * 은행 직원이 들어올 수 없었다. 지금은 고객 로그인과 같은 백엔드 경로를 쓴다.
  *
- * <p>은행 직원의 문은 {@code /login} 하나다. 거기서 받은 진짜 JWT 의 roles 클레임이
- * 이 가드가 보는 값의 출처가 된다. returnUrl 을 달아 원래 가려던 화면으로 잇는다.
+ * <p>returnUrl 을 달아 원래 가려던 화면으로 잇는다.
  */
 function loginPathFor(pathname: string): string {
-  return '/login?returnUrl=' + encodeURIComponent(pathname)
+  return '/admin/login?returnUrl=' + encodeURIComponent(pathname)
 }
 
 export default function AdminGuard({ children }: { children: React.ReactNode }) {

@@ -355,12 +355,8 @@ export default function Header() {
         {/* 우측: 사용자 영역 */}
         {!isLoginPage && (
           <div className="flex items-center gap-2 text-[14px] flex-shrink-0">
-            {/*
-              직원 로그인은 /login 하나다. 예전 /admin/login 은 상담 서비스의 상담원
-              로그인이라 은행 직원 계정으로는 들어갈 수 없고, 성공해도 백엔드 JWT 가
-              아닌 mock 토큰을 만들어 게이트웨이가 모든 호출을 거절한다.
-            */}
-            <Link href="/login?returnUrl=%2Fadmin%2Ffraud"
+            {/* 직원 전용 문. 고객 로그인과 같은 백엔드를 쓰되 화면을 나눈다. */}
+            <Link href="/admin/login"
               className="px-3 py-1 text-[12px] font-semibold rounded-full border border-gray-300 text-gray-400 transition-colors hover:bg-gray-50">
               관리자
             </Link>
