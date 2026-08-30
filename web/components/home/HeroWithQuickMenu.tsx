@@ -126,20 +126,24 @@ export default function HeroWithQuickMenu() {
                   {idx > 0 && (
                     <div className="absolute left-0 top-1/4 bottom-1/4 w-px bg-gray-100" />
                   )}
-                  <div className="w-11 h-11 flex-shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-150">
+                  <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-150">
                     {menu.icon}
                   </div>
                   <div className="flex flex-col items-start gap-0.5">
                     <span className="text-[12px] font-bold tracking-wide text-kb-text-muted group-hover:text-kb-primary transition-colors">
                       {menu.step}
                     </span>
-                    <p className="text-[17px] font-semibold text-kb-text group-hover:text-kb-primary transition-colors whitespace-nowrap">{menu.label}</p>
+                    <p className="text-[18px] font-semibold text-kb-text group-hover:text-kb-primary transition-colors whitespace-nowrap">{menu.label}</p>
                   </div>
                 </>
               )
               // 아이콘을 위가 아니라 <b>왼쪽</b>에 둔다. 라벨이 두 줄(순서·이름)이라
               // 세로로 쌓으면 아이콘까지 세 층이 되어 띠가 두꺼워진다.
-              const cls = "flex items-center justify-center gap-3 px-4 py-5 hover:bg-kb-primary-bg transition-colors duration-150 group relative"
+              //
+              // 세로 여백은 넉넉히 준다. 가로로 눕히면 내용 높이가 절반이 되는데
+              // 여백까지 줄이면 띠가 눌린 것처럼 보인다 — 한 줄이던 시절의 높이가
+              // 이 자리에 맞았다.
+              const cls = "flex items-center justify-center gap-3 px-4 py-12 hover:bg-kb-primary-bg transition-colors duration-150 group relative"
 
               // 링크로 가는 것과 챗봇을 여는 것은 다른 요소여야 한다. 챗봇은
               // 라우트가 아니라 전역 위젯이라 <Link> 로 열 수 없고, <a href="#">
