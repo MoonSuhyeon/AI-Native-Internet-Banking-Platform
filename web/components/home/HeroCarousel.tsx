@@ -123,8 +123,8 @@ void IMAGE_CENTER // 세로 위치는 HERO_HEIGHT/2 로 고정하므로 현재�
  * 오른쪽 여백만큼 right 를 당기면 된다.
  */
 const HERO_IMAGE_LAYOUT = [
-  { width: 613, height: 339, right: -7 },  // personal-hero1 — 오른쪽 여백 137px 을 되돌린 값
-  { width: 579, height: 375, right: 0 },   // personal-hero2 — 오른쪽 여백 130px
+  { width: 613, height: 339, right: 0 },  // personal-hero1 — 오른쪽 여백 137px 을 되돌린 값
+  { width: 579, height: 375, right: 7 },   // personal-hero2 — 오른쪽 여백 130px
   { width: 621, height: 395, right: 80 },  // personal-hero3 — 여백이 거의 없다
 ]
 
