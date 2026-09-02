@@ -130,13 +130,19 @@ const CONTENT_CENTER_RIGHT = 441
  *
  * <p><b>이미지를 갈아 끼우면 여기 숫자도 다시 재야 한다</b>(불투명 영역 bbox).
  */
-const HERO_IMAGE_SOURCES = [
-  // 1번은 인물이 세로로 선 좁은 구도라, 기본 세로(295)로 맞추면 옆 슬라이드보다
-  // 눈에 띄게 작아 보인다. 조금 키우고, 그림 오른쪽 끝을 2번과 같은 선에 세운다.
-  {
-    canvas: { w: 672, h: 371 }, content: { left: 261, right: 522, top: 31, bottom: 354 },
-    contentHeight: 330, contentRight: 285,
-  },
+interface HeroImageSource {
+  /** PNG 원본 크기 */
+  canvas: { w: number; h: number }
+  /** 그 안에서 그림(불투명 영역)이 차지하는 사각형 */
+  content: { left: number; right: number; top: number; bottom: number }
+  /** 그림 세로를 기본값(CONTENT_HEIGHT) 대신 따로 줄 때 */
+  contentHeight?: number
+  /** 가로를 중심(CONTENT_CENTER_RIGHT) 대신 그림 오른쪽 끝으로 맞출 때 */
+  contentRight?: number
+}
+
+const HERO_IMAGE_SOURCES: HeroImageSource[] = [
+  { canvas: { w: 579, h: 431 }, content: { left: 140, right: 516, top: 34, bottom: 394 } },
   { canvas: { w: 621, h: 402 }, content: { left: 150, right: 482, top: 43, bottom: 359 } },
   // 3번은 그림이 캔버스를 가로로 꽉 채운 구도라 중심을 맞추면 왼쪽 끝이 텍스트를
   // 덮는다. 오른쪽 끝을 사이드바(고정 80px 폭) 앞에 세우는 편이 맞다.
