@@ -67,6 +67,8 @@ services:
   loan-db:
     image: postgres:16-alpine
     container_name: ib-loan-db
+    # 여신을 올릴 때만 뜬다. loan-service 와 한 세트다.
+    profiles: ["loan"]
     <<: *default-restart
     logging: *default-logging
     environment:
@@ -261,6 +263,16 @@ services:
         condition: service_healthy
 
   loan-service:
+    # 여신은 기본으로 뜨지 않는다 — 올리려면 `--profile loan` 을 준다.
+    #
+    # 혼자 오지 않기 때문이다. loan-db 까지 healthy 해야 뜨고 상한을 더하면
+    # 1.3GB 다. 8GB 서버에서 나머지 스택과 함께는 넘친다
+    # (web/lib/deployed-services.ts 의 DEPLOYED.loan 과 같은 판단이다).
+    #
+    # profile 로 두는 이유는 메모리가 아니라 사고 방지다. 그전에는 정의가 그냥
+    # 살아 있어서 `up -d api-gateway` 한 번에 여신이 딸려 올라왔다 —
+    # 게이트웨이의 depends_on 에 걸려 있었기 때문이다. 그 의존도 함께 끊었다.
+    profiles: ["loan"]
     image: ghcr.io/${GITHUB_OWNER}/loan-service:${LOAN_IMAGE_TAG:-latest}
     container_name: ib-loan-service
     <<: *default-restart
@@ -368,10 +380,12 @@ services:
     expose:
       - "8080"
     mem_limit: 512m
+    # loan-service 는 여기 넣지 않는다. profile 로 뺀 서비스를 depends_on 에
+    # 두면 compose 가 프로젝트 자체를 거절한다("depends on undefined service").
+    # 게이트웨이는 라우팅을 요청 시점에 풀므로 기동 시 여신이 필요하지도 않다.
     depends_on:
       - customer-service
       - core-banking
-      - loan-service
 
   consultation-service:
     image: ghcr.io/${GITHUB_OWNER}/consultation-service:${CONSULTATION_IMAGE_TAG:-latest}
