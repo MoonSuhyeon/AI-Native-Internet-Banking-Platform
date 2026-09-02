@@ -113,39 +113,55 @@ const CONTENT_HEIGHT = 295
 const CONTENT_CENTER_RIGHT = 441
 
 /**
- * 이미지마다 다른 두 가지 — 원본 캔버스 크기와, 그 안에서 <b>그림</b>(불투명
- * 영역)이 차지하는 사각형. PNG 를 직접 재서 넣는다.
+ * 이미지마다 다른 것 — 원본 캔버스 크기와, 그 안에서 <b>그림</b>(불투명 영역)이
+ * 차지하는 사각형. PNG 를 직접 재서 넣는다.
  *
  * <p>투명 여백이 이미지마다 제각각이라, 캔버스만 보고 크기·위치를 맞추면 그림이
  * 저마다 다른 크기로 다른 자리에 놓인다. 실제로 맞춰야 하는 것은 캔버스가 아니라
  * 그림이므로, 계산의 출발점을 캔버스가 아닌 이 실측값으로 둔다.
  *
- * <p>{@code right} 를 준 이미지는 기준선 대신 그 값을 쓴다. <b>이미지를 갈아
- * 끼우면 여기 숫자도 다시 재야 한다</b>(불투명 영역 bbox).
+ * <p>기본은 세로 CONTENT_HEIGHT · 가로 중심 CONTENT_CENTER_RIGHT 이고, 구도가
+ * 달라 기본값이 안 맞는 이미지만 예외를 준다.
+ *
+ * <ul>
+ *   <li>{@code contentHeight} — 그림 세로를 따로 준다.
+ *   <li>{@code contentRight} — 중심 대신 <b>그림 오른쪽 끝</b>을 이 자리에 맞춘다.
+ * </ul>
+ *
+ * <p><b>이미지를 갈아 끼우면 여기 숫자도 다시 재야 한다</b>(불투명 영역 bbox).
  */
 const HERO_IMAGE_SOURCES = [
-  { canvas: { w: 672, h: 371 }, content: { left: 261, right: 522, top: 31, bottom: 354 } },
+  // 1번은 인물이 세로로 선 좁은 구도라, 기본 세로(295)로 맞추면 옆 슬라이드보다
+  // 눈에 띄게 작아 보인다. 조금 키우고, 그림 오른쪽 끝을 2번과 같은 선에 세운다.
+  {
+    canvas: { w: 672, h: 371 }, content: { left: 261, right: 522, top: 31, bottom: 354 },
+    contentHeight: 330, contentRight: 285,
+  },
   { canvas: { w: 621, h: 402 }, content: { left: 150, right: 482, top: 43, bottom: 359 } },
-  // 3번만 기준선을 따르지 않는다. 그림이 캔버스를 가로로 꽉 채운 구도라 중심을
-  // 맞추면 왼쪽 끝이 텍스트를 덮는다. 지금 자리가 3번에는 맞다.
-  { canvas: { w: 621, h: 402 }, content: { left: 12, right: 621, top: 63, bottom: 363 }, right: 85 },
+  // 3번은 그림이 캔버스를 가로로 꽉 채운 구도라 중심을 맞추면 왼쪽 끝이 텍스트를
+  // 덮는다. 오른쪽 끝을 사이드바(고정 80px 폭) 앞에 세우는 편이 맞다.
+  { canvas: { w: 621, h: 402 }, content: { left: 12, right: 621, top: 63, bottom: 363 }, contentRight: 86 },
 ]
 
 /**
- * 실측값 → 실제로 쓸 크기와 가로 위치.
+ * 실측값 → 실제로 쓸 캔버스 크기와 가로 위치.
  *
- * <p>그림 세로가 CONTENT_HEIGHT 가 되도록 캔버스를 줄이고, 그림의 가로 중심이
- * CONTENT_CENTER_RIGHT 에 오도록 캔버스 오른쪽 여백만큼 되민다. 여백이 큰 이미지는
- * right 가 음수일 수 있는데, 화면 밖으로 나가는 것은 투명 여백뿐이고 부모가
- * overflow-hidden 이라 잘려도 보이지 않는다.
+ * <p>그림 세로가 목표치가 되도록 캔버스를 줄이고, 그림이 목표 자리에 오도록
+ * 캔버스 오른쪽 여백만큼 되민다. 여백이 큰 이미지는 right 가 음수일 수 있는데,
+ * 화면 밖으로 나가는 것은 투명 여백뿐이고 부모가 overflow-hidden 이라 잘려도
+ * 보이지 않는다.
  */
-const HERO_IMAGE_LAYOUT = HERO_IMAGE_SOURCES.map(({ canvas, content, right }) => {
-  const scale = CONTENT_HEIGHT / (content.bottom - content.top)
-  const centerToCanvasRight = (canvas.w - (content.left + content.right) / 2) * scale
+const HERO_IMAGE_LAYOUT = HERO_IMAGE_SOURCES.map(({ canvas, content, contentHeight, contentRight }) => {
+  const scale = (contentHeight ?? CONTENT_HEIGHT) / (content.bottom - content.top)
+  const toCanvasRight = (edge: number) => (canvas.w - edge) * scale
   return {
     width: Math.round(canvas.w * scale),
     height: Math.round(canvas.h * scale),
-    right: right ?? Math.round(CONTENT_CENTER_RIGHT - centerToCanvasRight),
+    right: Math.round(
+      contentRight !== undefined
+        ? contentRight - toCanvasRight(content.right)
+        : CONTENT_CENTER_RIGHT - toCanvasRight((content.left + content.right) / 2),
+    ),
   }
 })
 
