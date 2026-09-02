@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { fakeJwt } from './fake-token'
 
 /**
  * 계좌이체 진입 플로우 E2E — 실제 백엔드/로그인 없이 프론트 흐름만 검증한다.
@@ -8,9 +9,12 @@ import { test, expect } from '@playwright/test'
  * 여기서는 진입 페이지 렌더 + 금액 입력 상호작용까지 검증한다(이후 단계는 확장 지점).
  */
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('accessToken', 'e2e-fake-token')
-  })
+  // JWT 모양이어야 한다 — 아니면 readAccessToken() 이 저장소를 비워 가드가
+  // 로그인으로 보낸다. 자세한 이유는 fake-token.ts 에 적어 두었다.
+  const token = fakeJwt()
+  await page.addInitScript((t) => {
+    localStorage.setItem('accessToken', t)
+  }, token)
   await page.route('**/api/v1/**', async (route) => {
     await route.fulfill({
       status: 200,

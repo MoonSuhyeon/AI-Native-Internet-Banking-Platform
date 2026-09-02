@@ -1,4 +1,6 @@
 import { test, expect, Page } from '@playwright/test'
+import { DEPLOYED } from '../lib/deployed-services'
+import { fakeJwt } from './fake-token'
 
 /**
  * 모니터링 화면의 역할 게이팅.
@@ -14,12 +16,25 @@ const ALLOWED = ['ROLE_OPS', 'ROLE_HQ_RISK', 'ROLE_ADMIN']
 const DENIED = ['ROLE_TELLER', 'ROLE_COMPLIANCE']
 
 async function signInAs(page: Page, role: string) {
-  await page.addInitScript((r) => {
-    localStorage.setItem('admin_roles', JSON.stringify([r]))
-    // AdminGuard 는 토큰 존재를 확인한 뒤 서버 검증을 시도한다.
-    // 검증 서버가 없으면 클라이언트 판정으로 통과시키므로 값은 아무거나 된다.
-    localStorage.setItem('accessToken', 'e2e-dummy-token')
-  }, role)
+  // 토큰은 Node 에서 만들어 넘긴다. addInitScript 의 본문은 브라우저에서 돌아
+  // import 한 함수를 볼 수 없다.
+  const token = fakeJwt([role])
+  await page.addInitScript(
+    ({ r, t }) => {
+      localStorage.setItem('admin_roles', JSON.stringify([r]))
+      localStorage.setItem('accessToken', t)
+    },
+    { r: role, t: token },
+  )
+
+  // 토큰 검증을 고정한다.
+  //
+  // 예전에는 "검증 서버가 없으면 통과한다" 는 fallback 에 기대고 있었다. 그래서
+  // 백엔드가 없는 CI 와 customer-service 가 떠 있는 개발 PC 의 결과가 갈렸다.
+  // 여기서 보려는 것은 역할 게이팅이지 토큰 검증이 아니다.
+  await page.route('**/api/v1/auth/verify', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '{"valid":true}' }),
+  )
 }
 
 test.describe('어드민 모니터링 화면 접근 제어', () => {
@@ -30,7 +45,13 @@ test.describe('어드민 모니터링 화면 접근 제어', () => {
 
       await expect(page.getByRole('heading', { name: '모니터링 대시보드' })).toBeVisible()
       await expect(page.getByText('열람 권한이 없습니다')).toHaveCount(0)
-      await expect(page.locator('aside a[href="/admin/monitoring"]')).toHaveCount(1)
+
+      // 메뉴가 보이는지는 **배포 여부**가 정한다. 권한과는 다른 조건이다 —
+      // 관측 스택을 내린 뒤로 사이드바는 권한이 있어도 이 항목을 그리지 않는다.
+      // 그 사실을 모르고 1 을 기대하던 단언이 배포 결정 때문에 깨지고 있었다.
+      await expect(page.locator('aside a[href="/admin/monitoring"]')).toHaveCount(
+        DEPLOYED.monitoring ? 1 : 0,
+      )
     })
   }
 

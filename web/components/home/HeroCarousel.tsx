@@ -70,9 +70,6 @@ const CIRCLE_FRONT = { x: 220, y: 340, r: 140, opacity: 0.1 }
 
 type Circle = typeof CIRCLE_BACK
 
-/** 이미지 상자 너비. 실제 그림 크기는 여기에 맞춰 object-contain 으로 들어간다. */
-const IMAGE_BOX_WIDTH = 600
-
 /**
  * 두 원이 만나는 두 점 중 <b>화면에서 더 왼쪽</b>에 있는 점.
  *
