@@ -90,43 +90,53 @@ function leftIntersection(a: Circle, b: Circle): { x: number; y: number } {
 }
 
 /**
- * 이미지 중심이 놓일 자리 — 두 원이 겹치는 왼쪽 교점.
+ * 이미지가 놓일 자리 — 두 원이 겹치는 왼쪽 교점.
  *
- * <p>배경 원(CIRCLE_BACK·CIRCLE_FRONT)의 장식용 좌표로만 쓴다. 이미지 자체의
- * 가로 위치는 더 이상 이 교점을 따라가지 않는다(아래 IMAGE_RIGHT 참고) — 필요하면
- * 세로 중심을 맞출 때 참고 값으로만 남겨 둔다.
+ * <p><b>가로만</b> 쓴다. 그림의 가로 중심을 이 교점의 x 에 맞춘다(x 는 화면
+ * 오른쪽 끝에서 잰 거리다). 세로는 교점을 따르지 않고 히어로 한가운데로
+ * 고정한다 — 교점의 y(약 237)를 따르면 그림이 아래로 처져 보인다.
  */
 const IMAGE_CENTER = leftIntersection(CIRCLE_BACK, CIRCLE_FRONT)
-void IMAGE_CENTER // 세로 위치는 HERO_HEIGHT/2 로 고정하므로 현재는 참고용
+
+/** 그림이 화면에 보일 세로 크기. 3번 이미지가 그려지던 크기를 기준으로 잡았다. */
+const CONTENT_HEIGHT = 295
 
 /**
- * 히어로 이미지 배치.
+ * 이미지마다 다른 두 가지 — 원본 캔버스 크기와, 그 안에서 <b>그림</b>(불투명
+ * 영역)이 차지하는 사각형. PNG 를 직접 재서 넣는다.
  *
- * <p>PNG 마다 투명 여백의 크기와 치우침이 달라, 캔버스 크기만 맞추면 그림이
- * 제각각으로 보인다. 그래서 <b>캔버스가 아니라 그림(불투명 영역)</b> 기준으로
- * 맞춘다. 아래 값은 캔버스 크기지만, 실제로 맞춘 것은 그림이다.
+ * <p>투명 여백이 이미지마다 제각각이라, 캔버스만 보고 크기·위치를 맞추면 그림이
+ * 저마다 다른 크기로 다른 자리에 놓인다. 실제로 맞춰야 하는 것은 캔버스가 아니라
+ * 그림이므로, 계산의 출발점을 캔버스가 아닌 이 실측값으로 둔다.
  *
- * <p><b>크기</b>는 3번 이미지 기준 — 세 슬라이드 모두 그림 세로 약 295px 로 보인다.
- *
- * <p><b>가로 위치</b>는 1·2번과 3번이 다르다. 1·2번은 그림 오른쪽 끝을 화면
- * 오른쪽에서 <b>130px</b> 에 둔다(교체 전 2번 이미지가 있던 자리). 여기서 더
- * 오른쪽으로 붙이면 그림이 사이드바에 눌린 것처럼 치우쳐 보인다. 3번은 그림이
- * 캔버스를 거의 꽉 채운 가로로 긴 구도라 같은 130px 을 주면 텍스트를 침범해서,
- * 지금처럼 85px 에 둔다.
- *
- * <p>1번의 right 가 음수인 것은 그림 오른쪽에 캔버스 여백이 137px 이나 남아
- * 있어서다. 화면 밖으로 나가는 것은 투명 여백뿐이고 부모가 overflow-hidden 이라
- * 잘려도 보이지 않는다.
- *
- * <p>이미지를 갈아 끼우면 여백 비율이 달라지므로 이 표도 다시 잡아야 한다. 새 PNG
- * 의 불투명 영역(bbox)을 재서, 그림 세로가 295px 이 되도록 캔버스 크기를 줄이고
- * 오른쪽 여백만큼 right 를 당기면 된다.
+ * <p>{@code right} 를 준 이미지는 교점 대신 그 값을 쓴다. <b>이미지를 갈아
+ * 끼우면 여기 숫자도 다시 재야 한다</b>(불투명 영역 bbox).
  */
-const HERO_IMAGE_LAYOUT = [
-  { width: 613, height: 339, right: 20 },  // personal-hero1 — 오른쪽 여백 137px 을 되돌린 값
-  { width: 579, height: 375, right: 27 },   // personal-hero2 — 오른쪽 여백 130px
-  { width: 621, height: 395, right: 80 },  // personal-hero3 — 여백이 거의 없다
+const HERO_IMAGE_SOURCES = [
+  { canvas: { w: 672, h: 371 }, content: { left: 261, right: 522, top: 31, bottom: 354 } },
+  { canvas: { w: 621, h: 402 }, content: { left: 150, right: 482, top: 43, bottom: 359 } },
+  // 3번만 교점을 따르지 않는다. 그림이 캔버스를 가로로 꽉 채운 구도라 교점에
+  // 맞추면 오른쪽 끝이 FloatingSidebar(고정 80px 폭, 불투명) 밑으로 들어가 잘린다.
+  { canvas: { w: 621, h: 402 }, content: { left: 12, right: 621, top: 63, bottom: 363 }, right: 85 },
 ]
+
+/**
+ * 실측값 → 실제로 쓸 크기와 가로 위치.
+ *
+ * <p>그림 세로가 CONTENT_HEIGHT 가 되도록 캔버스를 줄이고, 그림의 가로 중심이
+ * IMAGE_CENTER.x 에 오도록 캔버스 오른쪽 여백만큼 되민다. 여백이 큰 이미지는
+ * right 가 음수일 수 있는데, 화면 밖으로 나가는 것은 투명 여백뿐이고 부모가
+ * overflow-hidden 이라 잘려도 보이지 않는다.
+ */
+const HERO_IMAGE_LAYOUT = HERO_IMAGE_SOURCES.map(({ canvas, content, right }) => {
+  const scale = CONTENT_HEIGHT / (content.bottom - content.top)
+  const centerToCanvasRight = (canvas.w - (content.left + content.right) / 2) * scale
+  return {
+    width: Math.round(canvas.w * scale),
+    height: Math.round(canvas.h * scale),
+    right: right ?? Math.round(IMAGE_CENTER.x - centerToCanvasRight),
+  }
+})
 
 interface HeroCarouselProps {
   current: number
