@@ -90,16 +90,27 @@ function leftIntersection(a: Circle, b: Circle): { x: number; y: number } {
 }
 
 /**
- * 이미지가 놓일 자리 — 두 원이 겹치는 왼쪽 교점.
+ * 두 원이 겹치는 왼쪽 교점 — 지금은 <b>참고용</b>이다.
  *
- * <p><b>가로만</b> 쓴다. 그림의 가로 중심을 이 교점의 x 에 맞춘다(x 는 화면
- * 오른쪽 끝에서 잰 거리다). 세로는 교점을 따르지 않고 히어로 한가운데로
- * 고정한다 — 교점의 y(약 237)를 따르면 그림이 아래로 처져 보인다.
+ * <p>한동안 그림의 가로 중심을 이 교점(x 약 315)에 맞췄지만, 그러면 그림이
+ * 사이드바 쪽으로 치우쳐 보였다. 지금은 아래 CONTENT_CENTER_RIGHT 를 쓴다.
+ * 배경 원을 옮길 때 이미지 자리를 가늠하는 값으로만 남겨 둔다.
  */
 const IMAGE_CENTER = leftIntersection(CIRCLE_BACK, CIRCLE_FRONT)
+void IMAGE_CENTER
 
 /** 그림이 화면에 보일 세로 크기. 3번 이미지가 그려지던 크기를 기준으로 잡았다. */
 const CONTENT_HEIGHT = 295
+
+/**
+ * 그림의 가로 중심이 놓일 자리 — 화면 오른쪽 끝에서 잰 거리다.
+ *
+ * <p>2번 이미지를 한 번 다른 그림으로 갈아 끼웠다가 되돌린 적이 있는데, 그
+ * <b>이전</b>에 지금과 같은 그림이 쓰이던 때의 자리다(당시 값 width 634 ·
+ * right 130 → 그림 중심이 오른쪽에서 441px). 두 원의 교점(약 315)보다 126px
+ * 더 왼쪽이고, 그만큼 텍스트와의 간격이 좁아져 배경 원 안에 들어와 보인다.
+ */
+const CONTENT_CENTER_RIGHT = 441
 
 /**
  * 이미지마다 다른 두 가지 — 원본 캔버스 크기와, 그 안에서 <b>그림</b>(불투명
@@ -109,14 +120,14 @@ const CONTENT_HEIGHT = 295
  * 저마다 다른 크기로 다른 자리에 놓인다. 실제로 맞춰야 하는 것은 캔버스가 아니라
  * 그림이므로, 계산의 출발점을 캔버스가 아닌 이 실측값으로 둔다.
  *
- * <p>{@code right} 를 준 이미지는 교점 대신 그 값을 쓴다. <b>이미지를 갈아
+ * <p>{@code right} 를 준 이미지는 기준선 대신 그 값을 쓴다. <b>이미지를 갈아
  * 끼우면 여기 숫자도 다시 재야 한다</b>(불투명 영역 bbox).
  */
 const HERO_IMAGE_SOURCES = [
   { canvas: { w: 672, h: 371 }, content: { left: 261, right: 522, top: 31, bottom: 354 } },
   { canvas: { w: 621, h: 402 }, content: { left: 150, right: 482, top: 43, bottom: 359 } },
-  // 3번만 교점을 따르지 않는다. 그림이 캔버스를 가로로 꽉 채운 구도라 교점에
-  // 맞추면 오른쪽 끝이 FloatingSidebar(고정 80px 폭, 불투명) 밑으로 들어가 잘린다.
+  // 3번만 기준선을 따르지 않는다. 그림이 캔버스를 가로로 꽉 채운 구도라 중심을
+  // 맞추면 왼쪽 끝이 텍스트를 덮는다. 지금 자리가 3번에는 맞다.
   { canvas: { w: 621, h: 402 }, content: { left: 12, right: 621, top: 63, bottom: 363 }, right: 85 },
 ]
 
@@ -124,7 +135,7 @@ const HERO_IMAGE_SOURCES = [
  * 실측값 → 실제로 쓸 크기와 가로 위치.
  *
  * <p>그림 세로가 CONTENT_HEIGHT 가 되도록 캔버스를 줄이고, 그림의 가로 중심이
- * IMAGE_CENTER.x 에 오도록 캔버스 오른쪽 여백만큼 되민다. 여백이 큰 이미지는
+ * CONTENT_CENTER_RIGHT 에 오도록 캔버스 오른쪽 여백만큼 되민다. 여백이 큰 이미지는
  * right 가 음수일 수 있는데, 화면 밖으로 나가는 것은 투명 여백뿐이고 부모가
  * overflow-hidden 이라 잘려도 보이지 않는다.
  */
@@ -134,7 +145,7 @@ const HERO_IMAGE_LAYOUT = HERO_IMAGE_SOURCES.map(({ canvas, content, right }) =>
   return {
     width: Math.round(canvas.w * scale),
     height: Math.round(canvas.h * scale),
-    right: right ?? Math.round(IMAGE_CENTER.x - centerToCanvasRight),
+    right: right ?? Math.round(CONTENT_CENTER_RIGHT - centerToCanvasRight),
   }
 })
 
