@@ -39,6 +39,13 @@ type QuickMenu = {
   href?: string
   /** 챗봇을 열고 이 질문을 보내는 것 */
   ask?: string
+  /**
+   * 카드 아래 한 줄 설명. <b>눌러서 바로 보이지 않는 것</b>만 적는다.
+   *
+   * <p>위험 안내는 신호 둘(반복 이체 + 고액)이 쌓여야 뜬다. 조건을 모르면 이체
+   * 화면만 보고 지나가므로, 그 조건을 카드에 적는다.
+   */
+  hint?: string
 }
 
 /**
@@ -48,15 +55,19 @@ type QuickMenu = {
  * 늘어놓으면 자리만 차지한다. 그래서 이 자리는 <b>무엇부터 해보면 되는가</b>를 놓는다 —
  * 처음 온 사람이 위에서 아래로 누르기만 하면 시연 동선이 그대로 재현된다.
  *
- * <p>세 칸인 이유는 넷째로 넣을 것이 이 제출물의 범위가 아니어서다. 준법·심사 화면은
- * 기존 플랫폼의 기능이라, 나란히 놓으면 무엇이 이번에 만든 것인지 흐려진다.
+ * <p>칸 순서는 <b>시연 순서 그대로</b>다 — 정상 이체 → 위험 안내 → 차단 확인 →
+ * 조사. 앞의 셋은 고객 화면, 마지막이 직원 화면이다. 한동안 위험 안내가 빠져 있었는데,
+ * 그것이 고객이 실제로 보는 유일한 이상거래 화면이라 시연에서 빠지면 이 제출물의
+ * 절반이 안 보인다. 넷째로 준법·심사 화면을 넣지 않는 이유는 그대로다 — 기존
+ * 플랫폼의 기능이라, 나란히 놓으면 무엇이 이번에 만든 것인지 흐려진다.
  *
  * <p>예전에는 넷 다 "AI" 로 시작했지만 셋은 상담 서비스의 챗봇을 열었고 하나는
  * 여신으로 갔다. 둘 다 이 배포에 없어 <b>네 칸이 전부 눌리지 않는 상태</b>였다.
  */
 const QUICK_MENUS: QuickMenu[] = [
   {
-    step: '시연 1', label: '이체 사전점검', href: '/transfer/account',
+    step: '시연 1', label: '정상 이체',
+    href: '/transfer/account',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="17 3 21 7 17 11"/>
@@ -67,7 +78,22 @@ const QUICK_MENUS: QuickMenu[] = [
     ),
   },
   {
-    step: '시연 2', label: '거래 차단 확인', href: '/inquiry/transactions',
+    // 받는 계좌와 금액을 미리 채워 보낸다. 심사자가 채워야 할 칸이 남아 있으면
+    // 그 자리에서 시연이 끊긴다. 조사 큐에 남는 케이스도 대본과 같은 값이 된다.
+    step: '시연 2', label: '위험 안내 받기',
+    href: '/transfer/account?to=001-2000-0000017&bank=AXful&amount=12000000',
+    hint: '소액을 여러 번 이체한 뒤 1천만원 이상을 시도하면 위험 안내가 표시됩니다',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3l9 16H3l9-16z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    ),
+  },
+  {
+    step: '시연 3', label: '거래 차단 확인',
+    href: '/inquiry/transactions',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
@@ -80,7 +106,8 @@ const QUICK_MENUS: QuickMenu[] = [
   {
     // 조사 콘솔. 직원 전용이라 로그인하지 않았으면 가드가 관리자 로그인으로 보내고,
     // returnUrl 로 이 화면을 기억했다가 되돌려 준다.
-    step: '시연 3', label: 'AI 이상거래 조사', href: '/admin/fraud',
+    step: '시연 4', label: 'AI 이상거래 조사',
+    href: '/admin/fraud',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="11" cy="11" r="7"/>
@@ -119,7 +146,7 @@ export default function HeroWithQuickMenu() {
       {/* 퀵메뉴 */}
       <section className="relative z-10 bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-kb-container mx-auto">
-          <div className="grid grid-cols-3">
+          <div className="grid grid-cols-4">
             {QUICK_MENUS.map((menu, idx) => {
               const inner = (
                 <>
@@ -134,6 +161,9 @@ export default function HeroWithQuickMenu() {
                       {menu.step}
                     </span>
                     <p className="text-[18px] font-semibold text-kb-text group-hover:text-kb-primary transition-colors whitespace-nowrap">{menu.label}</p>
+                    {menu.hint && (
+                      <p className="text-[11px] leading-snug text-kb-text-muted max-w-[190px]">{menu.hint}</p>
+                    )}
                   </div>
                 </>
               )

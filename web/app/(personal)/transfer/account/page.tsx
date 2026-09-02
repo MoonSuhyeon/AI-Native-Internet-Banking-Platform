@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { KB_BORDER, KB_MINT, KB_PRIMARY, KB_PRIMARY_BG, KB_PRIMARY_BORDER, KB_PRIMARY_SURFACE, KB_TEXT_LIGHT } from '@/lib/theme'
 
 import { useState, useEffect } from 'react'
@@ -41,11 +41,16 @@ export default function TransferAccountPage() {
   })
   const [favoriteModal, setFavoriteModal] = useState<FavoriteType | null>(null)
 
+  // ?to=·?bank=·?amount= 로 받는 곳과 금액을 미리 채운다. 홈의 "위험 안내 받기"
+  // 시연이 이 경로로 들어온다 — 심사자가 채워야 할 칸이 남아 있으면 그 자리에서
+  // 시연이 끊긴다. 금액은 숫자만 받는다(입력 칸이 콤마를 스스로 붙인다).
   useEffect(() => {
-    const to   = searchParams.get('to')
-    const bank = searchParams.get('bank')
+    const to     = searchParams.get('to')
+    const bank   = searchParams.get('bank')
+    const preset = searchParams.get('amount')
     if (to)   setToAccount(to)
     if (bank) setToBank(bank)
+    if (preset && /^\d+$/.test(preset)) setAmount(preset)
   }, [searchParams])
 
   useEffect(() => {
