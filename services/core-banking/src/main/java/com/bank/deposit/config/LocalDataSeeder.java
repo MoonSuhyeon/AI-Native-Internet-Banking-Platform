@@ -9,6 +9,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -43,10 +44,42 @@ public class LocalDataSeeder implements ApplicationRunner {
     private final TargetGroupRepository targetGroupRepository;
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * 여신 시스템계좌가 쓰는 상품. {@code V29__seed_loan_system_accounts.sql} 이 넣는다.
+     *
+     * <p>이 값을 여기 적어 두는 이유는 아래 가드 때문이다. 마이그레이션이 넣는 상품이라
+     * 시더가 돌기 전에 이미 표에 있고, 데모 상품 카탈로그와는 아무 상관이 없다.
+     */
+    private static final long SYSTEM_PRODUCT_ID = 9001L;
+
+    /**
+     * 데모 상품 카탈로그가 이미 심겼는가.
+     *
+     * <p><b>왜 전체 개수가 아닌가.</b> 예전에는 {@code productRepository.count() > 0} 이었다.
+     * 그런데 V29 가 시스템계좌용 상품 하나(9001)를 마이그레이션으로 넣으면서, <b>비어 있는
+     * DB 에서도 개수가 1</b> 이 됐다. 시더는 "이미 심겼다" 고 판단해 상품 카탈로그를
+     * 만들지 않고 건너뛰었고, 곧바로 데모 계약을 넣다가 없는 상품을 참조해 죽었다 —
+     * {@code violates foreign key constraint "fk_deposit_contracts_product"}.
+     *
+     * <p>그 예외는 잡히지 않아 ApplicationContext 기동 실패로 이어진다. 즉 <b>깨끗한
+     * DB 에서는 core-banking 이 아예 뜨지 않았다.</b> 이미 시드된 DB 로 도는 곳에서는
+     * 드러나지 않아, 볼륨을 지우거나 CI 가 새 DB 를 세울 때만 나타났다.
+     *
+     * <p>V29 의 주석이 "마이그레이션은 시드에 기대면 안 된다" 고 적었는데, 반대 방향으로
+     * 같은 결합이 생겼던 셈이다 — 시드가 마이그레이션의 부작용에 걸렸다.
+     */
+    private boolean demoCatalogSeeded() {
+        Integer count = jdbcTemplate.queryForObject(
+                "select count(*) from deposit_banking_products where banking_product_id <> ?",
+                Integer.class,
+                SYSTEM_PRODUCT_ID);
+        return count != null && count > 0;
+    }
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (productRepository.count() > 0) {
+        if (demoCatalogSeeded()) {
             seedDemoCustomerAccounts();
             seedDemoCustomerTransactions();
             seedDemoLoginAccounts();
@@ -802,12 +835,31 @@ public class LocalDataSeeder implements ApplicationRunner {
             log.warn("[seed] {} 없음 — {} 를 건너뛴다", location, label);
             return;
         }
-        try (var connection = jdbcTemplate.getDataSource().getConnection()) {
+
+        // 이 시더와 **같은 트랜잭션의 연결**로 돌려야 한다.
+        //
+        // 예전에는 dataSource.getConnection() 으로 새 연결을 열었다. 그러면 스크립트가
+        // 별개 트랜잭션에서 돌아, 바로 위에서 JPA 로 만든 상품이 아직 커밋되지 않아
+        // 보이지 않는다. 스크립트가 그 상품을 참조하므로 깨끗한 DB 에서는 언제나
+        // FK 위반으로 실패했다 — 잡아서 로그만 남기니 기동은 되고 데모 계좌만
+        // 조용히 없는 상태가 됐다.
+        //
+        // DataSourceUtils 는 트랜잭션에 묶인 연결이 있으면 그것을 준다. 닫는 것도
+        // 여기서 하지 않는다(트랜잭션이 끝날 때 정리된다).
+        var dataSource = jdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            log.warn("[seed] 데이터소스가 없다 — {} 를 건너뛴다", label);
+            return;
+        }
+        var connection = DataSourceUtils.getConnection(dataSource);
+        try {
             ScriptUtils.executeSqlScript(connection, script);
             log.info("[seed] {} 적용 완료", label);
         } catch (Exception e) {
             // 시연 데이터 실패가 기동을 막지는 않게 한다. 없으면 화면이 비어 보일 뿐이다.
             log.error("[seed] {} 시드 실패", label, e);
+        } finally {
+            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 }
