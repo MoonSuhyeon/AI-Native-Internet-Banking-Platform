@@ -2,12 +2,27 @@ name: Web CI
 
 # web/ 프론트엔드 변경 시 Vitest 단위 테스트를 자동 실행한다.
 # (테스트 하네스 — "테스트 없이 커밋" 재발 방지. 브랜치 보호 규칙의 required check 로 걸면 머지 차단까지.)
+#
+# contract 잡은 실제 백엔드를 상대로 돈다. 그래서 **백엔드만 고쳤을 때** 그것을
+# 확인할 방법이 없었다 — 트리거가 web/** 뿐이라 services/ 를 고친 커밋에서는
+# 돌지 않고, 다음에 누가 web 을 건드릴 때까지 결과를 알 수 없었다.
+# 실제로 core-banking 이 깨끗한 DB 에서 기동조차 못 하던 것을 고친 뒤,
+# 그 검증을 다음 web 커밋까지 기다려야 했다.
+#
+# workflow_dispatch 로 손으로 돌릴 수 있게 연다: gh workflow run "Web CI"
+# 워크플로 자신이 바뀔 때도 돌게 경로에 넣는다 — 트리거를 고쳐 놓고 그 트리거가
+# 도는지 확인할 길이 없으면 같은 자리로 돌아온다.
 on:
   push:
     branches: [main]
-    paths: ['web/**']
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-ci.yml'
   pull_request:
-    paths: ['web/**']
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-ci.yml'
+  workflow_dispatch:
 
 jobs:
   # 타입 오류를 빌드가 무시하고 있었다(next.config.js 의 ignoreBuildErrors).
