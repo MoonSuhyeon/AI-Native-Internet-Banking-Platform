@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { KB_MINT,KB_PRIMARY,KB_PRIMARY_BG } from '@/lib/theme'
 
 import { useEffect, useCallback } from 'react'
@@ -29,8 +29,8 @@ import Image from 'next/image'
 export const HERO_SLIDES = [
   {
     badge: '이상거래 조사',
-    title: 'FDS 위험 신호를\n스스로 조사하는 AI 에이전트',
-    desc: '다섯 가지 공격 가설을 경합시키며\n필요한 자료를 골라 단계적으로 검증합니다',
+    title: '이상거래(FDS) 징후를\n스스로 추적하는 AI 조사관',
+    desc: '다양한 침해 시나리오를 비교하고\n필요한 거래 정보를 찾아 단계적으로 검증합니다',
     cta: '이상거래 분석 보기',
     href: '/admin/fraud',
     bg: '#E8F7F3',
@@ -38,8 +38,8 @@ export const HERO_SLIDES = [
   },
   {
     badge: '규제 준수',
-    title: '규정상 확인이 필요한 거래를\n먼저 보는 책임 트리아지',
-    desc: '사망·후견처럼 확인이 필요한 사실은\n이상 점수가 낮아도 큐 맨 앞에 둡니다',
+    title: '리스크 징후를 알아서 걸러내는\n지능형 우선순위 분석',
+    desc: '보이스피싱 우려나 고객 확인이 시급한 거래는\n위험 점수와 관계없이\n전담 부서의 우선 처리 대상으로 분류합니다',
     cta: '이상거래 분석 보기',
     href: '/admin/fraud',
     bg: '#EDF3FF',
@@ -47,8 +47,8 @@ export const HERO_SLIDES = [
   },
   {
     badge: '사람 승인',
-    title: '에이전트는 권고만,\n실행은 사람 승인',
-    desc: '권한이 검증된 담당자만 승인과 실행을 할 수 있고,\n그 과정은 기록됩니다',
+    title: 'AI는 정밀 진단만,\n최종 승인은 보안 책임자가',
+    desc: '인증된 담당자의 승인을 거쳐야 최종 조치가 실행되며,\n모든 판단과 처리 과정은 기록됩니다',
     cta: '이상거래 분석 보기',
     href: '/admin/fraud',
     bg: KB_PRIMARY_BG,
