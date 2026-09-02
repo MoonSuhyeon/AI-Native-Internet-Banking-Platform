@@ -139,23 +139,6 @@ export default function HeroWithQuickMenu() {
       {/* 퀵메뉴 */}
       <section className="relative z-10 bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-kb-container mx-auto">
-
-          {/*
-            이 줄이 무엇인지 먼저 말한다.
-            
-            일반 금융 메뉴 사이에 카드 넷이 그냥 놓이면 "조회·이체 같은 기능" 으로
-            읽힌다. 실제로는 순서대로 눌러야 의미가 생기는 시나리오다. 카드 생김새는
-            그대로 두고 머리말만 얹어 성격을 밝힌다 — 카드까지 다르게 꾸미면 본문
-            메뉴와 따로 노는 배너가 되어, 오히려 광고처럼 읽혀 안 눌린다.
-          */}
-          <div className="flex items-center gap-2.5 px-8 py-3 border-b border-gray-100 bg-kb-primary-bg">
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-kb-primary border border-kb-primary-border">
-              체험
-            </span>
-            <h2 className="text-[14px] font-bold text-kb-text">AI 에이전트 시나리오 체험하기</h2>
-            <p className="text-[12px] text-kb-text-muted">순서대로 눌러 보면 탐지 → 안내 → 조사가 한 번에 이어집니다</p>
-          </div>
-
           <div className="grid grid-cols-4">
             {QUICK_MENUS.map((menu, idx) => {
               const inner = (
