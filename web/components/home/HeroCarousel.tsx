@@ -149,7 +149,12 @@ const HERO_IMAGE_SOURCES: HeroImageSource[] = [
     canvas: { w: 579, h: 431 }, content: { left: 140, right: 516, top: 34, bottom: 394 },
     contentHeight: 330,
   },
-  { canvas: { w: 621, h: 402 }, content: { left: 150, right: 482, top: 43, bottom: 359 } },
+  // 2번은 원본 그대로(1:1) 그린다 — 기본 세로(295)면 0.93 배로 줄어들어 1번보다
+  // 작아 보인다. 316 이 이 PNG 의 그림 세로라, 더 키우면 확대라 흐려진다.
+  {
+    canvas: { w: 621, h: 402 }, content: { left: 150, right: 482, top: 43, bottom: 359 },
+    contentHeight: 316,
+  },
   // 3번은 그림이 캔버스를 가로로 꽉 채운 구도라 중심을 맞추면 왼쪽 끝이 텍스트를
   // 덮는다. 오른쪽 끝을 사이드바(고정 80px 폭) 앞에 세우는 편이 맞다.
   { canvas: { w: 621, h: 402 }, content: { left: 12, right: 621, top: 63, bottom: 363 }, contentRight: 86 },
