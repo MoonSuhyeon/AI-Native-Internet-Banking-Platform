@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import {
   listFraudCases, runInvestigation, approveInvestigation,
@@ -94,8 +95,16 @@ export default function FraudInvestigationPage() {
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
       <main className="flex-1 overflow-auto">
-        <div className="bg-white border-b border-gray-200 px-6 py-3 text-xs text-gray-500">
-          이상거래 조사 &gt; <span className="text-gray-800 font-medium">조사 에이전트</span>
+        {/*
+          어드민에는 고객 화면으로 나가는 길이 없다. 전역 플로팅 UI 는 /admin 에서
+          숨겨지고 사이드바 맨 위는 대시보드로 간다 — 시연에서 이 화면까지 온 사람은
+          주소를 고치거나 뒤로가기를 눌러야 했다. 브레드크럼 줄 끝에 링크만 둔다.
+        */}
+        <div className="bg-white border-b border-gray-200 px-6 py-3 text-xs text-gray-500 flex items-center justify-between">
+          <span>이상거래 조사 &gt; <span className="text-gray-800 font-medium">조사 에이전트</span></span>
+          <Link href="/" className="text-gray-500 hover:text-gray-800 transition-colors">
+            고객 화면으로 ↗
+          </Link>
         </div>
 
         <div className="px-6 py-5 max-w-7xl">
