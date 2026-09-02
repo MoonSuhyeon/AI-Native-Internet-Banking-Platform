@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import { useAdminRoles } from '@/components/admin/RoleGate'
 import { hasAnyRole, BankRole } from '@/lib/admin-auth'
+import { readAccessToken } from '@/lib/token'
 
 // Grafana 주소. iframe 은 서버가 아니라 브라우저가 직접 가져오므로
 // 컨테이너 이름(grafana:3000)이 아니라 브라우저가 닿는 주소여야 한다.
@@ -49,7 +50,11 @@ export default function MonitoringPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/monitoring/dashboards')
+      // 서버 라우트도 같은 역할 조건을 다시 본다. 화면 게이팅만으로는 주소를
+      // 직접 치는 것을 막지 못하기 때문이다 — 토큰을 실어 보내야 통과한다.
+      const res = await fetch('/api/monitoring/dashboards', {
+        headers: { Authorization: `Bearer ${readAccessToken() ?? ''}` },
+      })
       if (!res.ok) {
         const body = await res.json().catch(() => null)
         throw new Error(body?.error ?? `목록 조회 실패 (${res.status})`)
