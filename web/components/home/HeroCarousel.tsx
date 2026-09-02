@@ -142,7 +142,13 @@ interface HeroImageSource {
 }
 
 const HERO_IMAGE_SOURCES: HeroImageSource[] = [
-  { canvas: { w: 579, h: 431 }, content: { left: 140, right: 516, top: 34, bottom: 394 } },
+  // 1번은 왼쪽 아래로 기운 대각선 구도라 그림 오른쪽에 빈 곳이 남는다. 기본값대로
+  // 두면 배경 원이 그림 밖으로 삐져나와 얼룩처럼 보이고 밴드도 헐거워, 조금 키우고
+  // 조금 오른쪽으로 밀어 로봇이 원 위에 얹히게 한다.
+  {
+    canvas: { w: 579, h: 431 }, content: { left: 140, right: 516, top: 34, bottom: 394 },
+    contentHeight: 330, contentRight: 215,
+  },
   { canvas: { w: 621, h: 402 }, content: { left: 150, right: 482, top: 43, bottom: 359 } },
   // 3번은 그림이 캔버스를 가로로 꽉 채운 구도라 중심을 맞추면 왼쪽 끝이 텍스트를
   // 덮는다. 오른쪽 끝을 사이드바(고정 80px 폭) 앞에 세우는 편이 맞다.
