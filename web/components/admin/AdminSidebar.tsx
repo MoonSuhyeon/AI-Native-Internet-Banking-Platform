@@ -22,7 +22,21 @@ type NavSection = {
   domain: string; section: string; dot: string
   bankRoles: string[]; items: NavItem[]
   deployed?: boolean
+  outOfScope?: boolean
 }
+
+/**
+ * 이번 제출의 범위 밖 화면을 보일 것인가.
+ *
+ * <p><b>배포 여부와는 다른 이유다.</b> 이 화면들은 배포돼 있고 실제로 동작한다 —
+ * 시드된 DB 를 조회하고 열람 감사도 남는다. 그런데 이상거래 조사 에이전트와 아무
+ * 상관이 없다. 조사 콘솔을 보러 온 사람이 옆에 늘어선 고객·준법 화면으로 새면
+ * 무엇을 본 것인지 흐려진다.
+ *
+ * <p>지우지 않고 플래그로 둔다. 기존 플랫폼의 기능이라 언젠가 다시 켤 수 있어야 하고,
+ * 지워 버리면 왜 없어졌는지도 남지 않는다.
+ */
+const SHOW_OUT_OF_SCOPE = false
 
 // CUSTOMER 제외 전 직원(BankRole). break-glass 긴급 접근 등 '전 직원' 범위 게이팅에 사용.
 const EMPLOYEE_ROLES = [
@@ -41,6 +55,7 @@ const NAV: NavSection[] = [
     domain: '고객·인증보안계',
     // 고객 운영 — 조회·회원 라이프사이클·가입 통계. (감사 로그는 여신계 감사 소관)
     section: '고객', dot: 'bg-blue-300',
+    outOfScope: true,
     bankRoles: CUSTOMER_VIEW,
     items: [
       { label: '고객 조회',      href: '/admin/customers' },
@@ -53,6 +68,7 @@ const NAV: NavSection[] = [
     domain: '고객·인증보안계',
     // KYC·AML·제재·세무 심사.
     section: '준법·심사', dot: 'bg-orange-400',
+    outOfScope: true,
     bankRoles: HQ_DESK,
     items: [
       { label: '제재대상 Hit 검토', href: '/admin/screening' },
@@ -185,6 +201,8 @@ export default function AdminSidebar() {
     // 배포되지 않은 서비스의 섹션은 권한과 무관하게 내린다. 권한이 있어도
     // 뒤에 서비스가 없으면 눌렀을 때 깨지고, 그게 더 나쁘게 읽힌다.
     .filter((g) => g.deployed !== false)
+    // 제출 범위 밖은 권한·배포와 무관하게 내린다.
+    .filter((g) => SHOW_OUT_OF_SCOPE || !g.outOfScope)
     .filter((g) => hasAnyRole(adminRoles, ...g.bankRoles))
     .map((g) => ({
       ...g,
