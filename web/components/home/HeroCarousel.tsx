@@ -37,9 +37,9 @@ export const HERO_SLIDES = [
     accent: KB_PRIMARY,
   },
   {
-    badge: '규제 준수',
+    badge: '우선순위 분석',
     title: '리스크 징후를 알아서 걸러내는\n지능형 우선순위 분석',
-    desc: '보이스피싱 우려나 고객 확인이 시급한 거래는\n위험 점수와 관계없이\n전담 부서의 우선 처리 대상으로 분류합니다',
+    desc: '보이스피싱 우려나 고객 확인이 시급한 거래는\n위험 점수와 관계없이 전담 부서의 우선 처리 대상으로 분류합니다',
     cta: '이상거래 분석 보기',
     href: '/admin/fraud',
     bg: '#EDF3FF',
