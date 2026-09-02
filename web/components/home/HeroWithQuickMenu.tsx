@@ -26,11 +26,15 @@ import HeroCarousel from './HeroCarousel'
  */
 type QuickMenu = {
   /**
-   * 순서 표시("시연 1"). 라벨과 <b>합치지 않는다.</b>
+   * 순서 표시(①②③④). 라벨과 <b>합치지 않는다.</b>
    *
-   * <p>합치면 라벨이 "시연 3 AI 이상거래 조사" 가 되어, 'AI' 로 시작하는 메뉴에
-   * 실제 에이전트가 있는지 보는 검사(AiMenuBackingTest)가 그 항목을 못 읽는다.
-   * 검사가 조용히 무력해지는 것을 막으려고 필드를 나눈다.
+   * <p>순서는 있어야 한다 — 넷은 기능 목록이 아니라 앞의 결과가 뒤의 입력이 되는
+   * 한 줄기다. 다만 <b>"시연 N" 이라고 쓰지 않는다.</b> 그렇게 쓰는 순간 화면이
+   * 은행이 아니라 데모 프로토타입으로 읽힌다. 라벨도 "무엇을 보여줄 것인가"가
+   * 아니라 <b>실제 금융 기능의 이름</b>으로 둔다.
+   *
+   * <p>필드를 나눠 두는 이유는 따로 있다 — 라벨에 순서를 합치면 라벨을 읽는 검사
+   * (AiMenuBackingTest)가 항목을 못 읽는다.
    */
   step: string
   label: string
@@ -48,8 +52,8 @@ type QuickMenu = {
  * 늘어놓으면 자리만 차지한다. 그래서 이 자리는 <b>무엇부터 해보면 되는가</b>를 놓는다 —
  * 처음 온 사람이 위에서 아래로 누르기만 하면 시연 동선이 그대로 재현된다.
  *
- * <p>칸 순서는 <b>시연 순서 그대로</b>다 — 정상 이체 → 위험 안내 → 차단 확인 →
- * 조사. 앞의 셋은 고객 화면, 마지막이 직원 화면이다. 한동안 위험 안내가 빠져 있었는데,
+ * <p>칸 순서는 <b>실제로 일이 벌어지는 순서</b>다 — 이체 → 거래 위험 분석 →
+ * 보안 처리 내역 → 이상거래 조사. 앞의 셋은 고객 화면, 마지막이 직원 화면이다. 한동안 위험 안내가 빠져 있었는데,
  * 그것이 고객이 실제로 보는 유일한 이상거래 화면이라 시연에서 빠지면 이 제출물의
  * 절반이 안 보인다. 넷째로 준법·심사 화면을 넣지 않는 이유는 그대로다 — 기존
  * 플랫폼의 기능이라, 나란히 놓으면 무엇이 이번에 만든 것인지 흐려진다.
@@ -57,9 +61,9 @@ type QuickMenu = {
  * <p>예전에는 넷 다 "AI" 로 시작했지만 셋은 상담 서비스의 챗봇을 열었고 하나는
  * 여신으로 갔다. 둘 다 이 배포에 없어 <b>네 칸이 전부 눌리지 않는 상태</b>였다.
  */
-const QUICK_MENUS: QuickMenu[] = [
+export const QUICK_MENUS: QuickMenu[] = [
   {
-    step: '시연 1', label: '정상 이체',
+    step: '①', label: '이체',
     href: '/transfer/account',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -74,7 +78,7 @@ const QUICK_MENUS: QuickMenu[] = [
     // 이체 화면이 받는 계좌와 금액을 미리 채우고, 위험 안내가 뜨는 조건도 그 화면에서
     // 안내한다. 카드에 조건을 적으면 이 칸만 두 줄이 되어 띠가 두꺼워지고, 정작
     // 읽어야 할 자리(이체 화면)에서는 다시 안 보인다.
-    step: '시연 2', label: '위험 안내 받기',
+    step: '②', label: '거래 위험 분석',
     href: '/transfer/account?demo=risk',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -85,7 +89,7 @@ const QUICK_MENUS: QuickMenu[] = [
     ),
   },
   {
-    step: '시연 3', label: '거래 차단 확인',
+    step: '③', label: '보안 처리 내역',
     href: '/inquiry/transactions',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -99,7 +103,7 @@ const QUICK_MENUS: QuickMenu[] = [
   {
     // 조사 콘솔. 직원 전용이라 로그인하지 않았으면 가드가 관리자 로그인으로 보내고,
     // returnUrl 로 이 화면을 기억했다가 되돌려 준다.
-    step: '시연 4', label: 'AI 이상거래 조사',
+    step: '④', label: '이상거래 조사',
     href: '/admin/fraud',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">

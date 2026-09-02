@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG } from '@/lib/theme'
 
@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import HeroWithQuickMenu from '@/components/home/HeroWithQuickMenu'
 import ProductShowcase from '@/components/home/ProductShowcase'
+import ServiceScenarioMenu from '@/components/home/ServiceScenarioMenu'
 import { formatNumber } from '@/lib/mock-data'
 import { fetchDepositAccountViewModels, getCurrentDepositCustomerId, fetchTransactions, type DepositViewAccount, type DepositTransaction } from '@/lib/deposit-api'
 import { NEWS_ITEMS } from '@/lib/news-data'
@@ -267,6 +268,11 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/*
+          로그인하면 히어로도 퀵메뉴도 사라진다. 이체 한 번 하고 돌아온 사람이
+          다음으로 갈 길을 잃지 않도록, 계좌·최근이체 아래에 같은 동선을 작게 둔다.
+        */}
+        <ServiceScenarioMenu />
         <RateBanner />
         <ProductShowcase />
 

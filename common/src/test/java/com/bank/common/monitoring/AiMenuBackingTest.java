@@ -64,17 +64,17 @@ class AiMenuBackingTest {
         String source = Files.readString(MENU);
 
         Set<String> unbacked = new TreeSet<>();
-        int seen = 0;
+        int entries = 0;
 
         Matcher m = ENTRY.matcher(source);
         while (m.find()) {
             String label = m.group(1);
             String kind = m.group(2);
             String value = m.group(3);
+            entries++;
             if (!label.startsWith("AI")) {
                 continue;
             }
-            seen++;
 
             // 챗봇에게 물어보는 것은 그 자체가 에이전트 호출이다.
             if (kind.equals("ask")) {
@@ -85,8 +85,12 @@ class AiMenuBackingTest {
             }
         }
 
-        assertThat(seen)
-                .as("AI 퀵메뉴를 하나도 못 읽었다 — 파싱이 깨졌거나 메뉴가 사라졌다. "
+        // 세는 것은 <b>읽어 낸 메뉴 전체</b>다. 예전에는 'AI' 로 시작하는 항목만 셌는데,
+        // 라벨에서 'AI' 를 빼자(메뉴를 금융 기능 이름으로 바꾸면서) 0 이 되어 검사가
+        // 실패했다 — 정작 막으려던 문제는 없는데도. 파싱이 살아 있는지는 전체 개수로
+        // 확인하고, 'AI' 라벨이 다시 생기면 그때 아래 검사가 그것을 잡는다.
+        assertThat(entries)
+                .as("퀵메뉴를 하나도 못 읽었다 — 파싱이 깨졌거나 메뉴가 사라졌다. "
                     + "어느 쪽이든 이 검사는 아무것도 지키지 않는 상태다")
                 .isPositive();
 
