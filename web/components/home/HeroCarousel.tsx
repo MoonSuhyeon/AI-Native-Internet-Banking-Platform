@@ -100,23 +100,29 @@ const IMAGE_CENTER = leftIntersection(CIRCLE_BACK, CIRCLE_FRONT)
 void IMAGE_CENTER // 세로 위치는 HERO_HEIGHT/2 로 고정하므로 현재는 참고용
 
 /**
- * 이미지 오른쪽 끝 — 화면의 <b>실제 오른쪽 끝</b>에 거의 붙인다.
+ * 히어로 이미지 배치 — 기준은 3번 이미지다.
  *
- * <p><b>예전에는</b> 텍스트와 이미지 사이 공백의 절반만큼 이미지를 왼쪽으로 미는
- * 공식(교점 기준 + 화면폭의 25%)을 썼다. 화면이 넓어질수록 이미지를 텍스트 쪽으로
- * 당겨서 "이미지가 화면 오른쪽에 외따로 뜨는 것"은 막았지만, 그 대가로 1920px
- * 화면에서 이미지 오른쪽 끝과 화면 끝 사이에 ~210px 짜리 배경색 띠가 남았다.
- * FloatingSidebar(고정 80px 폭, z-50)가 그 위에 얹히면서, "이미지 → 배경색
- * 여백 → 사이드바" 순서로 눈에 띄게 어색해 보이는 원인이 됐다(특히 이미지 자체
- * 여백이 큰 원본을 썼을 때 배로 두드러졌다).
+ * <p>PNG 마다 투명 여백의 크기와 치우침이 달라, 캔버스 크기만 맞추면 그림이
+ * 제각각으로 보인다. 그래서 <b>캔버스가 아니라 그림(불투명 영역)</b> 기준으로
+ * 맞춘다. 3번 이미지가 지금 그려지는 모습 — 그림 세로 약 295px, 그림 오른쪽 끝이
+ * 화면 오른쪽에서 약 85px — 을 목표로 두고, 나머지는 각자의 여백만큼 되돌려
+ * 계산한 값이다.
  *
- * <p><b>지금은</b> 화면 폭과 무관하게 사이드바 폭(80px)보다 작은 음수로 고정한다.
- * FloatingSidebar 가 항상 그 위에 떠 있는 불투명 흰 배경이라, 이미지가 살짝
- * 사이드바 밑으로 파고들어도 잘려 보이지 않고, 오히려 배경색 여백이 완전히
- * 사라진다. 초광폭 모니터에서 이미지가 텍스트와 조금 멀어져 보일 수 있지만,
- * 여기서는 "사이드바 바로 앞 여백"을 없애는 쪽을 우선한다.
+ * <p>그래서 1·2번은 right 가 음수다. 화면 밖으로 나가는 것은 투명 여백뿐이고
+ * 부모가 overflow-hidden 이라 잘려도 보이지 않는다. "오른쪽에서 85px" 이라는
+ * 목표 자체는 FloatingSidebar(고정 80px 폭, 불투명 흰 배경) 바로 앞에서 그림이
+ * 끝나도록 잡은 것이다. 예전처럼 화면 폭에 비례해 이미지를 왼쪽으로 밀면, 넓은
+ * 화면에서 이미지와 사이드바 사이에 배경색 띠가 남아 어색했다.
+ *
+ * <p>이미지를 갈아 끼우면 여백 비율이 달라지므로 이 표도 다시 잡아야 한다.
+ * 갈아 끼운 뒤에는 새 PNG 의 불투명 영역(bbox)을 재서, 그림 세로가 295px 이
+ * 되도록 캔버스 크기를 줄이고 오른쪽 여백만큼 right 를 당기면 된다.
  */
-const IMAGE_RIGHT = 130
+const HERO_IMAGE_LAYOUT = [
+  { width: 613, height: 339, right: -51 },  // personal-hero1 — 여백이 오른쪽에 크다
+  { width: 579, height: 375, right: -44 },  // personal-hero2
+  { width: 621, height: 395, right: 80 },   // personal-hero3 — 기준
+]
 
 interface HeroCarouselProps {
   current: number
@@ -136,6 +142,7 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
   }, [paused, next])
 
   const slide = HERO_SLIDES[current]
+  const image = HERO_IMAGE_LAYOUT[current] ?? HERO_IMAGE_LAYOUT[HERO_IMAGE_LAYOUT.length - 1]
 
   return (
     <div className="relative w-full overflow-hidden transition-colors duration-700"
@@ -154,27 +161,16 @@ export default function HeroCarousel({ current, paused, onChangeTo, onPausedChan
       </div>
 
 
-            {/* 히어로 이미지 */}
+      {/* 히어로 이미지 — 크기·위치는 HERO_IMAGE_LAYOUT 이 정본이다. */}
       <div
         className="absolute -translate-y-1/2 pointer-events-none"
-        style={{
-          right: current === 0 ? 170 : current === 2 ? 80 : IMAGE_RIGHT,
-          top: HERO_HEIGHT / 2,
-        }}
+        style={{ right: image.right, top: HERO_HEIGHT / 2 }}
       >
         <Image
           src={`/images/personal-hero${current + 1}.png`}
           alt={slide.badge}
-          width={
-            current === 0 ? 544:
-            current === 1 ? 634 :
-            621
-          }
-          height={
-            current === 0 ? 344 :
-            current === 1 ? 402 :
-            395
-          }
+          width={image.width}
+          height={image.height}
           className="object-contain drop-shadow-lg"
           priority
         />
