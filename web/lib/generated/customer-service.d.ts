@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/internal/customers/{customerId}/transfer-limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getTransferLimit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/internal/transaction-approvals/verify": {
         parameters: {
             query?: never;
@@ -253,7 +269,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["register_3"];
+        post: operations["register_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -292,6 +308,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/banking/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_5"];
+        put?: never;
+        post: operations["register_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/favorites/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateOrder_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/favorites/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/banking/withdrawal-accounts": {
         parameters: {
             query?: never;
@@ -299,7 +363,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_4"];
         put?: never;
         post: operations["register_2"];
         delete?: never;
@@ -340,6 +404,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/branches/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["myReservations"];
+        put?: never;
+        post: operations["reserve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/branches/reservations/{reservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["cancel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cert/manage": {
         parameters: {
             query?: never;
@@ -347,7 +459,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -411,7 +523,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get: operations["list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -466,6 +578,54 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["setPrimary"];
+        trace?: never;
+    };
+    "/api/v1/customers/me/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["history"];
+        put?: never;
+        post: operations["record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/consents/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["terms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/me/consents/{consentId}/withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["withdraw_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/customers/me/devices": {
@@ -836,6 +996,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/internal/audience/{customerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["audience"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/internal/auth/{customerId}/events": {
         parameters: {
             query?: never;
@@ -846,6 +1022,22 @@ export interface paths {
         get: operations["getAuthEvents"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/authorization/employee": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["decide"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1556,6 +1748,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/deposit-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["subscribe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/deposit-alerts/{subscriptionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["unsubscribe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{notificationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1610,6 +1866,11 @@ export interface components {
             relationTypeCode?: string;
             representationScope?: string;
         };
+        ApiResponseAudienceResponse: {
+            code?: string;
+            data?: components["schemas"]["AudienceResponse"];
+            message?: string;
+        };
         ApiResponseAuthEventsResponse: {
             code?: string;
             data?: components["schemas"]["AuthEventsResponse"];
@@ -1618,6 +1879,11 @@ export interface components {
         ApiResponseAuthMethodResponse: {
             code?: string;
             data?: components["schemas"]["AuthMethodResponse"];
+            message?: string;
+        };
+        ApiResponseBranchReservationResponse: {
+            code?: string;
+            data?: components["schemas"]["BranchReservationResponse"];
             message?: string;
         };
         ApiResponseCertDetailResponse: {
@@ -1635,9 +1901,19 @@ export interface components {
             data?: components["schemas"]["ComplianceInfo"];
             message?: string;
         };
+        ApiResponseConsentResponse: {
+            code?: string;
+            data?: components["schemas"]["ConsentResponse"];
+            message?: string;
+        };
         ApiResponseCustomerDetailResponse: {
             code?: string;
             data?: components["schemas"]["CustomerDetailResponse"];
+            message?: string;
+        };
+        ApiResponseFavoriteTransferResponse: {
+            code?: string;
+            data?: components["schemas"]["FavoriteTransferResponse"];
             message?: string;
         };
         ApiResponseFdsDetectionResponse: {
@@ -1675,9 +1951,24 @@ export interface components {
             data?: components["schemas"]["AuthMethodResponse"][];
             message?: string;
         };
+        ApiResponseListBranchReservationResponse: {
+            code?: string;
+            data?: components["schemas"]["BranchReservationResponse"][];
+            message?: string;
+        };
+        ApiResponseListBranchResponse: {
+            code?: string;
+            data?: components["schemas"]["BranchResponse"][];
+            message?: string;
+        };
         ApiResponseListCertSummaryResponse: {
             code?: string;
             data?: components["schemas"]["CertSummaryResponse"][];
+            message?: string;
+        };
+        ApiResponseListConsentResponse: {
+            code?: string;
+            data?: components["schemas"]["ConsentResponse"][];
             message?: string;
         };
         ApiResponseListCustomerGradeHistory: {
@@ -1690,9 +1981,19 @@ export interface components {
             data?: components["schemas"]["CustomerStatusHistory"][];
             message?: string;
         };
+        ApiResponseListFavoriteTransferResponse: {
+            code?: string;
+            data?: components["schemas"]["FavoriteTransferResponse"][];
+            message?: string;
+        };
         ApiResponseListFdsRuleResponse: {
             code?: string;
             data?: components["schemas"]["FdsRuleResponse"][];
+            message?: string;
+        };
+        ApiResponseListNotificationResponse: {
+            code?: string;
+            data?: components["schemas"]["NotificationResponse"][];
             message?: string;
         };
         ApiResponseListPartyRelationResponse: {
@@ -1710,9 +2011,19 @@ export interface components {
             data?: components["schemas"]["RegisteredDeviceResponse"][];
             message?: string;
         };
+        ApiResponseListSubscriptionResponse: {
+            code?: string;
+            data?: components["schemas"]["SubscriptionResponse"][];
+            message?: string;
+        };
         ApiResponseListTaxResidencyResponse: {
             code?: string;
             data?: components["schemas"]["TaxResidencyResponse"][];
+            message?: string;
+        };
+        ApiResponseListTermsTemplateResponse: {
+            code?: string;
+            data?: components["schemas"]["TermsTemplateResponse"][];
             message?: string;
         };
         ApiResponseListWithdrawalAccountResponse: {
@@ -1841,6 +2152,11 @@ export interface components {
             data?: components["schemas"]["SettingsResponse"];
             message?: string;
         };
+        ApiResponseSubscriptionResponse: {
+            code?: string;
+            data?: components["schemas"]["SubscriptionResponse"];
+            message?: string;
+        };
         ApiResponseTaxResidencyResponse: {
             code?: string;
             data?: components["schemas"]["TaxResidencyResponse"];
@@ -1871,6 +2187,11 @@ export interface components {
             data?: components["schemas"]["WithdrawalAccountResponse"];
             message?: string;
         };
+        AudienceResponse: {
+            band?: string;
+            /** Format: int64 */
+            customerId?: number;
+        };
         AuthEventsResponse: {
             /** Format: int64 */
             customerId?: number;
@@ -1891,6 +2212,48 @@ export interface components {
             /** Format: date-time */
             lastUsedAt?: string;
             primary?: boolean;
+        };
+        AuthorizationDecision: {
+            branchCode?: string;
+            decision?: string;
+            denyCode?: string;
+            /** Format: int64 */
+            employeeId?: number;
+            employeeName?: string;
+            role?: string;
+        };
+        AuthorizationRequest: {
+            action: string;
+            /** Format: int64 */
+            employeeId: number;
+            reason?: string;
+            resource: string;
+            targetCustomerId?: string;
+        };
+        BranchReservationResponse: {
+            /** Format: int64 */
+            branchId?: number;
+            branchName?: string;
+            contactPhone?: string;
+            memo?: string;
+            /** Format: int64 */
+            reservationId?: number;
+            /** Format: date-time */
+            reservedAt?: string;
+            statusCd?: string;
+            topicCd?: string;
+        };
+        BranchResponse: {
+            address?: string;
+            branchCode?: string;
+            /** Format: int64 */
+            branchId?: number;
+            branchName?: string;
+            branchType?: string;
+            closeTime?: string;
+            openTime?: string;
+            phone?: string;
+            region?: string;
         };
         CertDetailResponse: {
             certType?: string;
@@ -2021,6 +2384,38 @@ export interface components {
             /** Format: int32 */
             version?: number;
         };
+        ConsentRecordRequest: {
+            bizDivCd: string;
+            consentMethodCd: string;
+            /** Format: int64 */
+            consentTargetId?: number;
+            consentTool?: string;
+            items: components["schemas"]["Item"][];
+        };
+        ConsentResponse: {
+            agreed?: boolean;
+            /** Format: date-time */
+            agreedAt?: string;
+            bizDivCd?: string;
+            /** Format: int64 */
+            consentId?: number;
+            consentMethodCd?: string;
+            /** Format: int64 */
+            consentTargetId?: number;
+            effective?: boolean;
+            required?: boolean;
+            termsCategoryCd?: string;
+            termsName?: string;
+            termsNo?: string;
+            termsVersion?: string;
+            withdrawn?: boolean;
+            /** Format: date-time */
+            withdrawnAt?: string;
+            withdrawnReason?: string;
+        };
+        ConsentWithdrawRequest: {
+            reason: string;
+        };
         CorporateRegisterRequest: {
             bizItemCode: string;
             bizRegNo: string;
@@ -2036,6 +2431,15 @@ export interface components {
             phone: string;
             taxTypeCode: string;
             tradeName: string;
+        };
+        CreateBranchReservationRequest: {
+            /** Format: int64 */
+            branchId: number;
+            contactPhone: string;
+            memo?: string;
+            /** Format: date-time */
+            reservedAt: string;
+            topicCd: string;
         };
         CustomerDetailResponse: {
             address?: string;
@@ -2165,6 +2569,21 @@ export interface components {
             partyId?: number;
             partyName?: string;
         };
+        FavoriteTransferResponse: {
+            accountHolderName?: string;
+            accountNumber?: string;
+            alias?: string;
+            /** Format: int64 */
+            amount?: number;
+            bankCode?: string;
+            bankName?: string;
+            /** Format: int32 */
+            displayOrder?: number;
+            /** Format: int64 */
+            favoriteId?: number;
+            /** @enum {string} */
+            favoriteType?: "FAVORITE_ACCOUNT" | "QUICK_TRANSFER";
+        };
         FdsDetectionResponse: {
             /** Format: int64 */
             customerId?: number;
@@ -2260,6 +2679,10 @@ export interface components {
         InternetBankingCancelRequest: {
             currentPassword?: string;
         };
+        Item: {
+            agreed: boolean;
+            termsNo: string;
+        };
         JoinStatsResponse: {
             byChannel?: components["schemas"]["CodeCount"][];
             byGrade?: components["schemas"]["CodeCount"][];
@@ -2318,6 +2741,19 @@ export interface components {
             name?: string;
             phone?: string;
             zipCode?: string;
+        };
+        NotificationResponse: {
+            /** Format: date-time */
+            actionDueAt?: string;
+            body?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: int64 */
+            notificationId?: number;
+            read?: boolean;
+            referenceId?: string;
+            title?: string;
+            type?: string;
         };
         PageAccessLogResponse: {
             content?: components["schemas"]["AccessLogResponse"][];
@@ -2651,6 +3087,17 @@ export interface components {
             deviceOsVersion?: string;
             deviceTypeCode: string;
         };
+        RegisterFavoriteTransferRequest: {
+            accountHolderName?: string;
+            accountNumber: string;
+            alias: string;
+            /** Format: int64 */
+            amount?: number;
+            bankCode: string;
+            bankName: string;
+            /** @enum {string} */
+            favoriteType: "FAVORITE_ACCOUNT" | "QUICK_TRANSFER";
+        };
         RegisterPinRequest: {
             currentPassword: string;
             /** Format: int64 */
@@ -2757,6 +3204,25 @@ export interface components {
             newStatusCode?: string;
             previousStatusCode?: string;
         };
+        SubscribeRequest: {
+            accountNumber: string;
+            /** @enum {string} */
+            channel: "PUSH" | "SMS" | "EMAIL";
+            contact?: string;
+            /** Format: int64 */
+            minAmount?: number;
+        };
+        SubscriptionResponse: {
+            accountNumber?: string;
+            active?: boolean;
+            /** @enum {string} */
+            channel?: "PUSH" | "SMS" | "EMAIL";
+            contact?: string;
+            /** Format: int64 */
+            minAmount?: number;
+            /** Format: int64 */
+            subscriptionId?: number;
+        };
         TaxResidencyResponse: {
             foreignTin?: string;
             residentTypeCode?: string;
@@ -2766,6 +3232,16 @@ export interface components {
             taxResidencyId?: number;
             /** Format: int32 */
             withholdingRateBps?: number;
+        };
+        TermsTemplateResponse: {
+            description?: string;
+            required?: boolean;
+            termsCategoryCd?: string;
+            termsName?: string;
+            termsNo?: string;
+            /** Format: int64 */
+            termsTemplateId?: number;
+            termsVersion?: string;
         };
         TransactionApprovalIssueRequest: {
             amount: number;
@@ -2885,6 +3361,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HolderInfoResponse"];
+                };
+            };
+        };
+    };
+    getTransferLimit: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Caller-Service"?: string;
+            };
+            path: {
+                customerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferLimitResponse"];
                 };
             };
         };
@@ -3213,7 +3713,7 @@ export interface operations {
             };
         };
     };
-    register_3: {
+    register_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3285,7 +3785,109 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_5: {
+        parameters: {
+            query: {
+                type: "FAVORITE_ACCOUNT" | "QUICK_TRANSFER";
+            };
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListFavoriteTransferResponse"];
+                };
+            };
+        };
+    };
+    register_3: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterFavoriteTransferRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseFavoriteTransferResponse"];
+                };
+            };
+        };
+    };
+    updateOrder_1: {
+        parameters: {
+            query: {
+                type: "FAVORITE_ACCOUNT" | "QUICK_TRANSFER";
+            };
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    list_4: {
         parameters: {
             query?: never;
             header: {
@@ -3383,7 +3985,101 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    search: {
+        parameters: {
+            query?: {
+                keyword?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListBranchResponse"];
+                };
+            };
+        };
+    };
+    myReservations: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListBranchReservationResponse"];
+                };
+            };
+        };
+    };
+    reserve: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBranchReservationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseBranchReservationResponse"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                reservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    list_3: {
         parameters: {
             query?: never;
             header: {
@@ -3499,7 +4195,7 @@ export interface operations {
             };
         };
     };
-    list: {
+    list_2: {
         parameters: {
             query?: never;
             header: {
@@ -3591,6 +4287,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseAuthMethodResponse"];
+                };
+            };
+        };
+    };
+    history: {
+        parameters: {
+            query?: {
+                bizDivCd?: string;
+            };
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListConsentResponse"];
+                };
+            };
+        };
+    };
+    record: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentRecordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListConsentResponse"];
+                };
+            };
+        };
+    };
+    terms: {
+        parameters: {
+            query: {
+                bizDivCd: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListTermsTemplateResponse"];
+                };
+            };
+        };
+    };
+    withdraw_1: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                consentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentWithdrawRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseConsentResponse"];
                 };
             };
         };
@@ -4275,6 +5071,28 @@ export interface operations {
             };
         };
     };
+    audience: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                customerId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseAudienceResponse"];
+                };
+            };
+        };
+    };
     getAuthEvents: {
         parameters: {
             query?: {
@@ -4295,6 +5113,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseAuthEventsResponse"];
+                };
+            };
+        };
+    };
+    decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorizationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorizationDecision"];
                 };
             };
         };
@@ -5372,6 +6214,124 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseVerifyMobileAuthResponse"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListNotificationResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListSubscriptionResponse"];
+                };
+            };
+        };
+    };
+    subscribe: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscribeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseSubscriptionResponse"];
+                };
+            };
+        };
+    };
+    unsubscribe: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                subscriptionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    markRead: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Customer-Id": number;
+            };
+            path: {
+                notificationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseVoid"];
                 };
             };
         };

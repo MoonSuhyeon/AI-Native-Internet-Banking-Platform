@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/advisory/audit/quarantine/{advrId}/disposition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 격리 처분
+         * @description RELEASED(정상 판정) · REVIEW_REASSIGNED(재심사 배정) · AUDIT_REFERRED(감사부 조사 의뢰). 사유 필수. auditor/admin 권한. 격리 상태에서 한 번만 가능하며, 이미 처분됐으면 409.
+         */
+        post: operations["disposeQuarantine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/advisory/audit/risk-scores/top/bias": {
         parameters: {
             query?: never;
@@ -173,7 +193,7 @@ export interface paths {
         };
         /**
          * 리포트 목록
-         * @description 필터: targetReviewerId/revId/advisoryTypeCd/severityCd/advrStatusCd. reviewer 는 X-Actor-Role=REVIEWER 헤더로 호출 — 본인 대상 리포트만 노출.
+         * @description 필터: targetReviewerId/revId/advisoryTypeCd/severityCd/advrStatusCd. reviewer 권한이면 본인 대상 리포트만 노출 — 역할은 게이트웨이가 검증한 JWT 에서 온다.
          */
         get: operations["list_17"];
         put?: never;
@@ -253,7 +273,7 @@ export interface paths {
         };
         /**
          * 유사 과거 사례 검색
-         * @description 본 리포트와 유사 프로파일의 종결된 과거 심사 top-5 반환. reviewer 는 X-Actor-Role=REVIEWER 헤더 필수 — 본인 대상 리포트만 허용.
+         * @description 본 리포트와 유사 프로파일의 종결된 과거 심사 top-5 반환. reviewer 권한이면 본인 대상 리포트만 허용 — 역할은 게이트웨이가 검증한 JWT 에서 온다.
          */
         get: operations["similarCases"];
         put?: never;
@@ -3359,6 +3379,11 @@ export interface components {
             data?: components["schemas"]["PurgeExpiredDocumentsResponse"];
             message?: string;
         };
+        ApiResponseQuarantineReportResponse: {
+            code?: string;
+            data?: components["schemas"]["QuarantineReportResponse"];
+            message?: string;
+        };
         ApiResponseRateChangeApplyResponse: {
             code?: string;
             data?: components["schemas"]["RateChangeApplyResponse"];
@@ -4842,6 +4867,10 @@ export interface components {
             /** Format: int32 */
             scanned?: number;
         };
+        QuarantineDispositionRequest: {
+            disposition: string;
+            note: string;
+        };
         QuarantineReportResponse: {
             advisoryTypeCd?: string;
             /** Format: int64 */
@@ -5387,9 +5416,7 @@ export interface operations {
     opinionsByReport: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 advrId: number;
             };
@@ -5411,9 +5438,7 @@ export interface operations {
     opinionsByReviewer: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 reviewerId: number;
             };
@@ -5437,9 +5462,7 @@ export interface operations {
             query?: {
                 limit?: number;
             };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5459,9 +5482,7 @@ export interface operations {
     quarantinedReports: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5478,14 +5499,38 @@ export interface operations {
             };
         };
     };
+    disposeQuarantine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                advrId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuarantineDispositionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseQuarantineReportResponse"];
+                };
+            };
+        };
+    };
     topBias: {
         parameters: {
             query?: {
                 limit?: number;
             };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5507,9 +5552,7 @@ export interface operations {
             query?: {
                 limit?: number;
             };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5529,9 +5572,7 @@ export interface operations {
     riskScore: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 reviewerId: number;
             };
@@ -5559,9 +5600,7 @@ export interface operations {
                 severityCd?: string;
                 advrStatusCd?: string;
             };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5581,9 +5620,7 @@ export interface operations {
     get_17: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 advrId: number;
             };
@@ -5605,9 +5642,7 @@ export interface operations {
     ack_1: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 advrId: number;
             };
@@ -5633,9 +5668,7 @@ export interface operations {
     citations: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 advrId: number;
             };
@@ -5659,9 +5692,7 @@ export interface operations {
             query?: {
                 topK?: number;
             };
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 advrId: number;
             };
@@ -5683,9 +5714,7 @@ export interface operations {
     view: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 advrId: number;
             };
@@ -5707,9 +5736,7 @@ export interface operations {
     list_16: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5729,9 +5756,7 @@ export interface operations {
     update_1: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 ruleId: number;
             };
@@ -5757,9 +5782,7 @@ export interface operations {
     reviewerStats: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Actor-Role"?: string;
-            };
+            header?: never;
             path: {
                 reviewerId: number;
             };

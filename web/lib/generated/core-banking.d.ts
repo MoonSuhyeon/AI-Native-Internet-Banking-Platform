@@ -116,6 +116,22 @@ export interface paths {
         patch: operations["changeStatus_3"];
         trace?: never;
     };
+    "/accounts/{accountId}/termination-estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["terminationEstimate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/contracts": {
         parameters: {
             query?: never;
@@ -372,6 +388,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/interests/income-statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["incomeStatement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/interests/{interestId}": {
         parameters: {
             query?: never;
@@ -398,6 +430,22 @@ export interface paths {
         get: operations["list_6"];
         put?: never;
         post: operations["create_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payment-schedules/accounts/{accountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPaymentStatus"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -868,6 +916,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/transactions/certificates/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issueBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transactions/certificates/{certificateNo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["verify"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/transactions/deposit": {
         parameters: {
             query?: never;
@@ -964,6 +1044,38 @@ export interface paths {
         patch: operations["cancel"];
         trace?: never;
     };
+    "/transactions/{transactionId}/certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["history"];
+        put?: never;
+        post: operations["issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transactions/{transactionId}/memo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateMemo"];
+        trace?: never;
+    };
     "/v1/accounts/{accountNo}": {
         parameters: {
             query?: never;
@@ -1054,6 +1166,198 @@ export interface paths {
         get: operations["getBalance"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/banking/customers/{customerId}/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["accounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/banking/customers/{customerId}/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["contracts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/banking/customers/{customerId}/interest-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["interestHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/banking/customers/{customerId}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["transactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/banking/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["products"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/banking/special-terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["specialTerms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/ledger/loan-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["loanSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/loan-disbursements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["disburse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createInternalPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/payments/{paymentInstructionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPaymentDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/reconciliation/breaks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["breaks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/internal/reconciliation/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["run"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1253,6 +1557,22 @@ export interface components {
             /** Format: int64 */
             dailyWithdrawLimit?: number;
         };
+        AccountLine: {
+            accountAlias?: string;
+            /** Format: int64 */
+            accountId?: number;
+            accountNumber?: string;
+            /** Format: int64 */
+            incomeTax?: number;
+            /** Format: int64 */
+            interestAfterTax?: number;
+            /** Format: int64 */
+            interestBeforeTax?: number;
+            /** Format: int64 */
+            localIncomeTax?: number;
+            /** Format: int32 */
+            paymentCount?: number;
+        };
         AccountStatusUpdateRequest: {
             /** @enum {string} */
             accountStatus: "ACTIVE" | "DORMANT" | "SUSPENDED" | "CLOSED";
@@ -1340,6 +1660,27 @@ export interface components {
             totalInflow?: number;
             /** Format: int64 */
             totalOutflow?: number;
+        };
+        CertificateResponse: {
+            /** Format: int64 */
+            amount?: number;
+            /** Format: int64 */
+            balanceAfter?: number;
+            certificateNo?: string;
+            /** @enum {string} */
+            certificateType?: "RECEIPT" | "TRANSFER_CONFIRMATION";
+            counterpartyAccountNo?: string;
+            counterpartyBankName?: string;
+            counterpartyName?: string;
+            /** Format: int64 */
+            feeAmount?: number;
+            /** Format: date-time */
+            issuedAt?: string;
+            /** Format: date-time */
+            transactionAt?: string;
+            transactionMemo?: string;
+            transactionNumber?: string;
+            transactionType?: string;
         };
         Contract: {
             appliedTaxRate?: number;
@@ -1544,6 +1885,35 @@ export interface components {
             referenceNo?: string;
             transactionType?: string;
         };
+        EarlyTerminationEstimateResponse: {
+            /** Format: int64 */
+            accountId?: number;
+            accountNumber?: string;
+            appliedRate?: number;
+            contractRate?: number;
+            earlyTermination?: boolean;
+            /** Format: date */
+            estimatedOn?: string;
+            /** Format: int64 */
+            forgoneInterest?: number;
+            /** Format: int64 */
+            interestBeforeTax?: number;
+            /** Format: int64 */
+            interestIfHeldToMaturity?: number;
+            /** Format: date */
+            maturityAt?: string;
+            /** Format: int64 */
+            netAmount?: number;
+            /** Format: int64 */
+            principal?: number;
+            rateDescription?: string;
+            /** Format: date */
+            startedAt?: string;
+            /** Format: int64 */
+            taxAmount?: number;
+            taxRate?: number;
+            terminable?: boolean;
+        };
         HolderInfoResponse: {
             accountNo?: string;
             customerId?: string;
@@ -1603,6 +1973,21 @@ export interface components {
             /** Format: int64 */
             version?: number;
         };
+        InterestIncomeStatementResponse: {
+            accounts?: components["schemas"]["AccountLine"][];
+            /** Format: int32 */
+            taxYear?: number;
+            /** Format: int64 */
+            totalIncomeTax?: number;
+            /** Format: int64 */
+            totalInterestAfterTax?: number;
+            /** Format: int64 */
+            totalInterestBeforeTax?: number;
+            /** Format: int64 */
+            totalLocalIncomeTax?: number;
+            /** Format: int64 */
+            totalTaxAmount?: number;
+        };
         InterestPayRequest: {
             /** Format: int64 */
             accountId: number;
@@ -1623,6 +2008,17 @@ export interface components {
             /** @enum {string} */
             taxBenefitType?: "GENERAL" | "NON_TAXABLE" | "REDUCED_TAX";
         };
+        InterestRate: {
+            conditionDescription?: string;
+            /** Format: int32 */
+            maximumContractPeriod?: number;
+            /** Format: int32 */
+            minimumContractPeriod?: number;
+            rate?: number;
+            /** Format: int64 */
+            rateId?: number;
+            rateType?: string;
+        };
         InterestRateCreateRequest: {
             conditionDescription?: string;
             effectiveStartDate: string;
@@ -1641,6 +2037,118 @@ export interface components {
         InterestRateUpdateRequest: {
             effectiveEndDate?: string;
             rate: number;
+        };
+        InternalAccountSummary: {
+            accountAlias?: string;
+            /** Format: int64 */
+            accountId?: number;
+            accountNumber?: string;
+            accountStatus?: string;
+            accountType?: string;
+            /** Format: int64 */
+            balance?: number;
+            /** Format: date */
+            closedAt?: string;
+            currency?: string;
+            /** Format: date */
+            openedAt?: string;
+        };
+        InternalContractSummary: {
+            /** Format: int64 */
+            contractId?: number;
+            contractInterestRate?: number;
+            contractNumber?: string;
+            contractStatus?: string;
+            /** Format: int64 */
+            joinAmount?: number;
+            /** Format: date */
+            maturityAt?: string;
+            /** Format: int64 */
+            productId?: number;
+            productName?: string;
+            productType?: string;
+            /** Format: date */
+            startedAt?: string;
+        };
+        InternalInterestHistory: {
+            /** Format: int64 */
+            accountId?: number;
+            appliedInterestRate?: number;
+            /** Format: int64 */
+            contractId?: number;
+            /** Format: int64 */
+            interestAfterTaxAmount?: number;
+            /** Format: int64 */
+            interestAmount?: number;
+            /** Format: int64 */
+            interestId?: number;
+            /** Format: date-time */
+            paidAt?: string;
+        };
+        InternalPaymentRequest: {
+            channel?: string;
+            operation?: string;
+            receiverAccountNo?: string;
+            receiverBankCode?: string;
+            receiverHolderName?: string;
+            receiverMemo?: string;
+            receiverPassbookSenderDisplay?: string;
+            senderAccountId?: string;
+            senderMemo?: string;
+            /** Format: int64 */
+            transferAmount?: number;
+        };
+        InternalProductCatalogEntry: {
+            baseInterestRate?: number;
+            depositType?: string;
+            description?: string;
+            interestRates?: components["schemas"]["InterestRate"][];
+            isAutoRenewalAvailable?: boolean;
+            isCompoundInterest?: boolean;
+            isEarlyTerminationAllowed?: boolean;
+            isPassbookIssued?: boolean;
+            isTaxBenefitAvailable?: boolean;
+            /** Format: int64 */
+            maxJoinAmount?: number;
+            /** Format: int32 */
+            maxPeriodMonth?: number;
+            /** Format: int64 */
+            minJoinAmount?: number;
+            /** Format: int32 */
+            minPeriodMonth?: number;
+            preferentialRateCondition?: string;
+            /** Format: int64 */
+            productId?: number;
+            productName?: string;
+            productType?: string;
+            targetGroups?: components["schemas"]["TargetGroup"][];
+        };
+        InternalSpecialTerm: {
+            isRequired?: boolean;
+            specialTermContent?: string;
+            /** Format: int64 */
+            specialTermId?: number;
+            specialTermName?: string;
+            specialTermSummary?: string;
+            status?: string;
+        };
+        InternalTransactionSummary: {
+            /** Format: int64 */
+            accountId?: number;
+            /** Format: int64 */
+            amount?: number;
+            /** Format: int64 */
+            balanceAfter?: number;
+            directionType?: string;
+            internalTransfer?: boolean;
+            memo?: string;
+            status?: string;
+            /** Format: date-time */
+            transactionAt?: string;
+            /** Format: int64 */
+            transactionId?: number;
+            transactionNumber?: string;
+            transactionType?: string;
         };
         JoinChannelRequest: {
             /** @enum {string} */
@@ -1664,6 +2172,31 @@ export interface components {
             monthlyUsed?: number;
             /** Format: int64 */
             perTxLimit?: number;
+        };
+        LoanDisbursementRequest: {
+            accountNo?: string;
+            /** Format: int64 */
+            amount?: number;
+            memo?: string;
+        };
+        LoanDisbursementResponse: {
+            /** Format: int64 */
+            balanceAfter?: number;
+            journalNo?: string;
+        };
+        LoanLedgerSummary: {
+            baseDate?: string;
+            /** Format: int64 */
+            disbursedAmount?: number;
+            /** Format: int32 */
+            disbursedCount?: number;
+            /** Format: int64 */
+            repaidAmount?: number;
+            /** Format: int32 */
+            repaidCount?: number;
+        };
+        MemoUpdateRequest: {
+            memo?: string;
         };
         OperatorCancelRequest: {
             operatorId?: string;
@@ -1705,6 +2238,26 @@ export interface components {
             sort?: components["schemas"]["SortObject"][];
             unpaged?: boolean;
         };
+        PaymentDetailResponse: {
+            /** Format: int64 */
+            amount?: number;
+            businessDate?: string;
+            channel?: string;
+            /** Format: date-time */
+            completedAt?: string;
+            intraBank?: boolean;
+            paymentInstructionId?: string;
+            receiverAccountNo?: string;
+            receiverBankCode?: string;
+            receiverHolderName?: string;
+            /** Format: date-time */
+            requestedAt?: string;
+            routingNetworkType?: string;
+            senderAccountNo?: string;
+            senderUserId?: string;
+            status?: string;
+            transactionNo?: string;
+        };
         PaymentRequest: {
             channel?: string;
             receiverAccountNo?: string;
@@ -1720,7 +2273,12 @@ export interface components {
         PaymentResponse: {
             /** Format: date-time */
             completedAt?: string;
+            delayReasons?: string[];
+            /** Format: date-time */
+            delayedUntil?: string;
             failureCategory?: string;
+            guidance?: components["schemas"]["RiskGuidance"];
+            journalNo?: string;
             paymentInstructionId?: string;
             status?: string;
             transactionNo?: string;
@@ -1848,6 +2406,7 @@ export interface components {
             minJoinAmount?: number;
             /** Format: int32 */
             minPeriodMonth?: number;
+            preferentialRateCondition?: string;
             /** Format: int64 */
             productId?: number;
             productName?: string;
@@ -1921,6 +2480,47 @@ export interface components {
             productType?: string;
             reason?: string;
         };
+        ReconciliationBreakRow: {
+            breakType?: string;
+            businessDate?: string;
+            detail?: string;
+            /** Format: int64 */
+            externalAmount?: number;
+            externalStatus?: string;
+            /** Format: date-time */
+            firstDetectedAt?: string;
+            /** Format: int64 */
+            internalAmount?: number;
+            /** Format: date-time */
+            lastDetectedAt?: string;
+            network?: string;
+            paymentInstructionId?: string;
+            /** Format: int64 */
+            reconciliationBreakId?: number;
+            resolutionNote?: string;
+            resolutionStatus?: string;
+        };
+        RiskGuidance: {
+            actionSteps?: string[];
+            choices?: string[];
+            evidence?: string[];
+            headline?: string;
+        };
+        Round: {
+            /** Format: int64 */
+            actualAmount?: number;
+            autoTransfer?: boolean;
+            /** Format: date-time */
+            paidAt?: string;
+            /** Format: int32 */
+            paymentRound?: number;
+            /** Format: int64 */
+            scheduledAmount?: number;
+            /** Format: date */
+            scheduledDate?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "PAID" | "OVERDUE" | "FAILED" | "SUSPENDED";
+        };
         SavingsPaymentRequest: {
             /** Format: int64 */
             accountId: number;
@@ -1932,6 +2532,30 @@ export interface components {
             contractId: number;
             /** Format: int32 */
             paymentRound: number;
+        };
+        SavingsPaymentStatusResponse: {
+            /** Format: int64 */
+            accountId?: number;
+            /** Format: int64 */
+            contractId?: number;
+            contractNumber?: string;
+            /** Format: date */
+            maturityAt?: string;
+            /** Format: int32 */
+            missedRounds?: number;
+            /** Format: int64 */
+            monthlyAmount?: number;
+            /** Format: date */
+            nextScheduledDate?: string;
+            /** Format: int32 */
+            paidRounds?: number;
+            rounds?: components["schemas"]["Round"][];
+            /** Format: date */
+            startedAt?: string;
+            /** Format: int64 */
+            totalPaidAmount?: number;
+            /** Format: int32 */
+            totalRounds?: number;
         };
         SavingsProduct: {
             /** Format: date-time */
@@ -2161,6 +2785,7 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             currency?: string;
+            customerMemo?: string;
             delegateCustomerId?: string;
             delegateCustomerName?: string;
             depositorCustomerId?: string;
@@ -2210,6 +2835,24 @@ export interface components {
             transferRequestedAt?: string;
             /** @enum {string} */
             transferType?: "INTERNAL" | "EXTERNAL" | "AUTO" | "SCHEDULED";
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: int64 */
+            version?: number;
+        };
+        TransactionCertificate: {
+            /** Format: int64 */
+            certificateId?: number;
+            certificateNo?: string;
+            /** @enum {string} */
+            certificateType?: "RECEIPT" | "TRANSFER_CONFIRMATION";
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            issuedAt?: string;
+            issuedToCustomerId?: string;
+            /** Format: int64 */
+            transactionId?: number;
             /** Format: date-time */
             updatedAt?: string;
             /** Format: int64 */
@@ -2473,6 +3116,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Account"];
+                };
+            };
+        };
+    };
+    terminationEstimate: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Customer-Id"?: string;
+            };
+            path: {
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EarlyTerminationEstimateResponse"];
                 };
             };
         };
@@ -2886,7 +3553,9 @@ export interface operations {
     terminate: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Customer-Id"?: string;
+            };
             path: {
                 contractId: number;
             };
@@ -3067,6 +3736,30 @@ export interface operations {
             };
         };
     };
+    incomeStatement: {
+        parameters: {
+            query: {
+                taxYear: number;
+            };
+            header?: {
+                "X-Customer-Id"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterestIncomeStatementResponse"];
+                };
+            };
+        };
+    };
     get_5: {
         parameters: {
             query?: never;
@@ -3129,6 +3822,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TargetGroup"];
+                };
+            };
+        };
+    };
+    getPaymentStatus: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Customer-Id"?: string;
+            };
+            path: {
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavingsPaymentStatusResponse"];
                 };
             };
         };
@@ -4304,6 +5021,56 @@ export interface operations {
             };
         };
     };
+    issueBatch: {
+        parameters: {
+            query: {
+                type: "RECEIPT" | "TRANSFER_CONFIRMATION";
+            };
+            header?: {
+                "X-Customer-Id"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": number[];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificateResponse"][];
+                };
+            };
+        };
+    };
+    verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                certificateNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificateResponse"];
+                };
+            };
+        };
+    };
     deposit_1: {
         parameters: {
             query?: never;
@@ -4456,6 +5223,84 @@ export interface operations {
             };
         };
     };
+    history: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Customer-Id"?: string;
+            };
+            path: {
+                transactionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionCertificate"][];
+                };
+            };
+        };
+    };
+    issue: {
+        parameters: {
+            query: {
+                type: "RECEIPT" | "TRANSFER_CONFIRMATION";
+            };
+            header?: {
+                "X-Customer-Id"?: string;
+            };
+            path: {
+                transactionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificateResponse"];
+                };
+            };
+        };
+    };
+    updateMemo: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Customer-Id"?: string;
+            };
+            path: {
+                transactionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemoUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Transaction"];
+                };
+            };
+        };
+    };
     getAccount: {
         parameters: {
             query?: never;
@@ -4503,8 +5348,8 @@ export interface operations {
     deposit: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Idempotency-Key"?: string;
+            header: {
+                "X-Idempotency-Key": string;
             };
             path?: never;
             cookie?: never;
@@ -4529,8 +5374,8 @@ export interface operations {
     withdraw: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Idempotency-Key"?: string;
+            header: {
+                "X-Idempotency-Key": string;
             };
             path?: never;
             cookie?: never;
@@ -4555,8 +5400,8 @@ export interface operations {
     cancelWithdraw: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Idempotency-Key"?: string;
+            header: {
+                "X-Idempotency-Key": string;
             };
             path?: never;
             cookie?: never;
@@ -4596,6 +5441,317 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseBalanceResponse"];
+                };
+            };
+        };
+    };
+    accounts: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Employee-Id"?: string;
+                "X-Customer-Id"?: string;
+                "X-Internal-Service"?: string;
+                "X-Access-Reason"?: string;
+                "X-Trace-Id"?: string;
+            };
+            path: {
+                customerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalAccountSummary"][];
+                };
+            };
+        };
+    };
+    contracts: {
+        parameters: {
+            query?: {
+                contractStatus?: "ACTIVE" | "MATURED" | "TERMINATED" | "SUSPENDED";
+            };
+            header?: {
+                "X-Employee-Id"?: string;
+                "X-Customer-Id"?: string;
+                "X-Internal-Service"?: string;
+                "X-Access-Reason"?: string;
+                "X-Trace-Id"?: string;
+            };
+            path: {
+                customerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalContractSummary"][];
+                };
+            };
+        };
+    };
+    interestHistory: {
+        parameters: {
+            query?: {
+                size?: number;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
+                "X-Customer-Id"?: string;
+                "X-Internal-Service"?: string;
+                "X-Access-Reason"?: string;
+                "X-Trace-Id"?: string;
+            };
+            path: {
+                customerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalInterestHistory"][];
+                };
+            };
+        };
+    };
+    transactions: {
+        parameters: {
+            query?: {
+                size?: number;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
+                "X-Customer-Id"?: string;
+                "X-Internal-Service"?: string;
+                "X-Access-Reason"?: string;
+                "X-Trace-Id"?: string;
+            };
+            path: {
+                customerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalTransactionSummary"][];
+                };
+            };
+        };
+    };
+    products: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalProductCatalogEntry"][];
+                };
+            };
+        };
+    };
+    specialTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalSpecialTerm"][];
+                };
+            };
+        };
+    };
+    loanSummary: {
+        parameters: {
+            query: {
+                baseDate: string;
+            };
+            header?: {
+                "X-Internal-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanLedgerSummary"];
+                };
+            };
+        };
+    };
+    disburse: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Idempotency-Key": string;
+                "X-Internal-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoanDisbursementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanDisbursementResponse"];
+                };
+            };
+        };
+    };
+    createInternalPayment: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Idempotency-Key": string;
+                "X-Internal-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InternalPaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentResponse"];
+                };
+            };
+        };
+    };
+    getPaymentDetail: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Internal-Token"?: string;
+            };
+            path: {
+                paymentInstructionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentDetailResponse"];
+                };
+            };
+        };
+    };
+    breaks: {
+        parameters: {
+            query: {
+                businessDate: string;
+                network?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationBreakRow"][];
+                };
+            };
+        };
+    };
+    run: {
+        parameters: {
+            query: {
+                businessDate: string;
+                network?: string;
+            };
+            header?: {
+                "X-Employee-Id"?: string;
+                "X-User-Role"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: Record<string, never>;
+                    };
                 };
             };
         };
