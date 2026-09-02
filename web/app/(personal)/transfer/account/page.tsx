@@ -9,6 +9,24 @@ import FavoriteManageModal from '@/components/transfer/FavoriteManageModal'
 import { fetchFavorites, type FavoriteTransfer, type FavoriteType } from '@/lib/banking-api'
 import { fetchDepositAccountViewModels, getCurrentDepositCustomerId, DepositViewAccount, fetchTransactions, DepositTransaction } from '@/lib/deposit-api'
 
+/**
+ * 홈 "시연 2 · 위험 안내 받기" 로 들어왔을 때 미리 채우는 값과 조건 안내.
+ *
+ * <p>위험 안내는 신호 둘이 쌓여야 뜬다 — 짧은 시간 내 반복 이체(fds 기본값 5건
+ * 초과)와 1천만원 이상 고액. 조건을 모르면 이 화면을 평범한 이체 폼으로 보고
+ * 지나가므로, <b>안내를 이 화면에서</b> 한다. 홈 카드에 적으면 그 칸만 두 줄이
+ * 되어 띠가 두꺼워지고, 정작 읽어야 할 자리에서는 다시 안 보인다.
+ *
+ * <p>받는 계좌는 시드된 데모 계좌이고 금액은 촬영 대본과 같은 값이다. 심사자가
+ * 채워야 할 칸이 남아 있으면 그 자리에서 시연이 끊긴다.
+ */
+const DEMO_RISK_PRESET = {
+  to: '001-2000-0000017',
+  bank: 'AXful',
+  amount: '12000000',
+  notice: '소액을 여러 번 이체한 뒤 1천만원 이상을 시도하면 위험 안내가 표시됩니다.',
+}
+
 const AMOUNT_SHORTCUTS = ['100만', '50만', '10만', '5만', '1만', '전액', '정결']
 
 const labelCell = "px-4 py-3 text-[13px] font-semibold text-kb-text whitespace-nowrap w-[130px]"
@@ -33,6 +51,7 @@ export default function TransferAccountPage() {
   const [accounts, setAccounts] = useState<DepositViewAccount[]>([])
   const [recentAccounts, setRecentAccounts] = useState<{ bank: string; name: string; number: string }[]>([])
   const [validationMessage, setValidationMessage] = useState('')
+  const [demoNotice, setDemoNotice] = useState('')
 
   // 이체 즐겨찾기 — 자주쓰는계좌·단축이체. 등록/삭제 버튼에 핸들러가 없어
   // 두 탭 모두 영원히 "등록되어 있지 않습니다" 였다.
@@ -41,16 +60,24 @@ export default function TransferAccountPage() {
   })
   const [favoriteModal, setFavoriteModal] = useState<FavoriteType | null>(null)
 
-  // ?to=·?bank=·?amount= 로 받는 곳과 금액을 미리 채운다. 홈의 "위험 안내 받기"
-  // 시연이 이 경로로 들어온다 — 심사자가 채워야 할 칸이 남아 있으면 그 자리에서
-  // 시연이 끊긴다. 금액은 숫자만 받는다(입력 칸이 콤마를 스스로 붙인다).
   useEffect(() => {
-    const to     = searchParams.get('to')
-    const bank   = searchParams.get('bank')
-    const preset = searchParams.get('amount')
+    const to   = searchParams.get('to')
+    const bank = searchParams.get('bank')
     if (to)   setToAccount(to)
     if (bank) setToBank(bank)
-    if (preset && /^\d+$/.test(preset)) setAmount(preset)
+    // 홈 "위험 안내 받기" 로 들어온 경우. 받는 곳·금액을 채우고 조건을 알린다.
+    //
+    // 탭까지 같이 옮긴다. 기본 탭("내 계좌")은 내 계좌 목록에서 고르는 select 라,
+    // 값만 넣으면 목록에 없는 계좌라 화면에 아무것도 안 나타난다 — 심사자 눈에는
+    // 받는 곳이 비어 있는 것과 같다.
+    if (searchParams.get('demo') === 'risk') {
+      setInnerBankTab('own')
+      setOwnSubTab('direct')
+      setToBank(DEMO_RISK_PRESET.bank)
+      setToAccount(DEMO_RISK_PRESET.to)
+      setAmount(DEMO_RISK_PRESET.amount)
+      setDemoNotice(DEMO_RISK_PRESET.notice)
+    }
   }, [searchParams])
 
   useEffect(() => {
@@ -207,6 +234,19 @@ export default function TransferAccountPage() {
 
         <main className="flex-1 pl-8 pt-6 pb-12">
           <h1 className="text-[22px] font-bold text-kb-text mb-5">계좌이체</h1>
+
+          {demoNotice && (
+            <div className="rounded-xl px-4 py-3 mb-5 flex items-start gap-2.5 text-[13px]"
+              style={{ backgroundColor: KB_PRIMARY_BG, border: `1px solid ${KB_PRIMARY_BORDER}` }}>
+              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 flex-shrink-0 mt-0.5"
+                stroke={KB_PRIMARY} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <line x1="12" y1="8" x2="12" y2="13" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <p className="text-kb-text-body leading-relaxed">{demoNotice}</p>
+            </div>
+          )}
 
           {/* 수취인 탭 */}
           <div className="rounded-xl overflow-hidden mb-5" style={{ border: `1px solid ${KB_PRIMARY_BORDER}` }}>

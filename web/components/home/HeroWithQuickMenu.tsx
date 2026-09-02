@@ -39,13 +39,6 @@ type QuickMenu = {
   href?: string
   /** 챗봇을 열고 이 질문을 보내는 것 */
   ask?: string
-  /**
-   * 카드 아래 한 줄 설명. <b>눌러서 바로 보이지 않는 것</b>만 적는다.
-   *
-   * <p>위험 안내는 신호 둘(반복 이체 + 고액)이 쌓여야 뜬다. 조건을 모르면 이체
-   * 화면만 보고 지나가므로, 그 조건을 카드에 적는다.
-   */
-  hint?: string
 }
 
 /**
@@ -78,11 +71,11 @@ const QUICK_MENUS: QuickMenu[] = [
     ),
   },
   {
-    // 받는 계좌와 금액을 미리 채워 보낸다. 심사자가 채워야 할 칸이 남아 있으면
-    // 그 자리에서 시연이 끊긴다. 조사 큐에 남는 케이스도 대본과 같은 값이 된다.
+    // 이체 화면이 받는 계좌와 금액을 미리 채우고, 위험 안내가 뜨는 조건도 그 화면에서
+    // 안내한다. 카드에 조건을 적으면 이 칸만 두 줄이 되어 띠가 두꺼워지고, 정작
+    // 읽어야 할 자리(이체 화면)에서는 다시 안 보인다.
     step: '시연 2', label: '위험 안내 받기',
-    href: '/transfer/account?to=001-2000-0000017&bank=AXful&amount=12000000',
-    hint: '소액을 여러 번 이체한 뒤 1천만원 이상을 시도하면 위험 안내가 표시됩니다',
+    href: '/transfer/account?demo=risk',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 3l9 16H3l9-16z"/>
@@ -161,9 +154,6 @@ export default function HeroWithQuickMenu() {
                       {menu.step}
                     </span>
                     <p className="text-[18px] font-semibold text-kb-text group-hover:text-kb-primary transition-colors whitespace-nowrap">{menu.label}</p>
-                    {menu.hint && (
-                      <p className="text-[11px] leading-snug text-kb-text-muted max-w-[190px]">{menu.hint}</p>
-                    )}
                   </div>
                 </>
               )

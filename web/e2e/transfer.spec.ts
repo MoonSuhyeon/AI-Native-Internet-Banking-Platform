@@ -35,3 +35,19 @@ test('계좌이체 페이지가 렌더되고 금액 입력이 동작한다', asy
   await amount.fill('10000')
   await expect(amount).toHaveValue('10,000')
 })
+
+/**
+ * 홈 "시연 2 · 위험 안내 받기" 로 들어온 경우.
+ *
+ * <p>위험 안내는 신호 둘(반복 이체 + 고액)이 쌓여야 뜬다. 조건을 모르면 이 화면을
+ * 평범한 이체 폼으로 보고 지나가므로, 화면이 조건을 알리고 받는 곳·금액을 미리
+ * 채운다. <b>받는 곳은 탭까지 옮겨야 보인다</b> — 기본 탭은 내 계좌 목록에서 고르는
+ * select 라 값만 넣으면 화면에 아무것도 나타나지 않는다. 그 함정을 여기서 막는다.
+ */
+test('?demo=risk 로 들어오면 조건 안내와 함께 받는 곳·금액이 채워진다', async ({ page }) => {
+  await page.goto('/transfer/account?demo=risk')
+
+  await expect(page.getByText('소액을 여러 번 이체한 뒤 1천만원 이상')).toBeVisible()
+  await expect(page.getByPlaceholder('AXful Bank 계좌번호 입력')).toHaveValue('001-2000-0000017')
+  await expect(page.getByPlaceholder('0').first()).toHaveValue('12,000,000')
+})
