@@ -1,9 +1,8 @@
 ﻿'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import HeroCarousel from './HeroCarousel'
-import { KB_PRIMARY, KB_PRIMARY_BG } from '@/lib/theme'
 
 /**
  * 홈 퀵메뉴.
@@ -128,32 +127,6 @@ export default function HeroWithQuickMenu() {
   const [current, setCurrent] = useState(0)
   const [paused, setPaused] = useState(false)
 
-  /**
-   * 구석의 "시나리오 체험" 버튼(ScenarioLauncher)이 이 자리로 보낸다.
-   *
-   * <p>스크롤만 하면 화면이 조금 움직였을 뿐이라 어디를 보라는 건지 알기 어렵다.
-   * 그래서 도착한 자리를 잠깐 테두리로 표시한다. 계속 켜 두지 않는 이유는, 시연이
-   * 아닌 사람에게는 평범한 메뉴여야 하기 때문이다.
-   */
-  const [highlight, setHighlight] = useState(false)
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>
-    function show() {
-      document.getElementById('demo-scenario')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      setHighlight(true)
-      clearTimeout(timer)
-      timer = setTimeout(() => setHighlight(false), 2400)
-    }
-    // 다른 화면에서 넘어온 경우 — 해시를 달고 들어온다.
-    if (window.location.hash === '#demo-scenario') show()
-    // 이 화면에 이미 있는 경우 — 버튼이 이벤트로 알린다.
-    window.addEventListener('axful:show-scenario', show)
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('axful:show-scenario', show)
-    }
-  }, [])
-
   return (
     <>
       <HeroCarousel
@@ -164,15 +137,7 @@ export default function HeroWithQuickMenu() {
       />
 
       {/* 퀵메뉴 */}
-      {/*
-        강조는 클래스가 아니라 인라인 스타일로 준다. bg-white 와 강조색이 같은 급의
-        규칙이라 클래스로 덮으면 어느 쪽이 이길지 빌드 순서에 달린다.
-      */}
-      <section
-        id="demo-scenario"
-        className="relative z-10 bg-white shadow-sm border-b border-gray-100 scroll-mt-24 transition-all duration-500"
-        style={highlight ? { backgroundColor: KB_PRIMARY_BG, boxShadow: `inset 0 0 0 2px ${KB_PRIMARY}` } : undefined}
-      >
+      <section className="relative z-10 bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-kb-container mx-auto">
           <div className="grid grid-cols-4">
             {QUICK_MENUS.map((menu, idx) => {

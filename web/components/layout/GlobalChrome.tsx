@@ -1,9 +1,8 @@
-﻿'use client'
+'use client'
 
 import { usePathname } from 'next/navigation'
 import FloatingSidebar from '@/components/layout/FloatingSidebar'
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
-import ScenarioLauncher from '@/components/home/ScenarioLauncher'
 import { DEPLOYED } from '@/lib/deployed-services'
 
 /**
@@ -19,8 +18,6 @@ export default function GlobalChrome() {
   return (
     <>
       <FloatingSidebar />
-      {/* 시연 진입점. 본문을 어지르지 않도록 구석에 둔다 — 누르면 홈 퀵메뉴로 간다. */}
-      <ScenarioLauncher />
       {/*
         챗봇은 상담 서비스(consultation-service)를 부른다. 그 서비스가 배포에 없으면
         위젯은 열리는데 답이 오지 않는다 — 없는 것보다 나쁜 상태다. 사용자는 자기가
