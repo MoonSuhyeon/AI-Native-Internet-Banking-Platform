@@ -144,11 +144,10 @@ interface HeroImageSource {
 const HERO_IMAGE_SOURCES: HeroImageSource[] = [
   // 1번은 왼쪽 아래로 기운 대각선 구도라, 기본 세로(295)로 두면 옆 슬라이드보다
   // 작아 보이고 배경 원이 그림 밖으로 삐져나와 얼룩처럼 남는다. 세로만 키우고
-  // 가로는 기본 기준선(2번과 같은 중심)을 그대로 쓴다. 캔버스(425px)가 히어로
-  // 높이보다 큰데, 밖으로 나가는 것은 위아래 투명 여백뿐이고 그림은 안 잘린다.
+  // 가로는 기본 기준선(2번과 같은 중심)을 그대로 쓴다.
   {
     canvas: { w: 579, h: 431 }, content: { left: 140, right: 516, top: 34, bottom: 394 },
-    contentHeight: 355,
+    contentHeight: 330,
   },
   { canvas: { w: 621, h: 402 }, content: { left: 150, right: 482, top: 43, bottom: 359 } },
   // 3번은 그림이 캔버스를 가로로 꽉 채운 구도라 중심을 맞추면 왼쪽 끝이 텍스트를
