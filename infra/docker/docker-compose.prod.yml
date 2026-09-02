@@ -355,8 +355,12 @@ services:
       DEPOSIT_SERVICE_PORT: 8082
       LOAN_SERVICE_HOST: loan-service
       LOAN_SERVICE_PORT: 8083
+      # payment-service 가 별도 서비스이던 시절 8084 였다. core-banking 병합으로
+      # 지급·이체는 8082 안으로 들어왔고, 이 파일에만 옛 값이 남아 있었다 —
+      # 8084 에는 아무도 없어 /api/v1/payments/** 가 전부 502 로 떨어진다.
+      # 로컬 compose 는 이미 8082 다. 두 값이 갈라지면 서버에서만 조용히 깨진다.
       PAYMENT_SERVICE_HOST: core-banking
-      PAYMENT_SERVICE_PORT: 8084
+      PAYMENT_SERVICE_PORT: 8082
       # AI(auto-loan-review)·상담은 게이트웨이 미경유 구조 → 라우트 없음(의도적).
       # redis 는 api-gateway 가 사용하지 않음 → 미설정.
     # 호스트 포트를 열지 않는다. Caddy 가 유일한 외부 진입점이고, 게이트웨이를
