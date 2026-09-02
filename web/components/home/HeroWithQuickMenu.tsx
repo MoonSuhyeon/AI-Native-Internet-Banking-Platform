@@ -26,17 +26,12 @@ import HeroCarousel from './HeroCarousel'
  */
 type QuickMenu = {
   /**
-   * 순서 표시(①②③④). 라벨과 <b>합치지 않는다.</b>
+   * 화면에 뜨는 이름. <b>실제 금융 기능의 이름</b>으로 둔다.
    *
-   * <p>순서는 있어야 한다 — 넷은 기능 목록이 아니라 앞의 결과가 뒤의 입력이 되는
-   * 한 줄기다. 다만 <b>"시연 N" 이라고 쓰지 않는다.</b> 그렇게 쓰는 순간 화면이
-   * 은행이 아니라 데모 프로토타입으로 읽힌다. 라벨도 "무엇을 보여줄 것인가"가
-   * 아니라 <b>실제 금융 기능의 이름</b>으로 둔다.
-   *
-   * <p>필드를 나눠 두는 이유는 따로 있다 — 라벨에 순서를 합치면 라벨을 읽는 검사
-   * (AiMenuBackingTest)가 항목을 못 읽는다.
+   * <p>예전에는 "시연 1~4" 라는 순서표가 라벨 위에 붙어 있었다. 넷이 한 줄기인 것은
+   * 맞지만, 번호를 달아 두면 은행 화면이 아니라 데모 프로토타입으로 읽힌다. 순서는
+   * 왼쪽에서 오른쪽 배치로만 남긴다.
    */
-  step: string
   label: string
   icon: React.ReactNode
   /** 링크로 가는 것 */
@@ -63,7 +58,7 @@ type QuickMenu = {
  */
 export const QUICK_MENUS: QuickMenu[] = [
   {
-    step: '①', label: '이체',
+    label: '이체',
     href: '/transfer/account',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -78,7 +73,7 @@ export const QUICK_MENUS: QuickMenu[] = [
     // 이체 화면이 받는 계좌와 금액을 미리 채우고, 위험 안내가 뜨는 조건도 그 화면에서
     // 안내한다. 카드에 조건을 적으면 이 칸만 두 줄이 되어 띠가 두꺼워지고, 정작
     // 읽어야 할 자리(이체 화면)에서는 다시 안 보인다.
-    step: '②', label: '거래 위험 분석',
+    label: '거래 위험 분석',
     href: '/transfer/account?demo=risk',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -89,7 +84,7 @@ export const QUICK_MENUS: QuickMenu[] = [
     ),
   },
   {
-    step: '③', label: '보안 처리 내역',
+    label: '보안 처리 내역',
     href: '/inquiry/transactions',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -103,7 +98,7 @@ export const QUICK_MENUS: QuickMenu[] = [
   {
     // 조사 콘솔. 직원 전용이라 로그인하지 않았으면 가드가 관리자 로그인으로 보내고,
     // returnUrl 로 이 화면을 기억했다가 되돌려 준다.
-    step: '④', label: '이상거래 조사',
+    label: '이상거래 조사',
     href: '/admin/fraud',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -153,16 +148,11 @@ export default function HeroWithQuickMenu() {
                   <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-150">
                     {menu.icon}
                   </div>
-                  <div className="flex flex-col items-start gap-0.5">
-                    <span className="text-[12px] font-bold tracking-wide text-kb-text-muted group-hover:text-kb-primary transition-colors">
-                      {menu.step}
-                    </span>
-                    <p className="text-[18px] font-semibold text-kb-text group-hover:text-kb-primary transition-colors whitespace-nowrap">{menu.label}</p>
-                  </div>
+                  <p className="text-[18px] font-semibold text-kb-text group-hover:text-kb-primary transition-colors whitespace-nowrap">{menu.label}</p>
                 </>
               )
-              // 아이콘을 위가 아니라 <b>왼쪽</b>에 둔다. 라벨이 두 줄(순서·이름)이라
-              // 세로로 쌓으면 아이콘까지 세 층이 되어 띠가 두꺼워진다.
+              // 아이콘을 위가 아니라 <b>왼쪽</b>에 둔다. 세로로 쌓으면 띠가 그만큼
+              // 두꺼워지는데, 이 자리는 본문으로 넘어가는 길목이라 얇을수록 좋다.
               //
               // 세로 여백은 넉넉히 준다. 가로로 눕히면 내용 높이가 절반이 되는데
               // 여백까지 줄이면 띠가 눌린 것처럼 보인다 — 한 줄이던 시절의 높이가

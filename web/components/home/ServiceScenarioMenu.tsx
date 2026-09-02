@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { QUICK_MENUS } from './HeroWithQuickMenu'
-import { KB_MINT, KB_PRIMARY, KB_PRIMARY_BG } from '@/lib/theme'
+import { KB_MINT, KB_PRIMARY_BG } from '@/lib/theme'
 
 /**
  * 로그인 홈의 기능 탐색 줄.
@@ -29,7 +29,6 @@ export default function ServiceScenarioMenu() {
                 className="flex items-center gap-2.5 rounded-xl bg-white px-4 py-3 border transition-colors hover:bg-kb-primary-bg"
                 style={{ borderColor: `${KB_MINT}40` }}
               >
-                <span className="text-[13px] font-bold flex-shrink-0" style={{ color: KB_PRIMARY }}>{menu.step}</span>
                 <span className="text-[14px] font-semibold text-kb-text whitespace-nowrap">{menu.label}</span>
               </Link>
             ))}
