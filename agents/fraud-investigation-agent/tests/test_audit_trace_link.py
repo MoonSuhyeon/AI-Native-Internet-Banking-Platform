@@ -56,7 +56,7 @@ class TestTracingOff:
         monkeypatch.delenv("PHOENIX_ENABLED", raising=False)
 
         graph, config, _ = investigate(load_case("case_h1"), thread_id="inv-link-1")
-        approve_and_execute(graph, config, actor_roles=["FRAUD_OFFICER"], actor_id="9001")
+        approve_and_execute(graph, config, actor_roles=["ROLE_HQ_RISK"], actor_id="9001")
 
         execution = audit_log.of_kind(audit_mod.KIND_ACTION_EXECUTION)
         assert execution, "실행 기록이 없다"
@@ -67,7 +67,7 @@ class TestTracingOff:
         monkeypatch.delenv("PHOENIX_ENABLED", raising=False)
 
         graph, config, _ = investigate(load_case("case_h1"), thread_id="inv-link-2")
-        approve_and_execute(graph, config, actor_roles=["FRAUD_OFFICER"], actor_id="9001")
+        approve_and_execute(graph, config, actor_roles=["ROLE_HQ_RISK"], actor_id="9001")
 
         request = audit_log.of_kind(audit_mod.KIND_ACTION_EXECUTION)[0].request_json
         assert "inv-link-2" in request
@@ -88,7 +88,7 @@ class TestTraceIdShape:
         # "이 승인이 어느 조사에 대한 것인가" 를 잇지 못한다.
         graph, config, _ = investigate(load_case("case_h1"), thread_id="inv-link-3")
         state = approve_and_execute(
-            graph, config, actor_roles=["FRAUD_OFFICER"], actor_id="9001"
+            graph, config, actor_roles=["ROLE_HQ_RISK"], actor_id="9001"
         )
         audit_mod.record_investigation(state, case_name="case_h1")
 

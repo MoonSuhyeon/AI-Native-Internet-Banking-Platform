@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import AdminSidebar from '@/components/admin/AdminSidebar'
+import { AuditLogPanel, AuditScope } from '@/components/admin/fraud/AuditLogPanel'
 import {
-  listFraudCases, runInvestigation, approveInvestigation,
-  CaseSummary, InvestigateResponse, TraceStep, ApproveResponse,
+  listFraudCases, runInvestigation, approveInvestigation, listAuditLog,
+  CaseSummary, InvestigateResponse, TraceStep, ApproveResponse, AuditLogEntry,
   SCENARIO_LABEL, STATUS_LABEL, ACTION_LABEL, DECISIVE_LABEL, errMsg,
 } from '@/lib/fraud-agent-api'
 
@@ -52,6 +53,26 @@ export default function FraudInvestigationPage() {
   const [approveResult, setApproveResult]   = useState<ApproveResponse | null>(null)
   const [approving, setApproving]           = useState(false)
 
+  // 감사 로그 — 선택된 사건으로 좁히거나 전체 최신순.
+  const [auditEntries, setAuditEntries] = useState<AuditLogEntry[]>([])
+  const [loadingAudit, setLoadingAudit] = useState(false)
+  const [auditScope, setAuditScope]     = useState<AuditScope>('all')
+
+  const loadAudit = useCallback(async (scope: AuditScope, alertId?: string) => {
+    setLoadingAudit(true)
+    try {
+      setAuditEntries(await listAuditLog(scope === 'case' ? alertId : undefined))
+    } catch (e) {
+      setError(errMsg(e, '감사 로그 조회에 실패했습니다.'))
+    } finally {
+      setLoadingAudit(false)
+    }
+  }, [])
+
+  // 사건을 아직 안 골랐어도 전체 감사 로그는 볼 수 있어야 한다 — "조회" 화면이지
+  // 조사 부산물이 아니다.
+  useEffect(() => { loadAudit('all') }, [loadAudit])
+
   const loadCases = useCallback(async () => {
     setLoadingCases(true); setError(null)
     try {
@@ -68,9 +89,12 @@ export default function FraudInvestigationPage() {
 
   async function investigate(name: string) {
     setSelected(name); setRunning(true); setError(null)
-    setResult(null); setApproveResult(null)
+    setResult(null); setApproveResult(null); setAuditEntries([])
     try {
-      setResult(await runInvestigation(name))
+      const r = await runInvestigation(name)
+      setResult(r)
+      setAuditScope('case')
+      loadAudit('case', r.alert.id)
     } catch (e) {
       setError(errMsg(e, '조사 실행에 실패했습니다.'))
     } finally {
@@ -82,8 +106,11 @@ export default function FraudInvestigationPage() {
     if (!result) return
     setApproving(true); setError(null)
     try {
-      const roles = asFraudOfficer ? ['FRAUD_OFFICER'] : []
+      // 체크박스는 실제 권한을 주지 않는다 — 감사의 claimed_roles 로만 남고,
+      // 실제 발동 여부는 로그인 계정의 검증된 역할로 결정된다(게이트웨이 주입).
+      const roles = asFraudOfficer ? ['claimed:approver'] : []
       setApproveResult(await approveInvestigation(result.thread_id, roles, approved))
+      loadAudit(auditScope, result.alert.id)
     } catch (e) {
       setError(errMsg(e, '승인 처리에 실패했습니다.'))
     } finally {
@@ -214,12 +241,12 @@ export default function FraudInvestigationPage() {
                     <label className="flex items-center gap-2 text-[12px] text-gray-600">
                       <input type="checkbox" checked={asFraudOfficer}
                         onChange={e => setAsFraudOfficer(e.target.checked)} />
-                      FRAUD_OFFICER 권한 주장 (참고용 — 실제 발동 권한은 로그인 계정의 역할로 결정)
+                      승인 권한 주장 (참고용 — 실제 발동 권한은 로그인 계정의 역할로 결정)
                     </label>
                   </div>
                   <p className="text-[11px] text-gray-400 mb-3">
-                    지급정지·STR 은 FRAUD_OFFICER 역할로 로그인한 경우에만 실행됩니다.
-                    권한이 없으면 승인해도 해당 동작은 거부로 기록됩니다.
+                    지급정지·STR 은 컴플라이언스·리스크관리·운영·지점장 역할로 로그인한 경우에만
+                    실행됩니다. 권한이 없으면 승인해도 해당 동작은 거부로 기록됩니다.
                   </p>
                   <div className="flex gap-2">
                     <button onClick={() => approve(true)} disabled={approving}
@@ -251,6 +278,22 @@ export default function FraudInvestigationPage() {
                       </ul>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* 감사 로그 — AI 조사(권고)와 직원 판단(승인·실행)을 함께 조회한다.
+                  전체 로그를 훑어보거나 특정 사건을 딥링크로 열려면 독립 화면
+                  (/admin/fraud/audit)을 쓴다 — 여기는 지금 조사 중인 사건에 맞춰 좁힌다. */}
+              {!running && (
+                <div className="mt-4">
+                  <AuditLogPanel
+                    entries={auditEntries}
+                    loading={loadingAudit}
+                    scope={auditScope}
+                    caseAlertId={result?.alert.id}
+                    onScopeChange={s => { setAuditScope(s); loadAudit(s, result?.alert.id) }}
+                    onRefresh={() => loadAudit(auditScope, result?.alert.id)}
+                  />
                 </div>
               )}
             </div>

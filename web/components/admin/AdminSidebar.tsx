@@ -47,6 +47,10 @@ const EMPLOYEE_ROLES = [
 const CUSTOMER_VIEW = ['ROLE_COMPLIANCE', 'ROLE_HQ_REVIEWER', 'ROLE_HQ_RISK', 'ROLE_BRANCH_MANAGER', 'ROLE_DEPUTY_MANAGER', 'ROLE_TELLER']
 const AUDIT_VIEW    = ['ROLE_COMPLIANCE', 'ROLE_HQ_REVIEWER', 'ROLE_BRANCH_MANAGER', 'ROLE_TELLER']
 const HQ_DESK       = ['ROLE_COMPLIANCE', 'ROLE_HQ_REVIEWER', 'ROLE_HQ_RISK']
+// 이상거래 조사 콘솔 전용 — HQ_DESK + 지점장. 지점 거래도 지점장 책임 범위라 조사·승인
+// 권한이 있어야 한다(공모전 제출본의 테스트 계정 employee01=지점장). 다른 HQ_DESK 화면
+// (준법·심사, AI 심사지원)은 본사 전용으로 그대로 둔다 — 이 상수만 따로 둔다.
+const FRAUD_DESK     = [...HQ_DESK, 'ROLE_BRANCH_MANAGER']
 
 // 도메인(계) 블록 단위로 정렬한다. 같은 domain 끼리 연속 배치 → 렌더에서 도메인 헤더로 묶인다.
 const NAV: NavSection[] = [
@@ -83,9 +87,10 @@ const NAV: NavSection[] = [
     domain: '고객·인증보안계',
     // 이상거래 조사 에이전트(Python/LangGraph 사이드카) — 경쟁 가설 조사 + HITL 권고.
     section: '이상거래 조사', dot: 'bg-purple-400',
-    bankRoles: HQ_DESK,
+    bankRoles: FRAUD_DESK,
     items: [
       { label: '조사 에이전트', href: '/admin/fraud' },
+      { label: '감사 로그',     href: '/admin/fraud/audit' },
     ],
   },
 

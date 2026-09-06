@@ -31,8 +31,12 @@ from .hypotheses import CLOSE_THRESHOLD, CONFIRM_THRESHOLD
 from .tool_matrix import TOOL_MATRIX
 from .tracing import current_trace_id, investigation_span, trace_node
 
-# 동작별 필요 RBAC 역할 (목). 실서비스면 BankRole·hasAnyRole 게이팅.
-_REQUIRED_ROLE = "FRAUD_OFFICER"
+# 동작별 필요 RBAC 역할. common.BankRole.FDS_ROLES(컴플라이언스·리스크·운영·관리자)에
+# BRANCH_MANAGER 를 더한 집합이다 — 게이트웨이가 X-User-Role 로 넘기는 authority
+# 문자열(ROLE_ 접두어 포함)을 그대로 비교한다. 예전엔 시스템에 없는 역할명
+# (FRAUD_OFFICER)이라 어떤 계정으로도 통과할 수 없었다. BRANCH_MANAGER 는 지점
+# 거래도 지점장 책임 범위라 포함한다(제출본 테스트 계정 employee01=지점장).
+_REQUIRED_ROLES = {"ROLE_COMPLIANCE", "ROLE_HQ_RISK", "ROLE_OPS", "ROLE_ADMIN", "ROLE_BRANCH_MANAGER"}
 _GATED_ACTIONS = {ActionType.FREEZE_PAYMENT, ActionType.FILE_STR}
 
 
@@ -93,8 +97,8 @@ def build_graph(llm: LLMClient, case: Case, matrix: dict | None = None):
             return {"executed_actions": []}
         done: list[str] = []
         for a in rec.actions:
-            if a.type in _GATED_ACTIONS and _REQUIRED_ROLE not in state.actor_roles:
-                done.append(f"거부됨(RBAC): {a.type.value} — 필요 역할 {_REQUIRED_ROLE}")
+            if a.type in _GATED_ACTIONS and _REQUIRED_ROLES.isdisjoint(state.actor_roles):
+                done.append(f"거부됨(RBAC): {a.type.value} — 필요 역할 {'/'.join(sorted(_REQUIRED_ROLES))}")
                 continue
             if a.type == ActionType.NONE:
                 continue
@@ -176,7 +180,7 @@ def approve_and_execute(
     """사람 승인 후 재개. 승인 + RBAC 통과 시에만 execute_action 이 동작(목) 실행.
 
     ``actor_id`` 는 승인한 사람이다. 역할만으로는 "누가" 를 답할 수 없다 —
-    FRAUD_OFFICER 는 여럿이다. 없으면 감사에 NULL 로 남고, 그 NULL 이
+    게이팅 대상 역할(리스크·컴플라이언스 등)을 가진 직원은 여럿이다. 없으면 감사에 NULL 로 남고, 그 NULL 이
     "신원을 안 받고 있다"는 사실을 드러낸다.
     """
     graph.update_state(config, {"hitl_approved": approved, "actor_roles": actor_roles})

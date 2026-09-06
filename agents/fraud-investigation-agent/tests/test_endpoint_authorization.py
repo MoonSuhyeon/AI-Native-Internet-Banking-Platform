@@ -42,42 +42,40 @@ def client():
 
 # ── 막히는 경우 ──────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("call", ["cases", "investigate"])
+def _call(client, call, headers=None):
+    if call == "cases":
+        return client.get("/api/cases", headers=headers)
+    if call == "audit":
+        return client.get("/api/audit", headers=headers)
+    return client.post("/api/investigate", json={"transaction": _transaction()}, headers=headers)
+
+
+@pytest.mark.parametrize("call", ["cases", "investigate", "audit"])
 def test_신원_없이는_열리지_않는다(client, call):
-    resp = (client.get("/api/cases") if call == "cases"
-            else client.post("/api/investigate", json={"transaction": _transaction()}))
+    resp = _call(client, call)
 
     assert resp.status_code == 403
 
 
-@pytest.mark.parametrize("call", ["cases", "investigate"])
+@pytest.mark.parametrize("call", ["cases", "investigate", "audit"])
 def test_헤더를_손으로_붙여도_통하지_않는다(client, call):
     """사이드카가 8090 으로 열려 있는 한, 헤더만 신뢰하면 위조 방식만 바뀐다."""
-    headers = {"X-Employee-Id": "EMP999"}
-    resp = (client.get("/api/cases", headers=headers) if call == "cases"
-            else client.post("/api/investigate",
-                             json={"transaction": _transaction()}, headers=headers))
+    resp = _call(client, call, headers={"X-Employee-Id": "EMP999"})
 
     assert resp.status_code == 403
 
 
-@pytest.mark.parametrize("call", ["cases", "investigate"])
+@pytest.mark.parametrize("call", ["cases", "investigate", "audit"])
 def test_시크릿이_틀리면_거절한다(client, call):
-    headers = {"X-Gateway-Auth": GATEWAY_SECRET + "x", "X-Employee-Id": "EMP001"}
-    resp = (client.get("/api/cases", headers=headers) if call == "cases"
-            else client.post("/api/investigate",
-                             json={"transaction": _transaction()}, headers=headers))
+    resp = _call(client, call, headers={"X-Gateway-Auth": GATEWAY_SECRET + "x", "X-Employee-Id": "EMP001"})
 
     assert resp.status_code == 403
 
 
-@pytest.mark.parametrize("call", ["cases", "investigate"])
+@pytest.mark.parametrize("call", ["cases", "investigate", "audit"])
 def test_고객_토큰은_거절한다(client, call):
     """게이트웨이는 고객 토큰에도 헤더를 붙이되 빈 직원 ID 를 넣는다."""
-    headers = {"X-Gateway-Auth": GATEWAY_SECRET, "X-Employee-Id": ""}
-    resp = (client.get("/api/cases", headers=headers) if call == "cases"
-            else client.post("/api/investigate",
-                             json={"transaction": _transaction()}, headers=headers))
+    resp = _call(client, call, headers={"X-Gateway-Auth": GATEWAY_SECRET, "X-Employee-Id": ""})
 
     assert resp.status_code == 403
 
@@ -105,6 +103,15 @@ def test_게이트웨이가_주입한_신원이면_조사가_돈다(client):
 
     assert resp.status_code == 200
     assert resp.json()["hitl_pending"] is True
+
+
+def test_게이트웨이가_주입한_신원이면_감사_로그가_열린다(client):
+    """DSN 미설정 로컬(NoOp) 에서도 빈 목록으로 열려야 한다 — 조회가 깨진 것과
+    "기록이 아직 없다"를 구별할 수 있어야 한다."""
+    resp = client.get("/api/audit", headers=GATEWAY_HEADERS)
+
+    assert resp.status_code == 200
+    assert resp.json() == []
 
 
 # ── 공개로 남겨야 하는 것 ────────────────────────────────────────────────────

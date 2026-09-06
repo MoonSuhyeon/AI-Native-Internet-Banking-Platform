@@ -35,6 +35,16 @@ function IconMail() {
   )
 }
 
+function IconClipboard() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 4h6a1 1 0 011 1v1H8V5a1 1 0 011-1z" />
+      <rect x="5" y="5" width="14" height="16" rx="2" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
+  )
+}
+
 export default function ConsultModal({ onClose }: Props) {
   // 이메일상담 접수. 버튼이 있는데 접수할 곳이 없었다.
   const [emailOpen, setEmailOpen] = useState(false)
@@ -43,7 +53,7 @@ export default function ConsultModal({ onClose }: Props) {
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
         className="bg-white shadow-2xl"
-        style={{ width: 700, maxWidth: '95vw' }}
+        style={{ width: 860, maxWidth: '95vw' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -57,7 +67,7 @@ export default function ConsultModal({ onClose }: Props) {
           </span>
         </div>
 
-        {/* 카드 3개 */}
+        {/* 카드 4개 */}
         <div className="flex gap-3 p-4">
           {/* 전화상담 */}
           <div className="flex-1 bg-[#FAF8F2] border border-kb-border p-4 space-y-2">
@@ -122,6 +132,25 @@ export default function ConsultModal({ onClose }: Props) {
                 className="block border border-kb-border px-5 py-2 text-[12px] text-kb-text-body hover:bg-kb-beige transition-colors w-full text-left">
                 이메일상담하기
               </button>
+            </div>
+          </div>
+
+          {/* 이상거래 상담 처리 현황 */}
+          <div className="flex-1 bg-[#FAF8F2] border border-kb-border p-4 space-y-2">
+            <div className="flex items-center gap-2 text-kb-text mb-1">
+              <IconClipboard />
+              <span className="text-[15px] font-bold">상담 처리 현황</span>
+            </div>
+            <p className="text-[15px] font-bold" style={{ color: '#2563EB' }}>이상거래 상담</p>
+            <p className="text-[12px] text-kb-text-muted">접수번호로 확인</p>
+            <p className="text-[12px] text-kb-text-body leading-relaxed mt-2">
+              이체가 막혀 상담 요청하셨다면, 접수번호로 처리 현황을 확인하실 수 있습니다.
+            </p>
+            <div className="pt-3">
+              <Link href="/support/consultation/status" onClick={onClose}
+                className="block border border-kb-border px-5 py-2 text-[12px] text-kb-text-body hover:bg-kb-beige transition-colors w-full text-left">
+                처리 현황 조회
+              </Link>
             </div>
           </div>
         </div>

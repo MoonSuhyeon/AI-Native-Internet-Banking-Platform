@@ -8,6 +8,9 @@ CLI(run_investigation.py)와 **동일한 빌딩블록**(hypotheses·planner·too
   GET  /api/cases               — data/cases/*.json 목록(알림 요약)
   POST /api/investigate         — 한 사건 조사 → 트레이스 + 권고 + thread_id (HITL 대기)
   POST /api/approve             — 분석가 승인(+RBAC) → 동작 실행(목)
+  GET  /api/audit                — 감사 로그 조회(권고·실행 기록, 최신순)
+  POST /api/consult              — 고객이 막힌 이체를 상담 큐에 올림
+  GET  /api/consult/status       — 고객이 자기 상담 처리 현황을 확인(대기·검토중·완료)
 
 설계 원칙(CLAUDE.md)은 그대로다:
 - 결정적 사실(사망·후견)은 게이트가 가로채 즉시 종료(fail-closed). LLM 무관.
@@ -23,19 +26,19 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel, Field
 
 from . import hypotheses
+from .audit import list_recent as list_recent_audit
 from .audit import record_action_execution, record_investigation
 from .graph import (
     ACCOUNT_TOOLS,
     CLOSE_THRESHOLD,
     CONFIRM_THRESHOLD,
     _GATED_ACTIONS,
-    _REQUIRED_ROLE,
+    _REQUIRED_ROLES,
 )
 from .guidance import Guidance, lookup_audience, refine
 from .llm import get_llm_client
@@ -69,13 +72,11 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# 어드민 콘솔(Next.js dev: 3000/3001)에서 직접 호출. 운영이면 게이트웨이 뒤로.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS는 게이트웨이가 전담한다(application.yml globalcors). 이 사이드카는 호스트에
+# 포트를 열지 않고 fraud-internal 망에서 게이트웨이 요청만 받으므로 브라우저가
+# 직접 닿을 일이 없다 — 여기서 CORS 헤더를 또 붙이면 게이트웨이 것과 값이 달라
+# (allow_origins=["*"] vs 게이트웨이의 구체 오리진) 중복 Access-Control-Allow-Origin
+# 이 되어 브라우저가 응답 자체를 CORS 실패로 버린다(RETAIN_UNIQUE 는 값이 같을 때만 병합).
 
 # HITL — 권고는 서버가 보관하고, approve 는 thread_id 로만 참조한다(클라이언트가 보낸
 # 동작을 신뢰하지 않음). 단일 프로세스 PoC 라 인메모리. 실서비스면 체크포인터/DB.
@@ -403,6 +404,28 @@ def _require_employee(x_gateway_auth: str | None, x_employee_id: str | None) -> 
     return eid
 
 
+def _persist_auto_case(case: Case) -> None:
+    """탐지기(fds-detector)가 넘긴 실거래를 큐에도 남긴다.
+
+    **왜 필요한가.** 이 자리가 없으면 탐지기가 인계한 거래는 ``_run_trace`` 로
+    조사·권고까지 되고 감사에도 남지만, ``GET /api/cases`` 는 파일만 글롭하므로
+    아무도 볼 수 없는 조사 큐 밖 사건이 된다 — 조사는 됐는데 사람은 그 존재를
+    모르는, HITL 이 원천적으로 성립하지 않는 상태였다.
+
+    상담 요청(``/api/consult``)과 같은 방식으로 파일에 남긴다 — 큐가 파일 글롭
+    하나로 통일돼 있어야 두 경로가 다른 규칙으로 새지 않는다. 실패해도 방금 끝난
+    조사·감사 기록을 막지 않는다(파일 쓰기는 열람 편의이지 조사의 전제조건이 아니다).
+    """
+    try:
+        path = Path(CASES_DIR) / f"{case.name}.json"
+        path.write_text(
+            json.dumps(case.model_dump(mode="json"), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except OSError:
+        pass
+
+
 # --------------------------------------------------------------------------- #
 # 엔드포인트
 # --------------------------------------------------------------------------- #
@@ -481,6 +504,7 @@ def investigate(
 
     if req.transaction is not None:
         case = req.to_case()
+        _persist_auto_case(case)
     elif req.case:
         try:
             case = load_case(req.case)
@@ -706,10 +730,10 @@ def approve(
 
     done: list[str] = []
     for a in rec.actions:
-        if a.type in _GATED_ACTIONS and _REQUIRED_ROLE not in effective_roles:
+        if a.type in _GATED_ACTIONS and _REQUIRED_ROLES.isdisjoint(effective_roles):
             # 승인됐는데 실행되지 않은 것. 채택률만 보면 안 보이는 구멍이다.
             fraud_action_blocked_total.labels(action_type=a.type.value).inc()
-            done.append(f"거부됨(RBAC): {a.type.value} — 필요 역할 {_REQUIRED_ROLE}")
+            done.append(f"거부됨(RBAC): {a.type.value} — 필요 역할 {'/'.join(sorted(_REQUIRED_ROLES))}")
             continue
         if a.type == ActionType.NONE:
             continue
@@ -729,6 +753,52 @@ def approve(
     return ApproveResponse(
         thread_id=req.thread_id, approved=True, executed_actions=done
     )
+
+
+class AuditLogEntry(BaseModel):
+    """감사 로그 화면 1행. ``harness_audit_log`` 원본 컬럼을 그대로 옮긴다 —
+    화면이 요약하지 않는다. 요약은 화면 몫이고 여기는 조회 계약이다."""
+
+    alert_id: str
+    decision_kind: str
+    recorded_at: datetime
+    trace_id: str | None = None
+    actor_id: str | None = None
+    actor_roles: list[str] = Field(default_factory=list)
+    request: dict = Field(default_factory=dict)
+    output: dict = Field(default_factory=dict)
+
+
+@app.get("/api/audit", response_model=list[AuditLogEntry])
+def audit_log(
+    alert_id: str | None = None,
+    limit: int = 200,
+    x_employee_id: str | None = Header(default=None, alias="X-Employee-Id"),
+    x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+) -> list[AuditLogEntry]:
+    """감사 로그 조회 — 조사(RECOMMENDATION)와 승인 후 실행(ACTION_EXECUTION) 기록을
+    최신순으로 반환한다. 기록은 추가만 되므로(harness_audit_log 트리거) 여기 보이는
+    것이 전부다 — 화면 밖에서 고쳐진 값이 따로 없다.
+
+    ``alert_id`` 를 주면 그 사건 하나로 좁힌다. 직원만 볼 수 있다 — 행마다
+    고객 계좌·금액 등이 request/output 에 그대로 담긴다.
+    """
+    _require_employee(x_gateway_auth, x_employee_id)
+    limit = max(1, min(limit, 500))
+    entries = list_recent_audit(alert_id=alert_id, limit=limit)
+    return [
+        AuditLogEntry(
+            alert_id=e.subject_id,
+            decision_kind=e.decision_kind,
+            recorded_at=e.recorded_at,
+            trace_id=e.trace_id,
+            actor_id=e.actor_id,
+            actor_roles=json.loads(e.actor_roles or "[]"),
+            request=json.loads(e.request_json or "{}"),
+            output=json.loads(e.output_json or "{}"),
+        )
+        for e in entries
+    ]
 
 
 @app.get("/metrics")
@@ -812,6 +882,78 @@ def consult(
         raise HTTPException(status_code=503, detail="상담 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.")
 
     return ConsultResponse(case_id=case_id, queued=True)
+
+
+class ConsultStatusResponse(BaseModel):
+    """상담 처리 현황 — 고객 화면용. 시나리오명·위험 신호 같은 내부 조사 어휘는
+    감추고 세 상태(대기·검토중·완료)와 쉬운 한 문장으로만 알린다. 근거는
+    직원용 화면(/admin/fraud)의 몫이다."""
+
+    case_id: str
+    status: str  # PENDING | UNDER_REVIEW | RESOLVED
+    resolution: str | None = None  # RESOLVED 일 때만: CLEARED | RESTRICTED
+    message: str
+    amount: int
+    payee: str | None = None
+    submitted_at: datetime | None = None
+
+
+@app.get("/api/consult/status", response_model=ConsultStatusResponse)
+def consult_status(
+    case_id: str,
+    x_customer_id: str | None = Header(default=None, alias="X-Customer-Id"),
+    x_gateway_auth: str | None = Header(default=None, alias="X-Gateway-Auth"),
+) -> ConsultStatusResponse:
+    """상담 요청 이후 진행 상황 — 접수한 본인만 조회할 수 있다.
+
+    감사 로그(``/api/audit``)를 같은 ``alert_id``(=case_id)로 들여다본 뒤 세 상태로
+    번역한다: 기록이 없으면 대기, 권고(RECOMMENDATION)만 있으면 검토중, 승인 후
+    실행(ACTION_EXECUTION)까지 있으면 완료. "정상/제한"만 말하고 시나리오·위험
+    신호는 내보내지 않는다 — 그 어휘는 고객 화면의 몫이 아니다.
+    """
+    customer_id = _require_customer(x_gateway_auth, x_customer_id)
+
+    try:
+        case = load_case(case_id)
+    except (FileNotFoundError, OSError):
+        raise HTTPException(status_code=404, detail="상담 접수 내역을 찾을 수 없습니다.")
+
+    # 남의 사건 번호를 넣어 본 것과 없는 번호를 넣어 본 것이 같은 응답이어야 한다 —
+    # 존재 여부로 어느 쪽인지 알려주면 그 자체가 정보 노출이다.
+    if case.alert.customer_id != customer_id:
+        raise HTTPException(status_code=404, detail="상담 접수 내역을 찾을 수 없습니다.")
+
+    tx = case.alert.tx_context
+    entries = list_recent_audit(alert_id=case_id, limit=50)
+    execution = next((e for e in entries if e.decision_kind == "ACTION_EXECUTION"), None)
+    recommendation = next((e for e in entries if e.decision_kind == "RECOMMENDATION"), None)
+
+    if execution is not None:
+        executed = json.loads(execution.output_json or "{}").get("executed_actions") or []
+        restricted = any(str(a).startswith("실행(목)") for a in executed)
+        return ConsultStatusResponse(
+            case_id=case_id, status="RESOLVED",
+            resolution="RESTRICTED" if restricted else "CLEARED",
+            message=(
+                "확인 결과에 따라 거래가 제한되었습니다. 자세한 사항은 고객센터(1588-9999)로 문의해 주세요."
+                if restricted else
+                "정상 거래로 확인되었습니다. 다시 이체하실 수 있습니다."
+            ),
+            amount=tx.amount, payee=tx.payee, submitted_at=tx.time,
+        )
+
+    if recommendation is not None:
+        return ConsultStatusResponse(
+            case_id=case_id, status="UNDER_REVIEW",
+            message="조사가 완료되어 담당자 확인을 기다리고 있습니다.",
+            amount=tx.amount, payee=tx.payee, submitted_at=tx.time,
+        )
+
+    return ConsultStatusResponse(
+        case_id=case_id, status="PENDING",
+        message="상담 요청이 접수되었습니다. 담당자가 확인 중입니다.",
+        amount=tx.amount, payee=tx.payee, submitted_at=tx.time,
+    )
 
 
 @app.post("/api/guidance", response_model=GuidanceResponse)

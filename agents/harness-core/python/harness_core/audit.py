@@ -124,6 +124,16 @@ class AgentAuditLog(Protocol):
         """
         ...
 
+    def list_recent(
+        self, subject_type: str, subject_id: str | None = None, limit: int = 100
+    ) -> list[AgentAuditEntry]:
+        """최근 기록 목록(최신순). ``subject_id`` 를 주면 그 대상 하나로 좁힌다.
+
+        조회 화면(감사 로그 화면)이 직접 부르는 자리다. ``find_latest`` 는 1건만
+        돌려줘 "무슨 일이 있었는지 훑어보기"에는 못 쓴다.
+        """
+        ...
+
 
 class NoOpAgentAuditLog:
     """아무것도 기록하지 않는 구현.
@@ -141,3 +151,8 @@ class NoOpAgentAuditLog:
         self, subject_type: str, subject_id: str, decision_kind: str | None = None
     ) -> AgentAuditEntry | None:
         return None
+
+    def list_recent(
+        self, subject_type: str, subject_id: str | None = None, limit: int = 100
+    ) -> list[AgentAuditEntry]:
+        return []

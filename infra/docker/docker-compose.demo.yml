@@ -257,6 +257,17 @@ services:
     env_file: ../../.env.prod
     environment:
       TRIAGE_BACKEND_URL: http://customer-service:8081
+      # get_auth_events 만 실연결(Stage 7, tools.py 참조) — 이 값이 없으면
+      # TRIAGE_BACKEND_URL 이 있어도 모든 도구가 data/cases/*.json 고정 픽스처만
+      # 반환한다. customer-service 는 게이트웨이 헤더(X-User-Id/X-User-Role)를
+      # 검증 없이 신뢰하므로(GatewayHeaderAuthFilter) 이 호출도 도커 내부망
+      # 안에서만 가능해야 안전하다 — 8090 이 호스트에 안 열려 있는 것과 같은 전제.
+      TRIAGE_REAL_TOOLS: get_auth_events
+      # risk01(HQ_RISK, 이 파일이 이미 DEMO_EMPLOYEE_KEEP_OPEN 으로 열어 두는 계정)의
+      # party id. /api/v1/internal/** 는 직원 역할이면 통과하므로 다른 값을 쓸 필요가
+      # 없다 — 새 시드를 추가하지 않아도 되는 이유.
+      TRIAGE_USER_ID: "9005"
+      TRIAGE_USER_ROLE: ROLE_HQ_RISK
       # TRIAGE_LLM_PROVIDER 는 일부러 주지 않는다 — 미설정이 mock 이라 키 없이
       # 결정적으로 돈다. 실제 LLM 을 쓸 때만 .env.prod 에 provider 와 키를 넣는다.
       #

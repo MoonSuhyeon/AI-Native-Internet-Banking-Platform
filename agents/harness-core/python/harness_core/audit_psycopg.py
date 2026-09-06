@@ -48,6 +48,18 @@ _LATEST_BY_KIND_SQL = _SELECT_COLUMNS + """
  LIMIT 1
 """
 
+_LIST_SQL = _SELECT_COLUMNS + """
+ WHERE subject_type = %s
+ ORDER BY recorded_at DESC, id DESC
+ LIMIT %s
+"""
+
+_LIST_BY_SUBJECT_SQL = _SELECT_COLUMNS + """
+ WHERE subject_type = %s AND subject_id = %s
+ ORDER BY recorded_at DESC, id DESC
+ LIMIT %s
+"""
+
 
 class PsycopgAgentAuditLog:
     """``harness_audit_log`` 에 psycopg 로 직접 쓰는 구현.
@@ -115,3 +127,25 @@ class PsycopgAgentAuditLog:
         if row is None:
             return None
         return AgentAuditEntry(*row)
+
+    def list_recent(
+        self, subject_type: str, subject_id: str | None = None, limit: int = 100
+    ) -> list[AgentAuditEntry]:
+        """최근 기록 목록(최신순). ``subject_id`` 를 주면 그 대상 하나로 좁힌다.
+
+        조회 화면용이다 — 기록(``record``)은 조사·승인 경로에서 실패해도 응답을
+        막지 않지만, 이 메서드는 화면이 직접 부르므로 실패하면 그대로 올린다
+        (숨기면 "로그가 비었다"와 "조회가 깨졌다"를 화면에서 구별할 수 없다).
+        """
+        import psycopg
+
+        if subject_id is None:
+            sql, params = _LIST_SQL, (subject_type, limit)
+        else:
+            sql, params = _LIST_BY_SUBJECT_SQL, (subject_type, subject_id, limit)
+
+        with psycopg.connect(self._dsn) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                rows = cur.fetchall()
+        return [AgentAuditEntry(*row) for row in rows]

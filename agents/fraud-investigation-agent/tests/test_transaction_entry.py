@@ -82,3 +82,19 @@ def test_unknown_case_still_404():
     res = client.post("/api/investigate", json={"case": "no_such_case"})
 
     assert res.status_code == 404
+
+
+def test_실거래는_조사_큐에도_남는다():
+    """탐지기가 넘긴 거래가 조사되고 나면 GET /api/cases 로도 보여야 한다.
+
+    예전엔 감사 로그에는 남는데 파일 글롭 기반 큐(``/api/cases``)에는 안 보여서,
+    조사는 됐지만 아무도 그 존재를 모르는 사건이 됐다 — HITL 이 성립하지 않는 상태.
+    """
+    client = TestClient(app, headers=GATEWAY_HEADERS)
+
+    res = client.post("/api/investigate", json={"transaction": _transaction(alert_id="TXN-QUEUE-1")})
+    assert res.status_code == 200, res.text
+
+    queue = client.get("/api/cases").json()
+    assert any(c["alert_id"] == "TXN-QUEUE-1" for c in queue), \
+        f"조사된 실거래가 큐에 없음: {[c['alert_id'] for c in queue]}"

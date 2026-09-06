@@ -13,7 +13,7 @@
  *   사이드카는 이제 compose 의 internal 네트워크에 있어 호스트에서 닿지도 않는다.
  *
  * HITL: investigate → (분석가 검토) → approve. 동작(지급정지·STR)은 approve 가
- * RBAC(FRAUD_OFFICER) 통과 시에만 실행(목). 에이전트는 권고까지만.
+ * RBAC(컴플라이언스·리스크관리·운영·지점장·관리자) 통과 시에만 실행(목). 에이전트는 권고까지만.
  */
 import axios from 'axios'
 
@@ -160,6 +160,18 @@ export type ApproveResponse = {
   executed_actions: string[]
 }
 
+/** 감사 로그 화면 1행. harness_audit_log 원본을 그대로 옮긴 값 — 화면이 요약 안 함. */
+export type AuditLogEntry = {
+  alert_id: string
+  decision_kind: 'RECOMMENDATION' | 'ACTION_EXECUTION' | string
+  recorded_at: string
+  trace_id?: string | null
+  actor_id?: string | null
+  actor_roles: string[]
+  request: Record<string, unknown>
+  output: Record<string, unknown>
+}
+
 // ── 호출 ──────────────────────────────────────────────────────────────────
 
 /** 조사 입력 후보(트리아지 큐 대용) — data/cases/*.json 목록. */
@@ -184,6 +196,14 @@ export async function approveInvestigation(
     thread_id: threadId,
     actor_roles: actorRoles,
     approved,
+  })
+  return data
+}
+
+/** 감사 로그 조회 — 조사(권고)와 승인 후 실행 기록을 최신순으로. alertId 로 좁힐 수 있다. */
+export async function listAuditLog(alertId?: string): Promise<AuditLogEntry[]> {
+  const { data } = await api.get<AuditLogEntry[]>(`${FRAUD_BASE}/audit`, {
+    params: alertId ? { alert_id: alertId } : undefined,
   })
   return data
 }
@@ -217,6 +237,11 @@ export const ACTION_LABEL: Record<string, string> = {
   FILE_STR:       'STR 보고',
   ESCALATE:       '분석가 에스컬레이션',
   NONE:           '조치 불요',
+}
+
+export const DECISION_KIND_LABEL: Record<string, string> = {
+  RECOMMENDATION:   'AI 조사·권고',
+  ACTION_EXECUTION: '직원 승인·실행',
 }
 
 export function errMsg(e: unknown, fallback: string): string {

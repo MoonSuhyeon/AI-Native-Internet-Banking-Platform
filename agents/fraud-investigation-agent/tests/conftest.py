@@ -12,7 +12,11 @@
 막히는지는 ``test_endpoint_authorization.py`` 가 시크릿을 직접 다루며 따로 본다.
 """
 
+from pathlib import Path
+
 import pytest
+
+from agent.tools import CASES_DIR
 
 #: 게이트웨이와 나눠 갖는 시크릿(테스트 고정값).
 GATEWAY_SECRET = "test-fraud-gateway-secret"
@@ -33,3 +37,19 @@ def _gateway_secret(monkeypatch):
     조용히 403 으로 실패한다.
     """
     monkeypatch.setenv("FRAUD_GATEWAY_SHARED_SECRET", GATEWAY_SECRET)
+
+
+@pytest.fixture(autouse=True)
+def _cleanup_auto_case_files():
+    """자동탐지 조사(``_persist_auto_case``)가 큐 파일로 남긴 테스트 산출물을 치운다.
+
+    ``txn-`` 접두사만 지운다 — 커밋된 데모 픽스처(``case_*.json``)나 상담 접수
+    (``consult-*.json``)는 이 경로가 안 만드므로 건드리지 않는다. 실제
+    ``data/cases/`` 디렉터리를 쓰는 테스트라 정리를 안 하면 테스트 거래(TXN-1 등)가
+    커밋되지 않은 채로 남아 다음 실행의 큐에 계속 나타난다.
+    """
+    before = {p.name for p in Path(CASES_DIR).glob("txn-*.json")}
+    yield
+    for p in Path(CASES_DIR).glob("txn-*.json"):
+        if p.name not in before:
+            p.unlink(missing_ok=True)

@@ -42,3 +42,33 @@ export async function openRiskConsultation(input: {
     return { ok: false, message }
   }
 }
+
+/** 상담 처리 현황. 시나리오·위험 신호 같은 내부 조사 어휘는 서버가 이미 걸러서 보낸다. */
+export type ConsultStatus = {
+  case_id: string
+  status: 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED'
+  resolution?: 'CLEARED' | 'RESTRICTED' | null
+  message: string
+  amount: number
+  payee?: string | null
+  submitted_at?: string | null
+}
+
+export type ConsultStatusResult =
+  | { ok: true; data: ConsultStatus }
+  | { ok: false; message: string }
+
+/** 접수번호로 처리 현황을 조회한다. 본인 것이 아니거나 없는 번호면 같은 실패로 온다. */
+export async function getConsultStatus(caseId: string): Promise<ConsultStatusResult> {
+  try {
+    const { data } = await api.get<ConsultStatus>('/api/v1/fraud/consult/status', {
+      params: { case_id: caseId },
+    })
+    return { ok: true, data }
+  } catch (e: unknown) {
+    const message =
+      (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+      '접수 내역을 확인하지 못했습니다.'
+    return { ok: false, message }
+  }
+}

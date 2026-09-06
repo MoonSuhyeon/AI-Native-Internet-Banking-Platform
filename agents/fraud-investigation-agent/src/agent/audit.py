@@ -26,6 +26,13 @@ import os
 from harness_core import AgentAuditEntry, NoOpAgentAuditLog
 from harness_core.audit_psycopg import PsycopgAgentAuditLog
 
+__all__ = [
+    "record_investigation",
+    "record_action_execution",
+    "list_recent",
+    "get_audit_log",
+]
+
 logger = logging.getLogger(__name__)
 
 AGENT_NAME = "fraud-investigation"
@@ -147,3 +154,13 @@ def record_action_execution(
         }),
     )
     get_audit_log().record(entry)
+
+
+def list_recent(alert_id: str | None = None, limit: int = 200) -> list[AgentAuditEntry]:
+    """감사 로그 조회 화면이 부르는 자리. 사건 하나(``alert_id``)로 좁히거나 전체 최신순.
+
+    권고(RECOMMENDATION)와 실행(ACTION_EXECUTION)이 뒤섞여 최신순으로 나온다 —
+    화면에서 ``decision_kind`` 로 구분해 보여준다. 기록 지점이 둘인 이유는
+    이 파일 위쪽 docstring 참조.
+    """
+    return get_audit_log().list_recent(SUBJECT_TYPE, subject_id=alert_id, limit=limit)

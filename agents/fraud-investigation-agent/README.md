@@ -147,7 +147,7 @@ python scripts/serve.py                  # 기본 0.0.0.0:8090 (FRAUD_AGENT_PORT
 `POST /api/approve`(HITL 승인 + RBAC → 동작 실행, 목). 프론트는
 `web/admin/fraud` 페이지에서 `NEXT_PUBLIC_FRAUD_AGENT_URL`(기본 `http://localhost:8090`)로
 이 서버를 가리킨다 — 큐 선택 → 단계별 트레이스/분포 막대 → 권고 → 분석가 승인까지
-한 화면에서. 동작은 여전히 **HITL 승인 + RBAC(FRAUD_OFFICER) 통과 시에만** 실행(목).
+한 화면에서. 동작은 여전히 **HITL 승인 + RBAC(`common.BankRole.FDS_ROLES` + BRANCH_MANAGER = COMPLIANCE/HQ_RISK/OPS/ADMIN/BRANCH_MANAGER) 통과 시에만** 실행(목).
 
 ## 기술 스택
 

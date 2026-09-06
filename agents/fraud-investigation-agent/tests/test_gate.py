@@ -47,17 +47,24 @@ def test_hitl_holds_until_approval_then_rbac_gates_execution():
     assert state.executed_actions == []  # 에이전트는 권고까지만
 
     # 승인 + 올바른 RBAC → 동작(목) 실행
-    final = approve_and_execute(graph, config, actor_roles=["FRAUD_OFFICER"])
+    final = approve_and_execute(graph, config, actor_roles=["ROLE_HQ_RISK"])
     assert any("실행(목)" in x for x in final.executed_actions)
 
 
 def test_hitl_rbac_denies_without_role():
     graph, config, _ = investigate(load_case("case_h1"), thread_id="hitl-2")
-    denied = approve_and_execute(graph, config, actor_roles=["TELLER"])
+    denied = approve_and_execute(graph, config, actor_roles=["ROLE_TELLER"])
     assert any("거부됨(RBAC)" in x for x in denied.executed_actions)
+
+
+def test_hitl_rbac_allows_branch_manager():
+    # 지점장(제출본 테스트 계정 employee01)도 승인·실행 가능해야 한다.
+    graph, config, _ = investigate(load_case("case_h1"), thread_id="hitl-4")
+    final = approve_and_execute(graph, config, actor_roles=["ROLE_BRANCH_MANAGER"])
+    assert any("실행(목)" in x for x in final.executed_actions)
 
 
 def test_hitl_no_approval_no_execution():
     graph, config, _ = investigate(load_case("case_h1"), thread_id="hitl-3")
-    result = approve_and_execute(graph, config, actor_roles=["FRAUD_OFFICER"], approved=False)
+    result = approve_and_execute(graph, config, actor_roles=["ROLE_HQ_RISK"], approved=False)
     assert any("HITL 미승인" in x for x in result.executed_actions)

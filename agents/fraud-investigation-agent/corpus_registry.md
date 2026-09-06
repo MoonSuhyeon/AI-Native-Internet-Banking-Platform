@@ -596,7 +596,7 @@ get_party:               decisive   사망·후견 → 즉시 fail-closed
 
 `hypothesize` → `plan` → `act` → `observe` → `gate`(조건부 엣지) → `plan`(루프백) / `recommend` → *interrupt(HITL)* → `execute_action`.
 - `gate`: §16-5 우선순위(decisive→max≥0.75→budget==0→else plan).
-- HITL: `interrupt_before=["execute_action"]` + `MemorySaver`. `execute_action` 은 `hitl_approved` + RBAC(`FRAUD_OFFICER`) 통과 시에만 동작(목) 실행.
+- HITL: `interrupt_before=["execute_action"]` + `MemorySaver`. `execute_action` 은 `hitl_approved` + RBAC(`common.BankRole.FDS_ROLES` + BRANCH_MANAGER = COMPLIANCE/HQ_RISK/OPS/ADMIN/BRANCH_MANAGER) 통과 시에만 동작(목) 실행.
 
 **도구 → 함수 / 실서비스 엔드포인트** (`tools.py`, 전부 조회 전용·PoC 목)
 

@@ -282,6 +282,19 @@ spring:
             - SetPath=/api/consult
             - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:not-configured}
 
+        # 상담 처리 현황 조회 — 접수한 본인만 (JWT 필요)
+        #
+        # 위 consult 와 다른 라우트로 둔 이유는 위 guidance/consult 와 같다 — 경로가
+        # 다르면 predicate 가 정확히 그 문자열에만 매칭돼 조사 큐·승인 경로로 새지 않는다.
+        # SetPath 는 경로만 바꾸고 쿼리스트링(?case_id=...)은 그대로 통과한다.
+        - id: fraud-agent-consult-status
+          uri: http://${FRAUD_AGENT_HOST:localhost}:${FRAUD_AGENT_PORT:8090}
+          predicates:
+            - Path=/api/v1/fraud/consult/status
+          filters:
+            - SetPath=/api/consult/status
+            - AddRequestHeader=X-Gateway-Auth, ${FRAUD_GATEWAY_SHARED_SECRET:not-configured}
+
         # 목표·지출 에이전트 (JWT 필요)
         #
         # 프론트의 BFF 프록시가 NEXT_PUBLIC_AI_API_URL 기본값 8086 으로 이 에이전트를

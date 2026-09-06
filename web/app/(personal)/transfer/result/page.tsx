@@ -121,7 +121,14 @@ export default function TransferResultPage() {
                 </p>
                 <p className="text-[12px] text-kb-text-muted">이체는 진행되지 않았습니다. 돈은 그대로 있습니다.</p>
                 {paymentResult.caseId && (
-                  <p className="mt-1 text-[12px] text-kb-text-muted">접수번호: {paymentResult.caseId}</p>
+                  <p className="mt-1 text-[12px] text-kb-text-muted">
+                    접수번호: {paymentResult.caseId}
+                    {' · '}
+                    <Link href={`/support/consultation/status?case_id=${encodeURIComponent(paymentResult.caseId)}`}
+                      className="underline font-medium text-amber-700">
+                      처리 현황 조회
+                    </Link>
+                  </p>
                 )}
               </div>
             </div>
