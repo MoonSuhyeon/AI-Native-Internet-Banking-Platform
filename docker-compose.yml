@@ -556,6 +556,10 @@ services:
       TRIAGE_BACKEND_URL: ${TRIAGE_BACKEND_URL:-http://customer-service:8081}
       TRIAGE_USER_ID: ${TRIAGE_USER_ID:-1}
       TRIAGE_USER_ROLE: ${TRIAGE_USER_ROLE:-ROLE_HQ_RISK}
+      # get_auth_events 만 실연결(Stage 7, tools.py 참조). 이 값이 없으면 위
+      # TRIAGE_BACKEND_URL 이 있어도 모든 조사 도구가 data/cases/*.json 고정
+      # 픽스처만 반환한다.
+      TRIAGE_REAL_TOOLS: ${TRIAGE_REAL_TOOLS:-get_auth_events}
       # 조사 루프를 Phoenix 로 남긴다. 끄면 계측 전체가 no-op 이다.
       PHOENIX_ENABLED: ${PHOENIX_ENABLED:-false}
       PHOENIX_GRPC_ENDPOINT: http://phoenix:4317
